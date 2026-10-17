@@ -252,3 +252,12 @@ model TelegramCustomer {
 
   @@map("telegram_customers")
 }
+
+// Encrypted admin-only integration settings. No webhook URL in public settings.
+model DeskcommIntegration {
+  id                String   @id @map("_id")
+  enabled           Boolean  @default(false)
+  webhookCiphertext String?
+  updatedAt         DateTime @updatedAt
+  @@map("deskcomm_integrations")
+}
