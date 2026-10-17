@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Package, LogOut, RefreshCw, ExternalLink, Check, LayoutDashboard, ShoppingBag, Image as ImageIcon, Grid, Settings } from "lucide-react";
 import { adminLogin, getAdminNotifications, markAllNotificationsRead, markNotificationRead, getAllOrders, getProducts, getCategories, createProduct, updateProduct, deleteProduct, createCategory, deleteCategory, Product, Category } from "@/lib/api";
+import DeskcommTab from "./deskcomm-tab";
 import { OverviewTab, ProductsTab, BannersTab, CategoriesTab, HomepageBuilderTab, OrdersTab } from "./tabs";
 
 interface Notification {
@@ -30,7 +31,7 @@ interface Order {
 
 const POLL_INTERVAL_MS = 5000;
 
-type Tab = "overview" | "notifications" | "orders" | "products" | "banners" | "categories" | "settings";
+type Tab = "overview" | "notifications" | "orders" | "products" | "banners" | "categories" | "settings" | "deskcomm";
 
 export default function AdminPage() {
     const [token, setToken] = useState<string | null>(null);
@@ -203,6 +204,10 @@ export default function AdminPage() {
                         <Settings size={14} className="inline mr-2" /> Home Builder
                         {activeTab === "settings" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />}
                     </button>
+                    <button onClick={() => setActiveTab("deskcomm")} className={tabClass("deskcomm")}>
+                        <Settings size={14} className="inline mr-2" /> DeskcommCRM
+                        {activeTab === "deskcomm" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />}
+                    </button>
                     <button onClick={() => setActiveTab("notifications")} className={tabClass("notifications")}>
                         <Bell size={14} className="inline mr-2" /> Alerts
                         {unread > 0 && <span className="ml-2 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{unread}</span>}
@@ -233,6 +238,7 @@ export default function AdminPage() {
                 )}
 
                 {activeTab === "settings" && <HomepageBuilderTab />}
+                {activeTab === "deskcomm" && <DeskcommTab />}
 
                 {activeTab === "banners" && <BannersTab />}
 
