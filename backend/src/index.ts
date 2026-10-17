@@ -13,6 +13,7 @@ import { orderRoutes, notificationRoutes } from "./routes/order.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { addressRoutes } from "./routes/address.routes";
 import { settingsRoutes } from "./routes/settings.routes";
+import { deskcommRoutes } from "./routes/deskcomm.routes";
 import { telegramRoutes } from "./routes/telegram.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { syncSheetsToDatabase } from "./lib/notifications";
@@ -79,6 +80,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/telegram", telegramRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/integrations/deskcomm", deskcommRoutes);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 app.use(errorMiddleware);
