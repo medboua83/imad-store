@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { bridgeOrderToAdmin, OrderForBridge } from "../lib/telegram-bridge";
 import { appendOrderToSheets, updateOrderStatusInSheets } from "../lib/notifications";
+import { queueConfirmed } from "../lib/order-webhook";
 
 // Guest-only checkout schema — COD only (card payments disabled)
 const createOrderSchema = z.object({
@@ -223,34 +224,27 @@ export async function listOrders(req: Request, res: Response) {
     res.json({ success: true, data: orders, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
 }
 
-export async function updateOrderStatus(req: Request, res: Response) {
-    const { id } = req.params;
-    const { status } = z.object({ status: z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]) }).parse(req.body);
-
-    const order = await prisma.order.update({
-        where: { id },
-        data: {
-            status,
-            events: { create: { type: "status_changed", message: `Order marked as ${status}` } },
-        },
-        include: ORDER_INCLUDE,
-    });
-
-    await prisma.adminNotification.create({
-        data: {
-            type: "order_status",
-            title: `Order #${order.id.slice(-6).toUpperCase()} → ${status}`,
-            message: `${order.customerName} — ${order.totalAmount.toFixed(2)} MAD`,
-            orderId: order.id,
-        },
-    });
-
-    // Google Sheets status update sync (best-effort, non-blocking)
-    updateOrderStatusInSheets(order.id, status).catch((err) =>
-        console.error("Google Sheets status update failed:", err)
-    );
-
-    res.json({ success: true, data: order });
+export async function updateOrderStatus(req:Request,res:Response){
+  const {id}=req.params;
+  const {status}=z.object({status:z.enum(["PENDING","CONFIRMED","SHIPPED","DELIVERED","CANCELLED"])}).parse(req.body);
+  const settings=await prisma.storeSettings.findUnique({where:{id:"settings"}});
+  const result=await prisma.$transaction(async tx=>{
+    const before=await tx.order.findUnique({where:{id}});
+    if(!before)throw new AppError("Order not found",404);
+    if(before.status===status)return {order:await tx.order.findUniqueOrThrow({where:{id},include:ORDER_INCLUDE}),changed:false};
+    const updated=await tx.order.updateMany({where:{id,status:before.status},data:{status}});
+    if(updated.count!==1)throw new AppError("Concurrent order update, please retry",409);
+    const order=await tx.order.findUniqueOrThrow({where:{id},include:ORDER_INCLUDE});
+    await tx.orderEvent.create({data:{orderId:id,type:"status_changed",message:"Order marked as "+status}});
+    await tx.adminNotification.create({data:{type:"order_status",
+      title:"Order #"+id.slice(-6).toUpperCase()+" → "+status,
+      message:(order.customerName||"Customer")+" — "+order.totalAmount.toFixed(2)+" MAD",orderId:id}});
+    if(status==="CONFIRMED"&&settings?.webhookEnabled&&settings.webhookUrl)
+      await queueConfirmed(tx,order,settings.webhookUrl);
+    return {order,changed:true};
+  });
+  if(result.changed)updateOrderStatusInSheets(id,status).catch(console.error);
+  res.json({success:true,data:result.order});
 }
 
 // Admin: list notifications (polling endpoint)

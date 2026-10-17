@@ -17,6 +17,7 @@ import { telegramRoutes } from "./routes/telegram.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { syncSheetsToDatabase } from "./lib/notifications";
 import { ensureProductionData } from "./lib/seedAdmin";
+import { processOrderWebhooks } from "./lib/order-webhook";
 
 const app: Application = express();
 const PORT = process.env.PORT ?? 4000;
@@ -99,3 +100,6 @@ setInterval(() => {
 }, 30_000);
 
 export default app;
+
+processOrderWebhooks().catch(console.error);
+setInterval(()=>processOrderWebhooks().catch(console.error),20000);

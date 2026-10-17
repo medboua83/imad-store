@@ -234,6 +234,8 @@ model StoreSettings {
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
   codEnabled      Boolean @default(true)
+  webhookEnabled  Boolean @default(false)
+  webhookUrl      String?
 
   @@map("store_settings")
 }
@@ -251,4 +253,20 @@ model TelegramCustomer {
   updatedAt DateTime @updatedAt
 
   @@map("telegram_customers")
+}
+
+model WebhookDelivery {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventKey      String   @unique
+  orderId       String   @db.ObjectId
+  payload       Json
+  targetUrl     String
+  status        String   @default("PENDING")
+  attempts      Int      @default(0)
+  nextAttemptAt DateTime @default(now())
+  lastError     String?
+  deliveredAt   DateTime?
+  createdAt     DateTime @default(now())
+  @@index([status, nextAttemptAt])
+  @@map("webhook_deliveries")
 }

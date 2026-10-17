@@ -245,3 +245,14 @@ export const updateSettings = async (payload: Partial<StoreSettings>) => {
 };
 
 export default api;
+
+export interface OrderWebhookSettings { enabled:boolean;url:string;secretConfigured:boolean; }
+export async function getOrderWebhookSettings():Promise<OrderWebhookSettings>{
+  const {data}=await api.get("/settings/admin/webhook");return data.data;
+}
+export async function saveOrderWebhookSettings(input:{enabled:boolean;url:string}){
+  const {data}=await api.put("/settings/admin/webhook",input);return data.data;
+}
+export async function testOrderWebhook(){
+  const {data}=await api.post("/settings/admin/webhook/test");return data;
+}
