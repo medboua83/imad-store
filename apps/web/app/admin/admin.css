@@ -1359,3 +1359,254 @@
 .admin-content-panel .storefront-home .section-heading h2 {
     font-size: clamp(30px, 3vw, 42px);
 }
+
+/* Order workspace: native modal keeps focus contained and supports Escape. */
+.admin-app .order-quick-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0;
+}
+.admin-app .order-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dce1d6;
+  border-radius: 30px;
+  padding: 10px 14px;
+  background: #fff;
+  color: #385143;
+  cursor: pointer;
+}
+.admin-app .order-filter[aria-pressed="true"] {
+  background: #254b39;
+  color: white;
+  border-color: #254b39;
+}
+.admin-app .order-filter span {
+  font-size: 12px;
+  border-radius: 20px;
+  padding: 2px 7px;
+  background: #84958026;
+}
+.admin-app .order-extra-filters {
+  margin: 14px 0;
+  border-bottom: 1px solid #e0e4da;
+  padding-bottom: 16px;
+}
+.admin-app .order-extra-filters summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.admin-app .order-extra-filters p {
+  font-size: 12px;
+  color: #637064;
+  margin-top: 8px;
+}
+.admin-app .order-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+.admin-app .order-filter-fields label {
+  display: grid;
+  gap: 7px;
+}
+.admin-app .order-results {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  font-size: 13px;
+}
+.admin-app .order-details-trigger {
+  width: 100%;
+  justify-content: space-between;
+  margin: 4px 0 14px;
+}
+.admin-app .order-detail-dialog {
+  box-sizing: border-box;
+  width: min(820px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid #dfe3d8;
+  border-radius: 20px;
+  padding: 0;
+  background: #fffef9;
+  color: #243a2d;
+  margin: auto;
+  overflow: auto;
+  box-shadow: 0 28px 100px #132b3540;
+}
+.admin-app .order-detail-dialog::backdrop {
+  background: #10251ccc;
+  backdrop-filter: blur(4px);
+}
+.admin-app .order-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  background: #f0f3e9;
+  border-bottom: 1px solid #dce1d6;
+}
+.admin-app .order-detail-header h2 {
+  margin: 5px 0 0;
+  font-size: 28px;
+}
+.admin-app .order-detail-header button {
+  flex-shrink: 0;
+}
+.admin-app .order-detail-body {
+  padding: 24px 28px;
+  overflow-wrap: anywhere;
+}
+.admin-app .order-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+}
+.admin-app .order-progress {
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.admin-app .order-progress li {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: #647064;
+  border-top: 3px solid #dee3d7;
+  padding-top: 10px;
+}
+.admin-app .order-progress li.reached {
+  border-color: #315f47;
+  color: #254b39;
+}
+.admin-app .order-progress li[aria-current] {
+  font-weight: 700;
+}
+.admin-app .order-progress li span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e7ebe1;
+}
+.admin-app .order-progress li.reached span {
+  background: #315f47;
+  color: white;
+}
+.admin-app .order-cancelled {
+  padding: 16px;
+  border-radius: 10px;
+  background: #f9eae4;
+  margin: 20px 0;
+}
+.admin-app .order-detail-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 26px 0;
+  padding: 20px;
+  border: 1px solid #dce1d6;
+  border-radius: 12px;
+}
+.admin-app .order-detail-body h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.admin-app .order-detail-body p,
+.admin-app .order-detail-body address {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.admin-app .order-line-items {
+  padding: 0;
+  list-style: none;
+}
+.admin-app .order-line-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e0e4da;
+}
+.admin-app .order-line-items p {
+  margin: 5px 0;
+  color: #637064;
+}
+.admin-app .order-line-items span {
+  font-size: 13px;
+}
+.admin-app .order-totals {
+  margin: 24px 0;
+  background: #f1f4ec;
+  padding: 18px;
+  border-radius: 12px;
+}
+.admin-app .order-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+}
+.admin-app .order-totals dd {
+  margin: 0;
+  text-align: right;
+}
+.admin-app .order-grand-total {
+  border-top: 1px solid #d5dccd;
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 18px;
+}
+.admin-app .order-customer-note {
+  margin: 24px 0;
+}
+.admin-app .order-reference {
+  font-size: 12px;
+  margin: 20px 0;
+}
+.admin-app .order-reference summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.admin-app .order-detail-footer {
+  border-top: 1px solid #dce1d6;
+  padding-top: 20px;
+}
+@media (max-width: 600px) {
+  .admin-app .order-filter-fields,
+  .admin-app .order-detail-columns {
+    grid-template-columns: 1fr;
+  }
+  .admin-app .order-detail-header,
+  .admin-app .order-detail-body {
+    padding: 20px 16px;
+  }
+  .admin-app .order-detail-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 14px;
+  }
+  .admin-app .order-progress {
+    gap: 4px;
+  }
+  .admin-app .order-progress li {
+    font-size: 10px;
+  }
+  .admin-app .order-results {
+    align-items: flex-start;
+  }
+}

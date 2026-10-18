@@ -286,6 +286,29 @@ export interface AdminOrder {
     customerPhone: string | null;
     city: string | null;
     region: string | null;
+    fullName?: string | null;
+    phone?: string | null;
+    street?: string | null;
+    postalCode?: string | null;
+    customerEmail?: string | null;
+    notes?: string | null;
+    shippingCost?: number;
+    updatedAt?: string;
+    address?: {
+        fullName?: string;
+        phone?: string;
+        street?: string;
+        city?: string;
+        region?: string;
+        postalCode?: string;
+    } | null;
+    items?: {
+        id: string;
+        quantity: number;
+        unitPrice: number;
+        product?: { nameFr?: string; nameAr?: string; nameEn?: string } | null;
+        variant?: { colorNameFr?: string; colorNameAr?: string; size?: string } | null;
+    }[];
     status: string;
     paymentMethod: string;
     paymentStatus: string;
