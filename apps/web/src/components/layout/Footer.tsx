@@ -1,31 +1,53 @@
 import Link from "next/link";
+import { ArrowUpLeft } from "lucide-react";
 export function Footer() {
     return (
-        <footer className="border-t bg-[#F5EDE0] py-10 px-5">
-            <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+        <footer className="site-footer">
+            <div className="footer-main section-container">
                 <div>
-                    <p className="text-2xl tracking-widest">IMAD MODE</p>
-                    <p className="mt-3">اختيارك يبدأ من هنا.</p>
+                    <Link
+                        href="/"
+                        className="brand-wordmark"
+                        dir="ltr"
+                        aria-label="IMAD Mode — الرئيسية"
+                    >
+                        IMAD <span>MODE</span>
+                    </Link>
+                    <p className="footer-tagline">
+                        أناقة في الاختيار.
+                        <br />
+                        بساطة في التفاصيل.
+                    </p>
                 </div>
-                <nav aria-label="معلومات المتجر" className="flex flex-col gap-3">
+                <nav aria-label="معلومات المتجر">
+                    <h2>روابط تهمكِ</h2>
                     {[
-                        ["/shop", "المتجر"],
-                        ["/contact", "تواصل معنا"],
+                        ["/shop", "اكتشفي المتجر"],
                         ["/delivery", "التوصيل"],
                         ["/returns", "الاستبدال والإرجاع"],
                         ["/privacy", "الخصوصية"],
                     ].map(([href, label]) => (
-                        <Link className="action" key={href} href={href}>
+                        <Link key={href} href={href}>
                             {label}
                         </Link>
                     ))}
                 </nav>
-                <p className="leading-8">
-                    تجدين تفاصيل المنتجات والتوفر في المتجر، ورسوم التوصيل في ملخص الطلب قبل
-                    التأكيد.
-                </p>
+                <div className="footer-help">
+                    <h2>نحن هنا لمساعدتكِ.</h2>
+                    <p>
+                        سؤال عن قطعة أو عن طلبكِ؟
+                        <br />
+                        تواصلي معنا لتوضيح التفاصيل.
+                    </p>
+                    <Link href="/contact" className="text-link">
+                        تواصل معنا <ArrowUpLeft size={18} aria-hidden="true" />
+                    </Link>
+                </div>
             </div>
-            <p className="text-center text-sm mt-8">© {new Date().getFullYear()} IMAD Mode</p>
+            <div className="footer-bottom section-container">
+                <p>© {new Date().getFullYear()} IMAD Mode</p>
+                <p>اختاري. راجعي. واطلبي بثقة.</p>
+            </div>
         </footer>
     );
 }

@@ -23,9 +23,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 />
                 <link
                     rel="preload"
-                    href="/fonts/8091de8f5e738f1d.woff2"
+                    href="/fonts/tajawal-400-arabic.woff2"
                     as="font"
                     type="font/woff2"
+                    crossOrigin="anonymous"
+                />
+                <link
+                    rel="preload"
+                    href="/fonts/cormorant-wordmark.ttf"
+                    as="font"
+                    type="font/ttf"
                     crossOrigin="anonymous"
                 />
             </head>

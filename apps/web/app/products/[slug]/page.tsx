@@ -42,7 +42,7 @@ export default async function ProductPage({ params }: Props) {
         },
     };
     return (
-        <section className="page-shell">
+        <section className="page-shell product-page">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -57,7 +57,7 @@ export default async function ProductPage({ params }: Props) {
             </nav>
             <div className="grid lg:grid-cols-2 gap-8">
                 <div>
-                    <div className="relative aspect-[4/5] bg-[#F5EDE0] rounded-xl overflow-hidden">
+                    <div className="relative aspect-[4/5] bg-[#F5EDE0] product-main-image overflow-hidden">
                         <Image
                             src={product.images[0]}
                             alt={name}
@@ -79,7 +79,7 @@ export default async function ProductPage({ params }: Props) {
                         </div>
                     ))}
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-6 product-detail">
                     <p>{product.category.nameAr || product.category.nameFr}</p>
                     <h1 className="text-4xl">{name}</h1>
                     <p className="text-2xl">{product.price.toFixed(2)} MAD</p>

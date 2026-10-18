@@ -40,12 +40,16 @@ export default async function ShopPage({
         return `/shop?${query}`;
     };
     return (
-        <section className="page-shell">
-            <h1 className="text-3xl mb-6">المتجر</h1>
+        <section className="page-shell shop-page">
+            <div className="shop-intro">
+                <p className="eyebrow">THE IMAD EDIT</p>
+                <h1>اكتشفي ما يشبهكِ.</h1>
+                <p>كل القطع، في مكان واحد. اختاري الفئة والتفاصيل التي تناسبكِ.</p>
+            </div>
             <form
                 action="/shop"
                 method="get"
-                className="rounded-xl border bg-white p-5 grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+                className="shop-filters grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
             >
                 <label className="col-span-2 sm:col-span-1">
                     البحث عن منتج
@@ -83,8 +87,8 @@ export default async function ShopPage({
                     className="col-span-2 lg:col-span-4 border-t pt-3"
                     open={
                         !!(
-                            value("sort") ||
-                            value("availability") ||
+                            (value("sort") && value("sort") !== "newest") ||
+                            (value("availability") && value("availability") !== "all") ||
                             value("minPrice") ||
                             value("maxPrice")
                         )
@@ -151,7 +155,7 @@ export default async function ShopPage({
                 {result.total} منتج — الصفحة {result.page} من {Math.max(1, result.totalPages)}
             </p>
             {result.data.length ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="catalog-grid">
                     {result.data.map((p) => (
                         <ProductCard product={p} key={p.id} />
                     ))}
