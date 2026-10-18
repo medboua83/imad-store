@@ -37,3 +37,7 @@ The owner clarified that new catalogue entries are for testing, not real merchan
 ## Storefront UI/UX redesign
 
 See `STOREFRONT_DESIGN_2026-10-18.md`. The storefront uses a consistent ivory/forest palette, editorial home layout, category tiles, redesigned product cards, navigation and footer. Self-hosted Tajawal improves Arabic body text while Amiri headings and a Cormorant wordmark provide contrast. Product/checkout presentation and filter disclosure were refined. Backend and CRM logic are unchanged.
+
+## Administration design and usability
+
+See `ADMIN_WORKSPACE_2026-10-18.md`. A scoped ivory/forest admin workspace replaces the dark mixed-language tabs. Navigation, product/order search, editor feedback, session/sync states and mobile controls are clearer. Financial cards no longer invent a profit margin; their loaded-data scope is explicit. Frontend order actions follow existing backend transitions. Twenty-two isolated tests pass. After the owner stopped the old frontend, the tested production build was started on port 3000. Live authenticated browser checks verified dashboard rendering, product/order search and opening/cancelling the product editor. Order count, all CRM outbox states/attempts, product prices/statuses and variant stock match the pre-application snapshot. No backend, database schema or CRM configuration changes are part of this lot.

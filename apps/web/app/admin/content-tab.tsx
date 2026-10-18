@@ -60,9 +60,9 @@ export default function ContentTab() {
             setBusy(false);
         }
     }
-    const input = "w-full rounded border border-white/30 bg-[#252539] text-white p-3 mt-2";
+    const input = "admin-field mt-2";
     return (
-        <div className="space-y-5" dir="ltr">
+        <div className="admin-panel admin-content-panel space-y-5" dir="ltr">
             <h2 className="text-2xl">Accueil et informations du magasin</h2>
             <p>
                 Révision {revision}. Enregistrez le brouillon, vérifiez l’aperçu, puis publiez
@@ -259,27 +259,24 @@ export default function ContentTab() {
                     </label>
                     <div className="flex flex-wrap gap-3">
                         <button
-                            className="action bg-[#C9A96E] text-black rounded px-5"
+                            className="admin-button primary"
                             disabled={busy}
                             onClick={() => perform("draft")}
                         >
                             Enregistrer le brouillon
                         </button>
-                        <button
-                            className="action border rounded"
-                            onClick={() => setPreview(!preview)}
-                        >
+                        <button className="admin-button" onClick={() => setPreview(!preview)}>
                             Aperçu du brouillon
                         </button>
                         <button
-                            className="action border rounded"
+                            className="admin-button"
                             disabled={busy || dirty}
                             onClick={() => perform("publish")}
                         >
                             Publier
                         </button>
                         <button
-                            className="action border rounded"
+                            className="admin-button"
                             disabled={busy || !rollback || dirty}
                             onClick={() => perform("rollback")}
                         >
