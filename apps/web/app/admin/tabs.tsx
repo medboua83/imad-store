@@ -1,718 +1,19 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useState } from "react";
 import {
-    DollarSign,
-    ShoppingCart,
-    Trash2,
-    TrendingUp,
-    TrendingDown,
-    Banknote,
-    Target,
-    CheckCircle2,
-    XCircle,
+    ArrowUpRight,
+    Check,
+    Package,
     RefreshCw,
-    ExternalLink,
+    Search,
+    ShoppingBag,
+    Truck,
+    X,
 } from "lucide-react";
-import {
-    AreaChart,
-    Area,
-    BarChart,
-    Bar,
-    PieChart,
-    Pie,
-    Cell,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from "recharts";
-import type { LucideIcon } from "lucide-react";
 import type { Product, Category } from "@/lib/api";
 import { updateOrderStatus } from "@/lib/api";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const CATEGORY_LABELS: Record<string, string> = {
-    bags: "الحقائب",
-    abayas: "العبايات",
-    shawls: "شيلان",
-    "womens-shoes": "أحذية نسائية",
-    "mens-clogs": "صابو رجالي",
-};
-// All 5 columns always present — start with zero revenue
-const ORDERED_CATS = Object.keys(CATEGORY_LABELS);
-
-interface OrderItem {
-    quantity: number;
-    unitPrice: number;
-    productId?: string;
-}
-interface Order {
-    id: string;
-    status: string;
-    totalAmount: number;
-    shippingCost?: number;
-    createdAt: string;
-    items?: OrderItem[];
-}
-
-// ─── Chart tooltip style ──────────────────────────────────────────────────────
-const TOOLTIP_STYLE = {
-    backgroundColor: "#1e1e3a",
-    border: "1px solid rgba(201,169,110,0.3)",
-    borderRadius: "8px",
-    color: "#fff",
-    fontSize: "11px",
-};
-const PIE_COLORS = ["#fbbf24", "#60a5fa", "#34d399", "#f87171", "#a78bfa"];
-
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-const CustomTooltip = ({
-    active,
-    payload,
-    label,
-}: {
-    active?: boolean;
-    payload?: { color?: string; name?: string; value?: number | string }[];
-    label?: string | number;
-}) => {
-    if (!active || !payload?.length) return null;
-    return (
-        <div style={TOOLTIP_STYLE} className="px-3 py-2">
-            <p className="text-[10px] text-white/50 mb-1">{label}</p>
-            {payload.map((p, i: number) => (
-                <p key={i} style={{ color: p.color }} className="text-xs font-medium">
-                    {p.name}: {typeof p.value === "number" ? `${p.value.toFixed(2)} MAD` : p.value}
-                </p>
-            ))}
-        </div>
-    );
-};
-
-// ─── Section Title ────────────────────────────────────────────────────────────
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#C9A96E] mb-4 font-semibold">
-        {children}
-    </h3>
-);
-
-// ─── Glass Card ───────────────────────────────────────────────────────────────
-const GlassCard = ({
-    children,
-    className = "",
-}: {
-    children: React.ReactNode;
-    className?: string;
-}) => (
-    <div
-        className={`bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 ${className}`}
-    >
-        {children}
-    </div>
-);
-
-// ─── Overview Tab ─────────────────────────────────────────────────────────────
-export function OverviewTab({ orders, products }: { orders: Order[]; products: Product[] }) {
-    const now = new Date();
-
-    // ── Core metrics ──────────────────────────────────────────────────────────
-    const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-    const totalShipping = orders.reduce((s, o) => s + (o.shippingCost ?? 0), 0);
-    const netSales = totalRevenue - totalShipping;
-    const netProfit = netSales * 0.6; // Estimated 60% margin
-    const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
-    const pending = orders.filter((o) => o.status === "PENDING").length;
-    const confirmed = orders.filter((o) => o.status === "CONFIRMED").length;
-    const delivered = orders.filter((o) => o.status === "DELIVERED").length;
-    const cancelled = orders.filter((o) => o.status === "CANCELLED").length;
-    const pendingCOD = orders
-        .filter((o) => o.status === "PENDING" || o.status === "CONFIRMED")
-        .reduce((s, o) => s + o.totalAmount, 0);
-
-    // ── Month-over-month growth ───────────────────────────────────────────────
-    const thisMonthOrders = orders.filter((o) => {
-        const d = new Date(o.createdAt);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-    const lastMonthOrders = orders.filter((o) => {
-        const d = new Date(o.createdAt);
-        const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
-    });
-    const thisMonthRev = thisMonthOrders.reduce((s, o) => s + o.totalAmount, 0);
-    const lastMonthRev = lastMonthOrders.reduce((s, o) => s + o.totalAmount, 0);
-    const growth = lastMonthRev > 0 ? ((thisMonthRev - lastMonthRev) / lastMonthRev) * 100 : 0;
-
-    // ── Revenue trend (last 14 days) ──────────────────────────────────────────
-    const revenueTrend = useMemo(() => {
-        const now = new Date();
-        const days: Record<string, { revenue: number; orders: number }> = {};
-        for (let i = 13; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            const key = d.toLocaleDateString("fr-MA", { day: "2-digit", month: "short" });
-            days[key] = { revenue: 0, orders: 0 };
-        }
-        orders.forEach((o) => {
-            const key = new Date(o.createdAt).toLocaleDateString("fr-MA", {
-                day: "2-digit",
-                month: "short",
-            });
-            if (days[key]) {
-                days[key].revenue += o.totalAmount;
-                days[key].orders += 1;
-            }
-        });
-        return Object.entries(days).map(([date, v]) => ({ date, ...v }));
-    }, [orders]);
-
-    // ── Category revenue ──────────────────────────────────────────────────────
-    // Slug → Arabic label mapping (matches exactly what seedAdmin inserts)
-
-    const categoryRevenue = (() => {
-        // Base map with 0 for every category so all bars render
-        const catMap: Record<string, number> = {};
-        ORDERED_CATS.forEach((slug) => {
-            catMap[CATEGORY_LABELS[slug]] = 0;
-        });
-
-        orders.forEach((o) => {
-            (o.items || []).forEach((item) => {
-                const prod = products.find((p) => p.id === item.productId);
-                const catSlug = prod?.category?.slug ?? "bags";
-                // Map to a known slug; unknown slugs fall back to 'bags'
-                const resolvedSlug = CATEGORY_LABELS[catSlug] ? catSlug : "bags";
-                const label = CATEGORY_LABELS[resolvedSlug];
-                catMap[label] = (catMap[label] ?? 0) + item.unitPrice * item.quantity;
-            });
-        });
-
-        // Preserve the canonical order (not sorted by revenue) so columns are stable
-        return ORDERED_CATS.map((slug) => ({
-            category: CATEGORY_LABELS[slug],
-            revenue: catMap[CATEGORY_LABELS[slug]],
-        }));
-    })();
-
-    // ── Order status pie ──────────────────────────────────────────────────────
-    const statusData = [
-        { name: "قيد الانتظار", value: pending },
-        { name: "مؤكد", value: confirmed },
-        { name: "تم التسليم", value: delivered },
-        { name: "ملغي", value: cancelled },
-    ].filter((s) => s.value > 0);
-
-    const kpiCards = [
-        {
-            icon: DollarSign,
-            label: "إجمالي المبيعات",
-            value: `${totalRevenue.toFixed(2)} MAD`,
-            sub:
-                growth >= 0
-                    ? `+${growth.toFixed(1)}% هذا الشهر`
-                    : `${growth.toFixed(1)}% هذا الشهر`,
-            color: "#C9A96E",
-            trend: growth,
-        },
-        {
-            icon: Banknote,
-            label: "صافي الربح (تقديري)",
-            value: `${netProfit.toFixed(2)} MAD`,
-            sub: "هامش ربح 60%",
-            color: "#34d399",
-            trend: 1,
-        },
-        {
-            icon: Target,
-            label: "متوسط قيمة الطلب",
-            value: `${avgOrderValue.toFixed(2)} MAD`,
-            sub: `${orders.length} طلب إجمالاً`,
-            color: "#a78bfa",
-            trend: 1,
-        },
-        {
-            icon: ShoppingCart,
-            label: "إجمالي الطلبات",
-            value: String(orders.length),
-            sub: `${pending} قيد الانتظار · ${delivered} مسلّم`,
-            color: "#60a5fa",
-            trend: 0,
-        },
-    ];
-
-    return (
-        <div className="space-y-8" dir="rtl">
-            {/* ── Page header ──────────────────────────────────────────── */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2
-                        className="text-2xl font-light tracking-widest"
-                        style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                    >
-                        لوحة التحليلات المالية
-                    </h2>
-                    <p className="text-[10px] text-white/30 tracking-widest uppercase mt-1">
-                        Financial Analytics Dashboard
-                    </p>
-                </div>
-                <div className="text-right">
-                    <p className="text-[10px] text-white/30 tracking-widest uppercase">
-                        Last updated
-                    </p>
-                    <p className="text-xs text-[#C9A96E] font-mono mt-0.5" suppressHydrationWarning>
-                        {new Date().toLocaleString("fr-MA")}
-                    </p>
-                </div>
-            </div>
-
-            {/* ── KPI Cards ────────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {kpiCards.map(({ icon: Icon, label, value, sub, color, trend }) => (
-                    <GlassCard key={label}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="p-2.5 rounded-xl" style={{ background: `${color}18` }}>
-                                <Icon size={18} style={{ color }} />
-                            </div>
-                            <div
-                                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${
-                                    trend > 0
-                                        ? "bg-emerald-500/15 text-emerald-400"
-                                        : trend < 0
-                                          ? "bg-red-500/15 text-red-400"
-                                          : "bg-white/5 text-white/30"
-                                }`}
-                            >
-                                {trend > 0 ? (
-                                    <TrendingUp size={10} />
-                                ) : trend < 0 ? (
-                                    <TrendingDown size={10} />
-                                ) : null}
-                                {trend !== 0 ? `${Math.abs(trend).toFixed(1)}%` : "—"}
-                            </div>
-                        </div>
-                        <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mb-1">
-                            {label}
-                        </p>
-                        <p className="text-xl font-light tracking-wide" style={{ color }}>
-                            {value}
-                        </p>
-                        <p className="text-[10px] text-white/25 mt-1">{sub}</p>
-                    </GlassCard>
-                ))}
-            </div>
-
-            {/* ── Charts Row ───────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Revenue Area Chart */}
-                <GlassCard className="xl:col-span-2">
-                    <SectionTitle>منحنى المبيعات — آخر 14 يوم</SectionTitle>
-                    <ResponsiveContainer width="100%" height={220}>
-                        <AreaChart
-                            data={revenueTrend}
-                            margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
-                        >
-                            <defs>
-                                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#C9A96E" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#C9A96E" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="ordGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#60a5fa" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                            <XAxis
-                                dataKey="date"
-                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }}
-                                axisLine={false}
-                                tickLine={false}
-                            />
-                            <YAxis
-                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }}
-                                axisLine={false}
-                                tickLine={false}
-                                width={55}
-                                tickFormatter={(v) => `${v} د`}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Area
-                                type="monotone"
-                                dataKey="revenue"
-                                name="مبيعات (MAD)"
-                                stroke="#C9A96E"
-                                strokeWidth={2}
-                                fill="url(#revGrad)"
-                                dot={false}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="orders"
-                                name="عدد الطلبات"
-                                stroke="#60a5fa"
-                                strokeWidth={1.5}
-                                fill="url(#ordGrad)"
-                                dot={false}
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </GlassCard>
-
-                {/* Order Status Pie */}
-                <GlassCard>
-                    <SectionTitle>توزيع حالات الطلبات</SectionTitle>
-                    {statusData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={160}>
-                                <PieChart>
-                                    <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={45}
-                                        outerRadius={70}
-                                        dataKey="value"
-                                        paddingAngle={3}
-                                        strokeWidth={0}
-                                    >
-                                        {statusData.map((_, i) => (
-                                            <Cell
-                                                key={i}
-                                                fill={PIE_COLORS[i % PIE_COLORS.length]}
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="space-y-2 mt-2">
-                                {statusData.map((s, i) => (
-                                    <div
-                                        key={s.name}
-                                        className="flex items-center justify-between text-xs"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="w-2 h-2 rounded-full shrink-0"
-                                                style={{
-                                                    background: PIE_COLORS[i % PIE_COLORS.length],
-                                                }}
-                                            />
-                                            <span className="text-white/60">{s.name}</span>
-                                        </div>
-                                        <span className="font-medium text-white/90">{s.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="h-40 flex items-center justify-center text-white/20 text-xs">
-                            لا توجد طلبات بعد
-                        </div>
-                    )}
-                </GlassCard>
-            </div>
-
-            {/* ── Category Revenue Bar Chart ───────────────────────────── */}
-            <GlassCard>
-                <SectionTitle>المبيعات حسب الفئة</SectionTitle>
-                <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                        data={categoryRevenue}
-                        margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                    >
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="rgba(255,255,255,0.04)"
-                            vertical={false}
-                        />
-                        <XAxis
-                            dataKey="category"
-                            tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }}
-                            axisLine={false}
-                            tickLine={false}
-                        />
-                        <YAxis
-                            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }}
-                            axisLine={false}
-                            tickLine={false}
-                            width={55}
-                            tickFormatter={(v) => `${v} د`}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar
-                            dataKey="revenue"
-                            name="المبيعات (MAD)"
-                            radius={[6, 6, 0, 0]}
-                            maxBarSize={50}
-                        >
-                            {categoryRevenue.map((_, i) => (
-                                <Cell
-                                    key={i}
-                                    fill={
-                                        i === 0 ? "#C9A96E" : `rgba(201,169,110,${0.7 - i * 0.08})`
-                                    }
-                                />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </GlassCard>
-
-            {/* ── Accounting Breakdown Table ───────────────────────────── */}
-            <GlassCard>
-                <SectionTitle>ملخص الحسابات المالية</SectionTitle>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-white/10">
-                                {["البند", "المبلغ (MAD)", "ملاحظات"].map((h) => (
-                                    <th
-                                        key={h}
-                                        className="text-right text-[10px] tracking-[0.2em] uppercase text-white/30 py-3 px-4 font-normal"
-                                    >
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {[
-                                {
-                                    label: "إجمالي المبيعات (Gross Revenue)",
-                                    value: totalRevenue,
-                                    note: `${orders.length} طلب`,
-                                    highlight: false,
-                                },
-                                {
-                                    label: "رسوم الشحن المحصلة",
-                                    value: totalShipping,
-                                    note: "COD Shipping Fees",
-                                    highlight: false,
-                                },
-                                {
-                                    label: "صافي المبيعات (Net Sales)",
-                                    value: netSales,
-                                    note: "Gross - Shipping",
-                                    highlight: true,
-                                },
-                                {
-                                    label: "صافي الربح التقديري (60%)",
-                                    value: netProfit,
-                                    note: "هامش ربح مقدر بـ 60%",
-                                    highlight: true,
-                                },
-                                {
-                                    label: "مبالغ COD قيد التحصيل",
-                                    value: pendingCOD,
-                                    note: `${pending + confirmed} طلب معلق`,
-                                    highlight: false,
-                                },
-                            ].map((row) => (
-                                <tr
-                                    key={row.label}
-                                    className={row.highlight ? "bg-[#C9A96E]/5" : ""}
-                                >
-                                    <td
-                                        className={`py-4 px-4 text-xs ${row.highlight ? "text-[#C9A96E] font-semibold" : "text-white/70"}`}
-                                    >
-                                        {row.label}
-                                    </td>
-                                    <td
-                                        className={`py-4 px-4 font-mono font-medium ${row.highlight ? "text-[#C9A96E]" : "text-white"}`}
-                                    >
-                                        {row.value.toLocaleString("fr-MA", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td className="py-4 px-4 text-[10px] text-white/30">
-                                        {row.note}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </GlassCard>
-        </div>
-    );
-}
-
-// ─── Products Tab ─────────────────────────────────────────────────────────────
-export { ProductsTab } from "./products-tab";
-
-// ─── Categories Tab ───────────────────────────────────────────────────────────
-export function CategoriesTab({
-    categories,
-    onCreate,
-    onDelete,
-}: {
-    categories: Category[];
-    onCreate: (d: Record<string, unknown>) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
-}) {
-    const [form, setForm] = useState({ slug: "", nameEn: "", nameFr: "", nameAr: "" });
-    const inp =
-        "w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white rounded mb-2";
-
-    const submit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await onCreate(form);
-        setForm({ slug: "", nameEn: "", nameFr: "", nameAr: "" });
-    };
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <h2 className="text-lg tracking-widest uppercase mb-6">Add Category</h2>
-                <form
-                    onSubmit={submit}
-                    className="bg-white/5 border border-white/10 rounded-xl p-6"
-                >
-                    <input
-                        className={inp}
-                        placeholder="Slug (e.g. abaya)"
-                        value={form.slug}
-                        onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                        required
-                    />
-                    <input
-                        className={inp}
-                        placeholder="Name (EN)"
-                        value={form.nameEn}
-                        onChange={(e) => setForm((f) => ({ ...f, nameEn: e.target.value }))}
-                        required
-                    />
-                    <input
-                        className={inp}
-                        placeholder="Name (FR)"
-                        value={form.nameFr}
-                        onChange={(e) => setForm((f) => ({ ...f, nameFr: e.target.value }))}
-                        required
-                    />
-                    <input
-                        className={inp}
-                        placeholder="Name (AR)"
-                        value={form.nameAr}
-                        onChange={(e) => setForm((f) => ({ ...f, nameAr: e.target.value }))}
-                        required
-                    />
-                    <button
-                        type="submit"
-                        className="mt-2 bg-[#C9A96E] text-[#1A1A2E] px-4 py-2 text-[10px] tracking-widest uppercase font-bold rounded"
-                    >
-                        Create Category
-                    </button>
-                </form>
-            </div>
-            <div>
-                <h2 className="text-lg tracking-widest uppercase mb-6">Existing Categories</h2>
-                <div className="space-y-2">
-                    {categories.map((c) => (
-                        <div
-                            key={c.id}
-                            className="bg-white/5 border border-white/10 p-4 rounded flex justify-between items-center"
-                        >
-                            <div>
-                                <p className="font-medium text-sm">{c.nameEn}</p>
-                                <p className="text-xs text-white/40">{c.slug}</p>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    if (confirm("Delete category?")) onDelete(c.id);
-                                }}
-                                className="text-red-400 hover:bg-white/5 p-2 rounded"
-                            >
-                                <Trash2 size={14} />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Toast System ─────────────────────────────────────────────────────────────────
-export interface Toast {
-    id: string;
-    message: string;
-    type: "success" | "error";
-}
-
-export function ToastContainer({
-    toasts,
-    onDismiss,
-}: {
-    toasts: Toast[];
-    onDismiss: (id: string) => void;
-}) {
-    return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none">
-            {toasts.map((t) => (
-                <div
-                    key={t.id}
-                    className={`pointer-events-auto flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border text-sm font-medium tracking-wide transition-all duration-300 animate-in slide-in-from-bottom-4 ${
-                        t.type === "success"
-                            ? "bg-[#1e2d1e] border-emerald-500/40 text-emerald-300"
-                            : "bg-[#2d1e1e] border-red-500/40 text-red-300"
-                    }`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Fermer : ${t.message}`}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onDismiss(t.id);
-                        }
-                    }}
-                    onClick={() => onDismiss(t.id)}
-                >
-                    {t.type === "success" ? (
-                        <CheckCircle2 size={16} className="shrink-0" />
-                    ) : (
-                        <XCircle size={16} className="shrink-0" />
-                    )}
-                    {t.message}
-                </div>
-            ))}
-        </div>
-    );
-}
-
-export function useToast() {
-    const [toasts, setToasts] = useState<Toast[]>([]);
-    const push = useCallback((message: string, type: Toast["type"] = "success") => {
-        const id = Math.random().toString(36).slice(2);
-        setToasts((prev) => [...prev, { id, message, type }]);
-        setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
-    }, []);
-    const dismiss = useCallback(
-        (id: string) => setToasts((prev) => prev.filter((t) => t.id !== id)),
-        [],
-    );
-    return { toasts, push, dismiss };
-}
-
-// ─── Orders Tab ─────────────────────────────────────────────────────────────────
-const STATUS_COLORS: Record<string, string> = {
-    PENDING: "bg-yellow-500/20 text-yellow-300",
-    CONFIRMED: "bg-blue-500/20 text-blue-300",
-    SHIPPED: "bg-purple-500/20 text-purple-300",
-    DELIVERED: "bg-emerald-500/20 text-emerald-300",
-    CANCELLED: "bg-red-500/20 text-red-300",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    PENDING: "قيد الانتظار",
-    CONFIRMED: "مؤكد",
-    SHIPPED: "تم الشحن",
-    DELIVERED: "مسلّم",
-    CANCELLED: "ملغي",
-};
-
-interface AdminOrderRow {
+import { allowedActions, filterOrders, money, statusLabels, summarize } from "./admin-utils";
+type Order = {
     id: string;
     customerName: string | null;
     customerPhone: string | null;
@@ -722,237 +23,492 @@ interface AdminOrderRow {
     paymentStatus: string;
     totalAmount: number;
     createdAt: string;
+};
+export function OverviewTab({
+    orders,
+    products,
+    orderTotal,
+    productTotal,
+    onNavigate,
+}: {
+    orders: Order[];
+    products: Product[];
+    orderTotal: number;
+    productTotal: number;
+    onNavigate: (tab: "orders" | "products") => void;
+}) {
+    const summary = summarize(orders, products);
+    const days = useMemo(() => {
+        const fmt = new Intl.DateTimeFormat("fr-MA", {
+            timeZone: "Africa/Casablanca",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        const now = new Date();
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(now);
+            d.setDate(now.getDate() - 6 + i);
+            const key = fmt.format(d);
+            return {
+                date: key,
+                label: d.toLocaleDateString("fr-MA", {
+                    timeZone: "Africa/Casablanca",
+                    weekday: "short",
+                }),
+                count: orders.filter((o) => fmt.format(new Date(o.createdAt)) === key).length,
+            };
+        });
+    }, [orders]);
+    const max = Math.max(1, ...days.map((d) => d.count));
+    const cards = [
+        {
+            label: "Commandes au total",
+            value: String(orderTotal),
+            sub: `${orders.length} dernières analysées`,
+            icon: Package,
+        },
+        {
+            label: "À confirmer",
+            value: String(summary.pending),
+            sub: "Dans les commandes chargées",
+            icon: RefreshCw,
+        },
+        {
+            label: "Montant des commandes livrées",
+            value: money(summary.deliveredAmount),
+            sub: "Commandes chargées · livraison comprise",
+            icon: Truck,
+        },
+        {
+            label: "Produits en vente",
+            value: String(summary.activeProducts),
+            sub: `Sur ${products.length} fiches chargées (${productTotal} au total)`,
+            icon: ShoppingBag,
+        },
+    ];
+    return (
+        <div className="admin-overview">
+            <div className="admin-kpi-grid">
+                {cards.map(({ label, value, sub, icon: Icon }) => (
+                    <section className="admin-kpi" key={label}>
+                        <div>
+                            <p>{label}</p>
+                            <span>
+                                <Icon size={19} aria-hidden="true" />
+                            </span>
+                        </div>
+                        <strong>{value}</strong>
+                        <p>{sub}</p>
+                    </section>
+                ))}
+            </div>
+            <div className="admin-overview-grid">
+                <section className="admin-panel">
+                    <div className="admin-panel-heading">
+                        <div>
+                            <h2>L’activité de votre boutique</h2>
+                            <p>Commandes reçues · 7 derniers jours · heure du Maroc</p>
+                        </div>
+                        <span className="admin-tag">
+                            {days.reduce((s, d) => s + d.count, 0)} commandes
+                        </span>
+                    </div>
+                    <div
+                        className="admin-activity-chart"
+                        role="img"
+                        aria-label={days.map((d) => `${d.date} : ${d.count} commandes`).join(" ; ")}
+                    >
+                        {days.map((d) => (
+                            <div key={d.date}>
+                                <span className="admin-bar-count">{d.count}</span>
+                                <div className="admin-bar-track">
+                                    <span
+                                        style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
+                                    />
+                                </div>
+                                <span>{d.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="admin-scope">
+                        Calculé sur les {orders.length} commandes chargées, toutes situations
+                        confondues. Les annulations restent dans l’activité; elles sont exclues du
+                        montant livré.
+                    </p>
+                </section>
+                <section className="admin-attention">
+                    <p className="admin-eyebrow">VOTRE PROCHAINE ÉTAPE</p>
+                    <h2>
+                        Une boutique
+                        <br />
+                        bien suivie.
+                    </h2>
+                    <p>
+                        {summary.pending
+                            ? `${summary.pending} commande(s) en attente de confirmation.`
+                            : "Aucune commande à confirmer dans la sélection."}
+                    </p>
+                    <button className="admin-button" onClick={() => onNavigate("orders")}>
+                        Voir les commandes
+                        <ArrowUpRight size={17} />
+                    </button>
+                    <div className="admin-attention-stock">
+                        <ShoppingBag size={18} />
+                        <span>
+                            {summary.lowStock} produit(s) en vente avec une variante à 3 unités ou
+                            moins.
+                        </span>
+                    </div>
+                    <button className="admin-text-button" onClick={() => onNavigate("products")}>
+                        Vérifier les stocks <ArrowUpRight size={15} />
+                    </button>
+                </section>
+            </div>
+            <section className="admin-panel">
+                <div className="admin-panel-heading">
+                    <div>
+                        <h2>Dernières commandes</h2>
+                        <p>Les cinq dernières demandes reçues.</p>
+                    </div>
+                    <button className="admin-text-button" onClick={() => onNavigate("orders")}>
+                        Tout consulter
+                        <ArrowUpRight size={16} />
+                    </button>
+                </div>
+                {orders.length ? (
+                    <div className="admin-recent-list">
+                        {orders.slice(0, 5).map((o) => (
+                            <div key={o.id}>
+                                <span className="admin-order-icon">
+                                    <Package size={19} />
+                                </span>
+                                <div>
+                                    <strong>#{o.id.slice(-8).toUpperCase()}</strong>
+                                    <span>
+                                        {o.customerName || "Client invité"} ·{" "}
+                                        {o.city || "Ville non renseignée"}
+                                    </span>
+                                </div>
+                                <span className={`admin-status status-${o.status.toLowerCase()}`}>
+                                    {statusLabels[o.status] || o.status}
+                                </span>
+                                <strong>{money(o.totalAmount)}</strong>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="admin-empty">Votre première commande apparaîtra ici.</p>
+                )}
+            </section>
+        </div>
+    );
 }
-
 export function OrdersTab({
     orders,
+    total,
     onRefresh,
 }: {
-    orders: AdminOrderRow[];
+    orders: Order[];
+    total: number;
     onRefresh: () => Promise<void>;
 }) {
-    const [updating, setUpdating] = useState<Record<string, boolean>>({});
-    const { toasts, push, dismiss } = useToast();
-    const [filterStatus, setFilterStatus] = useState("ALL");
-    const [search, setSearch] = useState("");
-
-    const filtered = useMemo(() => {
-        let list = orders;
-        if (filterStatus !== "ALL") list = list.filter((o) => o.status === filterStatus);
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            list = list.filter(
-                (o) =>
-                    (o.customerName ?? "").toLowerCase().includes(q) ||
-                    (o.customerPhone ?? "").includes(q) ||
-                    o.id.toLowerCase().includes(q),
-            );
-        }
-        return list;
-    }, [orders, filterStatus, search]);
-
-    const updateStatus = async (orderId: string, status: string, label: string) => {
-        setUpdating((prev) => ({ ...prev, [orderId]: true }));
+    const [search, setSearch] = useState(""),
+        [status, setStatus] = useState("ALL"),
+        [busy, setBusy] = useState<string | null>(null),
+        [message, setMessage] = useState(""),
+        [error, setError] = useState(false),
+        [refreshing, setRefreshing] = useState(false);
+    const filtered = useMemo(() => filterOrders(orders, search, status), [orders, search, status]);
+    async function refresh() {
+        setRefreshing(true);
         try {
-            await updateOrderStatus(orderId, status);
             await onRefresh();
-            push(`تم تحديث حالة الطلب إلى: ${label}`, "success");
+            setError(false);
+            setMessage("Commandes actualisées.");
         } catch {
-            push(`فشل تحديث الحالة`, "error");
+            setError(true);
+            setMessage("Actualisation impossible. Réessayez.");
         } finally {
-            setUpdating((prev) => ({ ...prev, [orderId]: false }));
+            setRefreshing(false);
         }
-    };
-
-    const actionButtons = (o: AdminOrderRow) => {
-        const busy = updating[o.id];
-        const btn = (label: string, status: string, color: string, Icon: LucideIcon) => (
-            <button
-                key={status}
-                disabled={busy || o.status === status}
-                onClick={() => updateStatus(o.id, status, STATUS_LABELS[status])}
-                title={label}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-[9px] tracking-[0.15em] uppercase font-bold rounded-lg transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${color}`}
-            >
-                {busy ? <RefreshCw size={10} className="animate-spin" /> : <Icon size={10} />}
-                {label}
-            </button>
-        );
-        return (
-            <div className="flex flex-wrap gap-1">
-                {o.status !== "CONFIRMED" &&
-                    o.status !== "DELIVERED" &&
-                    o.status !== "CANCELLED" &&
-                    btn(
-                        "تأكيد",
-                        "CONFIRMED",
-                        "bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 border border-blue-500/30",
-                        CheckCircle2,
-                    )}
-                {o.status !== "DELIVERED" &&
-                    o.status !== "CANCELLED" &&
-                    btn(
-                        "مسلّم",
-                        "DELIVERED",
-                        "bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30",
-                        CheckCircle2,
-                    )}
-                {o.status !== "CANCELLED" &&
-                    o.status !== "DELIVERED" &&
-                    btn(
-                        "إلغاء",
-                        "CANCELLED",
-                        "bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30",
-                        XCircle,
-                    )}
-            </div>
-        );
-    };
-
+    }
+    async function change(order: Order, next: string) {
+        if (
+            next === "CANCELLED" &&
+            !confirm(
+                `Annuler la commande #${order.id.slice(-8).toUpperCase()} ? Son stock réservé sera restitué si sa réservation est vérifiée.`,
+            )
+        )
+            return;
+        setBusy(order.id);
+        setMessage("");
+        try {
+            await updateOrderStatus(order.id, next);
+            await onRefresh();
+            setError(false);
+            setMessage(`Commande #${order.id.slice(-8).toUpperCase()} : ${statusLabels[next]}.`);
+        } catch (e) {
+            setError(true);
+            setMessage(
+                (e as { response?: { data?: { error?: string } } }).response?.data?.error ||
+                    "Impossible de mettre à jour cette commande. Réessayez.",
+            );
+        } finally {
+            setBusy(null);
+        }
+    }
     return (
-        <>
-            <ToastContainer toasts={toasts} onDismiss={dismiss} />
-            <div>
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <section className="admin-panel">
+            <div className="admin-panel-heading">
+                <div>
+                    <h2>Suivi des commandes</h2>
+                    <p>
+                        {orders.length} dernières commandes chargées sur {total}. Recherche et
+                        filtres sur cette sélection.
+                    </p>
+                </div>
+                <button className="admin-button" disabled={refreshing} onClick={refresh}>
+                    <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                    Actualiser
+                </button>
+            </div>
+            <div className="admin-toolbar">
+                <label className="admin-search">
+                    <span>Rechercher une commande</span>
                     <div>
-                        <h2 className="text-lg tracking-widest uppercase">إدارة الطلبات</h2>
-                        <p className="text-[10px] text-white/30 tracking-widest mt-0.5">
-                            {orders.length} طلب إجمالاً
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {/* Search */}
+                        <Search size={17} aria-hidden="true" />
                         <input
-                            type="text"
+                            type="search"
+                            placeholder="Nom, téléphone, ville ou référence"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="بحث بالاسم أو الهاتف..."
-                            className="bg-white/5 border border-white/10 px-3 py-2 text-xs text-white placeholder:text-white/30 rounded-lg outline-none focus:border-[#C9A96E] w-48"
                         />
-                        {/* Status filter */}
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="bg-white/5 border border-white/10 px-3 py-2 text-xs text-white rounded-lg outline-none focus:border-[#C9A96E]"
-                        >
-                            <option value="ALL">جميع الحالات</option>
-                            {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                                <option key={k} value={k}>
-                                    {v}
-                                </option>
-                            ))}
-                        </select>
-                        {/* Refresh */}
-                        <button
-                            onClick={() =>
-                                onRefresh().then(() => push("تم تحديث الطلبات", "success"))
-                            }
-                            className="flex items-center gap-1.5 text-[10px] text-[#C9A96E] tracking-widest uppercase hover:text-white transition-colors"
-                        >
-                            <RefreshCw size={12} /> تحديث
-                        </button>
+                    </div>
+                </label>
+                <label>
+                    Statut
+                    <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <option value="ALL">Tous les statuts</option>
+                        {Object.entries(statusLabels).map(([id, label]) => (
+                            <option key={id} value={id}>
+                                {label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <button
+                    className="admin-text-button"
+                    disabled={!search && status === "ALL"}
+                    onClick={() => {
+                        setSearch("");
+                        setStatus("ALL");
+                    }}
+                >
+                    Effacer les filtres
+                </button>
+            </div>
+            <p className="admin-result-count" role="status">
+                {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
+            </p>
+            {message && (
+                <p
+                    className={error ? "admin-alert" : "admin-feedback"}
+                    role={error ? "alert" : "status"}
+                >
+                    {message}
+                </p>
+            )}
+            <div className="admin-order-grid">
+                {filtered.length ? (
+                    filtered.map((o) => (
+                        <article className="admin-order-card" key={o.id}>
+                            <div className="admin-order-heading">
+                                <div>
+                                    <strong>#{o.id.slice(-8).toUpperCase()}</strong>
+                                    <time dateTime={o.createdAt}>
+                                        {new Date(o.createdAt).toLocaleString("fr-MA", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </time>
+                                </div>
+                                <span className={`admin-status status-${o.status.toLowerCase()}`}>
+                                    {statusLabels[o.status] || o.status}
+                                </span>
+                            </div>
+                            <div className="admin-order-customer">
+                                <h3>{o.customerName || "Client invité"}</h3>
+                                <p>{o.city || "Ville non renseignée"}</p>
+                                <p dir="ltr">{o.customerPhone || "Téléphone non renseigné"}</p>
+                            </div>
+                            <div className="admin-order-amount">
+                                <strong>{money(o.totalAmount)}</strong>
+                                <span>
+                                    {o.paymentMethod === "COD"
+                                        ? "Paiement à la livraison"
+                                        : o.paymentMethod}
+                                </span>
+                            </div>
+                            <div className="admin-order-actions">
+                                {(allowedActions[o.status] || []).length ? (
+                                    (allowedActions[o.status] || []).map((next) => (
+                                        <button
+                                            key={next}
+                                            className={`admin-button ${next === "CANCELLED" ? "danger" : ""}`}
+                                            disabled={busy === o.id}
+                                            onClick={() => change(o, next)}
+                                        >
+                                            {next === "CANCELLED" ? (
+                                                <X size={15} />
+                                            ) : next === "SHIPPED" ? (
+                                                <Truck size={15} />
+                                            ) : (
+                                                <Check size={15} />
+                                            )}{" "}
+                                            {busy === o.id
+                                                ? "En cours…"
+                                                : next === "CONFIRMED"
+                                                  ? "Confirmer"
+                                                  : next === "SHIPPED"
+                                                    ? "Marquer expédiée"
+                                                    : next === "DELIVERED"
+                                                      ? "Marquer livrée"
+                                                      : "Annuler"}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p>
+                                        Commande {o.status === "DELIVERED" ? "terminée" : "annulée"}{" "}
+                                        · aucune action requise
+                                    </p>
+                                )}
+                            </div>
+                        </article>
+                    ))
+                ) : (
+                    <div className="admin-empty">
+                        <Package size={30} />
+                        <h3>Aucune commande trouvée</h3>
+                        <p>Essayez un autre nom, numéro ou statut.</p>
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+}
+export function CategoriesTab({
+    categories,
+    onCreate,
+    onDelete,
+}: {
+    categories: Category[];
+    onCreate: (d: Record<string, unknown>) => Promise<void>;
+    onDelete: (id: string) => Promise<void>;
+}) {
+    const [form, setForm] = useState({ slug: "", nameFr: "", nameAr: "", nameEn: "" }),
+        [busy, setBusy] = useState(false),
+        [message, setMessage] = useState("");
+    return (
+        <div className="admin-category-grid">
+            <section className="admin-panel">
+                <h2>Ajouter une catégorie</h2>
+                <p className="admin-muted">
+                    Renseignez les trois langues utilisées dans le catalogue.
+                </p>
+                <form
+                    className="admin-category-form"
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        setBusy(true);
+                        setMessage("");
+                        try {
+                            await onCreate(form);
+                            setForm({ slug: "", nameFr: "", nameAr: "", nameEn: "" });
+                            setMessage("Catégorie ajoutée.");
+                        } catch {
+                            setMessage(
+                                "Impossible d’ajouter cette catégorie. Vérifiez son adresse et réessayez.",
+                            );
+                        } finally {
+                            setBusy(false);
+                        }
+                    }}
+                >
+                    {(
+                        [
+                            ["slug", "Adresse de la catégorie"],
+                            ["nameFr", "Nom français"],
+                            ["nameAr", "Nom arabe"],
+                            ["nameEn", "Nom anglais"],
+                        ] as const
+                    ).map(([key, label]) => (
+                        <label key={key}>
+                            {label}
+                            <input
+                                required
+                                dir={key === "nameAr" ? "rtl" : "ltr"}
+                                value={form[key]}
+                                pattern={key === "slug" ? "[a-z0-9]+(-[a-z0-9]+)*" : undefined}
+                                placeholder={key === "slug" ? "exemple-categorie" : undefined}
+                                onChange={(e) => setForm((v) => ({ ...v, [key]: e.target.value }))}
+                            />
+                        </label>
+                    ))}
+                    <button className="admin-button primary" disabled={busy}>
+                        {busy ? "Enregistrement…" : "Créer la catégorie"}
+                    </button>
+                </form>
+                {message && (
+                    <p className="admin-feedback" role="status">
+                        {message}
+                    </p>
+                )}
+            </section>
+            <section className="admin-panel">
+                <div className="admin-panel-heading">
+                    <div>
+                        <h2>Vos catégories</h2>
+                        <p>{categories.length} catégorie(s)</p>
                     </div>
                 </div>
-
-                {/* Table */}
-                <div className="overflow-x-auto rounded-xl border border-white/10">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-[10px] tracking-widest uppercase text-white/30 border-b border-white/10 bg-white/[0.02]">
-                                {[
-                                    "رقم الطلب",
-                                    "العميل",
-                                    "الهاتف",
-                                    "المدينة",
-                                    "المبلغ",
-                                    "الحالة",
-                                    "التاريخ",
-                                    "إجراءات",
-                                ].map((h) => (
-                                    <th key={h} className="text-right py-3 px-4 font-normal">
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {filtered.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={8}
-                                        className="text-center py-16 text-white/30 text-xs"
-                                    >
-                                        لا توجد طلبات
-                                    </td>
-                                </tr>
-                            ) : (
-                                filtered.map((o) => (
-                                    <tr
-                                        key={o.id}
-                                        className="hover:bg-white/[0.02] transition-colors group"
-                                    >
-                                        <td className="py-3 px-4">
-                                            <span className="font-mono text-[11px] text-[#C9A96E]">
-                                                #{o.id.slice(-6).toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <p className="text-sm text-white/90 font-medium">
-                                                {o.customerName ?? "—"}
-                                            </p>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {o.customerPhone ? (
-                                                <a
-                                                    href={`https://wa.me/${o.customerPhone.replace(/[^\d]/g, "")}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="flex items-center gap-1 text-xs text-white/50 hover:text-[#25D366] transition-colors"
-                                                >
-                                                    {o.customerPhone} <ExternalLink size={10} />
-                                                </a>
-                                            ) : (
-                                                "—"
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-4 text-xs text-white/50">
-                                            {o.city ?? "—"}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span className="font-mono font-semibold text-white">
-                                                {o.totalAmount.toFixed(2)}
-                                            </span>
-                                            <span className="text-[10px] text-white/30 ml-1">
-                                                MAD
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span
-                                                className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full font-bold ${STATUS_COLORS[o.status] ?? "bg-white/10 text-white/40"}`}
-                                            >
-                                                {STATUS_LABELS[o.status] ?? o.status}
-                                            </span>
-                                        </td>
-                                        <td
-                                            className="py-3 px-4 text-[10px] text-white/30"
-                                            suppressHydrationWarning
-                                        >
-                                            {new Date(o.createdAt).toLocaleString("fr-MA", {
-                                                day: "2-digit",
-                                                month: "short",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
-                                        </td>
-                                        <td className="py-3 px-4">{actionButtons(o)}</td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                <div className="admin-category-list">
+                    {categories.map((c) => (
+                        <div key={c.id}>
+                            <div>
+                                <strong>{c.nameFr}</strong>
+                                <span dir="rtl">{c.nameAr}</span>
+                                <small>/{c.slug}</small>
+                            </div>
+                            <button
+                                className="admin-button danger"
+                                disabled={busy}
+                                aria-label={`Supprimer ${c.nameFr}`}
+                                onClick={async () => {
+                                    if (!confirm(`Supprimer la catégorie « ${c.nameFr} » ?`))
+                                        return;
+                                    setBusy(true);
+                                    try {
+                                        await onDelete(c.id);
+                                        setMessage("Catégorie supprimée.");
+                                    } catch {
+                                        setMessage(
+                                            "Suppression impossible. Vérifiez que cette catégorie ne contient aucun produit.",
+                                        );
+                                    } finally {
+                                        setBusy(false);
+                                    }
+                                }}
+                            >
+                                Supprimer
+                            </button>
+                        </div>
+                    ))}
                 </div>
-            </div>
-        </>
+            </section>
+        </div>
     );
 }

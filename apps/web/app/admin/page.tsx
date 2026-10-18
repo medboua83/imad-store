@@ -1,17 +1,22 @@
 "use client";
-
 import dynamic from "next/dynamic";
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
+    ArrowUpRight,
     Bell,
-    Package,
-    LogOut,
-    Check,
+    CheckCheck,
+    Grid2X2,
     LayoutDashboard,
+    LogOut,
+    Menu,
+    Package,
+    RefreshCw,
+    Settings2,
     ShoppingBag,
-    Image as ImageIcon,
-    Grid,
-    Settings,
+    X,
+    Eye,
+    EyeOff,
 } from "lucide-react";
 import {
     adminLogin,
@@ -27,502 +32,581 @@ import {
     deleteProduct,
     createCategory,
     deleteCategory,
-    Product,
-    Category,
+    type Product,
+    type Category,
+    type AdminOrder,
 } from "@/lib/api";
-const DeskcommTab = dynamic(() => import("./deskcomm-tab"));
-const OverviewTab = dynamic(() => import("./tabs").then((module) => module.OverviewTab));
-const OrdersTab = dynamic(() => import("./tabs").then((module) => module.OrdersTab));
-const CategoriesTab = dynamic(() => import("./tabs").then((module) => module.CategoriesTab));
-const ProductsTab = dynamic(() => import("./products-tab").then((module) => module.ProductsTab));
-const ContentTab = dynamic(() => import("./content-tab"));
-
-interface Notification {
-    id: string;
-    type: string;
-    title: string;
-    message: string;
-    orderId?: string;
-    read: boolean;
-    createdAt: string;
-}
-
-interface Order {
-    id: string;
-    customerName: string | null;
-    customerPhone: string | null;
-    city: string | null;
-    region: string | null;
-    status: string;
-    paymentMethod: string;
-    paymentStatus: string;
-    totalAmount: number;
-    createdAt: string;
-}
-
-const POLL_INTERVAL_MS = 15000;
-
+import "./admin.css";
+const pendingView = () => (
+    <div className="admin-loading" role="status">
+        Chargement de votre espace…
+    </div>
+);
+const OverviewTab = dynamic(() => import("./tabs").then((m) => m.OverviewTab), {
+    loading: pendingView,
+});
+const OrdersTab = dynamic(() => import("./tabs").then((m) => m.OrdersTab), {
+    loading: pendingView,
+});
+const CategoriesTab = dynamic(() => import("./tabs").then((m) => m.CategoriesTab), {
+    loading: pendingView,
+});
+const ProductsTab = dynamic(() => import("./products-tab").then((m) => m.ProductsTab), {
+    loading: pendingView,
+});
+const ContentTab = dynamic(() => import("./content-tab"), { loading: pendingView });
+const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: pendingView });
 type Tab =
-    | "overview"
-    | "notifications"
-    | "orders"
-    | "products"
-    | "banners"
-    | "categories"
-    | "settings"
-    | "deskcomm";
-
+    "overview" | "orders" | "products" | "categories" | "content" | "deskcomm" | "notifications";
+type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
+const sections = [
+    {
+        id: "overview" as Tab,
+        label: "Vue d’ensemble",
+        description: "Les repères essentiels de votre boutique.",
+        icon: LayoutDashboard,
+    },
+    {
+        id: "orders" as Tab,
+        label: "Commandes",
+        description: "Retrouvez une commande et suivez sa progression.",
+        icon: Package,
+    },
+    {
+        id: "products" as Tab,
+        label: "Produits",
+        description: "Vos fiches, variantes et stocks au même endroit.",
+        icon: ShoppingBag,
+    },
+    {
+        id: "categories" as Tab,
+        label: "Catégories",
+        description: "Organisez votre collection pour vos visiteurs.",
+        icon: Grid2X2,
+    },
+    {
+        id: "content" as Tab,
+        label: "Contenu du site",
+        description: "Préparez vos textes et visuels avant publication.",
+        icon: Settings2,
+    },
+    {
+        id: "deskcomm" as Tab,
+        label: "Intégration CRM",
+        description: "Gérez la connexion à votre service client.",
+        icon: Settings2,
+    },
+    {
+        id: "notifications" as Tab,
+        label: "Notifications",
+        description: "Les dernières informations de votre boutique.",
+        icon: Bell,
+    },
+];
 export default function AdminPage() {
-    const [token, setToken] = useState<string | null>(null);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [authError, setAuthError] = useState("");
-    const [authLoading, setAuthLoading] = useState(false);
-
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unread, setUnread] = useState(0);
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [activeTab, setActiveTab] = useState<Tab>("overview");
-    const [syncError, setSyncError] = useState("");
-    const [lastSync, setLastSync] = useState<Date | null>(null);
-
-    // Load token from localStorage on mount
+    const [token, setToken] = useState<string | null>(null),
+        [sessionReady, setSessionReady] = useState(false);
+    const [email, setEmail] = useState(""),
+        [password, setPassword] = useState(""),
+        [showPassword, setShowPassword] = useState(false),
+        [authError, setAuthError] = useState(""),
+        [authLoading, setAuthLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<Tab>("overview"),
+        [mobileMenu, setMobileMenu] = useState(false);
+    const [notifications, setNotifications] = useState<Notice[]>([]),
+        [unread, setUnread] = useState(0),
+        [orders, setOrders] = useState<AdminOrder[]>([]),
+        [products, setProducts] = useState<Product[]>([]),
+        [categories, setCategories] = useState<Category[]>([]);
+    const [orderTotal, setOrderTotal] = useState(0),
+        [productTotal, setProductTotal] = useState(0),
+        [syncError, setSyncError] = useState(""),
+        [actionMessage, setActionMessage] = useState(""),
+        [syncing, setSyncing] = useState(false),
+        [lastSync, setLastSync] = useState<Date | null>(null);
+    const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
+    const mainTitle = useRef<HTMLHeadingElement>(null);
+    const menuButton = useRef<HTMLButtonElement>(null),
+        nav = useRef<HTMLElement>(null);
     useEffect(() => {
-        const t = localStorage.getItem("adminToken");
-        const task = window.setTimeout(() => {
-            if (t) setToken(t);
+        const task = setTimeout(() => {
+            setToken(localStorage.getItem("adminToken"));
+            setSessionReady(true);
         }, 0);
-        return () => window.clearTimeout(task);
+        return () => clearTimeout(task);
     }, []);
-
     useEffect(() => {
-        const expired = (event?: Event) => {
+        const expire = (event?: Event) => {
             setToken(null);
             setOrders([]);
             setProducts([]);
+            setCategories([]);
             setNotifications([]);
+            setUnread(0);
             setLastSync(null);
             setAuthError(
                 event instanceof CustomEvent && event.detail === "logout"
                     ? "Vous êtes déconnecté."
-                    : "Session terminée ou accès refusé. Reconnectez-vous.",
+                    : "Votre session est terminée. Reconnectez-vous pour continuer.",
             );
         };
-        const changed = (event: StorageEvent) => {
-            if (event.key === "adminToken" && !event.newValue) expired();
+        const changed = (e: StorageEvent) => {
+            if (e.key === "adminToken" && !e.newValue) expire();
         };
         window.addEventListener("storage", changed);
-        window.addEventListener("imad:session-expired", expired);
+        window.addEventListener("imad:session-expired", expire);
         return () => {
             window.removeEventListener("storage", changed);
-            window.removeEventListener("imad:session-expired", expired);
+            window.removeEventListener("imad:session-expired", expire);
         };
     }, []);
-    // Initial load of products and categories
     useEffect(() => {
         if (!token) return;
-        getAdminProducts({ limit: 100 })
-            .then((res) => setProducts(res.data))
-            .catch(() => setSyncError("Chargement incomplet. Réessayez la synchronisation."));
-        getCategories()
-            .then(setCategories)
-            .catch(() => setSyncError("Chargement incomplet. Réessayez la synchronisation."));
-    }, [token]);
-
-    // Polling for notifications and orders when authenticated
-    useEffect(() => {
-        if (!token) return;
-
-        let busy = false,
-            alive = true;
-        const tick = async () => {
+        let alive = true,
+            busy = false;
+        const sync = async () => {
             if (busy || document.hidden) return;
             busy = true;
-            try {
-                const [nRes, oRes] = await Promise.all([
-                    getAdminNotifications(),
-                    getAllOrders({ limit: 100 }),
-                ]);
-                if (!alive) return;
-                setSyncError("");
-                setNotifications(nRes.data);
-                setUnread(nRes.unread);
-                setOrders((oRes.data ?? []) as Order[]);
-                setLastSync(new Date());
-            } catch (err) {
-                if (alive)
-                    setSyncError(
-                        "Synchronisation interrompue. Les données affichées peuvent être anciennes.",
-                    );
-                console.error("Polling failed:", err);
-            } finally {
-                busy = false;
+            setSyncing(true);
+            const results = await Promise.allSettled([
+                getAllOrders({ limit: 100 }),
+                getAdminProducts({ limit: 100 }),
+                getCategories(),
+                getAdminNotifications(),
+            ]);
+            if (alive) {
+                const [o, p, c, n] = results;
+                if (o.status === "fulfilled") {
+                    setOrders(o.value.data);
+                    setOrderTotal(o.value.total);
+                }
+                if (p.status === "fulfilled") {
+                    setProducts(p.value.data);
+                    setProductTotal(p.value.total);
+                }
+                if (c.status === "fulfilled") setCategories(c.value);
+                if (n.status === "fulfilled") {
+                    setNotifications(n.value.data);
+                    setUnread(n.value.unread);
+                }
+                const failed = results.some((r) => r.status === "rejected");
+                setSyncError(
+                    failed
+                        ? "Certaines données n’ont pas pu être actualisées. Les informations précédentes restent affichées."
+                        : "",
+                );
+                if (!failed) setLastSync(new Date());
+                setSyncing(false);
             }
+            busy = false;
         };
-
-        tick();
-        const id = setInterval(tick, POLL_INTERVAL_MS);
-        window.addEventListener("imad:sync", tick);
-        document.addEventListener("visibilitychange", tick);
+        void sync();
+        const interval = setInterval(sync, 30000);
+        window.addEventListener("imad:sync", sync);
+        document.addEventListener("visibilitychange", sync);
         return () => {
             alive = false;
-            clearInterval(id);
-            window.removeEventListener("imad:sync", tick);
-            document.removeEventListener("visibilitychange", tick);
+            clearInterval(interval);
+            window.removeEventListener("imad:sync", sync);
+            document.removeEventListener("visibilitychange", sync);
         };
     }, [token]);
-
-    // Handle login form submission
-    const handleLogin = async (e: React.FormEvent) => {
+    useEffect(() => {
+        if (mobileMenu) nav.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    }, [mobileMenu]);
+    const selectTab = (tab: Tab) => {
+        setActiveTab(tab);
+        setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
+        requestAnimationFrame(() => mainTitle.current?.focus());
+        setMobileMenu(false);
+        setActionMessage("");
+    };
+    async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
-        setAuthError("");
         setAuthLoading(true);
+        setAuthError("");
         try {
-            const res = await adminLogin(email, password);
-            const t = res.data.accessToken;
-            localStorage.setItem("adminToken", t);
-            localStorage.setItem("adminRefresh", res.data.refreshToken);
-            setToken(t);
+            const r = await adminLogin(email, password);
+            localStorage.setItem("adminToken", r.data.accessToken);
+            localStorage.setItem("adminRefresh", r.data.refreshToken);
+            setPassword("");
+            setToken(r.data.accessToken);
         } catch {
-            setAuthError("Invalid credentials");
+            setAuthError("Connexion impossible. Vérifiez vos identifiants et votre connexion.");
         } finally {
             setAuthLoading(false);
         }
-    };
-
-    // Handle logout
-    const logout = async () => {
+    }
+    async function logout() {
         try {
             await adminLogout();
             setToken(null);
         } catch {
-            setSyncError(
-                "Déconnexion serveur impossible. Réessayez, ou fermez cette session localement.",
-            );
+            setSyncError("La déconnexion n’a pas abouti. Réessayez.");
         }
-    };
-
-    // Render login form when not authenticated
-    if (!token) {
+    }
+    async function refreshProducts() {
+        const r = await getAdminProducts({ limit: 100 });
+        setProducts(r.data);
+        setProductTotal(r.total);
+    }
+    async function refreshOrders() {
+        const r = await getAllOrders({ limit: 100 });
+        setOrders(r.data);
+        setOrderTotal(r.total);
+    }
+    const current = sections.find((s) => s.id === activeTab)!;
+    if (!sessionReady)
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A2E] to-[#0f0f1e] px-4">
-                <form
-                    onSubmit={handleLogin}
-                    className="w-full max-w-sm bg-white/5 backdrop-blur border border-white/10 p-8 rounded-2xl shadow-2xl"
-                >
-                    <div className="text-center mb-8">
-                        <h1
-                            className="text-3xl font-light text-white tracking-widest"
-                            style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                        >
-                            IMAD MODE
-                        </h1>
-                        <p className="text-[#C9A96E] text-[10px] tracking-[0.4em] uppercase mt-2">
-                            Admin Dashboard
-                        </p>
-                    </div>
-                    {authError ? (
-                        <div
-                            role="alert"
-                            className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 text-xs rounded"
-                        >
-                            {authError}
-                        </div>
-                    ) : null}
-                    <input
-                        aria-label="Email"
-                        autoComplete="username"
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full mb-3 bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E]"
-                    />
-                    <input
-                        aria-label="Password"
-                        autoComplete="current-password"
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="w-full mb-6 bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E]"
-                    />
-                    <button
-                        type="submit"
-                        disabled={authLoading}
-                        className="w-full bg-[#C9A96E] hover:bg-[#b09055] text-[#1A1A2E] text-xs tracking-[0.25em] uppercase font-bold py-3 transition-colors disabled:opacity-50"
-                    >
-                        {authLoading ? "..." : "Sign In"}
-                    </button>
-                </form>
+            <div className="admin-app admin-session" dir="ltr" lang="fr" role="status">
+                Ouverture de l’administration…
             </div>
         );
-    }
-
-    const tabClass = (id: Tab) =>
-        `relative px-4 py-4 text-xs tracking-[0.2em] uppercase font-medium transition-colors ${activeTab === id ? "text-[#C9A96E]" : "text-white/50 hover:text-white/80"}`;
-
-    return (
-        <div className="min-h-screen bg-[#0f0f1e] text-white">
-            <header className="border-b border-white/10 bg-[#1A1A2E] sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    if (!token)
+        return (
+            <div className="admin-app admin-auth" dir="ltr" lang="fr">
+                <div className="admin-auth-story">
+                    <Link href="/" className="brand-wordmark">
+                        IMAD <span>MODE</span>
+                    </Link>
                     <div>
-                        <h1
-                            className="text-2xl font-light tracking-widest"
-                            style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                        >
-                            IMAD <span className="text-[#C9A96E]">Mode</span>
+                        <p className="admin-eyebrow">VOTRE ESPACE BOUTIQUE</p>
+                        <h1>
+                            Tout commence
+                            <br />
+                            par les détails.
                         </h1>
-                        <p className="text-[10px] text-white/40 tracking-widest uppercase mt-0.5">
-                            Admin Dashboard
+                        <p>
+                            Votre collection, vos commandes et votre quotidien.
+                            <br />
+                            Un espace pour tout garder en vue.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div
-                            className="flex items-center gap-2 text-[10px] text-white/50 tracking-widest uppercase"
-                            suppressHydrationWarning
-                        >
-                            <span
-                                className={`w-2 h-2 rounded-full ${lastSync && !syncError ? "bg-emerald-400" : "bg-white/30"}`}
+                    <span>IMAD Mode · Administration</span>
+                </div>
+                <main className="admin-auth-main">
+                    <form onSubmit={handleLogin} className="admin-login-card">
+                        <p className="admin-eyebrow">HEUREUX DE VOUS RETROUVER</p>
+                        <h2>Connexion à votre espace</h2>
+                        <p className="admin-muted">
+                            Utilisez votre compte administrateur pour continuer.
+                        </p>
+                        {authError && (
+                            <p className="admin-alert" role="alert">
+                                {authError}
+                            </p>
+                        )}
+                        <label htmlFor="admin-email">Adresse e-mail</label>
+                        <input
+                            id="admin-email"
+                            type="email"
+                            autoComplete="username"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="vous@exemple.ma"
+                        />
+                        <label htmlFor="admin-password">Mot de passe</label>
+                        <div className="admin-password">
+                            <input
+                                id="admin-password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
-                            {syncError
-                                ? "Synchronisation en erreur"
-                                : lastSync
-                                  ? `Actualisé à ${lastSync.toLocaleTimeString()}`
-                                  : "Chargement…"}
+                            <button
+                                type="button"
+                                aria-label={
+                                    showPassword
+                                        ? "Masquer le mot de passe"
+                                        : "Afficher le mot de passe"
+                                }
+                                aria-pressed={showPassword}
+                                onClick={() => setShowPassword((v) => !v)}
+                            >
+                                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                            </button>
                         </div>
-                        <button
-                            onClick={logout}
-                            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-                            title="Logout"
-                        >
-                            <LogOut size={16} />
+                        <button className="admin-button primary" disabled={authLoading}>
+                            {authLoading ? "Connexion en cours…" : "Se connecter"}
+                            <ArrowUpRight size={18} aria-hidden="true" />
                         </button>
-                    </div>
-                </div>
-            </header>
-
-            <div className="border-b border-white/10 overflow-x-auto hide-scrollbar bg-[#1A1A2E]/50">
-                <div className="max-w-7xl mx-auto px-4 flex min-w-max">
-                    <button
-                        onClick={() => setActiveTab("overview")}
-                        className={tabClass("overview")}
-                    >
-                        <LayoutDashboard size={14} className="inline mr-2" /> Overview
-                        {activeTab === "overview" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button onClick={() => setActiveTab("orders")} className={tabClass("orders")}>
-                        <Package size={14} className="inline mr-2" /> Orders ({orders.length})
-                        {activeTab === "orders" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("products")}
-                        className={tabClass("products")}
-                    >
-                        <ShoppingBag size={14} className="inline mr-2" /> Products (
-                        {products.length})
-                        {activeTab === "products" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("categories")}
-                        className={tabClass("categories")}
-                    >
-                        <Grid size={14} className="inline mr-2" /> Categories
-                        {activeTab === "categories" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button onClick={() => setActiveTab("banners")} className={tabClass("banners")}>
-                        <ImageIcon size={14} className="inline mr-2" /> Banners
-                        {activeTab === "banners" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("settings")}
-                        className={tabClass("settings")}
-                    >
-                        <Settings size={14} className="inline mr-2" /> Home Builder
-                        {activeTab === "settings" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("deskcomm")}
-                        className={tabClass("deskcomm")}
-                    >
-                        <Settings size={14} className="inline mr-2" /> DeskcommCRM
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("notifications")}
-                        className={tabClass("notifications")}
-                    >
-                        <Bell size={14} className="inline mr-2" /> Alerts
-                        {unread > 0 && (
-                            <span className="ml-2 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">
-                                {unread}
-                            </span>
-                        )}
-                        {activeTab === "notifications" && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />
-                        )}
-                    </button>
-                </div>
+                        <Link href="/" className="admin-back-link">
+                            Retour à la boutique
+                        </Link>
+                    </form>
+                </main>
             </div>
-
-            <main className="max-w-7xl mx-auto px-6 py-8">
-                {syncError && (
-                    <p role="alert" className="bg-red-950 p-4 mb-5 rounded">
-                        {syncError}{" "}
+        );
+    return (
+        <div className="admin-app admin-workspace" dir="ltr" lang="fr">
+            <a className="skip-link" href="#admin-main">
+                Aller au contenu
+            </a>
+            <aside className="admin-sidebar">
+                <Link href="/" className="brand-wordmark">
+                    IMAD <span>MODE</span>
+                </Link>
+                <p className="admin-sidebar-label">ESPACE ADMINISTRATION</p>
+                <button
+                    ref={menuButton}
+                    className="admin-mobile-menu"
+                    aria-expanded={mobileMenu}
+                    aria-controls="admin-navigation"
+                    onClick={() => setMobileMenu((v) => !v)}
+                >
+                    {mobileMenu ? <X size={20} /> : <Menu size={20} />}Navigation
+                </button>
+                <nav
+                    ref={nav}
+                    id="admin-navigation"
+                    className={mobileMenu ? "is-open" : ""}
+                    aria-label="Administration"
+                >
+                    {sections.map(({ id, label, icon: Icon }) => (
                         <button
-                            className="underline action"
+                            key={id}
+                            onKeyDown={(e) => {
+                                if (e.key === "Escape") {
+                                    setMobileMenu(false);
+                                    menuButton.current?.focus();
+                                }
+                            }}
+                            onClick={() => selectTab(id)}
+                            aria-current={activeTab === id ? "page" : undefined}
+                        >
+                            <Icon size={19} aria-hidden="true" />
+                            <span>{label}</span>
+                            {id === "notifications" && unread > 0 && (
+                                <span className="admin-count">{unread}</span>
+                            )}
+                        </button>
+                    ))}
+                </nav>
+                <div className="admin-sidebar-bottom">
+                    <Link href="/" target="_blank" rel="noreferrer">
+                        <ArrowUpRight size={17} aria-hidden="true" />
+                        Voir la boutique
+                    </Link>
+                    <button onClick={logout}>
+                        <LogOut size={17} aria-hidden="true" />
+                        Se déconnecter
+                    </button>
+                </div>
+            </aside>
+            <div className="admin-body">
+                <header className="admin-topbar">
+                    <p>
+                        Votre boutique <span>/ {current.label}</span>
+                    </p>
+                    <div className="admin-topbar-actions">
+                        <span className={`admin-sync ${syncError ? "has-error" : ""}`}>
+                            <i />
+                            {syncing
+                                ? "Actualisation…"
+                                : lastSync
+                                  ? `À jour à ${lastSync.toLocaleTimeString("fr-MA", { hour: "2-digit", minute: "2-digit" })}`
+                                  : "Chargement initial"}
+                        </span>
+                        <button
+                            className="admin-icon-button"
+                            aria-label="Actualiser les données"
+                            disabled={syncing}
                             onClick={() => window.dispatchEvent(new Event("imad:sync"))}
                         >
-                            Réessayer
+                            <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
                         </button>
-                    </p>
-                )}
-                {activeTab === "overview" && <OverviewTab orders={orders} products={products} />}
-
-                {activeTab === "products" && (
-                    <ProductsTab
-                        products={products}
-                        categories={categories}
-                        onCreate={async (d) => {
-                            await createProduct(d);
-                            const res = await getAdminProducts({ limit: 100 });
-                            setProducts(res.data);
-                        }}
-                        onUpdate={async (id, d) => {
-                            await updateProduct(id, d);
-                            const res = await getAdminProducts({ limit: 100 });
-                            setProducts(res.data);
-                        }}
-                        onDelete={async (id) => {
-                            await deleteProduct(id);
-                            const res = await getAdminProducts({ limit: 100 });
-                            setProducts(res.data);
-                        }}
-                    />
-                )}
-
-                {activeTab === "categories" && (
-                    <CategoriesTab
-                        categories={categories}
-                        onCreate={async (d) => {
-                            await createCategory(d);
-                            const res = await getCategories();
-                            setCategories(res);
-                        }}
-                        onDelete={async (id) => {
-                            await deleteCategory(id);
-                            const res = await getCategories();
-                            setCategories(res);
-                        }}
-                    />
-                )}
-
-                {activeTab === "settings" && <ContentTab />}
-                {activeTab === "deskcomm" && <DeskcommTab />}
-
-                {activeTab === "banners" && <ContentTab />}
-
-                {activeTab === "notifications" && (
-                    <div>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg tracking-widest uppercase">
-                                Real-Time Notifications
-                            </h2>
-                            {unread > 0 && (
-                                <button
-                                    onClick={async () => {
-                                        await markAllNotificationsRead();
-                                        setUnread(0);
-                                        setNotifications((n) =>
-                                            n.map((x) => ({ ...x, read: true })),
-                                        );
-                                    }}
-                                    className="text-[10px] text-[#C9A96E] tracking-widest uppercase flex items-center gap-1 hover:underline"
-                                >
-                                    <Check size={12} /> Mark all read
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            {notifications.length === 0 ? (
-                                <div className="text-center py-16 text-white/40 text-sm">
-                                    No notifications yet
-                                </div>
-                            ) : (
-                                notifications.map((n) => (
-                                    <div
-                                        key={n.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
-                                                e.currentTarget.click();
-                                            }
-                                        }}
-                                        onClick={() =>
-                                            !n.read &&
-                                            markNotificationRead(n.id).then(() => {
-                                                setNotifications((ns) =>
-                                                    ns.map((x) =>
-                                                        x.id === n.id ? { ...x, read: true } : x,
-                                                    ),
-                                                );
-                                                setUnread((u) => u - 1);
-                                            })
-                                        }
-                                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${n.read ? "bg-white/2 border-white/5" : "bg-[#C9A96E]/10 border-[#C9A96E]/30"}`}
-                                    >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div>
-                                                <p
-                                                    className={`text-sm ${n.read ? "text-white/60" : "text-white font-medium"}`}
-                                                >
-                                                    {n.title}
-                                                </p>
-                                                <p className="text-xs text-white/40 mt-1">
-                                                    {n.message}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className="text-[10px] text-white/30 tracking-widest uppercase shrink-0"
-                                                suppressHydrationWarning
-                                            >
-                                                {new Date(n.createdAt).toLocaleTimeString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <button
+                            className="admin-icon-button"
+                            aria-label={`Notifications, ${unread} non lues`}
+                            onClick={() => selectTab("notifications")}
+                        >
+                            <Bell size={19} />
+                            {unread > 0 && <span className="admin-dot" />}
+                        </button>
                     </div>
-                )}
-
-                {activeTab === "orders" && (
-                    <OrdersTab
-                        orders={orders}
-                        onRefresh={async () => {
-                            const o = await getAllOrders({ limit: 100 });
-                            setOrders((o.data ?? []) as Order[]);
-                        }}
-                    />
-                )}
-            </main>
+                </header>
+                <main id="admin-main" className="admin-main">
+                    <div className="admin-page-heading">
+                        <div>
+                            <p className="admin-eyebrow">IMAD · GESTION DE LA BOUTIQUE</p>
+                            <h1 ref={mainTitle} tabIndex={-1}>
+                                {current.label}
+                            </h1>
+                            <p>{current.description}</p>
+                        </div>
+                        {activeTab === "overview" && (
+                            <button
+                                className="admin-button primary"
+                                onClick={() => selectTab("products")}
+                            >
+                                <ShoppingBag size={17} />
+                                Gérer les produits
+                            </button>
+                        )}
+                    </div>
+                    {syncError && (
+                        <div className="admin-alert" role="alert">
+                            {syncError}
+                            <button onClick={() => window.dispatchEvent(new Event("imad:sync"))}>
+                                Réessayer
+                            </button>
+                        </div>
+                    )}
+                    {actionMessage && (
+                        <p className="admin-feedback" role="status">
+                            {actionMessage}
+                        </p>
+                    )}
+                    {!lastSync && syncing ? (
+                        <div className="admin-loading" role="status">
+                            Chargement des données…
+                        </div>
+                    ) : (
+                        <>
+                            {activeTab === "overview" && (
+                                <OverviewTab
+                                    orders={orders}
+                                    products={products}
+                                    orderTotal={orderTotal}
+                                    productTotal={productTotal}
+                                    onNavigate={selectTab}
+                                />
+                            )}
+                            {activeTab === "orders" && (
+                                <OrdersTab
+                                    orders={orders}
+                                    total={orderTotal}
+                                    onRefresh={refreshOrders}
+                                />
+                            )}
+                            {openedTabs.includes("products") && (
+                                <div hidden={activeTab !== "products"}>
+                                    <ProductsTab
+                                        products={products}
+                                        categories={categories}
+                                        total={productTotal}
+                                        onCreate={async (d) => {
+                                            await createProduct(d);
+                                            await refreshProducts();
+                                        }}
+                                        onUpdate={async (id, d) => {
+                                            await updateProduct(id, d);
+                                            await refreshProducts();
+                                        }}
+                                        onDelete={async (id) => {
+                                            await deleteProduct(id);
+                                            await refreshProducts();
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            {activeTab === "categories" && (
+                                <CategoriesTab
+                                    categories={categories}
+                                    onCreate={async (d) => {
+                                        await createCategory(d);
+                                        setCategories(await getCategories());
+                                    }}
+                                    onDelete={async (id) => {
+                                        await deleteCategory(id);
+                                        setCategories(await getCategories());
+                                    }}
+                                />
+                            )}
+                            {openedTabs.includes("content") && (
+                                <div hidden={activeTab !== "content"}>
+                                    <ContentTab />
+                                </div>
+                            )}
+                            {activeTab === "deskcomm" && <DeskcommTab />}
+                            {activeTab === "notifications" && (
+                                <section className="admin-panel">
+                                    <div className="admin-panel-heading">
+                                        <div>
+                                            <h2>Dernières notifications</h2>
+                                            <p>
+                                                {unread} non lue{unread !== 1 ? "s" : ""}
+                                            </p>
+                                        </div>
+                                        <button
+                                            className="admin-button"
+                                            disabled={!unread}
+                                            onClick={async () => {
+                                                try {
+                                                    await markAllNotificationsRead();
+                                                    setNotifications((v) =>
+                                                        v.map((n) => ({ ...n, read: true })),
+                                                    );
+                                                    setUnread(0);
+                                                } catch {
+                                                    setActionMessage(
+                                                        "Impossible de mettre à jour les notifications. Réessayez.",
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            <CheckCheck size={17} />
+                                            Tout marquer comme lu
+                                        </button>
+                                    </div>
+                                    {!notifications.length ? (
+                                        <p className="admin-empty">
+                                            Aucune notification pour le moment.
+                                        </p>
+                                    ) : (
+                                        <div className="admin-notices">
+                                            {notifications.map((n) => (
+                                                <button
+                                                    key={n.id}
+                                                    className={n.read ? "" : "unread"}
+                                                    disabled={n.read}
+                                                    onClick={async () => {
+                                                        try {
+                                                            await markNotificationRead(n.id);
+                                                            setNotifications((v) =>
+                                                                v.map((x) =>
+                                                                    x.id === n.id
+                                                                        ? { ...x, read: true }
+                                                                        : x,
+                                                                ),
+                                                            );
+                                                            setUnread((v) => Math.max(0, v - 1));
+                                                        } catch {
+                                                            setActionMessage(
+                                                                "Impossible de marquer cette notification comme lue.",
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    <span className="admin-notice-dot" />
+                                                    <span>
+                                                        <strong>{n.title}</strong>
+                                                        <span>{n.message}</span>
+                                                    </span>
+                                                    <time dateTime={n.createdAt}>
+                                                        {new Date(n.createdAt).toLocaleDateString(
+                                                            "fr-MA",
+                                                        )}
+                                                    </time>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            )}
+                        </>
+                    )}
+                    <footer className="admin-page-footer">
+                        <span>IMAD Mode · Votre espace de gestion</span>
+                        <Link href="/" target="_blank" rel="noreferrer">
+                            Ouvrir la boutique <ArrowUpRight size={14} />
+                        </Link>
+                    </footer>
+                </main>
+            </div>
         </div>
     );
 }

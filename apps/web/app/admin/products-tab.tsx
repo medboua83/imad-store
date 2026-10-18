@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { Plus, Search, Package } from "lucide-react";
 import { Product, Category, uploadProductImage } from "@/lib/api";
 
 type Variant = {
@@ -37,17 +39,30 @@ const blank = {
 };
 export function ProductsTab({
     products,
+    total,
     categories,
     onCreate,
     onUpdate,
     onDelete,
 }: {
     products: Product[];
+    total: number;
     categories: Category[];
     onCreate: (data: Record<string, unknown>) => Promise<void>;
     onUpdate: (id: string, data: Record<string, unknown>) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
 }) {
+    const [success, setSuccess] = useState("");
+    const [search, setSearch] = useState("");
+    const [publication, setPublication] = useState("ALL");
+    const editorTitle = useRef<HTMLHeadingElement>(null);
+    const visibleProducts = products.filter(
+        (p) =>
+            (publication === "ALL" || p.status === publication) &&
+            [p.nameFr, p.nameAr, p.nameEn, p.slug, ...p.variants.map((v) => v.sku)].some((v) =>
+                v.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+            ),
+    );
     const [open, setOpen] = useState(false),
         [id, setId] = useState<string | null>(null),
         [form, setForm] = useState(blank);
@@ -58,7 +73,12 @@ export function ProductsTab({
     const edit = (product?: Product) => {
         setId(product?.id || null);
         setError("");
+        setSuccess("");
         setOpen(true);
+        requestAnimationFrame(() => {
+            editorTitle.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+            editorTitle.current?.focus({ preventScroll: true });
+        });
         setForm(
             product
                 ? {
@@ -91,8 +111,7 @@ export function ProductsTab({
             "Impossible d’enregistrer. Réessayez."
         );
     };
-    const inputClass =
-        "w-full rounded border border-white/20 bg-[#252539] px-3 py-2 text-white focus:outline-2 focus:outline-[#C9A96E]";
+    const inputClass = "admin-field";
     const set = (key: keyof typeof blank, value: string) =>
         setForm((previous) => ({ ...previous, [key]: value }));
     const changeVariant = (index: number, key: keyof Variant, value: string | number) =>
@@ -100,24 +119,32 @@ export function ProductsTab({
             previous.map((v, i) => (i === index ? { ...v, [key]: value } : v)),
         );
     return (
-        <div className="space-y-5">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl">Produits</h2>
-                <button
-                    className="rounded bg-[#C9A96E] text-black px-4 py-2"
-                    onClick={() => edit()}
-                >
-                    Ajouter un produit
+        <div className="space-y-5 admin-products">
+            <div className="admin-panel-heading">
+                <div>
+                    <h2>Votre catalogue</h2>
+                    <p>
+                        {products.length} fiches chargées sur {total}. Recherche sur cette
+                        sélection.
+                    </p>
+                </div>
+                <button className="admin-button primary" onClick={() => edit()}>
+                    <Plus size={18} aria-hidden="true" /> Ajouter un produit
                 </button>
             </div>
+            {success && (
+                <p className="admin-feedback" role="status">
+                    {success}
+                </p>
+            )}
             {error && (
-                <p role="alert" className="rounded bg-red-950 p-3 text-red-100">
+                <p role="alert" className="admin-alert">
                     {error}
                 </p>
             )}
             {open && (
                 <form
-                    className="space-y-4 border border-white/20 rounded-xl p-4"
+                    className="space-y-4 admin-panel admin-product-editor"
                     onSubmit={async (e) => {
                         e.preventDefault();
                         setBusy(true);
@@ -135,6 +162,7 @@ export function ProductsTab({
                             if (id) await onUpdate(id, data);
                             else await onCreate(data);
                             setOpen(false);
+                            setSuccess("Produit enregistré. Le catalogue est à jour.");
                         } catch (failure) {
                             setError(message(failure));
                         } finally {
@@ -142,7 +170,13 @@ export function ProductsTab({
                         }
                     }}
                 >
-                    <h3>{id ? "Modifier le produit" : "Nouveau produit"}</h3>
+                    <h3 ref={editorTitle} tabIndex={-1}>
+                        {id ? "Modifier le produit" : "Nouveau produit"}
+                    </h3>
+                    <p className="admin-muted">
+                        Complétez la fiche, ajoutez vos photos et vérifiez les variantes. Le statut
+                        Brouillon permet de préparer un produit sans le mettre en vente.
+                    </p>
                     <div className="grid gap-3 md:grid-cols-2">
                         {(
                             [
@@ -229,7 +263,7 @@ export function ProductsTab({
                     ))}
                     <fieldset className="space-y-3">
                         <legend>Photos du produit</legend>
-                        <p className="text-sm text-white/70">
+                        <p className="admin-muted">
                             PNG, JPEG ou WebP, 5 Mo maximum. Ajoutez une vraie photo avant de
                             publier.
                         </p>
@@ -292,14 +326,14 @@ export function ProductsTab({
                     </fieldset>
                     <fieldset className="space-y-3">
                         <legend>Variantes et stock</legend>
-                        <p className="text-sm text-white/70">
+                        <p className="admin-muted">
                             Pour retirer une variante existante de la vente, mettez son stock à
                             zéro.
                         </p>
                         {variants.map((v, index) => (
                             <fieldset
                                 key={v.id || index}
-                                className="grid gap-3 border border-white/20 p-3 md:grid-cols-3"
+                                className="admin-variant-fields grid gap-3 p-4 md:grid-cols-3"
                             >
                                 <legend>Variante {index + 1}</legend>
                                 {(
@@ -368,12 +402,8 @@ export function ProductsTab({
                             Ajouter une variante
                         </button>
                     </fieldset>
-                    <div className="flex gap-3">
-                        <button
-                            disabled={busy}
-                            type="submit"
-                            className="rounded bg-[#C9A96E] text-black p-3 disabled:opacity-50"
-                        >
+                    <div className="admin-editor-actions">
+                        <button disabled={busy} type="submit" className="admin-button primary">
                             {busy ? "En cours…" : "Enregistrer"}
                         </button>
                         <button type="button" disabled={busy} onClick={() => setOpen(false)}>
@@ -382,63 +412,127 @@ export function ProductsTab({
                     </div>
                 </form>
             )}
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <caption className="sr-only">Catalogue et disponibilité</caption>
-                    <thead>
-                        <tr>
-                            {["Produit", "Prix", "Stock", "Publication", "Actions"].map((text) => (
-                                <th key={text} className="p-2">
-                                    {text}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((p) => (
-                            <tr key={p.id} className="border-t border-white/10">
-                                <td className="p-2">
-                                    {p.nameFr}
-                                    <small className="block text-white/60">{p.slug}</small>
-                                </td>
-                                <td className="p-2">{p.price.toFixed(2)} MAD</td>
-                                <td className="p-2">
-                                    {p.variants.reduce((total, v) => total + v.stock, 0)}
-                                </td>
-                                <td className="p-2">
+            <div className="admin-panel">
+                <div className="admin-toolbar">
+                    <label className="admin-search">
+                        <span>Rechercher un produit</span>
+                        <div>
+                            <Search size={17} aria-hidden="true" />
+                            <input
+                                type="search"
+                                value={search}
+                                placeholder="Nom, adresse ou référence SKU"
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                    </label>
+                    <label>
+                        Publication
+                        <select
+                            value={publication}
+                            onChange={(e) => setPublication(e.target.value)}
+                        >
+                            <option value="ALL">Tous les statuts</option>
+                            <option value="ACTIVE">En vente</option>
+                            <option value="DRAFT">Brouillons</option>
+                            <option value="ARCHIVED">Archivés</option>
+                        </select>
+                    </label>
+                    <button
+                        className="admin-text-button"
+                        disabled={!search && publication === "ALL"}
+                        onClick={() => {
+                            setSearch("");
+                            setPublication("ALL");
+                        }}
+                    >
+                        Effacer les filtres
+                    </button>
+                </div>
+                <p className="admin-result-count" role="status">
+                    {visibleProducts.length} résultat{visibleProducts.length !== 1 ? "s" : ""}
+                </p>
+                <div className="admin-product-list">
+                    {visibleProducts.length ? (
+                        visibleProducts.map((p) => (
+                            <article key={p.id}>
+                                <div className="admin-product-thumb">
+                                    {p.images[0] ? (
+                                        <Image
+                                            src={p.images[0]}
+                                            alt={p.nameFr}
+                                            width={64}
+                                            height={76}
+                                        />
+                                    ) : (
+                                        <Package size={24} aria-hidden="true" />
+                                    )}
+                                </div>
+                                <div className="admin-product-name">
+                                    <h3>{p.nameFr}</h3>
+                                    <p dir="rtl">{p.nameAr}</p>
+                                    <span>
+                                        {p.category.nameFr} · /{p.slug}
+                                    </span>
+                                </div>
+                                <div className="admin-product-numbers">
+                                    <strong>{p.price.toFixed(2)} MAD</strong>
+                                    <span>
+                                        {p.variants.reduce((sum, v) => sum + v.stock, 0)} unités ·{" "}
+                                        {p.variants.length} variante(s)
+                                    </span>
+                                </div>
+                                <span className={`admin-status status-${p.status.toLowerCase()}`}>
                                     {p.status === "ACTIVE"
                                         ? "En vente"
                                         : p.status === "DRAFT"
                                           ? "Brouillon"
                                           : "Archivé"}
-                                </td>
-                                <td className="p-2">
+                                </span>
+                                <div className="admin-product-actions">
                                     <button
+                                        className="admin-button"
                                         aria-label={`Modifier ${p.nameFr}`}
-                                        className="underline mr-3"
+                                        disabled={busy}
                                         onClick={() => edit(p)}
                                     >
                                         Modifier
                                     </button>
                                     <button
+                                        className="admin-text-button"
                                         aria-label={`Archiver ${p.nameFr}`}
+                                        disabled={busy || p.status === "ARCHIVED"}
                                         onClick={async () => {
-                                            if (confirm("Archiver ce produit ?")) {
+                                            if (
+                                                confirm(
+                                                    `Archiver « ${p.nameFr} » ? Le produit ne sera plus visible dans le magasin.`,
+                                                )
+                                            ) {
                                                 try {
+                                                    setBusy(true);
                                                     await onDelete(p.id);
+                                                    setSuccess("Produit archivé.");
                                                 } catch (failure) {
                                                     setError(message(failure));
+                                                } finally {
+                                                    setBusy(false);
                                                 }
                                             }
                                         }}
                                     >
                                         Archiver
                                     </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                </div>
+                            </article>
+                        ))
+                    ) : (
+                        <div className="admin-empty">
+                            <Package size={30} />
+                            <h3>Aucun produit trouvé</h3>
+                            <p>Essayez un autre nom ou un autre statut.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
