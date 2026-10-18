@@ -1032,8 +1032,10 @@ dialog::backdrop {
         display: none;
     }
     .hero-visual {
-        min-height: 360px;
-        aspect-ratio: 1.2;
+        min-width: 0;
+        min-height: 0;
+        width: 100%;
+        aspect-ratio: 1.1;
     }
     .hero-photo {
         object-position: 50% 43%;
