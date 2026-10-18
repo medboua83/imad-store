@@ -1,0 +1,99 @@
+{
+  "kind": "synthetic-local-test",
+  "imageSource": "Built-in imagegen; fictional product-mockup images, 2026-10-18",
+  "products": [
+    {
+      "slug": "catalogue-essai-sac",
+      "nameFr": "[TEST] Sac cognac",
+      "nameAr": "[اختبار] حقيبة بنية",
+      "nameEn": "[TEST] Cognac bag",
+      "descriptionFr": "PRODUIT DE TEST — Visuel généré par IA. Modèle, prix et stock fictifs, uniquement pour tester le site. Ne correspond pas à un article réel à expédier.",
+      "descriptionAr": "منتج تجريبي — صورة مولدة بالذكاء الاصطناعي. التصميم والثمن والمخزون افتراضية لاختبار الموقع فقط، وليس منتجا حقيقيا للشحن.",
+      "descriptionEn": "TEST PRODUCT — AI-generated image. Fictional design, price and stock for website testing only. Not real merchandise for shipping.",
+      "price": 299,
+      "images": [
+        "/images/catalogue-test/sac.webp"
+      ],
+      "category": "bags",
+      "variants": [
+        {
+          "sku": "ESSAI-SAC-COGNAC",
+          "color": "#99562f",
+          "colorNameFr": "Cognac",
+          "colorNameAr": "بني",
+          "colorNameEn": "Cognac",
+          "size": "Unique",
+          "stock": 8
+        }
+      ]
+    },
+    {
+      "slug": "catalogue-essai-abaya",
+      "nameFr": "[TEST] Abaya noire",
+      "nameAr": "[اختبار] عباية سوداء",
+      "nameEn": "[TEST] Black abaya",
+      "descriptionFr": "PRODUIT DE TEST — Visuel généré par IA. Modèle, prix et stock fictifs, uniquement pour tester le site. Ne correspond pas à un article réel à expédier.",
+      "descriptionAr": "منتج تجريبي — صورة مولدة بالذكاء الاصطناعي. التصميم والثمن والمخزون افتراضية لاختبار الموقع فقط، وليس منتجا حقيقيا للشحن.",
+      "descriptionEn": "TEST PRODUCT — AI-generated image. Fictional design, price and stock for website testing only. Not real merchandise for shipping.",
+      "price": 399,
+      "images": [
+        "/images/catalogue-test/abaya.webp"
+      ],
+      "category": "abayas",
+      "variants": [
+        {
+          "sku": "ESSAI-ABAYA-NOIR-S",
+          "color": "#171717",
+          "colorNameFr": "Noir",
+          "colorNameAr": "أسود",
+          "colorNameEn": "Black",
+          "size": "S",
+          "stock": 8
+        },
+        {
+          "sku": "ESSAI-ABAYA-NOIR-M",
+          "color": "#171717",
+          "colorNameFr": "Noir",
+          "colorNameAr": "أسود",
+          "colorNameEn": "Black",
+          "size": "M",
+          "stock": 8
+        },
+        {
+          "sku": "ESSAI-ABAYA-NOIR-L",
+          "color": "#171717",
+          "colorNameFr": "Noir",
+          "colorNameAr": "أسود",
+          "colorNameEn": "Black",
+          "size": "L",
+          "stock": 8
+        }
+      ]
+    },
+    {
+      "slug": "catalogue-essai-chale",
+      "nameFr": "[TEST] Châle beige",
+      "nameAr": "[اختبار] شال بيج",
+      "nameEn": "[TEST] Beige shawl",
+      "descriptionFr": "PRODUIT DE TEST — Visuel généré par IA. Modèle, prix et stock fictifs, uniquement pour tester le site. Ne correspond pas à un article réel à expédier.",
+      "descriptionAr": "منتج تجريبي — صورة مولدة بالذكاء الاصطناعي. التصميم والثمن والمخزون افتراضية لاختبار الموقع فقط، وليس منتجا حقيقيا للشحن.",
+      "descriptionEn": "TEST PRODUCT — AI-generated image. Fictional design, price and stock for website testing only. Not real merchandise for shipping.",
+      "price": 129,
+      "images": [
+        "/images/catalogue-test/chale.webp"
+      ],
+      "category": "shawls",
+      "variants": [
+        {
+          "sku": "ESSAI-CHALE-BEIGE",
+          "color": "#c9b38d",
+          "colorNameFr": "Beige",
+          "colorNameAr": "بيج",
+          "colorNameEn": "Beige",
+          "size": "Unique",
+          "stock": 8
+        }
+      ]
+    }
+  ]
+}
