@@ -1,7 +1,8 @@
 "use client";
 import { useEffect,useState } from "react";
 import axios from "axios";
-const base=(process.env.NEXT_PUBLIC_API_URL||"http://localhost:4000/api").replace(/\/$/,"").replace(/\/api$/,"")+"/api";
+import { getBaseUrl } from "@/lib/api";
+const base=getBaseUrl();
 type Config={enabled:boolean;configured:boolean;updatedAt:string|null};
 export default function DeskcommTab(){
  const [config,setConfig]=useState<Config|null>(null),[url,setUrl]=useState(""),[enabled,setEnabled]=useState(false),[clearWebhook,setClear]=useState(false),[loading,setLoading]=useState(false),[message,setMessage]=useState("");

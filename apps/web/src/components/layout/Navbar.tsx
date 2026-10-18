@@ -80,7 +80,7 @@ export function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                        <button onClick={openCart} className="relative flex items-center text-[#1A1A2E] hover:text-[#C9A96E] transition-colors p-2">
+                        <button aria-label="فتح السلة" onClick={openCart} className="relative flex items-center text-[#1A1A2E] hover:text-[#C9A96E] transition-colors p-2">
                             <ShoppingBag size={28} strokeWidth={1.5} />
                             <AnimatePresence>
                                 {mounted && count > 0 && (
@@ -94,6 +94,7 @@ export function Navbar() {
                             </AnimatePresence>
                         </button>
                         <button
+                            aria-label="فتح القائمة"
                             onClick={() => setMobileOpen(true)}
                             className="lg:hidden text-[#1A1A2E] hover:text-[#C9A96E] transition-colors p-1"
                         >
@@ -141,6 +142,7 @@ export function Navbar() {
                                     IMAD <span className="text-[#C9A96E] text-xs">Mode</span>
                                 </span>
                                 <button
+                                    aria-label="إغلاق القائمة"
                                     onClick={() => setMobileOpen(false)}
                                     className="w-8 h-8 flex items-center justify-center border border-white/20 text-white/50 hover:text-[#C9A96E] hover:border-[#C9A96E]/40 transition-colors"
                                 >

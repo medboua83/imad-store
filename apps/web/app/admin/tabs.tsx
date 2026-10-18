@@ -462,7 +462,7 @@ export function BannersTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {banners.map((b, i) => (
                     <div key={i} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden relative group aspect-[16/7]">
-                        <img src={b.imageUrl} className="w-full h-full object-cover" />
+                        <img src={b.imageUrl} alt={b.title || "Banner"} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
                             <button onClick={() => { setEditIdx(i); setForm(b); }} className="bg-white/20 p-2 rounded hover:bg-white/40"><Pencil size={14}/></button>
                             <button onClick={() => saveBanners(banners.filter((_, j) => j !== i))} className="bg-red-500/50 p-2 rounded hover:bg-red-500/80"><Trash2 size={14}/></button>

@@ -1,22 +1,21 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Gift, Sparkles } from "lucide-react";
+import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { useCartStore } from "@/store/cart.store";
 
 
-const FREE_THRESHOLD = 800;
+import { useShipping } from "@/hooks/useShipping";
 
 export function CartDrawer() {
     const { items, isOpen, closeCart, updateQty, removeItem, total } = useCartStore();
     const subtotal = total();
-    const freeLeft = Math.max(0, FREE_THRESHOLD - subtotal);
-    const progress = Math.min(100, (subtotal / FREE_THRESHOLD) * 100);
-    const deliveryFee = freeLeft === 0 ? 0 : 30; // 30 MAD standard Delivery
-    const orderTotal = subtotal + deliveryFee;
+    const { settings, fee: deliveryFee, total: orderTotal } = useShipping(subtotal);
+    const freeLeft = Math.max(0, (settings?.freeShippingMin ?? 0) - subtotal);
+    const progress = settings ? Math.min(100, (subtotal / Math.max(1, settings.freeShippingMin)) * 100) : 0;
 
     const T = {
         bag: "حقيبتي",
@@ -84,14 +83,14 @@ export function CartDrawer() {
                                         </motion.span>
                                     )}
                                 </div>
-                                <button onClick={closeCart}
+                                <button aria-label="إغلاق السلة" onClick={closeCart}
                                     className="w-9 h-9 border border-white/15 flex items-center justify-center text-white/50 hover:text-[#C9A96E] hover:border-[#C9A96E]/50 transition-all">
                                     <X size={17} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             {/* Free shipping progress */}
-                            {items.length > 0 && (
+                            {items.length > 0 && settings && (
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
                                         <p className="text-[9px] tracking-[0.18em] uppercase text-white/40">
@@ -147,7 +146,7 @@ export function CartDrawer() {
                                             >
                                                 {/* Image — large and prominent */}
                                                 <div className="relative w-28 h-36 bg-[#F5EDE0] shrink-0 overflow-hidden group">
-                                                    <Image src={item.image || "https://placehold.co/600x600/e2e8f0/1e293b?text=No+Image"} alt={item.nameAr || "Item"} fill
+                                                    <Image src={item.image || "/images/cat-abayas.png"} alt={item.nameAr || "Item"} fill
                                                         className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                                     {/* Gold badge overlay */}
                                                     <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#1A1A2E]/50 to-transparent h-1/3 pointer-events-none" />
@@ -161,7 +160,7 @@ export function CartDrawer() {
                                                             style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                                                             {item.nameAr}
                                                         </Link>
-                                                        <button onClick={() => removeItem(item.variantId)}
+                                                        <button aria-label="حذف المنتج" onClick={() => removeItem(item.variantId)}
                                                             className="shrink-0 mt-0.5 w-6 h-6 flex items-center justify-center text-[#1A1A2E]/20 hover:text-red-400 hover:bg-red-50 rounded-sm transition-all">
                                                             <Trash2 size={13} strokeWidth={1.5} />
                                                         </button>
@@ -176,14 +175,14 @@ export function CartDrawer() {
                                                     <div className="flex items-center justify-between mt-auto">
                                                         {/* Qty stepper */}
                                                         <div className="flex items-center border border-[#C9A96E]/25 divide-x divide-[#C9A96E]/20">
-                                                            <button onClick={() => updateQty(item.variantId, item.quantity - 1)}
+                                                            <button aria-label="تقليل الكمية" onClick={() => updateQty(item.variantId, item.quantity - 1)}
                                                                 className="w-9 h-9 flex items-center justify-center text-[#1A1A2E]/40 hover:text-[#C9A96E] hover:bg-[#C9A96E]/5 transition-colors">
                                                                 <Minus size={11} />
                                                             </button>
                                                             <span className="w-10 h-9 flex items-center justify-center text-sm font-medium text-[#1A1A2E]">
                                                                 {item.quantity}
                                                             </span>
-                                                            <button onClick={() => updateQty(item.variantId, item.quantity + 1)}
+                                                            <button aria-label="زيادة الكمية" onClick={() => updateQty(item.variantId, item.quantity + 1)}
                                                                 className="w-9 h-9 flex items-center justify-center text-[#1A1A2E]/40 hover:text-[#C9A96E] hover:bg-[#C9A96E]/5 transition-colors">
                                                                 <Plus size={11} />
                                                             </button>
@@ -204,11 +203,7 @@ export function CartDrawer() {
                                         ))}
                                     </AnimatePresence>
 
-                                    {/* Gift note */}
-                                    <div className="py-5 flex items-center gap-3 text-[10px] tracking-widest uppercase text-[#8B8399] hover:text-[#C9A96E] transition-colors cursor-pointer group">
-                                        <Gift size={14} strokeWidth={1.5} className="group-hover:scale-110 transition-transform shrink-0" />
-                                        {T.gift} +
-                                    </div>
+
                                 </div>
                             )}
                         </div>
@@ -229,7 +224,7 @@ export function CartDrawer() {
                                         <div className="flex justify-between text-xs">
                                             <span className="tracking-wider uppercase text-[#1A1A2E]/50">{T.delivery}</span>
                                             <span className={deliveryFee === 0 ? "text-[#C9A96E] text-xs tracking-wider" : "text-[#1A1A2E]/60"}>
-                                                {deliveryFee === 0 ? T.free : `${deliveryFee} MAD`}
+                                                {deliveryFee === null ? "يُحسب عند إتمام الطلب" : deliveryFee === 0 ? T.free : `${deliveryFee} MAD`}
                                             </span>
                                         </div>
                                     </div>
@@ -240,7 +235,7 @@ export function CartDrawer() {
                                             initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                                             className="text-2xl font-light text-[#1A1A2E]"
                                             style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                                            {orderTotal.toLocaleString()} MAD
+                                            {(orderTotal ?? subtotal).toLocaleString()} MAD
                                         </motion.span>
                                     </div>
 

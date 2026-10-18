@@ -27,3 +27,7 @@ On 2026-10-18 a read-only comparison with `medboua83/imad-store` branch `Master`
 ## Synchronization follow-up — 2026-10-18
 
 The prepared candidate was copied into an isolated workspace, compared with the local source, and corrected until the frontend production build and backend typecheck passed. No active runtime or database changes were applied. See CURRENT_STATUS.md for verification limits.
+
+## Browser QA follow-up — 2026-10-18
+
+Read-only browser testing used the existing API with an isolated frontend on port 3100. Fixed API access, mock homepage cart entries, missing standalone image rendering, contact navigation, checkout field labels and shipping mismatch. Test-only catalog records were retained. No successful checkout or CRM delivery was attempted. API_UPSTREAM_URL selects the same-origin proxy target at build time; defaults to the local API on port 4000. Explicit NEXT_PUBLIC_API_URL overrides the browser base URL and requires matching backend CORS configuration.

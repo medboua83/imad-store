@@ -122,11 +122,13 @@ export default function AdminPage() {
                         <p className="text-[#C9A96E] text-[10px] tracking-[0.4em] uppercase mt-2">Admin Dashboard</p>
                     </div>
                     {authError ? (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 text-xs rounded">
+                        <div role="alert" className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 text-xs rounded">
                             {authError}
                         </div>
                     ) : null}
                     <input
+                        aria-label="Email"
+                        autoComplete="username"
                         type="email"
                         placeholder="Email"
                         value={email}
@@ -135,6 +137,8 @@ export default function AdminPage() {
                         className="w-full mb-3 bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E]"
                     />
                     <input
+                        aria-label="Password"
+                        autoComplete="current-password"
                         type="password"
                         placeholder="Password"
                         value={password}

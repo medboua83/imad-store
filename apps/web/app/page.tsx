@@ -4,8 +4,8 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
-import { ArrowRight, MessageCircle, Mail, ShoppingBag, Star } from "lucide-react";
-import { useCartStore } from "@/store/cart.store";
+import { ArrowRight, MessageCircle, Mail, Star } from "lucide-react";
+import { getProducts, type Product } from "@/lib/api";
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 const fadeUp = {
@@ -53,17 +53,7 @@ const CATEGORIES = [
     { slug: "shoes-men", img: "/images/cat-shoes.png", labelAr: "سابو رجالي" },
 ];
 
-const FEATURED_PRODUCTS = [
-    { id: 1, slug: "sac-cuir-luxe", nameAr: "حقيبة جلدية فاخرة", price: 1200, compareAt: 1500, img1: "/images/hero-1.png", img2: "/images/cat-abayas.png", colors: ["#F5EDE0", "#1A1A2E"] },
-    { id: 2, slug: "abaya-velours", nameAr: "عباية مخملية ملكية", price: 850, compareAt: 1100, img1: "/images/cat-abayas.png", img2: "/images/hero-2.png", colors: ["#800020", "#1A1A2E"] },
-    { id: 3, slug: "chale-soie", nameAr: "شال حريري", price: 350, compareAt: null, img1: "/images/hero-2.png", img2: "/images/hero-1.png", colors: ["#F5F5DC", "#FFFFFF"] },
-];
 
-const HOT_SELLERS = [
-    { id: 10, slug: "talons-hauts-or", nameAr: "حذاء كعب عالي ذهبي", price: 590, img: "/images/cat-shoes.png", tag: "إصدار محدود" },
-    { id: 11, slug: "pyjama-soie", nameAr: "بيجامة حريرية", price: 450, img: "/images/hero-1.png", tag: "الأكثر مبيعاً" },
-    { id: 12, slug: "sabots-classiques", nameAr: "سابو رجالي كلاسيك", price: 320, img: "/images/hero-2.png", tag: "جديد" },
-];
 
 /* ─── Components ─────────────────────────────────────────── */
 
@@ -164,6 +154,8 @@ function HeroSection() {
                 {HERO_SLIDES.map((_, i) => (
                     <button
                         key={i}
+                        aria-label={`الشريحة ${i + 1}`}
+                        aria-pressed={i === active}
                         onClick={() => setActive(i)}
                         className="relative group py-2"
                     >
@@ -331,247 +323,22 @@ function BentoCard({ cat, large }: { cat: typeof CATEGORIES[0]; large?: boolean 
     );
 }
 
-function ProductCardRefined({ product }: { product: typeof FEATURED_PRODUCTS[0] }) {
-    const [hovered, setHovered] = useState(false);
-    const { addItem, openCart } = useCartStore();
-
-    return (
-        <div className="group flex-shrink-0 w-[280px] md:w-[360px]">
-            <Link href={`/products/${product.slug}`}>
-                <div
-                    className="relative aspect-[3/4] overflow-hidden bg-[#F5EDE0] mb-6"
-                    onMouseEnter={() => setHovered(true)}
-                    onMouseLeave={() => setHovered(false)}
-                >
-                    <Image src={product.img1} alt={product.nameAr} fill className={`object-cover transition-opacity duration-1000 ${hovered ? "opacity-0" : "opacity-100"}`} />
-                    <Image src={product.img2} alt={product.nameAr} fill className={`object-cover transition-opacity duration-1000 ${hovered ? "opacity-100" : "opacity-0"}`} />
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                    <motion.button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            addItem({
-                                id: product.id.toString(), slug: product.slug,
-                                nameFr: product.nameAr, nameAr: product.nameAr, nameEn: product.nameAr,
-                                price: product.price, images: [product.img1],
-                                descriptionFr: "", descriptionAr: "", descriptionEn: "", status: "active",
-                                category: { id: "", slug: "", nameFr: "", nameAr: "", nameEn: "" },
-                                variants: []
-                            }, {
-                                id: product.id.toString() + "-v1",
-                                color: product.colors[0] || "#000",
-                                colorNameFr: "STD", colorNameAr: "STD", colorNameEn: "STD",
-                                size: "Standard",
-                                stock: 10, sku: product.slug
-                            }, 1);
-                            openCart();
-                        }}
-                        className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm shadow-xl text-[#1A1A2E] text-[9px] tracking-[0.25em] uppercase px-8 py-4 font-medium opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-[#1A1A2E] hover:text-white"
-                    >
-                        إضافة
-                    </motion.button>
-                </div>
-            </Link>
-
-            <div className="flex flex-col items-center text-center">
-                <p className="text-[#C9A96E] text-[9px] tracking-[0.3em] uppercase mb-2">هاوت كوتور</p>
-                <h3 className="text-[#1A1A2E] font-light text-2xl mb-3 leading-tight hover:text-[#C9A96E] transition-colors" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                    {product.nameAr}
-                </h3>
-                <div className="flex items-center gap-4">
-                    {product.compareAt && (
-                        <span className="text-[#8B8399] text-[13px] line-through">{product.compareAt.toLocaleString()} MAD</span>
-                    )}
-                    <span className="text-[#1A1A2E] font-medium text-[15px]">{product.price.toLocaleString()} MAD</span>
-                </div>
-            </div>
+function CatalogHighlights({ products, loading, error }: { products: Product[]; loading: boolean; error: boolean }) {
+    return <section className="bg-[#1A1A2E] py-20 text-white" dir="rtl">
+        <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-wrap items-center justify-between gap-5 mb-10"><h2 className="text-3xl text-[#C9A96E]">مختارات من المتجر</h2><Link href="/shop" className="underline underline-offset-4">عرض المجموعة</Link></div>
+            {loading ? <p role="status">جارٍ تحميل المنتجات...</p> : error ? <p role="alert">تعذر تحميل المنتجات. <Link href="/shop" className="underline">الانتقال إلى المتجر</Link></p> : products.length === 0 ? <p>لا توجد منتجات متاحة حالياً.</p> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {products.map(product => {
+                    const name = product.nameAr || product.nameFr || product.nameEn;
+                    const image = product.images.find(value => (value.startsWith("/") && !value.startsWith("//")) || /^https:\/\/(res\.cloudinary\.com|placeholder\.co)\//.test(value));
+                    return <Link key={product.id} href={`/products/${encodeURIComponent(product.slug)}`} className="group block border border-white/10 bg-white/5">
+                        <div className="relative aspect-[3/4] bg-[#F5EDE0] overflow-hidden">{image ? <Image src={image} alt={name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform group-hover:scale-105"/> : <span className="absolute inset-0 flex items-center justify-center text-gray-500">لا توجد صورة</span>}</div>
+                        <div className="p-5"><h3 className="text-xl mb-3">{name}</h3><p>{product.price.toLocaleString()} MAD</p><span className="inline-block mt-4 text-[#C9A96E]">عرض التفاصيل</span></div>
+                    </Link>;
+                })}
+            </div>}
         </div>
-    );
-}
-
-function FeaturedCarousel() {
-    return (
-        <section className="py-32 bg-white border-b border-[#C9A96E]/10">
-            <div className="max-w-[1600px] mx-auto px-6 overflow-hidden">
-                <motion.div
-                    initial="hidden" whileInView="show" viewport={{ once: true }}
-                    className="flex flex-col items-center text-center mb-20"
-                >
-                    <motion.p variants={fadeUp} className="text-[#8B8399] text-[10px] tracking-[0.35em] uppercase mb-4">
-                        مختارات مميزة
-                    </motion.p>
-                    <motion.h2 variants={fadeUp} className="text-[#1A1A2E] text-4xl md:text-6xl font-black uppercase tracking-widest flex flex-wrap justify-center items-center gap-x-4">
-                        توقيع
-                        <em className="text-[#C9A96E] font-serif font-light italic normal-case tracking-normal text-5xl md:text-7xl">
-                            الدار
-                        </em>
-                    </motion.h2>
-                </motion.div>
-
-                <div className="-mx-6 px-6 md:mx-0 md:px-0">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1.2 }}
-                        className="flex gap-8 overflow-x-auto pb-12 snap-x snap-mandatory scrollbar-hide cursor-grab active:cursor-grabbing"
-                        style={{ scrollbarWidth: "none" }}
-                    >
-                        <div className="w-[5vw] shrink-0 hidden md:block" />
-
-                        {FEATURED_PRODUCTS.map((p) => (
-                            <div key={p.id} className="snap-center shrink-0 first:pl-6 md:first:pl-0 last:pr-6 md:last:pr-0">
-                                <ProductCardRefined product={p} />
-                            </div>
-                        ))}
-
-                        <div className="w-[5vw] shrink-0 hidden md:block" />
-                    </motion.div>
-                </div>
-
-                <div className="flex justify-center mt-4">
-                    <Link href="/shop" className="text-[#1A1A2E] text-[10px] tracking-[0.3em] uppercase border-b border-[#1A1A2E] pb-1 hover:text-[#C9A96E] hover:border-[#C9A96E] transition-colors">
-                        اكتشفي المزيد
-                    </Link>
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function HotSellers() {
-    const { addItem, openCart } = useCartStore();
-
-    return (
-        <section className="bg-[#1A1A2E] py-32 overflow-hidden border-b border-[#C9A96E]/20">
-            <div className="max-w-7xl mx-auto px-6">
-
-                <div className="flex flex-col md:flex-row pb-12 md:items-end justify-between border-b border-white/10 mb-16 gap-8">
-                    <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }}>
-                        <motion.p variants={fadeUp} className="text-[#C9A96E] text-[10px] tracking-[0.4em] uppercase mb-4">
-                            الأكثر مبيعا
-                        </motion.p>
-                        <motion.h2 variants={fadeUp} className="text-white text-4xl md:text-6xl font-black uppercase tracking-[0.15em] flex flex-wrap items-center gap-x-4">
-                            الأكثر
-                            <em className="text-[#C9A96E] font-serif font-light italic normal-case tracking-normal text-5xl md:text-7xl block md:inline">
-                                مبيعاً
-                            </em>
-                        </motion.h2>
-                    </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 1 }}
-                        className="pb-2"
-                    >
-                        <Link href="/shop" className="text-white/60 text-xs tracking-widest uppercase hover:text-[#C9A96E] transition-colors flex items-center gap-3 group">
-                            عرض المجموعة
-                            <span className="w-12 h-px bg-white/30 group-hover:bg-[#C9A96E] transition-colors" />
-                        </Link>
-                    </motion.div>
-                </div>
-
-                <div className="grid lg:grid-cols-[1.5fr_1fr] gap-8 h-auto lg:h-[800px]">
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
-                        className="relative group bg-[#F5EDE0] w-full h-[600px] lg:h-full overflow-hidden"
-                    >
-                        <Link href={`/products/${HOT_SELLERS[0].slug}`} className="absolute inset-0 z-10" />
-                        <Image src={HOT_SELLERS[0].img} alt={HOT_SELLERS[0].nameAr} fill className="object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out" />
-
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E]/90 via-transparent to-transparent pointer-events-none" />
-
-                        <div className="absolute top-6 left-6 z-20">
-                            <span className="bg-[#C9A96E] text-white text-[9px] tracking-[0.2em] uppercase px-4 py-2">1</span>
-                        </div>
-                        <div className="absolute top-6 right-6 z-20">
-                            <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] tracking-[0.2em] uppercase px-4 py-2">
-                                {HOT_SELLERS[0].tag}
-                            </span>
-                        </div>
-
-                        <div className="absolute bottom-0 inset-x-0 p-8 md:p-12 z-20 flex justify-between items-end">
-                            <div>
-                                <h3 className="text-white text-3xl md:text-5xl font-light mb-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                                    {HOT_SELLERS[0].nameAr}
-                                </h3>
-                                <p className="text-white/60 text-lg">{HOT_SELLERS[0].price.toLocaleString()} MAD</p>
-                            </div>
-                            <button onClick={(e) => {
-                                e.preventDefault();
-                                addItem({
-                                    id: HOT_SELLERS[0].id.toString(), slug: HOT_SELLERS[0].slug,
-                                    nameFr: HOT_SELLERS[0].nameAr, nameAr: HOT_SELLERS[0].nameAr, nameEn: HOT_SELLERS[0].nameAr,
-                                    price: HOT_SELLERS[0].price, images: [HOT_SELLERS[0].img],
-                                    descriptionFr: "", descriptionAr: "", descriptionEn: "", status: "active",
-                                    category: { id: "", slug: "", nameFr: "", nameAr: "", nameEn: "" },
-                                    variants: []
-                                }, {
-                                    id: HOT_SELLERS[0].id.toString() + "-v1",
-                                    color: "#000", colorNameFr: "STD", colorNameAr: "STD", colorNameEn: "STD",
-                                    size: "Standard", stock: 10, sku: HOT_SELLERS[0].slug
-                                }, 1);
-                                openCart();
-                            }} className="w-14 h-14 rounded-full bg-white text-[#1A1A2E] flex items-center justify-center hover:bg-[#C9A96E] hover:text-white transition-colors">
-                                <ShoppingBag size={20} strokeWidth={1.5} />
-                            </button>
-                        </div>
-                    </motion.div>
-
-                    <div className="grid grid-rows-2 gap-8 h-[800px] lg:h-full">
-                        {HOT_SELLERS.slice(1).map((product, idx) => (
-                            <motion.div
-                                key={product.id}
-                                initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: idx * 0.2 }}
-                                className="relative group bg-[#F5EDE0] w-full h-full overflow-hidden"
-                            >
-                                <Link href={`/products/${product.slug}`} className="absolute inset-0 z-10" />
-                                <Image src={product.img} alt={product.nameAr} fill className="object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E]/80 via-transparent to-transparent pointer-events-none" />
-
-                                <div className="absolute top-5 left-5 z-20">
-                                    <span className="bg-[#C9A96E] text-white text-[9px] tracking-[0.2em] uppercase px-3 py-1.5">{idx + 2}</span>
-                                </div>
-                                <div className="absolute top-5 right-5 z-20">
-                                    <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] tracking-[0.2em] uppercase px-3 py-1.5">
-                                        {product.tag}
-                                    </span>
-                                </div>
-
-                                <div className="absolute bottom-0 inset-x-0 p-6 z-20 flex justify-between items-end">
-                                    <div>
-                                        <h3 className="text-white text-2xl font-light mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                                            {product.nameAr}
-                                        </h3>
-                                        <p className="text-white/60 text-sm">{product.price.toLocaleString()} MAD</p>
-                                    </div>
-                                    <button onClick={(e) => {
-                                        e.preventDefault();
-                                        addItem({
-                                            id: product.id.toString(), slug: product.slug,
-                                            nameFr: product.nameAr, nameAr: product.nameAr, nameEn: product.nameAr,
-                                            price: product.price, images: [product.img],
-                                            descriptionFr: "", descriptionAr: "", descriptionEn: "", status: "active",
-                                            category: { id: "", slug: "", nameFr: "", nameAr: "", nameEn: "" },
-                                            variants: []
-                                        }, {
-                                            id: product.id.toString() + "-v1",
-                                            color: "#000", colorNameFr: "STD", colorNameAr: "STD", colorNameEn: "STD",
-                                            size: "Standard", stock: 10, sku: product.slug
-                                        }, 1);
-                                        openCart();
-                                    }} className="w-10 h-10 rounded-full bg-white text-[#1A1A2E] flex items-center justify-center hover:bg-[#C9A96E] hover:text-white transition-colors">
-                                        <ShoppingBag size={15} strokeWidth={1.5} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
+    </section>;
 }
 
 function MaisonStory() {
@@ -713,7 +480,9 @@ function Testimonials() {
                             {TESTIMONIALS.map((t, i) => (
                                 <motion.button
                                     key={i}
-                                    onClick={() => setActive(i)}
+                                    aria-label={`الشريحة ${i + 1}`}
+                        aria-pressed={i === active}
+                        onClick={() => setActive(i)}
                                     animate={{
                                         y: [0, i % 2 === 0 ? -8 : 10, 0, i % 2 === 0 ? 6 : -8, 0],
                                         x: [0, i % 3 === 0 ? 6 : -6, 0, i % 3 === 0 ? -5 : 8, 0]
@@ -760,13 +529,22 @@ function Testimonials() {
 }
 
 export default function LuxuryHomePage() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+    useEffect(() => {
+        let active = true;
+        getProducts({ status: "ACTIVE", limit: 6 }).then(result => { if (active) setProducts(result.data); })
+            .catch(() => { if (active) setError(true); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, []);
     return (
         <div className="bg-[#FDFAF6] min-h-screen">
             <HeroSection />
             <MarqueeBar />
             <CollectionGallery />
-            <HotSellers />
-            <FeaturedCarousel />
+            <CatalogHighlights products={products} loading={loading} error={error} />
             <Testimonials />
             <MaisonStory />
             <WhatsAppCTA />
