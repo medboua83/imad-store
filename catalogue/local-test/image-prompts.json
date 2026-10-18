@@ -1,0 +1,8 @@
+{
+  "tool": "built-in imagegen",
+  "prompts": {
+    "sac": "Use case: product-mockup. Asset type: provisional ecommerce catalog concept image for a Moroccan fashion shop. Subject: one elegant unbranded cognac brown structured handbag with two handles and a detachable shoulder strap, tasteful minimal gold hardware. Photorealistic studio product concept, warm ivory seamless background, soft diffuse daylight, subtle grounded shadow, three-quarter view, full bag visible centered with generous margins, square composition. Fine leather-like texture, coherent stitching and construction. No text, logos, people, accessories or watermarks. This is a fictional design illustration, not documentation of real inventory.",
+    "abaya": "Use case: product-mockup. A provisional ecommerce concept photograph, one unbranded black abaya, simple elegant loose long sleeves and full-length modest silhouette, on an invisible mannequin, no person or visible stand, full garment centered with ample margins. Warm ivory seamless studio background, soft diffuse light, realistic fabric drape. Square composition. No embroidery, text, logos or watermarks. Fictional garment design, not a real inventory photo.",
+    "chale": "Use case: product-mockup. Provisional ecommerce concept photograph of one unbranded sand beige shawl, neatly folded with a portion softly draped showing fine woven texture and short fringe. Warm ivory seamless studio background, diffuse natural light, subtle shadow, centered complete item with ample margins, square composition. No person, props, text, logos, watermarks. Fictional design, not a real inventory photo."
+  }
+}

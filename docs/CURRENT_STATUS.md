@@ -29,3 +29,7 @@ PR #2 synchronized the local storefront and CRM integration; PR #3 recorded the 
 Twenty isolated scenarios pass. Public pages render their useful data on the server; product metadata, real 404s, robots and sitemap are implemented. Cart reconciliation, recovery after network failure, accessible dialogs, server-backed content publication and session renewal were verified in browsers. The public catalog remains empty until real products are supplied. Commercial terms require owner validation; generic pages do not invent delivery times or return rules.
 
 Applied follow-up: the active port 3000 frontend and port 4000 backend have been restarted and verified. Live order count, all eight outbox rows (including attempts), product statuses and manually maintained order indexes match the pre-application snapshot. No site content was published on the active database.
+
+## Explicitly authorized local test catalogue
+
+The owner clarified that new catalogue entries are for testing, not real merchandise. Three labelled synthetic products with built-in imagegen WebP images and five variants were installed on local port 3000. See `catalogue/local-test/README.md` for fictional prices, provenance, strict opt-in installation and archive rollback. One browser checkout was verified, cancelled and its reserved stock restored; no new CRM event and no change to the eight previous outbox records. Real commercial product information remains outstanding.
