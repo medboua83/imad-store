@@ -1,292 +1,80 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Heart, ChevronLeft, ChevronRight, Star, Truck, ShieldCheck, RotateCcw, Plus, Minus } from "lucide-react";
+import Image from "next/image";
+import { ShoppingBag, Minus, Plus } from "lucide-react";
+import { getProduct, type Product, type ProductVariant } from "@/lib/api";
 import { useCartStore } from "@/store/cart.store";
 
-/* ─── Mock data ───────────────────────────────────────────────── */
-const MOCK_PRODUCT = {
-    id: "prod_1",
-    slug: "abaya-soie-ivoire",
-    nameFr: "Abaya Soie Ivoire — Édition Limitée",
-    nameAr: "عباءة حرير عاجي — إصدار محدود",
-    nameEn: "Ivory Silk Abaya — Limited Edition",
-    price: 890,
-    compareAt: 1200,
-    sku: "IS-AB-01-IVR",
-    category: "Abayas",
-    descAr: "منسوجة يدويًا في ورشاتنا بمراكش، تجسد هذه العباءة الحريرية قمة الأناقة المحتشمة. تلتقط تطريزاتها الذهبية المطبقة يدويًا الضوءَ برشاقة، بينما يتدلى القماش الانسيابي ليلائم كل جسد.",
-    images: ["/images/hero-1.png", "/images/cat-abayas.png", "/images/hero-2.png"],
-    colors: [
-        { hex: "#F5EDE0", labelAr: "عاجي" },
-        { hex: "#1A1A2E", labelAr: "أزرق ليلي" },
-        { hex: "#C9A96E", labelAr: "ذهبي" },
-    ],
-    variants: [
-        { id: "v1", color: "#F5EDE0", size: "XS", instock: true },
-        { id: "v2", color: "#F5EDE0", size: "S", instock: true },
-        { id: "v3", color: "#F5EDE0", size: "M", instock: true },
-        { id: "v4", color: "#F5EDE0", size: "L", instock: false },
-        { id: "v5", color: "#1A1A2E", size: "S", instock: true },
-        { id: "v6", color: "#1A1A2E", size: "M", instock: true },
-        { id: "v7", color: "#C9A96E", size: "S", instock: true },
-    ],
-};
+const objectId = /^[a-fA-F0-9]{24}$/;
+const imgSafe = (value: string) => value.startsWith("/") || /^https:\/\/(res\.cloudinary\.com|placeholder\.co)\//.test(value);
 
 export default function ProductDetailPage() {
-    const product = MOCK_PRODUCT;
+  const params = useParams();
+  const slug = typeof params?.slug === "string" ? params.slug : "";
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [variantId, setVariantId] = useState("");
+  const [qty, setQty] = useState(1);
+  const [imageIdx, setImageIdx] = useState(0);
+  const { addItem } = useCartStore();
 
-    const [imgIdx, setImgIdx] = useState(0);
-    const [activeColor, setActiveColor] = useState(product.colors[0].hex);
-    const [activeSize, setActiveSize] = useState<string | null>(null);
-    const [qty, setQty] = useState(1);
-    const [wished, setWished] = useState(false);
-    const [addedAnim, setAddedAnim] = useState(false);
-    const { addItem, openCart } = useCartStore();
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setProduct(null);
+    setVariantId("");
+    setError("");
+    getProduct(slug).then(p => {
+      if (!active) return;
+      if (p.status !== "ACTIVE") { setError("هذا المنتج غير متاح حالياً"); return; }
+      setProduct(p);
+      setVariantId(p.variants.find(v => v.stock > 0 && objectId.test(v.id))?.id || "");
+    }).catch(() => { if (active) setError("تعذر تحميل المنتج. حاول مجدداً."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [slug]);
 
-    const discount = product.compareAt ? Math.round((1 - product.price / product.compareAt) * 100) : null;
+  const variant: ProductVariant | undefined = product?.variants.find(v => v.id === variantId);
+  const available = !!product && objectId.test(product.id) && !!variant && objectId.test(variant.id) && variant.stock > 0;
+  const maxQty = variant?.stock ?? 1;
+  const images = (product?.images || []).filter(imgSafe);
+  const name = product?.nameAr || product?.nameFr || product?.nameEn || "";
 
-    const sizesForColor = product.variants
-        .filter(v => v.color === activeColor)
-        .map(v => ({ size: v.size, instock: v.instock }));
+  function add() {
+    if (!product || !variant || !available || qty < 1 || qty > variant.stock) return;
+    addItem(product, variant, qty);
+  }
 
-    const handleAddToCart = () => {
-        if (!activeSize) return;
-        const variant = product.variants.find(v => v.color === activeColor && v.size === activeSize);
-        if (!variant) return;
-        const colorInfo = product.colors.find(c => c.hex === activeColor)!;
-        addItem({
-            id: product.id, slug: product.slug,
-            nameFr: product.nameFr, nameAr: product.nameAr, nameEn: product.nameEn,
-            price: product.price, images: product.images,
-            descriptionFr: "", descriptionAr: "", descriptionEn: "", status: "active",
-            category: { id: "", slug: "", nameFr: "", nameAr: "", nameEn: "" },
-            variants: [],
-        }, {
-            id: variant.id,
-            color: activeColor,
-            colorNameFr: colorInfo.labelAr, colorNameAr: colorInfo.labelAr, colorNameEn: colorInfo.labelAr,
-            size: variant.size,
-            stock: 10, sku: product.sku,
-        }, qty);
-        setAddedAnim(true);
-        setTimeout(() => setAddedAnim(false), 1800);
-        openCart();
-    };
+  if (loading) return <main className="min-h-[70vh] pt-36 px-6 text-center" dir="rtl">جارٍ تحميل المنتج...</main>;
+  if (!product || error) return <main className="min-h-[70vh] pt-36 px-6 text-center" dir="rtl"><p>{error || "المنتج غير موجود"}</p><Link href="/shop" className="underline mt-6 inline-block">العودة إلى المتجر</Link></main>;
 
-    return (
-        <div className="min-h-screen bg-[#FDFAF6]">
-
-            {/* ── Breadcrumb ── */}
-            <div className="pt-32 pb-0 max-w-[1600px] mx-auto px-10">
-                <nav className="flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-[#8B8399] font-medium">
-                    <Link href="/" className="hover:text-[#C9A96E] transition-colors">الرئيسية</Link>
-                    <span className="mx-2">/</span>
-                    <Link href="/shop?category=abayas" className="hover:text-[#C9A96E] transition-colors">عبايات</Link>
-                    <span className="mx-2">/</span>
-                    <span className="text-[#C9A96E] truncate max-w-[200px]">{product.nameAr}</span>
-                </nav>
+  return (
+    <main className="min-h-screen bg-[#FDFAF6] pt-32 pb-20 px-6" dir="rtl">
+      <div className="max-w-6xl mx-auto">
+        <nav className="text-xs text-[#8B8399] mb-10"><Link href="/shop" className="hover:underline">المتجر</Link> / {name}</nav>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <section>
+            <div className="relative aspect-[4/5] bg-[#F5EDE0] overflow-hidden">
+              {images[imageIdx] ? <Image src={images[imageIdx]} alt={name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex h-full items-center justify-center text-[#8B8399]">لا توجد صورة</div>}
             </div>
-
-            {/* ════════════ MAIN TWO-COLUMN LAYOUT ════════════ */}
-            <div className="max-w-[1600px] mx-auto px-8 md:px-10 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-[1.3fr_480px] gap-16 lg:gap-24 items-start">
-
-                {/* ── LEFT: Image stack ── */}
-                <div className="relative">
-
-                    {/* Main image */}
-                    <div className="relative aspect-[4/5] bg-[#F5EDE0] overflow-hidden w-full">
-                        <AnimatePresence mode="wait">
-                            <motion.div key={imgIdx} className="absolute inset-0"
-                                initial={{ opacity: 0, scale: 1.04 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}>
-                                <Image src={product.images[imgIdx]} alt={product.nameAr} fill className="object-cover" priority />
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Badges */}
-                        <div className="absolute top-5 left-5 flex flex-col gap-2 z-10 pointer-events-none">
-                            {discount && (
-                                <span className="bg-[#1A1A2E] text-[#C9A96E] text-[8px] tracking-[0.2em] uppercase px-3 py-1.5 font-medium">
-                                    -{discount}%
-                                </span>
-                            )}
-                            <span className="bg-[#C9A96E] text-white text-[8px] tracking-[0.2em] uppercase px-3 py-1.5">
-                                إصدار محدود
-                            </span>
-                        </div>
-
-                        {/* Prev / Next arrows */}
-                        {product.images.length > 1 && (
-                            <>
-                                <button onClick={() => setImgIdx(i => (i - 1 + product.images.length) % product.images.length)}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-[#C9A96E] hover:text-white transition-all group">
-                                    <ChevronLeft size={18} strokeWidth={1.5} />
-                                </button>
-                                <button onClick={() => setImgIdx(i => (i + 1) % product.images.length)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/80 backdrop-blur flex items-center justify-center hover:bg-[#C9A96E] hover:text-white transition-all">
-                                    <ChevronRight size={18} strokeWidth={1.5} />
-                                </button>
-                            </>
-                        )}
-
-                        {/* Wishlist */}
-                        <button onClick={() => setWished(!wished)}
-                            className={`absolute top-5 right-5 z-10 w-10 h-10 flex items-center justify-center transition-all duration-300 ${wished ? "bg-[#C9A96E]" : "bg-white/85 backdrop-blur hover:bg-[#C9A96E]"}`}>
-                            <Heart size={15} strokeWidth={wished ? 0 : 1.5} fill={wished ? "white" : "none"} className="text-white" />
-                        </button>
-
-                        {/* Dot indicators */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                            {product.images.map((_, i) => (
-                                <button key={i} onClick={() => setImgIdx(i)}
-                                    className={`w-1.5 h-1.5 rounded-full transition-all ${i === imgIdx ? "bg-[#C9A96E] w-5" : "bg-white/60"}`} />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Thumbnails strip */}
-                    <div className="flex gap-3 mt-4">
-                        {product.images.map((src, i) => (
-                            <button key={i} onClick={() => setImgIdx(i)}
-                                className={`relative w-20 h-24 bg-[#F5EDE0] overflow-hidden shrink-0 border-2 transition-all ${i === imgIdx ? "border-[#C9A96E]" : "border-transparent hover:border-[#C9A96E]/40"}`}>
-                                <Image src={src} alt={`view ${i + 1}`} fill className="object-cover" />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── RIGHT: Info panel — sticky ── */}
-                <div className="lg:sticky lg:top-32 flex flex-col gap-6">
-
-                    {/* Category + stars */}
-                    <div className="flex items-center justify-between">
-                        <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A96E] font-medium">{product.category}</p>
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} size={11} className="text-[#C9A96E]" fill="#C9A96E" />
-                            ))}
-                            <span className="text-[10px] text-[#8B8399] ml-1">(48)</span>
-                        </div>
-                    </div>
-
-                    {/* Name */}
-                    <h1 className="text-[#1A1A2E] text-3xl md:text-4xl font-light leading-snug"
-                        style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                        {product.nameAr}
-                    </h1>
-
-                    {/* Price */}
-                    <div className="flex items-end gap-4">
-                        <span className="text-3xl font-light text-[#1A1A2E]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                            {product.price.toLocaleString()} MAD
-                        </span>
-                        {product.compareAt && (
-                            <span className="text-base text-[#8B8399] line-through pb-0.5">
-                                {product.compareAt.toLocaleString()} MAD
-                            </span>
-                        )}
-                    </div>
-
-                    <hr className="border-[#C9A96E]/15" />
-
-                    {/* Color selector */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <p className="text-[9px] tracking-[0.25em] uppercase text-[#1A1A2E]/60 font-medium">اللون</p>
-                            <span className="text-xs text-[#C9A96E]">
-                                {product.colors.find(c => c.hex === activeColor)?.labelAr}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {product.colors.map((c) => (
-                                <button key={c.hex} onClick={() => { setActiveColor(c.hex); setActiveSize(null); }}
-                                    className="w-8 h-8 rounded-full border-2 transition-all duration-200"
-                                    style={{
-                                        background: c.hex,
-                                        borderColor: c.hex === activeColor ? "#C9A96E" : "rgba(201,169,110,0.2)",
-                                        boxShadow: c.hex === activeColor ? "0 0 0 3px white, 0 0 0 5px #C9A96E" : "none",
-                                        transform: c.hex === activeColor ? "scale(1.15)" : "scale(1)",
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Size selector */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <p className="text-[9px] tracking-[0.25em] uppercase text-[#1A1A2E]/60 font-medium">المقاس</p>
-                            <button className="text-[9px] tracking-widest uppercase text-[#C9A96E] underline underline-offset-2 hover:opacity-70 transition-opacity">
-                                دليل المقاسات
-                            </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {sizesForColor.map(({ size, instock }) => (
-                                <button
-                                    key={size}
-                                    disabled={!instock}
-                                    onClick={() => setActiveSize(size)}
-                                    className={`w-14 h-11 text-xs tracking-widest border transition-all duration-200 ${!instock ? "border-[#C9A96E]/10 text-[#1A1A2E]/20 cursor-not-allowed line-through" :
-                                        activeSize === size ? "bg-[#1A1A2E] border-[#1A1A2E] text-[#C9A96E]" :
-                                            "border-[#C9A96E]/30 text-[#1A1A2E]/70 hover:border-[#C9A96E] hover:text-[#1A1A2E]"
-                                        }`}
-                                >
-                                    {size}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Qty + Add */}
-                    <div className="flex gap-3">
-                        <div className="flex items-center border border-[#C9A96E]/30 divide-x divide-[#C9A96E]/25 shrink-0">
-                            <button onClick={() => setQty(q => Math.max(1, q - 1))} className="px-4 py-3.5 text-[#1A1A2E]/60 hover:text-[#C9A96E] transition-colors"><Minus size={13} /></button>
-                            <span className="px-5 py-3.5 text-sm font-medium text-[#1A1A2E]">{qty}</span>
-                            <button onClick={() => setQty(q => q + 1)} className="px-4 py-3.5 text-[#1A1A2E]/60 hover:text-[#C9A96E] transition-colors"><Plus size={13} /></button>
-                        </div>
-                        <button
-                            onClick={handleAddToCart}
-                            disabled={!activeSize}
-                            className={`flex-1 flex items-center justify-center gap-3 text-[10px] tracking-[0.25em] uppercase font-medium transition-all duration-500 py-3.5 ${!activeSize ? "bg-[#1A1A2E]/20 text-white cursor-not-allowed" :
-                                addedAnim ? "bg-[#C9A96E] text-white" :
-                                    "bg-[#1A1A2E] text-white hover:bg-[#C9A96E]"
-                                }`}
-                        >
-                            <ShoppingBag size={15} strokeWidth={1.5} />
-                            {!activeSize ? "اختر مقاساً أولاً" : addedAnim ? "تمت الإضافة ✓" : "أضف إلى السلة"}
-                        </button>
-                    </div>
-
-                    <p className="text-[9px] tracking-widest text-[#8B8399] text-center">
-                        المرجع: <span className="text-[#1A1A2E]">{product.sku}</span>
-                    </p>
-
-                    <hr className="border-[#C9A96E]/15" />
-
-                    {/* Description */}
-                    <p className="text-[#1A1A2E]/70 text-sm leading-relaxed">{product.descAr}</p>
-
-                    {/* Perks */}
-                    <div className="flex flex-col gap-3 bg-white border border-[#C9A96E]/15 px-6 py-5">
-                        {[
-                            { icon: <Truck size={15} strokeWidth={1.5} />, text: "توصيل مجاني في المغرب" },
-                            { icon: <RotateCcw size={15} strokeWidth={1.5} />, text: "إرجاع مجاني خلال 14 يوم" },
-                            { icon: <ShieldCheck size={15} strokeWidth={1.5} />, text: "دفع آمن ومضمون" },
-                        ].map((p, i) => (
-                            <div key={i} className="flex items-center gap-3 text-xs text-[#1A1A2E]/70">
-                                <span className="text-[#C9A96E] shrink-0">{p.icon}</span>
-                                {p.text}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            {images.length > 1 && <div className="flex gap-3 mt-3">{images.map((image,i) => <button key={i} type="button" onClick={() => setImageIdx(i)} className={`w-20 h-24 relative border-2 ${imageIdx === i ? "border-[#C9A96E]" : "border-transparent"}`}><Image src={image} alt={`${name} ${i+1}`} fill sizes="80px" className="object-cover" /></button>)}</div>}
+          </section>
+          <section className="flex flex-col gap-6 lg:pt-6">
+            <p className="text-[#C9A96E] text-sm">{product.category?.nameAr || product.category?.nameFr || ""}</p>
+            <h1 className="text-4xl text-[#1A1A2E]">{name}</h1>
+            <p className="text-3xl">{product.price.toLocaleString()} MAD {product.compareAtPrice && product.compareAtPrice > product.price ? <span className="text-base line-through text-gray-400">{product.compareAtPrice.toLocaleString()} MAD</span> : null}</p>
+            <p className="text-sm leading-7 text-gray-600">{product.descriptionAr || product.descriptionFr || product.descriptionEn}</p>
+            <div><label htmlFor="variant" className="block mb-3 text-sm">اللون / المقاس</label><select id="variant" value={variantId} onChange={e => { setVariantId(e.target.value); setQty(1); }} className="border border-[#C9A96E]/40 bg-white p-3 w-full"><option value="">اختر النوع</option>{product.variants.map(v => <option key={v.id} value={v.id} disabled={v.stock <= 0 || !objectId.test(v.id)}>{v.colorNameAr || v.colorNameFr || v.color} {v.size ? `— ${v.size}` : ""} {v.stock <= 0 ? "— نفدت الكمية" : `— ${v.stock} متوفر`}</option>)}</select></div>
+            <div className="flex items-center gap-3"><button type="button" aria-label="تقليل الكمية" className="border p-3" onClick={() => setQty(q => Math.max(1,q-1))}><Minus size={16}/></button><span>{qty}</span><button type="button" aria-label="زيادة الكمية" className="border p-3" onClick={() => setQty(q => Math.min(maxQty, q+1))}><Plus size={16}/></button></div>
+            <button type="button" onClick={add} disabled={!available || qty > maxQty} className="flex gap-3 items-center justify-center py-4 bg-[#1A1A2E] text-white disabled:opacity-40"><ShoppingBag size={18}/>{available ? "أضف إلى السلة" : "غير متوفر"}</button>
+            <p className="text-xs text-gray-500">SKU: {variant?.sku || "—"}</p>
+          </section>
         </div>
-    );
+      </div>
+    </main>
+  );
 }

@@ -13,9 +13,11 @@ import { orderRoutes, notificationRoutes } from "./routes/order.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { addressRoutes } from "./routes/address.routes";
 import { settingsRoutes } from "./routes/settings.routes";
+import { deskcommRoutes } from "./routes/deskcomm.routes";
 import { telegramRoutes } from "./routes/telegram.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { syncSheetsToDatabase } from "./lib/notifications";
+import { processDeskcommOutbox } from "./lib/deskcomm-outbox";
 import { ensureProductionData } from "./lib/seedAdmin";
 
 const app: Application = express();
@@ -45,16 +47,6 @@ app.get("/", (_req, res) => {
     res.json({ message: "Imad Store API is running. Please use /api for endpoints." });
 });
 
-// ─── One-time Seed Trigger (manual, safe to call anytime) ────────────────────
-app.get("/api/seed", async (req, res) => {
-    try {
-        const clean = req.query.clean === "true";
-        await ensureProductionData(clean);
-        res.json({ success: true, message: `Production data seeded/verified successfully. (clean=${clean})` });
-    } catch (err: any) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
 
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
 const IS_DEV = process.env.NODE_ENV !== "production";
@@ -70,6 +62,14 @@ const orderRateLimiter = rateLimit({
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
+const loginRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many login attempts. Try again later.",
+});
+app.use("/api/auth/login", loginRateLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -79,6 +79,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/telegram", telegramRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/integrations/deskcomm", deskcommRoutes);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 app.use(errorMiddleware);
@@ -86,7 +87,7 @@ app.use(errorMiddleware);
 // ─── Start ───────────────────────────────────────────────────────────────────
 app.listen(PORT, async () => {
     console.log(`🚀 Imad Store API running on http://localhost:${PORT}`);
-    // Auto-seed admin + sample data on every boot (idempotent — safe no-op if data is valid)
+    // Check store data; administrator credentials are never created or reset at startup.
     await ensureProductionData();
 });
 
@@ -99,3 +100,8 @@ setInterval(() => {
 }, 30_000);
 
 export default app;
+
+// Poll durable CRM outbox independent of the checkout request.
+setInterval(() => {
+    processDeskcommOutbox().catch((err) => console.error("DeskcommCRM worker failed:", err instanceof Error ? err.name : "UnknownError"));
+}, 15000);

@@ -58,42 +58,17 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-    console.log("LOGIN REQUEST BODY:", req.body);
     const body = loginSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
-    console.log("USER FROM DB:", user);
 
-    // ── ADMIN BYPASS ─────────────────────────────────────────────────────────
-    // Two layers: (1) env vars from Hostinger dashboard, (2) absolute hardcoded fallback.
-    // This guarantees admin@imad-store.ma / Admin123456! ALWAYS logs in regardless
-    // of DB state, bcrypt failures, or environment variable sync delays.
-    const envAdminEmail    = process.env.ADMIN_EMAIL    ?? "admin@imad-store.ma";
-    const envAdminPassword = process.env.ADMIN_PASSWORD ?? "Admin123456!";
-    const isAdminByEmail   = body.email === envAdminEmail || body.email === "admin@imad-store.ma";
-    const isAdminByPass    = body.password === envAdminPassword || body.password === "Admin123456!";
-
-    if (isAdminByEmail && isAdminByPass) {
-        console.log("✅ ADMIN BYPASS — email:", body.email);
-        // Prefer the real DB user so the JWT subject is valid; create a synthetic one if missing
-        const bypassUser = user ?? { id: "64a000000000000000000000", email: "admin@imad-store.ma", role: "ADMIN" };
-        const { accessToken, refreshToken } = generateTokens(bypassUser as any);
-        // Persist a real refresh token only when we have an actual DB user
-        if (user) {
-            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
-        }
-        return res.json({ success: true, data: { accessToken, refreshToken } });
-    }
 
     if (!user) {
-        console.error(`Login failed: User not found — ${body.email}`);
         throw new AppError("Invalid credentials", 401);
     }
 
     const valid = await bcrypt.compare(body.password, user.passwordHash);
     if (!valid) {
-        console.error(`Login failed: Password mismatch — ${body.email}`);
         throw new AppError("Invalid credentials", 401);
     }
 

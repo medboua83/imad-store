@@ -13,6 +13,8 @@ function CheckoutContent() {
     const [success, setSuccess] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState("");
+    const [crmConsent, setCrmConsent] = useState(false);
+    const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
 
     const [form, setForm] = useState({
         fullName: "",
@@ -35,6 +37,8 @@ function CheckoutContent() {
         }));
 
         try {
+            const activeKey = checkoutKey ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `order_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+            if (!checkoutKey) setCheckoutKey(activeKey);
             const order = await createOrder({
                 paymentMethod: "COD",
                 customer: {
@@ -45,15 +49,17 @@ function CheckoutContent() {
                     region: form.city,
                 },
                 items: itemsPayload,
-            });
+                crmConsent,
+            }, activeKey);
 
             setOrderId(order.id);
             setSuccess(true);
             clearCart();
+            setCheckoutKey(null);
         } catch (err: unknown) {
             console.error("Order failed:", err);
             // Surface the real API error if available
-            const axiosErr = err as any;
+            const axiosErr = err as { response?: { data?: { error?: string; details?: { message?: string }[] } }; message?: string };
             const apiMsg = axiosErr?.response?.data?.error
                 ?? axiosErr?.response?.data?.details?.[0]?.message
                 ?? axiosErr?.message;
@@ -278,6 +284,12 @@ function CheckoutContent() {
                         </div>
                     </div>
 
+                    <label className="flex items-start gap-3 text-sm text-[#1A1A2E]">
+                        <input type="checkbox" checked={crmConsent}
+                            onChange={(e) => setCrmConsent(e.target.checked)}
+                            className="mt-1" />
+                        <span>أوافق على مشاركة بيانات طلبي مع فريق خدمة العملاء عبر DeskcommCRM للتواصل معي بشأن طلبي بواسطة واتساب. الموافقة اختيارية ولا تمنع إتمام الطلب.</span>
+                    </label>
                     <button
                         type="submit"
                         disabled={loading}
