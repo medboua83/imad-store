@@ -1,14 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
-import { getSettings, type StoreSettings } from "@/lib/api";
-
+import { useQuery } from "@tanstack/react-query";
+import { getSettings } from "@/lib/api";
 export function useShipping(subtotal: number) {
-    const [settings, setSettings] = useState<StoreSettings | null>(null);
-    useEffect(() => {
-        let active = true;
-        getSettings().then(value => { if (active) setSettings(value); }).catch(() => {});
-        return () => { active = false; };
-    }, []);
-    const fee = settings ? (subtotal >= settings.freeShippingMin ? 0 : settings.shippingCost) : null;
-    return { settings, fee, total: fee === null ? null : subtotal + fee };
+    const query = useQuery({
+        queryKey: ["store-settings"],
+        queryFn: getSettings,
+        staleTime: 60_000,
+        retry: 2,
+    });
+    const settings = query.data ?? null;
+    const fee = settings
+        ? subtotal >= settings.freeShippingMin
+            ? 0
+            : settings.shippingCost
+        : null;
+    return {
+        settings,
+        fee,
+        total: fee === null ? null : subtotal + fee,
+        loading: query.isPending,
+        error: query.isError,
+        retry: query.refetch,
+    };
 }

@@ -9,29 +9,39 @@ import { paginationSchema, statusSchema } from "../lib/validation";
 import { transitionOrderStatus } from "../lib/order-lifecycle";
 
 // Guest-only checkout schema — COD only (card payments disabled)
-const createOrderSchema = z.object({
-    paymentMethod: z.enum(["COD"]).default("COD"),
-    crmConsent: z.boolean().default(false),
-    notes: z.string().max(2000).optional(),
-    customer: z.object({
-        fullName: z.string().trim().min(2, "Full name is required").max(120),
-        phone: z.string().regex(/^(?:\+212|0)[5-7]\d{8}$/, "رقم الهاتف غير صالح"),
-        email: z.string().email().optional().or(z.literal("")),
-        street: z.string().trim().min(3, "Address is required").max(500),
-        city: z.string().trim().min(1, "City is required").max(120),
-        region: z.string().trim().min(1, "Region is required").max(120),
-        postalCode: z.string().max(20).optional(),
-    }).strict(),
-    items: z.array(
-        z.object({
-            productId: z.string(),
-            variantId: z.string(),
-            quantity: z.number().int().min(1).max(10000),
-            price: z.number().optional(),
-            name: z.string().optional(),
-        }).strict()
-    ).min(1, "Cart cannot be empty").max(100),
-}).strict();
+const createOrderSchema = z
+    .object({
+        paymentMethod: z.enum(["COD"]).default("COD"),
+        crmConsent: z.boolean().default(false),
+        expectedTotal: z.number().nonnegative().optional(),
+        notes: z.string().max(2000).optional(),
+        customer: z
+            .object({
+                fullName: z.string().trim().min(2, "Full name is required").max(120),
+                phone: z.string().regex(/^(?:\+212|0)[5-7]\d{8}$/, "رقم الهاتف غير صالح"),
+                email: z.string().email().optional().or(z.literal("")),
+                street: z.string().trim().min(3, "Address is required").max(500),
+                city: z.string().trim().min(1, "City is required").max(120),
+                region: z.string().trim().min(1, "Region is required").max(120),
+                postalCode: z.string().max(20).optional(),
+            })
+            .strict(),
+        items: z
+            .array(
+                z
+                    .object({
+                        productId: z.string(),
+                        variantId: z.string(),
+                        quantity: z.number().int().min(1).max(10000),
+                        price: z.number().optional(),
+                        name: z.string().optional(),
+                    })
+                    .strict(),
+            )
+            .min(1, "Cart cannot be empty")
+            .max(100),
+    })
+    .strict();
 
 const ORDER_INCLUDE = {
     items: {
@@ -50,104 +60,201 @@ export async function createOrder(req: Request, res: Response) {
     }
     // The fingerprint prevents using an existing key for a different cart/consent/customer.
     // Exclude UI-supplied price/name: the catalog determines the actual order price.
-    const requestFingerprint = createHash("sha256").update(JSON.stringify({
-        customer: body.customer, paymentMethod: body.paymentMethod,
-        crmConsent: body.crmConsent, notes: body.notes ?? null,
-        items: body.items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
-    })).digest("hex");
+    const requestFingerprint = createHash("sha256")
+        .update(
+            JSON.stringify({
+                customer: body.customer,
+                paymentMethod: body.paymentMethod,
+                crmConsent: body.crmConsent,
+                notes: body.notes ?? null,
+                items: body.items.map((i) => ({
+                    productId: i.productId,
+                    variantId: i.variantId,
+                    quantity: i.quantity,
+                })),
+            }),
+        )
+        .digest("hex");
 
-    const findPrevious = () => prisma.order.findUnique({
-        where: { idempotencyKey: key }, include: { ...ORDER_INCLUDE, events: true },
-    });
+    const findPrevious = () =>
+        prisma.order.findUnique({
+            where: { idempotencyKey: key },
+            include: { ...ORDER_INCLUDE, events: true },
+        });
     const previous = await findPrevious();
     if (previous) {
-        if (previous.requestFingerprint !== requestFingerprint) throw new AppError("Idempotency key already used for another order", 409);
+        if (previous.requestFingerprint !== requestFingerprint)
+            throw new AppError("Idempotency key already used for another order", 409);
         return res.status(200).json({ success: true, data: previous, idempotentReplay: true });
     }
 
     let order: Awaited<ReturnType<typeof findPrevious>> = null;
     for (let attempt = 0; attempt < 5; attempt++) {
         try {
-            order = await prisma.$transaction(async (tx) => {
-                const ids = body.items.map(i => i.productId);
-                const objectIds = ids.filter(id => /^[a-fA-F0-9]{24}$/.test(id));
-                const slugs = ids.filter(id => !/^[a-fA-F0-9]{24}$/.test(id));
-                const products = await tx.product.findMany({
-                    where: { OR: [...(objectIds.length ? [{ id: { in: objectIds } }] : []),
-                                  ...(slugs.length ? [{ slug: { in: slugs } }] : [])] },
-                    include: { variants: true },
-                });
-                const grouped = new Map<string, { quantity: number; productId: string }>();
-                const orderItems: {productId: string; variantId: string; quantity: number; unitPrice: number}[] = [];
-                let itemsTotal = 0;
-                for (const item of body.items) {
-                    const product = products.find(p => p.id === item.productId || p.slug === item.productId);
-                    if (!product || product.status !== "ACTIVE") throw new AppError("Requested product is unavailable", 400);
-                    const variant = product.variants.find(v => v.id === item.variantId || v.sku === item.variantId);
-                    if (!variant || variant.productId !== product.id) throw new AppError("Requested variant is unavailable", 400);
-                    const aggregate = grouped.get(variant.id);
-                    grouped.set(variant.id, { quantity: (aggregate?.quantity ?? 0) + item.quantity, productId: product.id });
-                    const unitPrice = Number(product.price);
-                    if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new AppError("Invalid product price", 400);
-                    orderItems.push({ productId: product.id, variantId: variant.id, quantity: item.quantity, unitPrice });
-                    itemsTotal += unitPrice * item.quantity;
-                }
-                // Conditional inventory reservations ensure no overselling. Any failure aborts all writes.
-                for (const [variantId, requested] of grouped) {
-                    const reserved = await tx.productVariant.updateMany({
-                        where: { id: variantId, productId: requested.productId, stock: { gte: requested.quantity } },
-                        data: { stock: { decrement: requested.quantity } },
-                    });
-                    if (reserved.count !== 1) throw new AppError("Insufficient stock", 409);
-                }
-                const settings = await tx.storeSettings.findUnique({ where: { id: "settings" } });
-                if (settings?.codEnabled === false) throw new AppError("Le paiement à la livraison est temporairement indisponible", 409);
-                const appliedShipping = itemsTotal >= (settings?.freeShippingMin ?? 500) ? 0 : Number(settings?.shippingCost ?? 30);
-                const created = await tx.order.create({
-                    data: {
-                        idempotencyKey: key, requestFingerprint, inventoryReserved: true,
-                        customerName: body.customer.fullName, customerPhone: body.customer.phone,
-                        customerEmail: body.customer.email || null,
-                        fullName: body.customer.fullName, phone: body.customer.phone,
-                        street: body.customer.street, city: body.customer.city,
-                        region: body.customer.region, postalCode: body.customer.postalCode,
-                        paymentMethod: "COD", paymentStatus: "PENDING", status: "PENDING",
-                        totalAmount: itemsTotal + appliedShipping, shippingCost: appliedShipping,
-                        notes: body.notes,
-                        items: { create: orderItems },
-                        events: { create: { type: "created", message: `New COD order from ${body.customer.fullName}` } },
-                    }, include: { ...ORDER_INCLUDE, events: true },
-                });
-                // The CRM event is committed together with order and stock, only with explicit consent.
-                if (body.crmConsent) {
-                    await tx.deskcommOutbox.create({data: {
-                        orderId: created.id,
-                        payload: {
-                            id: created.id, name: created.customerName ?? "", phone: created.customerPhone ?? "",
-                            email: created.customerEmail ?? undefined, street: created.street ?? "",
-                            city: created.city ?? "", region: created.region ?? "",
-                            totalAmount: created.totalAmount, shippingCost: created.shippingCost,
-                            status: created.status, paymentMethod: created.paymentMethod,
-                            items: created.items.map(i => ({
-                                name: i.product?.nameFr || i.product?.nameAr || i.product?.nameEn || "Produit",
-                                quantity: i.quantity, unitPrice: i.unitPrice,
-                            })),
+            order = await prisma.$transaction(
+                async (tx) => {
+                    const ids = body.items.map((i) => i.productId);
+                    const objectIds = ids.filter((id) => /^[a-fA-F0-9]{24}$/.test(id));
+                    const slugs = ids.filter((id) => !/^[a-fA-F0-9]{24}$/.test(id));
+                    const products = await tx.product.findMany({
+                        where: {
+                            OR: [
+                                ...(objectIds.length ? [{ id: { in: objectIds } }] : []),
+                                ...(slugs.length ? [{ slug: { in: slugs } }] : []),
+                            ],
                         },
-                    }});
-                }
-                return created;
-            }, { maxWait: 5000, timeout: 15000 });
+                        include: { variants: true },
+                    });
+                    const grouped = new Map<string, { quantity: number; productId: string }>();
+                    const orderItems: {
+                        productId: string;
+                        variantId: string;
+                        quantity: number;
+                        unitPrice: number;
+                    }[] = [];
+                    let itemsTotal = 0;
+                    for (const item of body.items) {
+                        const product = products.find(
+                            (p) => p.id === item.productId || p.slug === item.productId,
+                        );
+                        if (!product || product.status !== "ACTIVE")
+                            throw new AppError("Requested product is unavailable", 400);
+                        const variant = product.variants.find(
+                            (v) => v.id === item.variantId || v.sku === item.variantId,
+                        );
+                        if (!variant || variant.productId !== product.id)
+                            throw new AppError("Requested variant is unavailable", 400);
+                        const aggregate = grouped.get(variant.id);
+                        grouped.set(variant.id, {
+                            quantity: (aggregate?.quantity ?? 0) + item.quantity,
+                            productId: product.id,
+                        });
+                        const unitPrice = Number(product.price);
+                        if (!Number.isFinite(unitPrice) || unitPrice < 0)
+                            throw new AppError("Invalid product price", 400);
+                        orderItems.push({
+                            productId: product.id,
+                            variantId: variant.id,
+                            quantity: item.quantity,
+                            unitPrice,
+                        });
+                        itemsTotal += unitPrice * item.quantity;
+                    }
+                    // Conditional inventory reservations ensure no overselling. Any failure aborts all writes.
+                    for (const [variantId, requested] of grouped) {
+                        const reserved = await tx.productVariant.updateMany({
+                            where: {
+                                id: variantId,
+                                productId: requested.productId,
+                                stock: { gte: requested.quantity },
+                            },
+                            data: { stock: { decrement: requested.quantity } },
+                        });
+                        if (reserved.count !== 1) throw new AppError("Insufficient stock", 409);
+                    }
+                    const settings = await tx.storeSettings.findUnique({
+                        where: { id: "settings" },
+                    });
+                    if (settings?.codEnabled === false)
+                        throw new AppError(
+                            "Le paiement à la livraison est temporairement indisponible",
+                            409,
+                        );
+                    const appliedShipping =
+                        itemsTotal >= (settings?.freeShippingMin ?? 500)
+                            ? 0
+                            : Number(settings?.shippingCost ?? 30);
+                    if (
+                        body.expectedTotal !== undefined &&
+                        Math.abs(body.expectedTotal - (itemsTotal + appliedShipping)) > 0.005
+                    )
+                        throw new AppError(
+                            "Le total a changé. Actualisez votre panier avant de confirmer.",
+                            409,
+                        );
+                    const created = await tx.order.create({
+                        data: {
+                            idempotencyKey: key,
+                            requestFingerprint,
+                            inventoryReserved: true,
+                            customerName: body.customer.fullName,
+                            customerPhone: body.customer.phone,
+                            customerEmail: body.customer.email || null,
+                            fullName: body.customer.fullName,
+                            phone: body.customer.phone,
+                            street: body.customer.street,
+                            city: body.customer.city,
+                            region: body.customer.region,
+                            postalCode: body.customer.postalCode,
+                            paymentMethod: "COD",
+                            paymentStatus: "PENDING",
+                            status: "PENDING",
+                            totalAmount: itemsTotal + appliedShipping,
+                            shippingCost: appliedShipping,
+                            notes: body.notes,
+                            items: { create: orderItems },
+                            events: {
+                                create: {
+                                    type: "created",
+                                    message: `New COD order from ${body.customer.fullName}`,
+                                },
+                            },
+                        },
+                        include: { ...ORDER_INCLUDE, events: true },
+                    });
+                    // The CRM event is committed together with order and stock, only with explicit consent.
+                    if (body.crmConsent) {
+                        await tx.deskcommOutbox.create({
+                            data: {
+                                orderId: created.id,
+                                payload: {
+                                    id: created.id,
+                                    name: created.customerName ?? "",
+                                    phone: created.customerPhone ?? "",
+                                    email: created.customerEmail ?? undefined,
+                                    street: created.street ?? "",
+                                    city: created.city ?? "",
+                                    region: created.region ?? "",
+                                    totalAmount: created.totalAmount,
+                                    shippingCost: created.shippingCost,
+                                    status: created.status,
+                                    paymentMethod: created.paymentMethod,
+                                    items: created.items.map((i) => ({
+                                        name:
+                                            i.product?.nameFr ||
+                                            i.product?.nameAr ||
+                                            i.product?.nameEn ||
+                                            "Produit",
+                                        quantity: i.quantity,
+                                        unitPrice: i.unitPrice,
+                                    })),
+                                },
+                            },
+                        });
+                    }
+                    return created;
+                },
+                { maxWait: 5000, timeout: 15000 },
+            );
             break;
         } catch (err: unknown) {
-            const code = (err as {code?: string})?.code;
+            const code = (err as { code?: string })?.code;
             if (code === "P2002") {
                 const existing = await findPrevious();
                 if (existing) {
-                    if (existing.requestFingerprint !== requestFingerprint) throw new AppError("Idempotency key already used for another order", 409);
-                    return res.status(200).json({ success: true, data: existing, idempotentReplay: true });
+                    if (existing.requestFingerprint !== requestFingerprint)
+                        throw new AppError("Idempotency key already used for another order", 409);
+                    return res
+                        .status(200)
+                        .json({ success: true, data: existing, idempotentReplay: true });
                 }
             }
-            if (code === "P2034" && attempt < 4) { await new Promise(resolve => setTimeout(resolve, 30 * 2 ** attempt + Math.random() * 30)); continue; }
+            if (code === "P2034" && attempt < 4) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 30 * 2 ** attempt + Math.random() * 30),
+                );
+                continue;
+            }
             throw err;
         }
     }
@@ -156,21 +263,35 @@ export async function createOrder(req: Request, res: Response) {
     // External notifications are invoked ONLY after transaction commit; retries reuse the saved order.
     const locale = (req.headers["x-locale"] as "ar" | "fr" | "en" | undefined) ?? "fr";
     const bridgePayload: OrderForBridge = {
-        id: order.id, customerName: order.customerName, customerPhone: order.customerPhone,
-        customerEmail: order.customerEmail ?? null, fullName: order.fullName ?? null,
-        city: order.city ?? null, region: order.region ?? null, totalAmount: order.totalAmount,
+        id: order.id,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        customerEmail: order.customerEmail ?? null,
+        fullName: order.fullName ?? null,
+        city: order.city ?? null,
+        region: order.region ?? null,
+        totalAmount: order.totalAmount,
         paymentMethod: "COD",
-        items: order.items.map(i => ({name: i.product?.nameFr || "Produit", quantity: i.quantity, unitPrice: i.unitPrice})),
+        items: order.items.map((i) => ({
+            name: i.product?.nameFr || "Produit",
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+        })),
         notes: order.notes ?? null,
     };
-    bridgeOrderToAdmin(bridgePayload, {locale}).catch(() => console.error("Telegram bridge failed"));
+    bridgeOrderToAdmin(bridgePayload, { locale }).catch(() =>
+        console.error("Telegram bridge failed"),
+    );
     appendOrderToSheets(order).catch(() => console.error("Google Sheets append failed"));
     return res.status(201).json({ success: true, data: order });
 }
 
 export async function getOrder(req: Request, res: Response) {
     const { id } = req.params;
-    const order = await prisma.order.findUnique({ where: { id }, select: { id: true, status: true, paymentStatus: true, createdAt: true } });
+    const order = await prisma.order.findUnique({
+        where: { id },
+        select: { id: true, status: true, paymentStatus: true, createdAt: true },
+    });
     res.setHeader("Cache-Control", "no-store");
     if (!order) throw new AppError("Order not found", 404);
     res.json({ success: true, data: order });
@@ -178,15 +299,28 @@ export async function getOrder(req: Request, res: Response) {
 
 export async function listOrders(req: Request, res: Response) {
     const { page, limit } = paginationSchema.parse(req.query);
-    const status = req.query.status === undefined ? undefined : statusSchema.parse(req.query.status);
+    const status =
+        req.query.status === undefined ? undefined : statusSchema.parse(req.query.status);
     const where = status ? { status } : {};
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
-        prisma.order.findMany({ where, include: ORDER_INCLUDE, skip, take: Number(limit), orderBy: { createdAt: "desc" } }),
+        prisma.order.findMany({
+            where,
+            include: ORDER_INCLUDE,
+            skip,
+            take: Number(limit),
+            orderBy: { createdAt: "desc" },
+        }),
         prisma.order.count({ where }),
     ]);
 
-    res.json({ success: true, data: orders, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
+    res.json({
+        success: true,
+        data: orders,
+        total,
+        page: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+    });
 }
 
 export async function updateOrderStatus(req: Request, res: Response) {
@@ -196,7 +330,7 @@ export async function updateOrderStatus(req: Request, res: Response) {
 
     // Google Sheets status update sync (best-effort, non-blocking)
     updateOrderStatusInSheets(order.id, status).catch((err) =>
-        console.error("Google Sheets status update failed:", err)
+        console.error("Google Sheets status update failed:", err),
     );
 
     res.json({ success: true, data: order });

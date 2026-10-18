@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { ProductVariant, Product } from "@/lib/api";
+import { getProduct, ProductVariant, Product } from "../lib/api";
 
 export interface CartItem {
     variantId: string;
@@ -16,6 +16,7 @@ export interface CartItem {
     size?: string;
     price: number;
     quantity: number;
+    stock: number;
 }
 
 interface CartStore {
@@ -26,6 +27,7 @@ interface CartStore {
     addItem: (product: Product, variant: ProductVariant, quantity?: number) => void;
     removeItem: (variantId: string) => void;
     updateQty: (variantId: string, quantity: number) => void;
+    refreshCart: () => Promise<boolean>;
     clearCart: () => void;
     total: () => number;
     itemCount: () => number;
@@ -40,14 +42,23 @@ export const useCartStore = create<CartStore>()(
             closeCart: () => set({ isOpen: false }),
 
             addItem: (product, variant, quantity = 1) => {
+                if (!Number.isFinite(quantity) || quantity < 1 || variant.stock < 1) return;
                 set((state) => {
                     const existing = state.items.find((i) => i.variantId === variant.id);
                     if (existing) {
                         return {
                             items: state.items.map((i) =>
                                 i.variantId === variant.id
-                                    ? { ...i, quantity: i.quantity + quantity }
-                                    : i
+                                    ? {
+                                          ...i,
+                                          stock: variant.stock,
+                                          price: product.price,
+                                          quantity: Math.min(
+                                              variant.stock,
+                                              i.quantity + Math.floor(quantity),
+                                          ),
+                                      }
+                                    : i,
                             ),
                             isOpen: true,
                         };
@@ -65,7 +76,8 @@ export const useCartStore = create<CartStore>()(
                         colorNameEn: variant.colorNameEn,
                         size: variant.size,
                         price: product.price,
-                        quantity,
+                        quantity: Math.min(variant.stock, Math.floor(quantity)),
+                        stock: variant.stock,
                     };
                     return { items: [...state.items, newItem], isOpen: true };
                 });
@@ -77,21 +89,58 @@ export const useCartStore = create<CartStore>()(
                 })),
 
             updateQty: (variantId, quantity) => {
+                if (!Number.isFinite(quantity)) return;
                 if (quantity <= 0) {
                     get().removeItem(variantId);
                     return;
                 }
                 set((state) => ({
                     items: state.items.map((i) =>
-                        i.variantId === variantId ? { ...i, quantity } : i
+                        i.variantId === variantId
+                            ? { ...i, quantity: Math.min(i.stock || 0, Math.floor(quantity)) }
+                            : i,
                     ),
                 }));
             },
 
-            clearCart: () => set({ items: [] }),
+            refreshCart: async () => {
+                const before = get().items;
+                const products = new Map(
+                    await Promise.all(
+                        [...new Set(before.map((i) => i.productSlug))].map(async (slug) => {
+                            try {
+                                return [slug, await getProduct(slug)] as const;
+                            } catch (error) {
+                                if (
+                                    (error as { response?: { status: number } }).response
+                                        ?.status === 404
+                                )
+                                    return [slug, null] as const;
+                                throw error;
+                            }
+                        }),
+                    ),
+                );
+                let changed = false;
+                set((state) => ({
+                    items: state.items.map((item) => {
+                        if (!products.has(item.productSlug)) return item;
+                        const product = products.get(item.productSlug),
+                            variant = product?.variants.find((v) => v.id === item.variantId);
+                        const stock = variant?.stock ?? 0,
+                            price = product?.price ?? item.price;
+                        const quantity = Math.min(item.quantity, stock);
+                        if (price !== item.price || quantity !== item.quantity || stock === 0)
+                            changed = true;
+                        return { ...item, price, stock, quantity };
+                    }),
+                }));
+                return changed;
+            },
+            clearCart: () => set({ items: [], isOpen: false }),
             total: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
             itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
         }),
-        { name: "imad-store-cart" }
-    )
+        { name: "imad-store-cart", partialize: (state) => ({ items: state.items }) },
+    ),
 );

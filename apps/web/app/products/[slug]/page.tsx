@@ -1,84 +1,102 @@
-"use client";
-
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
-import { ShoppingBag, Minus, Plus } from "lucide-react";
-import { getProduct, type Product, type ProductVariant } from "@/lib/api";
-import { useCartStore } from "@/store/cart.store";
-
-const objectId = /^[a-fA-F0-9]{24}$/;
-const imgSafe = (value: string) => value.startsWith("/") || /^https:\/\/(res\.cloudinary\.com|placeholder\.co)\//.test(value);
-
-export default function ProductDetailPage() {
-  const params = useParams();
-  const slug = typeof params?.slug === "string" ? params.slug : "";
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [variantId, setVariantId] = useState("");
-  const [qty, setQty] = useState(1);
-  const [imageIdx, setImageIdx] = useState(0);
-  const { addItem } = useCartStore();
-
-  useEffect(() => {
-    let active = true;
-    const reset = window.setTimeout(() => {
-    setLoading(true);
-    setProduct(null);
-    setVariantId("");
-    setError("");
-    }, 0);
-    getProduct(slug).then(p => {
-      if (!active) return;
-      window.clearTimeout(reset);
-      if (p.status !== "ACTIVE") { setError("هذا المنتج غير متاح حالياً"); return; }
-      setProduct(p);
-      setVariantId(p.variants.find(v => v.stock > 0 && objectId.test(v.id))?.id || "");
-    }).catch((err: unknown) => { if (active) setError(axios.isAxiosError(err) && err.response?.status === 404 ? "المنتج غير موجود" : "تعذر تحميل المنتج. حاول مجدداً."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; window.clearTimeout(reset); };
-  }, [slug]);
-
-  const variant: ProductVariant | undefined = product?.variants.find(v => v.id === variantId);
-  const available = !!product && objectId.test(product.id) && !!variant && objectId.test(variant.id) && variant.stock > 0;
-  const maxQty = variant?.stock ?? 1;
-  const images = (product?.images || []).filter(imgSafe);
-  const name = product?.nameAr || product?.nameFr || product?.nameEn || "";
-
-  function add() {
-    if (!product || !variant || !available || qty < 1 || qty > variant.stock) return;
-    addItem(product, variant, qty);
-  }
-
-  if (loading) return <main className="min-h-[70vh] pt-36 px-6 text-center" dir="rtl">جارٍ تحميل المنتج...</main>;
-  if (!product || error) return <main className="min-h-[70vh] pt-36 px-6 text-center" dir="rtl"><p>{error || "المنتج غير موجود"}</p><Link href="/shop" className="underline mt-6 inline-block">العودة إلى المتجر</Link></main>;
-
-  return (
-    <main className="min-h-screen bg-[#FDFAF6] pt-32 pb-20 px-6" dir="rtl">
-      <div className="max-w-6xl mx-auto">
-        <nav className="text-xs text-[#8B8399] mb-10"><Link href="/shop" className="hover:underline">المتجر</Link> / {name}</nav>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <section>
-            <div className="relative aspect-[4/5] bg-[#F5EDE0] overflow-hidden">
-              {images[imageIdx] ? <Image src={images[imageIdx]} alt={name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex h-full items-center justify-center text-[#8B8399]">لا توجد صورة</div>}
+import Link from "next/link";
+import { publicProduct, siteOrigin } from "@/lib/server-api";
+import { ProductOptions } from "@/components/store/ProductOptions";
+export const dynamic = "force-dynamic";
+type Props = { params: Promise<{ slug: string }> };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { slug } = await params;
+    const product = await publicProduct(slug);
+    if (!product) notFound();
+    return {
+        title: product.nameAr || product.nameFr,
+        description: (product.descriptionAr || product.descriptionFr || product.nameFr).slice(
+            0,
+            160,
+        ),
+        alternates: { canonical: `/products/${slug}` },
+        openGraph: { title: product.nameAr || product.nameFr, images: product.images.slice(0, 1) },
+    };
+}
+export default async function ProductPage({ params }: Props) {
+    const { slug } = await params;
+    const product = await publicProduct(slug);
+    if (!product) notFound();
+    const name = product.nameAr || product.nameFr;
+    const inStock = product.variants.some((v) => v.stock > 0);
+    const structured = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name,
+        description: product.descriptionAr || product.descriptionFr,
+        image: product.images.map((image) => new URL(image, siteOrigin()).toString()),
+        sku: product.variants[0]?.sku,
+        offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "MAD",
+            availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            url: new URL(`/products/${slug}`, siteOrigin()).toString(),
+        },
+    };
+    return (
+        <section className="page-shell">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(structured).replace(/</g, "\\u003c"),
+                }}
+            />
+            <nav aria-label="مسار التصفح" className="mb-7">
+                <Link className="underline" href="/shop">
+                    المتجر
+                </Link>{" "}
+                / {name}
+            </nav>
+            <div className="grid lg:grid-cols-2 gap-8">
+                <div>
+                    <div className="relative aspect-[4/5] bg-[#F5EDE0] rounded-xl overflow-hidden">
+                        <Image
+                            src={product.images[0]}
+                            alt={name}
+                            fill
+                            priority
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                            className="object-cover"
+                        />
+                    </div>
+                    {product.images.slice(1).map((image, i) => (
+                        <div className="relative aspect-[4/5] mt-4" key={image}>
+                            <Image
+                                src={image}
+                                alt={`${name} — ${i + 2}`}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                className="object-cover"
+                            />
+                        </div>
+                    ))}
+                </div>
+                <div className="space-y-6">
+                    <p>{product.category.nameAr || product.category.nameFr}</p>
+                    <h1 className="text-4xl">{name}</h1>
+                    <p className="text-2xl">{product.price.toFixed(2)} MAD</p>
+                    <p className="whitespace-pre-line leading-8">
+                        {product.descriptionAr || product.descriptionFr || product.descriptionEn}
+                    </p>
+                    <ProductOptions product={product} />
+                    <nav className="flex gap-5 flex-wrap">
+                        <Link className="underline action" href="/delivery">
+                            التوصيل
+                        </Link>
+                        <Link className="underline action" href="/returns">
+                            الاستبدال والإرجاع
+                        </Link>
+                    </nav>
+                </div>
             </div>
-            {images.length > 1 && <div className="flex gap-3 mt-3">{images.map((image,i) => <button key={i} type="button" onClick={() => setImageIdx(i)} className={`w-20 h-24 relative border-2 ${imageIdx === i ? "border-[#C9A96E]" : "border-transparent"}`}><Image src={image} alt={`${name} ${i+1}`} fill sizes="80px" className="object-cover" /></button>)}</div>}
-          </section>
-          <section className="flex flex-col gap-6 lg:pt-6">
-            <p className="text-[#C9A96E] text-sm">{product.category?.nameAr || product.category?.nameFr || ""}</p>
-            <h1 className="text-4xl text-[#1A1A2E]">{name}</h1>
-            <p className="text-3xl">{product.price.toLocaleString()} MAD {product.compareAtPrice && product.compareAtPrice > product.price ? <span className="text-base line-through text-gray-400">{product.compareAtPrice.toLocaleString()} MAD</span> : null}</p>
-            <p className="text-sm leading-7 text-gray-600">{product.descriptionAr || product.descriptionFr || product.descriptionEn}</p>
-            <div><label htmlFor="variant" className="block mb-3 text-sm">اللون / المقاس</label><select id="variant" value={variantId} onChange={e => { setVariantId(e.target.value); setQty(1); }} className="border border-[#C9A96E]/40 bg-white p-3 w-full"><option value="">اختر النوع</option>{product.variants.map(v => <option key={v.id} value={v.id} disabled={v.stock <= 0 || !objectId.test(v.id)}>{v.colorNameAr || v.colorNameFr || v.color} {v.size ? `— ${v.size}` : ""} {v.stock <= 0 ? "— نفدت الكمية" : `— ${v.stock} متوفر`}</option>)}</select></div>
-            <div className="flex items-center gap-3"><button type="button" aria-label="تقليل الكمية" className="border p-3" onClick={() => setQty(q => Math.max(1,q-1))}><Minus size={16}/></button><span>{qty}</span><button type="button" aria-label="زيادة الكمية" className="border p-3" onClick={() => setQty(q => Math.min(maxQty, q+1))}><Plus size={16}/></button></div>
-            <button type="button" onClick={add} disabled={!available || qty > maxQty} className="flex gap-3 items-center justify-center py-4 bg-[#1A1A2E] text-white disabled:opacity-40"><ShoppingBag size={18}/>{available ? "أضف إلى السلة" : "غير متوفر"}</button>
-            <p className="text-xs text-gray-500">SKU: {variant?.sku || "—"}</p>
-          </section>
-        </div>
-      </div>
-    </main>
-  );
+        </section>
+    );
 }

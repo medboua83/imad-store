@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import "express-async-errors";
 
 import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
+import { contentRoutes } from "./routes/content.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { productRoutes } from "./routes/product.routes";
 import { categoryRoutes } from "./routes/category.routes";
@@ -20,14 +21,13 @@ import { errorMiddleware } from "./middleware/error.middleware";
 
 export const app: Application = express();
 
-
 // ─── Global Middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(
     cors({
         origin: (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(","),
         credentials: true,
-    })
+    }),
 );
 app.use(morgan("dev"));
 
@@ -44,7 +44,6 @@ app.get("/health", (_req, res) => {
 app.get("/", (_req, res) => {
     res.json({ message: "Imad Store API is running. Please use /api for endpoints." });
 });
-
 
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
 const IS_DEV = process.env.NODE_ENV !== "production";
@@ -68,12 +67,22 @@ const loginRateLimiter = rateLimit({
     message: "Too many login attempts. Try again later.",
 });
 app.use("/api/auth/login", loginRateLimiter);
+app.use("/api", (req, res, next) => {
+    if (req.headers.authorization || !["GET", "HEAD"].includes(req.method))
+        res.setHeader("Cache-Control", "private, no-store");
+    next();
+});
+app.use("/api/content", contentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
-app.use("/uploads", (req, res, next) => {
-    if (!/^\/[a-f0-9]{64}\.webp$/.test(req.path)) return res.sendStatus(404);
-    next();
-}, express.static(uploadDirectory, { dotfiles: "deny", immutable: true, maxAge: "1y" }));
+app.use(
+    "/uploads",
+    (req, res, next) => {
+        if (!/^\/[a-f0-9]{64}\.webp$/.test(req.path)) return res.sendStatus(404);
+        next();
+    },
+    express.static(uploadDirectory, { dotfiles: "deny", immutable: true, maxAge: "1y" }),
+);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRateLimiter, orderRoutes);
@@ -86,6 +95,5 @@ app.use("/api/integrations/deskcomm", deskcommRoutes);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 app.use(errorMiddleware);
-
 
 export default app;

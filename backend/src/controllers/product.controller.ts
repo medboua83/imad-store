@@ -65,6 +65,10 @@ async function list(req: Request, res: Response, admin: boolean) {
             category: slugSchema.optional(),
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
+            minPrice: z.coerce.number().min(0).max(1000000).optional(),
+            maxPrice: z.coerce.number().min(0).max(1000000).optional(),
+            availability: z.enum(["all", "in-stock"]).default("all"),
+            sort: z.enum(["newest", "price-asc", "price-desc", "name"]).default("newest"),
         })
         .parse(req.query);
     if (!admin && query.status && query.status !== "ACTIVE")
@@ -74,9 +78,28 @@ async function list(req: Request, res: Response, admin: boolean) {
         : {
               status: "ACTIVE",
               images: { isEmpty: false },
-              variants: { some: { stock: { gt: 0 } } },
               NOT: [{ slug: { startsWith: "test-19a-" } }, { slug: "demo-bag-sample" }],
           };
+    if (
+        query.minPrice !== undefined &&
+        query.maxPrice !== undefined &&
+        query.minPrice > query.maxPrice
+    )
+        throw new AppError("Le prix minimum dépasse le maximum", 400);
+    if (query.availability === "in-stock") where.variants = { some: { stock: { gt: 0 } } };
+    if (query.minPrice !== undefined || query.maxPrice !== undefined)
+        where.price = {
+            ...(query.minPrice !== undefined ? { gte: query.minPrice } : {}),
+            ...(query.maxPrice !== undefined ? { lte: query.maxPrice } : {}),
+        };
+    const orderBy: any =
+        query.sort === "price-asc"
+            ? [{ price: "asc" }, { id: "asc" }]
+            : query.sort === "price-desc"
+              ? [{ price: "desc" }, { id: "asc" }]
+              : query.sort === "name"
+                ? [{ nameFr: "asc" }, { id: "asc" }]
+                : [{ createdAt: "desc" }, { id: "desc" }];
     if (admin && query.status) where.status = query.status;
     if (query.category) where.category = { slug: query.category };
     if (query.search)
@@ -89,10 +112,11 @@ async function list(req: Request, res: Response, admin: boolean) {
             include,
             skip: (query.page - 1) * query.limit,
             take: query.limit,
-            orderBy: { createdAt: "desc" },
+            orderBy,
         }),
         prisma.product.count({ where }),
     ]);
+    if (!admin) res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
     res.json({
         success: true,
         data: products,
@@ -117,6 +141,7 @@ export async function getProduct(req: Request, res: Response) {
         !product.images.length
     )
         throw new AppError("Produit introuvable", 404);
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
     res.json({ success: true, data: product });
 }
 export async function createProduct(req: Request, res: Response) {

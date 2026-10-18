@@ -13,8 +13,9 @@
     "start": "node server.js",
     "lint": "npx turbo run lint",
     "test": "npm run test:integration",
-    "test:integration": "node scripts/run-integration-tests.cjs",
-    "check": "npm --prefix backend run build && npm --prefix apps/web run lint && npm run build"
+    "test:integration": "npm --prefix packages/shared run build && node scripts/run-integration-tests.cjs",
+    "check": "npm --prefix packages/shared run build && npm --prefix backend run build && npm --prefix apps/web run lint && npm run build",
+    "predev": "npm --prefix packages/shared run build"
   },
   "devDependencies": {
     "eslint": "^9.39.0",

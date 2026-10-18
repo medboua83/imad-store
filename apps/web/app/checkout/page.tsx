@@ -1,366 +1,268 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useState, Suspense } from "react";
-
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
-import { CheckCircle, Ship, AlertCircle, User, Phone, MapPin, CreditCard, Lock } from "lucide-react";
-
 import { useShipping } from "@/hooks/useShipping";
-
-function CheckoutContent() {
-    const { items, total, clearCart } = useCartStore();
-
-    const { settings, fee: shippingFee, total: orderTotal } = useShipping(total());
-
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [orderId, setOrderId] = useState<string | null>(null);
-    const [errorMsg, setErrorMsg] = useState("");
-    const [crmConsent, setCrmConsent] = useState(false);
-    const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
-
-    const [form, setForm] = useState({
-        fullName: "",
-        phone: "",
-        city: "",
-        address: "",
-    });
-
-    const handleSubmit = async (e: React.FormEvent) => {
+export default function CheckoutPage() {
+    const { items, total, clearCart, refreshCart } = useCartStore();
+    const shipping = useShipping(total());
+    const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
+    const [fields, setFields] = useState<Record<string, string>>({});
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [orderId, setOrderId] = useState("");
+    const [key, setKey] = useState("");
+    const [consent, setConsent] = useState(false);
+    useEffect(() => {
+        refreshCart()
+            .then((changed) => {
+                if (changed) setError("تم تحديث الأسعار أو الكميات. راجعي ملخص الطلب.");
+            })
+            .catch(() => setError("تعذر تحديث السلة. اضغطي تأكيد الطلب لإعادة التحقق."));
+    }, [refreshCart]);
+    async function submit(e: React.FormEvent) {
         e.preventDefault();
-        setLoading(true);
-        setErrorMsg("");
-
-        const itemsPayload = items.map((i) => ({
-            productId: i.productId,
-            variantId: i.variantId,
-            quantity: i.quantity,
-            price: i.price,
-            name: i.nameAr || i.nameFr || i.nameEn || "Produit",
-        }));
-
+        const errors: Record<string, string> = {};
+        if (form.fullName.trim().length < 2) errors.fullName = "أدخلي الاسم الكامل";
+        if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
+            errors.phone = "أدخلي رقم هاتف مغربي صالحاً";
+        if (!form.city.trim()) errors.city = "أدخلي المدينة";
+        if (form.address.trim().length < 3) errors.address = "أدخلي عنوان التوصيل";
+        setFields(errors);
+        if (Object.keys(errors).length) {
+            document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
+            return;
+        }
+        setBusy(true);
+        setError("");
         try {
-            const activeKey = checkoutKey ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `order_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-            if (!checkoutKey) setCheckoutKey(activeKey);
-            const order = await createOrder({
-                paymentMethod: "COD",
-                customer: {
-                    fullName: form.fullName,
-                    phone: form.phone.replace(/[\s()-]/g, ""),
-                    street: form.address,
-                    city: form.city,
-                    region: form.city,
+            const changed = await refreshCart();
+            await shipping.retry({ throwOnError: true });
+            if (changed) {
+                setError("تغير السعر أو التوفر. راجعي المجموع الجديد ثم أكدي مجدداً.");
+                return;
+            }
+            const cart = useCartStore.getState().items;
+            if (!cart.length || cart.some((i) => i.quantity < 1 || i.quantity > i.stock)) {
+                setError("احذفي المنتجات غير المتوفرة من السلة قبل المتابعة.");
+                return;
+            }
+            const activeKey = key || crypto.randomUUID();
+            setKey(activeKey);
+            const order = await createOrder(
+                {
+                    paymentMethod: "COD",
+                    crmConsent: consent,
+                    expectedTotal: shipping.total ?? undefined,
+                    customer: {
+                        fullName: form.fullName.trim(),
+                        phone: form.phone.replace(/[\s()-]/g, ""),
+                        city: form.city.trim(),
+                        region: form.city.trim(),
+                        street: form.address.trim(),
+                    },
+                    items: cart.map((i) => ({
+                        productId: i.productId,
+                        variantId: i.variantId,
+                        quantity: i.quantity,
+                    })),
                 },
-                items: itemsPayload,
-                crmConsent,
-            }, activeKey);
-
+                activeKey,
+            );
             setOrderId(order.id);
-            setSuccess(true);
-            window.scrollTo({ top: 0, behavior: "instant" });
             clearCart();
-            setCheckoutKey(null);
-        } catch (err: unknown) {
-            console.error("Order failed:", err);
-            // Surface the real API error if available
-            const axiosErr = err as { response?: { data?: { error?: string; details?: { message?: string }[] } }; message?: string };
-            const apiMsg = axiosErr?.response?.data?.error
-                ?? axiosErr?.response?.data?.details?.[0]?.message
-                ?? axiosErr?.message;
-            setErrorMsg(
-                apiMsg
-                    ? `خطأ: ${apiMsg}`
-                    : "فشل في تسجيل طلبكم. برجاء التحقق من البيانات والمحاولة مجدداً."
+            window.scrollTo({ top: 0, behavior: "instant" });
+        } catch (failure) {
+            const response = (
+                failure as {
+                    response?: {
+                        data?: {
+                            error?: string;
+                            details?: { path: (string | number)[]; message: string }[];
+                        };
+                    };
+                }
+            ).response;
+            if (response?.data?.details) {
+                const errors: Record<string, string> = {};
+                for (const issue of response.data.details) {
+                    const field = String(issue.path.at(-1));
+                    errors[field === "street" ? "address" : field] = issue.message;
+                }
+                setFields(errors);
+            }
+            setError(
+                response?.data?.error ||
+                    "تعذر الاتصال. بياناتك محفوظة هنا، ويمكنك المحاولة مجدداً.",
             );
         } finally {
-            setLoading(false);
+            setBusy(false);
         }
-    };
-
-    if (success) {
+    }
+    if (orderId)
         return (
-            <div role="status" className="min-h-[70vh] pt-36 pb-12 flex flex-col justify-center items-center px-4 max-w-lg mx-auto text-center" dir="rtl">
-                <CheckCircle size={56} strokeWidth={1} className="text-emerald-500 mb-8" />
-                <h1 className="text-4xl font-light text-[#1A1A2E] tracking-wide mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                    تم استلام طلبكم
-                </h1>
-                <p className="text-[#9B8E82] text-sm tracking-wide leading-relaxed font-light mb-4">
-                    شكراً لاختياركم IMAD Mode. سيتواصل معكم فريقنا قريباً لتأكيد الطلب.
-                </p>
-                {orderId && (
-                    <p className="text-xs text-[#C9A96E] tracking-widest mb-8">
-                        رقم الطلب: #{orderId.slice(-8).toUpperCase()}
-                    </p>
-                )}
-                <a
-                    href={`https://wa.me/212660560522?text=${encodeURIComponent("السلام عليكم، أؤكد طلبي رقم " + (orderId?.slice(-8).toUpperCase() ?? ""))}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 bg-[#25D366] text-white text-sm tracking-[0.1em] font-bold py-4 px-12 rounded-full shadow-lg hover:bg-[#128C7E] hover:scale-105 transition-all duration-300 mb-6"
-                >
-                    <span className="text-xl">💬</span> تأكيد الطلب عبر الواتساب
-                </a>
-                <Link
-                    href="/"
-                    className="inline-block bg-[#1A1A2E] text-white text-[10px] tracking-[0.25em] uppercase font-bold py-4 px-10 hover:bg-[#C9A96E] transition-colors duration-300"
-                >
-                    العودة للرئيسية
+            <section className="page-shell text-center space-y-6" role="status">
+                <h1 className="text-3xl">تم استلام طلبكم</h1>
+                <p>رقم الطلب: {orderId.slice(-8).toUpperCase()}</p>
+                <p>سيتواصل معكم فريقنا لتأكيد التفاصيل.</p>
+                <Link href="/shop" className="btn-primary">
+                    العودة إلى المتجر
                 </Link>
-            </div>
+            </section>
         );
-    }
-
-    if (items.length === 0) {
-        return (
-            <div className="min-h-[60vh] flex flex-col justify-center items-center px-4 max-w-lg mx-auto text-center" dir="rtl">
-                <p className="text-3xl font-light text-[#1A1A2E] tracking-wide mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                    حقيبة التسوق فارغة
-                </p>
-                <p className="text-[#9B8E82] text-xs uppercase tracking-widest font-light mb-8">
-                    تصفحي مجموعاتنا الراقية لأحدث التصاميم
-                </p>
-                <a
-                    href="/shop"
-                    className="inline-block bg-[#1A1A2E] text-white text-[10px] tracking-[0.25em] uppercase font-bold py-4 px-10 hover:bg-[#C9A96E] transition-colors duration-300"
-                >
-                    تسوقي الآن
-                </a>
-            </div>
-        );
-    }
-
-    const formFields: Array<{
-        key: keyof typeof form;
-        label: string;
-        type: string;
-        placeholder: string;
-        colSpan?: number;
-        icon: React.ReactNode;
-        required?: boolean;
-    }> = [
-        {
-            key: "fullName",
-            label: "الاسم الكامل",
-            type: "text",
-            placeholder: "ياسمين العلمي",
-            icon: <User size={14} />,
-            required: true,
-        },
-        {
-            key: "phone",
-            label: "رقم الهاتف",
-            type: "tel",
-            placeholder: "+212 600-000000",
-            icon: <Phone size={14} />,
-            required: true,
-        },
-        {
-            key: "city",
-            label: "المدينة",
-            type: "text",
-            placeholder: "الدار البيضاء",
-            icon: <MapPin size={14} />,
-            required: true,
-        },
-        {
-            key: "address",
-            label: "عنوان التوصيل",
-            type: "text",
-            placeholder: "شارع المسيرة، رقم 4",
-            colSpan: 2,
-            icon: <MapPin size={14} />,
-            required: true,
-        },
-    ];
-
     return (
-        <div className="max-w-[1300px] mx-auto px-6 md:px-12 py-16 md:py-24" dir="rtl">
-            <div className="text-center mb-16">
-                <p className="text-[#C9A96E] text-[10px] tracking-[0.3em] uppercase mb-4">Haute Couture Modeste</p>
-                <h1 className="text-4xl md:text-5xl font-light text-[#1A1A2E] tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                    إتمام الطلب
-                </h1>
-                <div className="w-[100px] h-px bg-[#C9A96E]/20 mx-auto mt-6" />
-                <p className="text-[10px] text-[#9B8E82] tracking-widest uppercase mt-4">
-                    لا حاجة لإنشاء حساب
+        <section className="page-shell">
+            <h1 className="text-3xl mb-4">إتمام الطلب</h1>
+            <p className="mb-8">لا حاجة لإنشاء حساب. الدفع عند الاستلام.</p>
+            {!items.length ? (
+                <p>
+                    حقيبتك فارغة.{" "}
+                    <Link className="underline" href="/shop">
+                        تصفحي المتجر
+                    </Link>
                 </p>
-            </div>
-
-            <div className="grid lg:grid-cols-12 gap-16 items-start">
-                {/* ─── Form Pane ───────────────────────────────────── */}
-                <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-12">
-                    {errorMsg && (
-                        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 text-red-700 text-xs tracking-wide">
-                            <AlertCircle size={16} className="shrink-0" />
-                            <span>{errorMsg}</span>
-                        </div>
-                    )}
-
-                    <div>
-                        <h2 className="text-xs tracking-[0.2em] uppercase font-bold text-[#1A1A2E] mb-8 border-b border-[#C9A96E]/10 pb-4">
-                            01. معلومات التوصيل
-                        </h2>
-                        <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
-                            {formFields.map((f) => (
-                                <div key={f.key} className={f.colSpan === 2 ? "md:col-span-2" : ""}>
-                                    <label htmlFor={`checkout-${f.key}`} className="flex items-center gap-2 text-[9px] tracking-[0.2em] uppercase font-medium text-[#C9A96E] mb-2">
-                                        {f.icon} {f.label} {f.required && "*"}
-                                    </label>
-                                    <input
-                                        id={`checkout-${f.key}`}
-                                        type={f.type}
-                                        required={f.required}
-                                        placeholder={f.placeholder}
-                                        value={form[f.key]}
-                                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                                        className="w-full bg-[#FDFAF6] border border-[#1A1A2E]/10 px-5 py-4 text-xs tracking-wide text-[#1A1A2E] outline-none transition-colors hover:border-[#1A1A2E]/30 focus:border-[#C9A96E] focus:bg-white placeholder:text-[#9B8E82]/50 placeholder:text-xs"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <h2 className="text-xs tracking-[0.2em] uppercase font-bold text-[#1A1A2E] mb-8 border-b border-[#C9A96E]/10 pb-4">
-                            02. طريقة الدفع
-                        </h2>
-                        <div className="space-y-3">
-                            {/* Active option — Cash on Delivery */}
-                            <label
-                                className="flex items-center justify-between p-6 border border-[#C9A96E] bg-[#fbf8f3] cursor-pointer"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <input
-                                        type="radio"
-                                        name="payment"
-                                        value="COD"
-                                        checked
-                                        readOnly
-                                        className="accent-[#C9A96E] w-4 h-4 cursor-pointer"
-                                    />
-                                    <div>
-                                        <p className="font-medium text-xs text-[#1A1A2E] tracking-wider uppercase">
-                                            الدفع عند الاستلام
-                                        </p>
-                                        <p className="text-[10px] text-[#9B8E82] font-light mt-1">
-                                            ادفعي نقداً عند استلام الطلب
-                                        </p>
-                                    </div>
-                                </div>
-                                <Ship size={20} strokeWidth={1} className="text-[#C9A96E]" />
-                            </label>
-
-                            {/* Disabled — Card payment coming soon */}
-                            <div
-                                role="group"
-                                aria-disabled="true"
-                                className="relative flex items-center justify-between p-6 border border-dashed border-[#1A1A2E]/15 bg-[#FDFAF6]/40 cursor-not-allowed select-none opacity-60"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <input
-                                        type="radio"
-                                        name="payment"
-                                        value="CARD"
-                                        disabled
-                                        aria-disabled="true"
-                                        tabIndex={-1}
-                                        onChange={(e) => e.preventDefault()}
-                                        onClick={(e) => e.preventDefault()}
-                                        className="accent-[#C9A96E] w-4 h-4 cursor-not-allowed"
-                                    />
-                                    <div>
-                                        <p className="font-medium text-xs text-[#1A1A2E]/60 tracking-wider uppercase">
-                                            بطاقة بنكية
-                                        </p>
-                                        <p className="text-[10px] text-[#9B8E82] font-light mt-1">
-                                            قريباً
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[9px] tracking-[0.2em] uppercase font-bold text-white bg-[#1A1A2E] px-3 py-1">
-                                        قريباً
-                                    </span>
-                                    <CreditCard size={20} strokeWidth={1} className="text-[#1A1A2E]/30" />
-                                </div>
-                                <Lock size={12} className="absolute top-3 end-3 text-[#9B8E82]/60" />
+            ) : (
+                <div className="grid lg:grid-cols-2 gap-10">
+                    <form onSubmit={submit} noValidate className="space-y-5">
+                        <h2 className="text-2xl">معلومات التوصيل</h2>
+                        {(["fullName", "phone", "city", "address"] as const).map((field, i) => (
+                            <div key={field}>
+                                <label className="block mb-2" htmlFor={`checkout-${field}`}>
+                                    {["الاسم الكامل", "رقم الهاتف", "المدينة", "عنوان التوصيل"][i]}{" "}
+                                    *
+                                </label>
+                                <input
+                                    className="store-input"
+                                    id={`checkout-${field}`}
+                                    name={field}
+                                    type={field === "phone" ? "tel" : "text"}
+                                    inputMode={field === "phone" ? "tel" : undefined}
+                                    autoComplete={
+                                        ["name", "tel", "address-level2", "street-address"][i]
+                                    }
+                                    required
+                                    maxLength={field === "address" ? 500 : 120}
+                                    value={form[field]}
+                                    aria-invalid={!!fields[field]}
+                                    aria-describedby={fields[field] ? `${field}-error` : undefined}
+                                    onChange={(e) =>
+                                        setForm((old) => ({ ...old, [field]: e.target.value }))
+                                    }
+                                />
+                                {fields[field] && (
+                                    <p id={`${field}-error`} className="text-red-800 mt-2">
+                                        {fields[field]}
+                                    </p>
+                                )}
                             </div>
-                        </div>
-                    </div>
-
-                    <label className="flex items-start gap-3 text-sm text-[#1A1A2E]">
-                        <input type="checkbox" checked={crmConsent}
-                            onChange={(e) => setCrmConsent(e.target.checked)}
-                            className="mt-1" />
-                        <span>أوافق على مشاركة بيانات طلبي مع فريق خدمة العملاء عبر DeskcommCRM للتواصل معي بشأن طلبي بواسطة واتساب. الموافقة اختيارية ولا تمنع إتمام الطلب.</span>
-                    </label>
-                    <button
-                        type="submit"
-                        disabled={loading || shippingFee === null || settings?.codEnabled === false}
-                        className="group w-full relative flex items-center justify-center bg-[#1A1A2E] text-white text-[10px] md:text-[11px] font-bold tracking-[0.25em] py-5 px-8 uppercase overflow-hidden hover:bg-[#C9A96E] transition-colors duration-500 disabled:opacity-50"
-                    >
-                        {loading ? "جاري الإرسال..." : "تأكيد الطلب"}
-                    </button>
-                </form>
-
-                {/* ─── Summary Pane ─────────────────────────────────── */}
-                <div className="lg:col-span-5 lg:sticky lg:top-28">
-                    <div className="border border-[#C9A96E]/20 bg-[#FDFAF6] p-8 md:p-10 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-[3px] bg-[#C9A96E]" />
-
-                        <h2 className="text-[#1A1A2E] font-light text-2xl tracking-wide mb-8 border-b border-[#C9A96E]/10 pb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                            ملخص الطلب
-                        </h2>
-
-                        <div className="divide-y divide-[#C9A96E]/10 max-h-[300px] overflow-y-auto pr-2">
-                            {items.map((item) => (
-                                <div key={item.variantId} className="flex justify-between items-center py-4 text-xs">
-                                    <div className="text-start pr-4">
-                                        <p className="text-[#1A1A2E] font-semibold tracking-wide truncate max-w-[200px]">
-                                            {item.nameAr}
-                                        </p>
-                                        <p className="text-[10px] text-[#9B8E82] uppercase mt-1">
-                                            الكمية {item.quantity}
-                                        </p>
-                                    </div>
-                                    <span className="font-medium text-[#1A1A2E] select-all shrink-0">
-                                        {(item.price * item.quantity).toFixed(2)} MAD
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="border-t border-[#C9A96E]/15 mt-6 pt-6 space-y-4">
-                            <div className="flex justify-between items-center text-xs text-[#9B8E82] tracking-wide">
-                                <span>الشحن</span>
-                                <span className="uppercase text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5">
-                                    {shippingFee === null ? "تعذر تحميل تكلفة الشحن" : shippingFee === 0 ? "مجاني" : `${shippingFee.toFixed(2)} MAD`}
-                                </span>
+                        ))}
+                        <label className="flex gap-3 leading-7">
+                            <input
+                                className="w-5 h-5 shrink-0 mt-1"
+                                type="checkbox"
+                                checked={consent}
+                                onChange={(e) => setConsent(e.target.checked)}
+                            />
+                            أوافق اختيارياً على مشاركة بيانات طلبي مع فريق خدمة العملاء عبر
+                            DeskcommCRM للتواصل بشأن طلبي عبر واتساب. يمكن إتمام الطلب دون هذه
+                            الموافقة.
+                        </label>
+                        {error && (
+                            <p role="alert" className="bg-red-50 text-red-900 p-4 rounded">
+                                {error}
+                            </p>
+                        )}
+                        {shipping.error && (
+                            <p role="alert">
+                                تعذر تحميل رسوم التوصيل.{" "}
+                                <button
+                                    type="button"
+                                    className="underline action"
+                                    onClick={() => shipping.retry()}
+                                >
+                                    إعادة المحاولة
+                                </button>
+                            </p>
+                        )}
+                        {shipping.settings?.codEnabled === false && (
+                            <p role="alert">الطلب بالدفع عند الاستلام متوقف مؤقتاً.</p>
+                        )}
+                        <button
+                            className="btn-primary w-full"
+                            disabled={
+                                busy ||
+                                shipping.total === null ||
+                                shipping.settings?.codEnabled === false ||
+                                items.some((i) => i.quantity < 1)
+                            }
+                        >
+                            {busy ? "جارٍ التحقق والحفظ…" : "تأكيد الطلب"}
+                        </button>
+                        <p className="text-sm leading-7">
+                            قبل التأكيد، اطلعي على{" "}
+                            <Link href="/delivery" className="underline">
+                                التوصيل
+                            </Link>{" "}
+                            و
+                            <Link href="/returns" className="underline">
+                                الاستبدال والإرجاع
+                            </Link>{" "}
+                            و
+                            <Link href="/privacy" className="underline">
+                                الخصوصية
+                            </Link>
+                            .
+                        </p>
+                    </form>
+                    <aside className="bg-white border rounded-xl p-6 h-fit space-y-4">
+                        <h2 className="text-2xl">ملخص الطلب</h2>
+                        {items.map((i) => (
+                            <div key={i.variantId} className="border-b pb-3">
+                                <p>
+                                    {i.nameAr || i.nameFr} × {i.quantity}
+                                </p>
+                                <p>{(i.price * i.quantity).toFixed(2)} MAD</p>
+                                {!i.stock && (
+                                    <p className="text-red-800">
+                                        غير متوفر —{" "}
+                                        <button
+                                            className="underline"
+                                            onClick={() =>
+                                                useCartStore.getState().removeItem(i.variantId)
+                                            }
+                                        >
+                                            حذف من السلة
+                                        </button>
+                                    </p>
+                                )}
                             </div>
-                            <div className="flex justify-between items-center border-t border-[#C9A96E]/10 pt-4">
-                                <span className="text-xs uppercase tracking-widest font-semibold text-[#1A1A2E]">المجموع</span>
-                                <span className="text-xl font-bold text-[#C9A96E]">
-                                    {(orderTotal ?? total()).toFixed(2)} MAD
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                        ))}
+                        <p>
+                            التوصيل:{" "}
+                            {shipping.loading
+                                ? "جارٍ الحساب…"
+                                : shipping.fee === null
+                                  ? "تعذر تحميل الرسوم"
+                                  : shipping.fee === 0
+                                    ? "مجاني"
+                                    : `${shipping.fee.toFixed(2)} MAD`}
+                        </p>
+                        <p className="text-xl">
+                            المجموع:{" "}
+                            {shipping.total === null
+                                ? "بانتظار رسوم التوصيل"
+                                : `${shipping.total.toFixed(2)} MAD`}
+                        </p>
+                        <button
+                            className="underline action"
+                            onClick={() => useCartStore.getState().openCart()}
+                        >
+                            تعديل السلة
+                        </button>
+                    </aside>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-export default function CheckoutPage() {
-    return (
-        <Suspense fallback={
-            <div className="min-h-[85vh] flex items-center justify-center bg-[#FDFAF6]">
-                <p className="text-xs tracking-[0.2em] text-[#C9A96E] uppercase animate-pulse">جاري التحميل...</p>
-            </div>
-        }>
-            <CheckoutContent />
-        </Suspense>
+            )}
+        </section>
     );
 }

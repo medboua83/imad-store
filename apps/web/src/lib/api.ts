@@ -1,9 +1,10 @@
 import axios from "axios";
+import type { SiteContent } from "@imad-store/shared";
 
 export const getBaseUrl = () => {
     let url = process.env.NEXT_PUBLIC_API_URL || "/api";
     url = url.replace(/\/$/, ""); // remove trailing slash
-    
+
     // Fix double /api/api if misconfigured
     if (url.endsWith("/api/api")) {
         url = url.replace(/\/api\/api$/, "/api");
@@ -16,17 +17,104 @@ export const getBaseUrl = () => {
 
 const api = axios.create({
     baseURL: getBaseUrl(),
+    timeout: 10000,
     headers: { "Content-Type": "application/json" },
 });
 
-// Attach admin token from localStorage if present (only used by /admin pages)
+export function clearAdminSession(reason: "expired" | "logout" = "expired") {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminRefresh");
+    window.dispatchEvent(new CustomEvent("imad:session-expired", { detail: reason }));
+}
+let refreshPromise: Promise<string> | null = null;
 api.interceptors.request.use((config) => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
         const token = localStorage.getItem("adminToken");
         if (token) config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const config = error.config;
+        if (
+            typeof window === "undefined" ||
+            !config?.headers?.Authorization ||
+            /\/auth\//.test(config.url || "")
+        )
+            return Promise.reject(error);
+        if (error.response?.status === 403) {
+            clearAdminSession();
+            return Promise.reject(error);
+        }
+        if (error.response?.status !== 401 || config._retried) return Promise.reject(error);
+        config._retried = true;
+        if (!refreshPromise) {
+            const staleToken = String(config.headers.Authorization).replace(/^Bearer /, "");
+            const refresh = async () => {
+                const current = localStorage.getItem("adminToken");
+                if (current && current !== staleToken) return current;
+                const token = localStorage.getItem("adminRefresh");
+                if (!token) throw new Error("Session expirée");
+                const response = await axios.post(
+                    `${getBaseUrl()}/auth/refresh`,
+                    { token },
+                    { timeout: 10000 },
+                );
+                const session = response.data.data;
+                localStorage.setItem("adminToken", session.accessToken);
+                localStorage.setItem("adminRefresh", session.refreshToken);
+                return session.accessToken as string;
+            };
+            refreshPromise = (async () => {
+                if (navigator.locks)
+                    return await navigator.locks.request("imad-admin-refresh", refresh);
+                return await refresh();
+            })().finally(() => {
+                refreshPromise = null;
+            });
+        }
+        try {
+            config.headers.Authorization = `Bearer ${await refreshPromise}`;
+            return await api.request(config);
+        } catch (failure) {
+            if (axios.isAxiosError(failure) && !failure.response) return Promise.reject(failure);
+            clearAdminSession();
+            return Promise.reject(failure);
+        }
+    },
+);
+export async function adminLogout() {
+    const token = localStorage.getItem("adminRefresh");
+    if (token) await api.post("/auth/logout", { token });
+    clearAdminSession("logout");
+}
+export async function getContentAdmin() {
+    return (
+        await api.get<{
+            data: {
+                draft: SiteContent;
+                published: SiteContent;
+                revision: number;
+                canRollback: boolean;
+            };
+        }>("/content/admin")
+    ).data.data;
+}
+export async function saveContent(
+    action: "draft" | "publish" | "rollback",
+    revision: number,
+    content?: SiteContent,
+) {
+    return (
+        await api.post(`/content/${action}`, {
+            expectedRevision: revision,
+            ...(content ? { content } : {}),
+        })
+    ).data;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Category {
@@ -78,6 +166,7 @@ export interface ProductsResponse {
 export interface GuestCheckoutPayload {
     paymentMethod: "COD";
     crmConsent?: boolean;
+    expectedTotal?: number;
     customer: {
         fullName: string;
         phone: string;
@@ -87,7 +176,13 @@ export interface GuestCheckoutPayload {
         region: string;
         postalCode?: string;
     };
-    items: { productId: string; variantId: string; quantity: number; price?: number; name?: string }[];
+    items: {
+        productId: string;
+        variantId: string;
+        quantity: number;
+        price?: number;
+        name?: string;
+    }[];
     notes?: string;
 }
 
@@ -99,13 +194,17 @@ export const getProducts = async (params?: {
     page?: number;
     limit?: number;
     search?: string;
+    sort?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    availability?: string;
 }): Promise<ProductsResponse> => {
     const { data } = await api.get("/products", { params });
     return data;
 };
 
 export const getProduct = async (slug: string): Promise<Product> => {
-    const { data } = await api.get(`/products/${slug}`);
+    const { data } = await api.get(`/products/${encodeURIComponent(slug)}`);
     return data.data;
 };
 
@@ -117,7 +216,9 @@ export const getCategories = async (): Promise<Category[]> => {
 // ─── Guest Checkout (no auth) ─────────────────────────────────────────────────
 
 export const createOrder = async (payload: GuestCheckoutPayload, idempotencyKey: string) => {
-    const { data } = await api.post("/orders", payload, { headers: { "Idempotency-Key": idempotencyKey } });
+    const { data } = await api.post("/orders", payload, {
+        headers: { "Idempotency-Key": idempotencyKey },
+    });
     return data.data;
 };
 
@@ -194,7 +295,13 @@ export interface AdminOrder {
 
 export const getAllOrders = async (params?: { status?: string; page?: number; limit?: number }) => {
     const { data } = await api.get("/orders", { params });
-    return data as { success: boolean; data: AdminOrder[]; total: number; page: number; totalPages: number };
+    return data as {
+        success: boolean;
+        data: AdminOrder[];
+        total: number;
+        page: number;
+        totalPages: number;
+    };
 };
 
 export const updateOrderStatus = async (id: string, status: string) => {
@@ -245,5 +352,10 @@ export const updateSettings = async (payload: Partial<StoreSettings>) => {
 
 export default api;
 
-export async function getAdminProducts(params: Record<string, unknown> = {}) { return (await api.get<ProductsResponse>("/products/admin/catalog", { params })).data; }
-export async function uploadProductImage(file: File): Promise<string> { return (await api.post("/uploads", file, { headers: { "Content-Type": file.type } })).data.data.url; }
+export async function getAdminProducts(params: Record<string, unknown> = {}) {
+    return (await api.get<ProductsResponse>("/products/admin/catalog", { params })).data;
+}
+export async function uploadProductImage(file: File): Promise<string> {
+    return (await api.post("/uploads", file, { headers: { "Content-Type": file.type } })).data.data
+        .url;
+}

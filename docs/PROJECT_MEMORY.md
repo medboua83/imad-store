@@ -42,3 +42,7 @@ A later audit, documented in AUDIT_SITE_2026-10-18.md, identified 21 open findin
 ## Priority remediation (2026-10-18)
 
 The ten P1 findings are implemented; see `docs/PRIORITY_FIXES_2026-10-18.md` and `docs/CURRENT_STATUS.md` for test evidence and operational limits. Dependency migration was explicitly authorized with backup and tests. Active demo/test fixtures are now DRAFT; optional `inventoryReserved` and `verifiedAt` fields preserve safe treatment of historical records. Never infer legacy stock reservations or reactivate unverified Telegram links.
+
+## Usability and performance remediation (2026-10-18)
+
+The remaining eleven audit items have been implemented and verified with twenty isolated scenarios and browser checks. See docs/USABILITY_PERFORMANCE_2026-10-18.md. Site content uses an explicit draft/publish/rollback collection; never publish guesses about commercial terms. Demo seeding is no longer a startup option and requires an isolated test database. Shared package runtime now uses compiled CommonJS output, built before the backend.

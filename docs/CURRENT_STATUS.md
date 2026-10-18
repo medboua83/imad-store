@@ -21,5 +21,11 @@ PR #2 synchronized the local storefront and CRM integration; PR #3 recorded the 
 - Telegram requires matching webhook-secret configuration and verified contact sharing before receiving customer notifications. Unverified old associations are ignored.
 - Card-payment endpoints are closed; COD remains available. Stripe must be redesigned and tested before reactivation.
 - Historical orders without a verified reservation require stock reconciliation before cancellation. No historical stock adjustment was guessed.
-- The eleven P2 audit findings remain in the roadmap. This is not a complete security or performance certification; no production Lighthouse or field-performance score was measured.
+- The eleven P2 audit findings are implemented; see USABILITY_PERFORMANCE_2026-10-18.md for scope, verification, local measurements and owner content still required. No production field-performance certification is claimed.
 - Preserve the historical CRM cutoff and manually managed database indexes. Never replay historical jobs as part of tests.
+
+## Usability and performance follow-up
+
+Twenty isolated scenarios pass. Public pages render their useful data on the server; product metadata, real 404s, robots and sitemap are implemented. Cart reconciliation, recovery after network failure, accessible dialogs, server-backed content publication and session renewal were verified in browsers. The public catalog remains empty until real products are supplied. Commercial terms require owner validation; generic pages do not invent delivery times or return rules.
+
+Applied follow-up: the active port 3000 frontend and port 4000 backend have been restarted and verified. Live order count, all eight outbox rows (including attempts), product statuses and manually maintained order indexes match the pre-application snapshot. No site content was published on the active database.

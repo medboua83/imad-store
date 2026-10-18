@@ -1,132 +1,268 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap');
+@import "./fonts.css";
 
 @import "tailwindcss";
-@config "../tailwind.config.ts";
+@config "../tailwind.config.mjs";
 
 /* ─── Design Tokens ──────────────────────────────────────── */
 :root {
-  --gold: #C9A96E;
-  --gold-light: #E8D5A3;
-  --gold-dark: #A8883F;
-  --navy: #1A1A2E;
-  --ivory: #F5EDE0;
-  --alabaster: #FDFAF6;
-  --charcoal: #2C2C3E;
-  --muted: #8B8399;
+    --gold: #c9a96e;
+    --gold-light: #e8d5a3;
+    --gold-dark: #a8883f;
+    --navy: #1a1a2e;
+    --ivory: #f5ede0;
+    --alabaster: #fdfaf6;
+    --charcoal: #2c2c3e;
+    --muted: #8b8399;
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+    html {
+        scroll-behavior: smooth;
+    }
 
-  body {
-    background: var(--alabaster);
-    color: var(--navy);
-    font-family: 'DM Sans', sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
+    body {
+        background: var(--alabaster);
+        color: var(--navy);
+        font-family: "DM Sans", sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
 
-  [dir="rtl"] body {
-    font-family: 'Amiri', 'DM Sans', sans-serif;
-  }
+    [dir="rtl"] body {
+        font-family: "Amiri", "DM Sans", sans-serif;
+    }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: 'Cormorant Garamond', 'Amiri', serif;
-    letter-spacing: -0.01em;
-  }
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: "Amiri", serif;
+        letter-spacing: -0.01em;
+    }
 }
 
 @layer components {
-  .btn-gold {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden bg-[#C9A96E] text-white font-medium tracking-widest uppercase text-xs px-8 py-4 transition-all duration-500;
-  }
+    .btn-gold {
+        @apply relative inline-flex items-center justify-center gap-2 overflow-hidden bg-[#C9A96E] text-white font-medium tracking-widest uppercase text-xs px-8 py-4 transition-all duration-500;
+    }
 
-  .btn-gold::after {
-    content: '';
-    @apply absolute inset-0 bg-white/20 translate-y-full transition-transform duration-500;
-  }
+    .btn-gold::after {
+        content: "";
+        @apply absolute inset-0 bg-white/20 translate-y-full transition-transform duration-500;
+    }
 
-  .btn-gold:hover::after {
-    @apply translate-y-0;
-  }
+    .btn-gold:hover::after {
+        @apply translate-y-0;
+    }
 
-  .btn-outline-gold {
-    @apply inline-flex items-center justify-center gap-2 border border-[#C9A96E] text-[#C9A96E] font-medium tracking-widest uppercase text-xs px-8 py-4 hover:bg-[#C9A96E] hover:text-white transition-all duration-500;
-  }
+    .btn-outline-gold {
+        @apply inline-flex items-center justify-center gap-2 border border-[#C9A96E] text-[#C9A96E] font-medium tracking-widest uppercase text-xs px-8 py-4 hover:bg-[#C9A96E] hover:text-white transition-all duration-500;
+    }
 
-  .section-eyebrow {
-    @apply text-[#C9A96E] tracking-[0.3em] uppercase text-xs font-medium mb-4;
-  }
+    .section-eyebrow {
+        @apply text-[#C9A96E] tracking-[0.3em] uppercase text-xs font-medium mb-4;
+    }
 
-  .luxury-heading {
-    font-family: 'Cormorant Garamond', serif;
-    @apply font-light leading-tight;
-  }
+    .luxury-heading {
+        font-family: "Amiri", serif;
+        @apply font-light leading-tight;
+    }
 
-  .product-card {
-    @apply relative overflow-hidden bg-[#F5EDE0] cursor-pointer;
-  }
+    .product-card {
+        @apply relative overflow-hidden bg-[#F5EDE0] cursor-pointer;
+    }
 
-  .glass-nav {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    background: rgba(253, 250, 246, 0.85);
-    border-bottom: 1px solid rgba(201, 169, 110, 0.15);
-  }
+    .glass-nav {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: rgba(253, 250, 246, 0.85);
+        border-bottom: 1px solid rgba(201, 169, 110, 0.15);
+    }
 }
 
 /* ─── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 4px;
+    width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--alabaster);
+    background: var(--alabaster);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gold);
+    background: var(--gold);
 }
 
 /* ─── Selection ────────────────────────────────────────── */
 ::selection {
-  background: rgba(201, 169, 110, 0.2);
-  color: var(--navy);
+    background: rgba(201, 169, 110, 0.2);
+    color: var(--navy);
 }
 
 /* ─── Ping animation variants ──────────────────────────── */
 @keyframes ping-gold {
-
-  75%,
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+    75%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
 }
 
 .animate-ping-gold {
-  animation: ping-gold 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    animation: ping-gold 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 /* ─── Marquee ────────────────────────────────────────────── */
 @keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
+    0% {
+        transform: translateX(0);
+    }
 
-  100% {
-    transform: translateX(-50%);
-  }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 .marquee-inner {
-  animation: marquee 20s linear infinite;
+    animation: marquee 20s linear infinite;
 }
 
 [dir="rtl"] .marquee-inner {
-  animation-direction: reverse;
+    animation-direction: reverse;
+}
+/* Stable, readable storefront controls; native dialogs handle focus and Escape. */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #fdfaf6;
+    border-bottom: 1px solid #ded6cc;
+}
+.page-shell {
+    max-width: 80rem;
+    margin-inline: auto;
+    padding: 2rem 1.25rem 4rem;
+    min-height: 65vh;
+}
+.hero-section {
+    background: #f5ede0;
+    padding-block: 1.5rem;
+}
+.action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 0.7rem;
+}
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    background: #1a1a2e;
+    color: white;
+    font-size: 1rem;
+}
+.btn-primary:hover {
+    background: #383849;
+}
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.store-input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #81776c;
+    border-radius: 0.4rem;
+    background: white;
+    color: #1a1a2e;
+    font-size: 1rem;
+}
+:focus-visible {
+    outline: 3px solid #986d28;
+    outline-offset: 3px;
+}
+.skip-link {
+    position: fixed;
+    top: -100px;
+    right: 1rem;
+    z-index: 200;
+    padding: 0.7rem;
+    background: #1a1a2e;
+    color: white;
+}
+.skip-link:focus {
+    top: 1rem;
+}
+.cart-dialog {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: auto;
+    inset-inline-start: 0;
+    margin: 0;
+    width: min(100%, 32rem);
+    height: 100dvh;
+    max-width: 100%;
+    max-height: 100dvh;
+    background: #fdfaf6;
+    color: #1a1a2e;
+    border: 0;
+    padding: 0;
+}
+.cart-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+.menu-dialog {
+    margin: auto;
+    border: 0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    width: min(90%, 25rem);
+    background: #fdfaf6;
+}
+dialog::backdrop {
+    background: rgba(26, 26, 46, 0.65);
+}
+@media (max-width: 640px) {
+    body {
+        font-size: 18px;
+    }
+    .hero-section {
+        padding-block: 0;
+    }
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    .hero-section p {
+        font-size: 1rem;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-menu-toggle {
+        display: none;
+    }
+}
+.hero-section img {
+    object-position: top;
 }

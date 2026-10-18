@@ -311,3 +311,7 @@ L’administration authentifiée n’a pas été modifiée ni testée par créat
 ## Suivi du lot prioritaire
 
 Les dix constats P1 ont été traités dans une livraison distincte de l’audit initial. Voir [corrections, vérifications et limites opérationnelles](PRIORITY_FIXES_2026-10-18.md). Les observations ci-dessus décrivent l’état initial ; elles ne doivent pas être interprétées comme l’état actuel du site.
+
+## Suivi des onze constats P2
+
+Les corrections et leurs preuves sont décrites dans [Ergonomie et performance](USABILITY_PERFORMANCE_2026-10-18.md). Les constats initiaux restent conservés comme historique. Les vraies fiches produits et les informations commerciales détaillées nécessitent toujours les données du propriétaire.
