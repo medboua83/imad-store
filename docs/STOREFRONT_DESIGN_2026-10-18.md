@@ -22,3 +22,5 @@ Compilation, contrôle TypeScript et lint réussis. Essais navigateur sur la ver
 La refonte ne modifie ni le backend, ni les règles de réservation, ni la livraison CRM. Aucun nouvel envoi CRM ou commande n'est requis pour cette vérification visuelle. Les données de départ sont comparées après application locale. Les captures, limites de largeur réellement observées, mesures et emplacement de sauvegarde sont conservés dans le rapport local de cette phase.
 
 Contrôle local complémentaire : le formulaire de filtres est réinitialisé lorsque les paramètres changent. Cela évite qu'une navigation « effacer les filtres » affiche tous les produits tout en conservant visuellement l'ancienne catégorie dans un select non contrôlé.
+
+Correctif mobile complémentaire : à 389 px, l'image d'accueil débordait de 43 px car la hauteur minimale de 360 px combinée au ratio 1.2 imposait une largeur minimale de 432 px. La hauteur mobile est désormais déterminée par le ratio et la largeur disponible, sans minimum contraignant. Vérification locale : largeur image et page 389 px, sans débordement; contrôle complémentaire à 321 px également sans débordement.
