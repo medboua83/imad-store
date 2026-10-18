@@ -1,265 +1,46 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { ShoppingBag, Heart, Search } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { getProducts, type Product } from "@/lib/api";
 import { useCartStore } from "@/store/cart.store";
-import { ProductVariant } from "@/lib/api";
 
-/* ── Product interface ─────────────────────────────────────── */
-interface ShopProduct {
-    id: string;
-    slug: string;
-    nameFr: string;
-    nameAr: string;
-    nameEn: string;
-    price: number;
-    compareAt: number | null;
-    category: string;
-    img1: string;
-    img2: string;
-    colors: { hex: string; label: string }[];
-}
-
-/* ── Mock data ─────────────────────────────────────────────── */
-const ALL_PRODUCTS: ShopProduct[] = [
-    { id: "sac-cuir-luxe", slug: "sac-cuir-luxe", nameFr: "Sac en Cuir Luxe", nameAr: "حقيبة جلدية فاخرة", nameEn: "Luxury Leather Bag", price: 1200, compareAt: 1500, category: "bags", img1: "/images/cat-abayas.png", img2: "/images/hero-1.png", colors: [{ hex: "#000000", label: "أسود" }, { hex: "#C9A96E", label: "ذهب" }] },
-    { id: "abaya-velours", slug: "abaya-velours", nameFr: "Abaya Velours Royal", nameAr: "عباية مخملية ملكية", nameEn: "Royal Velvet Abaya", price: 850, compareAt: 1100, category: "abayas", img1: "/images/cat-abayas.png", img2: "/images/hero-2.png", colors: [{ hex: "#800020", label: "عنابي" }] },
-    { id: "chale-soie", slug: "chale-soie", nameFr: "Châle en Soie", nameAr: "شال حريري", nameEn: "Silk Shawl", price: 350, compareAt: null, category: "shailan", img1: "/images/hero-2.png", img2: "/images/hero-1.png", colors: [{ hex: "#F5F5DC", label: "بيج" }] },
-    { id: "talons-hauts-or", slug: "talons-hauts-or", nameFr: "Talons Hauts Or", nameAr: "حذاء كعب عالي ذهبي", nameEn: "Gold High Heels", price: 590, compareAt: 750, category: "shoes-women", img1: "/images/cat-shoes.png", img2: "/images/hero-1.png", colors: [{ hex: "#FFD700", label: "ذهبي" }] },
-    { id: "pyjama-soie", slug: "pyjama-soie", nameFr: "Pyjama en Soie", nameAr: "بيجامة حريرية", nameEn: "Silk Pajamas", price: 450, compareAt: 600, category: "pyjamas", img1: "/images/hero-1.png", img2: "/images/cat-abayas.png", colors: [{ hex: "#000080", label: "أزرق" }] },
-    { id: "sabots-classiques", slug: "sabots-classiques", nameFr: "Sabots Classiques Homme", nameAr: "سابو رجالي كلاسيك", nameEn: "Classic Men's Sabots", price: 320, compareAt: 450, category: "shoes-men", img1: "/images/cat-shoes.png", img2: "/images/hero-2.png", colors: [{ hex: "#8B4513", label: "بني" }] },
-];
-
-const CATEGORIES = [
-    { slug: "all", labelAr: "الكل" },
-    { slug: "bags", labelAr: "الحقائب" },
-    { slug: "abayas", labelAr: "العبايات" },
-    { slug: "shailan", labelAr: "شيلان" },
-    { slug: "shoes-women", labelAr: "أحذية نسائية" },
-    { slug: "pyjamas", labelAr: "بيجامات" },
-    { slug: "shoes-men", labelAr: "سابو رجالي" },
-];
+const validId = /^[a-fA-F0-9]{24}$/;
+const safeImage = (s: string) => s.startsWith("/") || /^https:\/\/(res\.cloudinary\.com|placeholder\.co)\//.test(s);
 
 function ShopContent() {
-    const searchParams = useSearchParams();
-    const selectedCategory = searchParams.get("category") || "all";
-    const [products, setProducts] = useState<ShopProduct[]>(ALL_PRODUCTS);
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const { items: cartItems } = useCartStore();
-
-    useEffect(() => {
-        let filtered = ALL_PRODUCTS;
-        if (selectedCategory !== "all") {
-            filtered = filtered.filter(p => p.category === selectedCategory);
-        }
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(p =>
-                p.nameAr.toLowerCase().includes(q) ||
-                p.nameFr.toLowerCase().includes(q)
-            );
-        }
-        setProducts(filtered);
-    }, [selectedCategory, searchQuery]);
-
-    const addToCart = (product: ShopProduct) => {
-        const color = product.colors[0];
-        const variant: ProductVariant = {
-            id: `${product.id}-${color.hex}`,
-            color: color.hex,
-            colorNameFr: color.label,
-            colorNameAr: color.label,
-            colorNameEn: color.label,
-            size: undefined,
-            stock: 10,
-            sku: `SKU-${product.id}`,
-        };
-        useCartStore.getState().addItem({
-            id: product.id,
-            slug: product.slug,
-            nameFr: product.nameFr,
-            nameAr: product.nameAr,
-            nameEn: product.nameEn,
-            descriptionFr: "",
-            descriptionAr: "",
-            descriptionEn: "",
-            price: product.price,
-            images: [product.img1],
-            status: "active",
-            category: { id: "", slug: product.category, nameFr: "", nameAr: "", nameEn: "" },
-            variants: [],
-        }, variant, 1);
-    };
-
-    return (
-        <div className="min-h-screen bg-[#FDFAF6]" dir="rtl">
-            {/* Header */}
-            <header className="border-b border-[#C9A96E]/20 py-8 mt-24">
-                <div className="max-w-[1300px] mx-auto px-6 md:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <p className="text-[#C9A96E] text-[10px] tracking-[0.3em] uppercase mb-2">المتجر</p>
-                        <h1 className="font-light text-[#1A1A2E] tracking-wide" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.8rem, 4vw, 2.8rem)" }}>
-                            {selectedCategory === "all" ? "كل المنتجات" : CATEGORIES.find(c => c.slug === selectedCategory)?.labelAr}
-                        </h1>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        {/* Search */}
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="ابحثي عن منتج..."
-                                className="bg-white border border-[#C9A96E]/20 px-4 py-2.5 pe-10 text-sm text-[#1A1A2E] outline-none focus:border-[#C9A96E] rounded-lg w-64"
-                            />
-                            <Search size={16} className="absolute top-1/2 -translate-y-1/2 end-3 text-[#9B8E82] pointer-events-none" />
-                        </div>
-
-                        {/* Cart count */}
-                        <Link href="/cart" className="relative">
-                            <ShoppingBag size={20} />
-                            {cartItems.length > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-[#C9A96E] text-white text-[8px] rounded-full w-5 h-5 flex items-center justify-center">
-                                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                                </span>
-                            )}
-                        </Link>
-                    </div>
-                </div>
-            </header>
-
-            {/* Category filter */}
-            <nav className="my-8 px-6 md:px-12 max-w-[1300px] mx-auto flex overflow-x-auto gap-3">
-                {CATEGORIES.map((cat) => (
-                    <Link
-                        key={cat.slug}
-                        href={`/shop?category=${cat.slug}`}
-                        className={`px-5 py-2.5 rounded-full text-[10px] tracking-[0.15em] uppercase font-bold whitespace-nowrap transition-all duration-300 ${
-                            cat.slug === selectedCategory
-                                ? "bg-[#1A1A2E] text-white"
-                                : "bg-white text-[#1A1A2E] hover:bg-[#C9A96E] hover:text-white border border-[#C9A96E]/20"
-                        }`}
-                    >
-                        {cat.labelAr}
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Products grid */}
-            <main className="px-6 md:px-12 py-8">
-                <div className="max-w-[1300px] mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <p className="text-[10px] text-[#9B8E82] tracking-widest uppercase">
-                            {products.length} منتج
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {products.length > 0 ? (
-                            products.map((product) => {
-                                const discount = product.compareAt
-                                    ? Math.round((1 - product.price / product.compareAt) * 100)
-                                    : 0;
-                                return (
-                                    <div
-                                        key={product.id}
-                                        className="group relative bg-white shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden"
-                                        onMouseEnter={() => setHoveredId(product.id)}
-                                        onMouseLeave={() => setHoveredId(null)}
-                                    >
-                                        {/* Image */}
-                                        <Link href={`/products/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-[#F5EDE0]">
-                                            <Image
-                                                src={product.img1}
-                                                alt={product.nameAr}
-                                                fill
-                                                className={`object-cover transition-opacity duration-700 ${hoveredId === product.id ? "opacity-0" : "opacity-100"}`}
-                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                            />
-                                            <Image
-                                                src={product.img2}
-                                                alt={product.nameAr}
-                                                fill
-                                                className={`object-cover transition-opacity duration-700 ${hoveredId === product.id ? "opacity-100" : "opacity-0"}`}
-                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                            />
-                                            {discount > 0 && (
-                                                <span className="absolute top-3 left-3 bg-[#1A1A2E] text-[#C9A96E] text-[9px] tracking-[0.2em] uppercase px-3 py-1.5 font-medium">
-                                                    -{discount}%
-                                                </span>
-                                            )}
-
-                                            {/* Wishlist */}
-                                            <button className="absolute top-3 right-3 w-8 h-8 bg-white/85 backdrop-blur flex items-center justify-center hover:bg-[#C9A96E] transition-all opacity-0 group-hover:opacity-100">
-                                                <Heart size={14} strokeWidth={1.5} />
-                                            </button>
-                                        </Link>
-
-                                        {/* Info */}
-                                        <div className="p-5">
-                                            <Link href={`/products/${product.slug}`}>
-                                                <h3 className="font-light text-[#1A1A2E] text-lg mb-2 hover:text-[#C9A96E] transition-colors line-clamp-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                                                    {product.nameAr}
-                                                </h3>
-                                            </Link>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                {product.colors.slice(0, 3).map((c, i) => (
-                                                    <span
-                                                        key={i}
-                                                        className="w-3 h-3 rounded-full border border-[#C9A96E]/20"
-                                                        style={{ background: c.hex }}
-                                                        title={c.label}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    {product.compareAt && (
-                                                        <span className="text-[#9B8E82] text-xs line-through">
-                                                            {product.compareAt.toLocaleString()} م.د
-                                                        </span>
-                                                    )}
-                                                    <span className="text-[#1A1A2E] font-semibold">
-                                                        {product.price.toLocaleString()} م.د
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    onClick={() => addToCart(product)}
-                                                    className="text-[#1A1A2E] hover:text-[#C9A96E] transition-colors"
-                                                    aria-label="أضف إلى السلة"
-                                                >
-                                                    <ShoppingBag size={16} strokeWidth={1.5} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <div className="col-span-full text-center py-20">
-                                <p className="text-[#9B8E82] text-sm">لا توجد منتجات في هذه الفئة</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </main>
-        </div>
-    );
+  const search = useSearchParams();
+  const category = search.get("category") || "all";
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const { addItem, items } = useCartStore();
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    getProducts({limit: 100, status: "ACTIVE", ...(category !== "all" ? {category} : {})})
+      .then(r => { if(active) setProducts(r.data); })
+      .catch(() => { if(active) setError("تعذر تحميل المنتجات. حاول مجدداً."); })
+      .finally(() => { if(active) setLoading(false); });
+    return () => {active = false;};
+  },[category]);
+  const filtered = useMemo(() => products.filter(p => [p.nameAr,p.nameFr,p.nameEn].some(n => n.toLowerCase().includes(query.trim().toLowerCase()))),[products,query]);
+  return <main className="min-h-screen bg-[#FDFAF6] pt-32 pb-20 px-6" dir="rtl">
+    <div className="max-w-7xl mx-auto">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8"><h1 className="text-4xl text-[#1A1A2E]">المتجر</h1><Link href="/checkout" className="flex gap-2 items-center text-sm"><ShoppingBag size={18}/>{items.reduce((n,i)=>n+i.quantity,0)} في السلة</Link></div>
+      <input aria-label="البحث عن منتج" value={query} onChange={e=>setQuery(e.target.value)} placeholder="ابحث عن منتج..." className="border p-3 mb-8 w-full max-w-sm bg-white" />
+      {loading ? <p>جارٍ تحميل المنتجات...</p> : error ? <p role="alert">{error}</p> : <><p className="mb-5 text-sm text-gray-500">{filtered.length} منتج</p><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{filtered.map(p=>{
+        const variant=p.variants.find(v=>v.stock>0 && validId.test(v.id));
+        const active=p.status==="ACTIVE" && validId.test(p.id) && !!variant;
+        const img=p.images.find(safeImage);
+        return <article key={p.id} className="bg-white shadow-sm"><Link href={`/products/${encodeURIComponent(p.slug)}`} className="relative aspect-[3/4] bg-[#F5EDE0] block">{img ? <Image src={img} alt={p.nameAr || p.nameFr} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-cover"/> : <span className="absolute inset-0 flex items-center justify-center text-gray-400">لا توجد صورة</span>}</Link><div className="p-5"><Link href={`/products/${encodeURIComponent(p.slug)}`} className="block text-lg mb-3 hover:underline">{p.nameAr || p.nameFr || p.nameEn}</Link><p className="mb-4">{p.price.toLocaleString()} MAD</p><button type="button" disabled={!active} onClick={()=>{if(variant) addItem(p,variant,1);}} className="w-full py-3 bg-[#1A1A2E] text-white disabled:opacity-40">{active ? "أضف إلى السلة" : "غير متوفر"}</button></div></article>;
+      })}</div>{filtered.length===0 && <p className="mt-8">لا توجد منتجات مطابقة</p>}</>}
+    </div>
+  </main>;
 }
-
-export default function ShopPage() {
-    return (
-        <Suspense fallback={
-            <div className="min-h-[70vh] flex items-center justify-center">
-                <p className="text-[#C9A96E] text-[10px] uppercase animate-pulse">جاري التحميل...</p>
-            </div>
-        }>
-            <ShopContent />
-        </Suspense>
-    );
-}
+export default function ShopPage() { return <Suspense fallback={<main className="pt-40 text-center">جارٍ التحميل...</main>}><ShopContent/></Suspense>; }

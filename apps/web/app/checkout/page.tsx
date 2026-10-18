@@ -6,13 +6,19 @@ import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { CheckCircle, Ship, AlertCircle, User, Phone, MapPin, CreditCard, Lock } from "lucide-react";
 
+import { useShipping } from "@/hooks/useShipping";
+
 function CheckoutContent() {
     const { items, total, clearCart } = useCartStore();
+
+    const { settings, fee: shippingFee, total: orderTotal } = useShipping(total());
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState("");
+    const [crmConsent, setCrmConsent] = useState(false);
+    const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
 
     const [form, setForm] = useState({
         fullName: "",
@@ -35,25 +41,29 @@ function CheckoutContent() {
         }));
 
         try {
+            const activeKey = checkoutKey ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `order_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+            if (!checkoutKey) setCheckoutKey(activeKey);
             const order = await createOrder({
                 paymentMethod: "COD",
                 customer: {
                     fullName: form.fullName,
-                    phone: form.phone,
+                    phone: form.phone.replace(/[\s()-]/g, ""),
                     street: form.address,
                     city: form.city,
                     region: form.city,
                 },
                 items: itemsPayload,
-            });
+                crmConsent,
+            }, activeKey);
 
             setOrderId(order.id);
             setSuccess(true);
             clearCart();
+            setCheckoutKey(null);
         } catch (err: unknown) {
             console.error("Order failed:", err);
             // Surface the real API error if available
-            const axiosErr = err as any;
+            const axiosErr = err as { response?: { data?: { error?: string; details?: { message?: string }[] } }; message?: string };
             const apiMsg = axiosErr?.response?.data?.error
                 ?? axiosErr?.response?.data?.details?.[0]?.message
                 ?? axiosErr?.message;
@@ -193,10 +203,11 @@ function CheckoutContent() {
                         <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
                             {formFields.map((f) => (
                                 <div key={f.key} className={f.colSpan === 2 ? "md:col-span-2" : ""}>
-                                    <label className="flex items-center gap-2 text-[9px] tracking-[0.2em] uppercase font-medium text-[#C9A96E] mb-2">
+                                    <label htmlFor={`checkout-${f.key}`} className="flex items-center gap-2 text-[9px] tracking-[0.2em] uppercase font-medium text-[#C9A96E] mb-2">
                                         {f.icon} {f.label} {f.required && "*"}
                                     </label>
                                     <input
+                                        id={`checkout-${f.key}`}
                                         type={f.type}
                                         required={f.required}
                                         placeholder={f.placeholder}
@@ -278,9 +289,15 @@ function CheckoutContent() {
                         </div>
                     </div>
 
+                    <label className="flex items-start gap-3 text-sm text-[#1A1A2E]">
+                        <input type="checkbox" checked={crmConsent}
+                            onChange={(e) => setCrmConsent(e.target.checked)}
+                            className="mt-1" />
+                        <span>أوافق على مشاركة بيانات طلبي مع فريق خدمة العملاء عبر DeskcommCRM للتواصل معي بشأن طلبي بواسطة واتساب. الموافقة اختيارية ولا تمنع إتمام الطلب.</span>
+                    </label>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || shippingFee === null || settings?.codEnabled === false}
                         className="group w-full relative flex items-center justify-center bg-[#1A1A2E] text-white text-[10px] md:text-[11px] font-bold tracking-[0.25em] py-5 px-8 uppercase overflow-hidden hover:bg-[#C9A96E] transition-colors duration-500 disabled:opacity-50"
                     >
                         {loading ? "جاري الإرسال..." : "تأكيد الطلب"}
@@ -318,13 +335,13 @@ function CheckoutContent() {
                             <div className="flex justify-between items-center text-xs text-[#9B8E82] tracking-wide">
                                 <span>الشحن</span>
                                 <span className="uppercase text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5">
-                                    يُحسب لاحقاً
+                                    {shippingFee === null ? "تعذر تحميل تكلفة الشحن" : shippingFee === 0 ? "مجاني" : `${shippingFee.toFixed(2)} MAD`}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-t border-[#C9A96E]/10 pt-4">
                                 <span className="text-xs uppercase tracking-widest font-semibold text-[#1A1A2E]">المجموع</span>
                                 <span className="text-xl font-bold text-[#C9A96E]">
-                                    {total().toFixed(2)} MAD
+                                    {(orderTotal ?? total()).toFixed(2)} MAD
                                 </span>
                             </div>
                         </div>

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const getBaseUrl = () => {
-    let url = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+export const getBaseUrl = () => {
+    let url = process.env.NEXT_PUBLIC_API_URL || "/api";
     url = url.replace(/\/$/, ""); // remove trailing slash
     
     // Fix double /api/api if misconfigured
@@ -21,8 +21,6 @@ const api = axios.create({
 
 // Attach admin token from localStorage if present (only used by /admin pages)
 api.interceptors.request.use((config) => {
-    // LOG EXACT URL BEING REQUESTED FOR DEBUGGING
-    console.log("AXIOS REQUEST URL:", config.baseURL, config.url, config.method);
     if (typeof window !== "undefined") {
         const token = localStorage.getItem("adminToken");
         if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -79,6 +77,7 @@ export interface ProductsResponse {
 // Guest-only checkout — no user account required
 export interface GuestCheckoutPayload {
     paymentMethod: "COD";
+    crmConsent?: boolean;
     customer: {
         fullName: string;
         phone: string;
@@ -117,8 +116,8 @@ export const getCategories = async (): Promise<Category[]> => {
 
 // ─── Guest Checkout (no auth) ─────────────────────────────────────────────────
 
-export const createOrder = async (payload: GuestCheckoutPayload) => {
-    const { data } = await api.post("/orders", payload);
+export const createOrder = async (payload: GuestCheckoutPayload, idempotencyKey: string) => {
+    const { data } = await api.post("/orders", payload, { headers: { "Idempotency-Key": idempotencyKey } });
     return data.data;
 };
 

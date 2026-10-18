@@ -88,9 +88,7 @@ export function Footer() {
                         {[
                             { label: "الرئيسية", href: "/" },
                             { label: "المتجر", href: "/shop" },
-                            { label: "اتصل بنا", href: "#" },
-                            { label: "الشروط والأحكام", href: "#" },
-                            { label: "سياسة الخصوصية", href: "#" },
+                            { label: "اتصل بنا", href: "/contact" },
                         ].map((link, i) => (
                             <Link
                                 key={i}

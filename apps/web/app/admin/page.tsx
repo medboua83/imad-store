@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Package, LogOut, RefreshCw, ExternalLink, Check, LayoutDashboard, ShoppingBag, Image as ImageIcon, Grid, Settings } from "lucide-react";
+import { Bell, Package, LogOut, Check, LayoutDashboard, ShoppingBag, Image as ImageIcon, Grid, Settings } from "lucide-react";
 import { adminLogin, getAdminNotifications, markAllNotificationsRead, markNotificationRead, getAllOrders, getProducts, getCategories, createProduct, updateProduct, deleteProduct, createCategory, deleteCategory, Product, Category } from "@/lib/api";
+import DeskcommTab from "./deskcomm-tab";
 import { OverviewTab, ProductsTab, BannersTab, CategoriesTab, HomepageBuilderTab, OrdersTab } from "./tabs";
 
 interface Notification {
@@ -30,7 +31,7 @@ interface Order {
 
 const POLL_INTERVAL_MS = 5000;
 
-type Tab = "overview" | "notifications" | "orders" | "products" | "banners" | "categories" | "settings";
+type Tab = "overview" | "notifications" | "orders" | "products" | "banners" | "categories" | "settings" | "deskcomm";
 
 export default function AdminPage() {
     const [token, setToken] = useState<string | null>(null);
@@ -121,11 +122,13 @@ export default function AdminPage() {
                         <p className="text-[#C9A96E] text-[10px] tracking-[0.4em] uppercase mt-2">Admin Dashboard</p>
                     </div>
                     {authError ? (
-                        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 text-xs rounded">
+                        <div role="alert" className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 text-xs rounded">
                             {authError}
                         </div>
                     ) : null}
                     <input
+                        aria-label="Email"
+                        autoComplete="username"
                         type="email"
                         placeholder="Email"
                         value={email}
@@ -134,6 +137,8 @@ export default function AdminPage() {
                         className="w-full mb-3 bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E]"
                     />
                     <input
+                        aria-label="Password"
+                        autoComplete="current-password"
                         type="password"
                         placeholder="Password"
                         value={password}
@@ -203,6 +208,9 @@ export default function AdminPage() {
                         <Settings size={14} className="inline mr-2" /> Home Builder
                         {activeTab === "settings" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A96E]" />}
                     </button>
+                    <button onClick={() => setActiveTab("deskcomm")} className={tabClass("deskcomm")}>
+                        <Settings size={14} className="inline mr-2" /> DeskcommCRM
+                    </button>
                     <button onClick={() => setActiveTab("notifications")} className={tabClass("notifications")}>
                         <Bell size={14} className="inline mr-2" /> Alerts
                         {unread > 0 && <span className="ml-2 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{unread}</span>}
@@ -233,6 +241,7 @@ export default function AdminPage() {
                 )}
 
                 {activeTab === "settings" && <HomepageBuilderTab />}
+                {activeTab === "deskcomm" && <DeskcommTab />}
 
                 {activeTab === "banners" && <BannersTab />}
 

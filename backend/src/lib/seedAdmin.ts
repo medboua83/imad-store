@@ -1,54 +1,9 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@imad-store.ma";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "Admin123456!";
-
-/** Ensures the admin user exists with a valid bcrypt hash. Safe to call on every boot. */
+/** Never auto-create or reset admin credentials on startup. */
 async function ensureAdminExists(): Promise<void> {
-    try {
-        const admin = await prisma.user.findFirst({ where: { role: "ADMIN" } });
-
-        if (!admin) {
-            console.log("⚙️  No admin found — seeding default admin...");
-            const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-            await prisma.user.create({
-                data: {
-                    email: ADMIN_EMAIL,
-                    passwordHash,
-                    firstName: "System",
-                    lastName: "Admin",
-                    role: "ADMIN",
-                },
-            });
-            console.log(`✅ Admin seeded: ${ADMIN_EMAIL}`);
-            return;
-        }
-
-        // Admin exists — verify the bcrypt hash is correct
-        let hashValid = false;
-        try {
-            if (admin.passwordHash) {
-                hashValid = await bcrypt.compare(ADMIN_PASSWORD, admin.passwordHash);
-            }
-        } catch {
-            hashValid = false;
-        }
-
-        if (!hashValid) {
-            console.log(`⚙️  Admin hash invalid for ${admin.email} — resetting password...`);
-            const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-            await prisma.user.update({
-                where: { id: admin.id },
-                data: { passwordHash, email: ADMIN_EMAIL },
-            });
-            console.log(`✅ Admin password reset: ${ADMIN_EMAIL}`);
-        } else {
-            console.log(`✅ Admin account OK: ${admin.email}`);
-        }
-    } catch (err) {
-        console.error("⚠️  ensureAdminExists failed (non-fatal):", err);
-    }
+    const count = await prisma.user.count({ where: { role: "ADMIN" } });
+    if (count === 0) console.warn("No admin account exists; provision with a restricted offline operation.");
 }
 
 const REAL_CATEGORIES = [
@@ -77,7 +32,7 @@ async function ensureSampleProducts(clean = false): Promise<void> {
         }
 
         console.log("⚙️  Seeding real store categories...");
-        let firstCategoryId = null;
+        let firstCategoryId: string | null = null;
 
         for (const cat of REAL_CATEGORIES) {
             const created = await prisma.category.upsert({

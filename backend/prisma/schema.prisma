@@ -166,6 +166,8 @@ model ProductVariant {
 // ─── Order ──────────────────────────────────────────────────────────────────
 
 model Order {
+  idempotencyKey        String?       @unique
+  requestFingerprint    String?
   id                    String        @id @default(auto()) @map("_id") @db.ObjectId
   userId                String?       @db.ObjectId
   user                  User?         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -251,4 +253,29 @@ model TelegramCustomer {
   updatedAt DateTime @updatedAt
 
   @@map("telegram_customers")
+}
+
+// Durable CRM delivery tracking; one row per source order.
+model DeskcommOutbox {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String   @unique
+  payload       Json
+  status        String   @default("PENDING")
+  attempts      Int      @default(0)
+  nextAttemptAt DateTime @default(now())
+  lockedAt      DateTime?
+  lastError     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@map("deskcomm_outbox")
+}
+
+model DeskcommIntegration {
+  id                String   @id @map("_id")
+  enabled           Boolean  @default(false)
+  webhookCiphertext String?
+  updatedAt         DateTime @updatedAt
+  @@map("deskcomm_integrations")
 }

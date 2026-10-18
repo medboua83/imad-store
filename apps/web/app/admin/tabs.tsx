@@ -1,10 +1,11 @@
 "use client";
-import { useState, useRef, useMemo, useCallback, useEffect } from "react";
-import { DollarSign, ShoppingCart, Clock, Package, Plus, Pencil, Trash2, Save, X, Image as ImageIcon, UploadCloud, TrendingUp, TrendingDown, Banknote, Target, CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink, ChevronDown } from "lucide-react";
+import { useState, useRef, useMemo, useCallback } from "react";
+import { DollarSign, ShoppingCart, Plus, Pencil, Trash2, Save, X, UploadCloud, TrendingUp, TrendingDown, Banknote, Target, CheckCircle2, XCircle, RefreshCw, ExternalLink } from "lucide-react";
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import type { LucideIcon } from "lucide-react";
 import type { Product, Category } from "@/lib/api";
 import { updateOrderStatus } from "@/lib/api";
 
@@ -58,22 +59,6 @@ const ImageUploadArea = ({ onUpload, currentImage, className = "" }: { onUpload:
     );
 };
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub?: string; color: string }) {
-    return (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-colors">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-[10px] tracking-[0.25em] uppercase text-white/40 mb-2">{label}</p>
-                    <p className="text-2xl font-light tracking-wide" style={{ color }}>{value}</p>
-                    {sub && <p className="text-[10px] text-white/30 mt-1">{sub}</p>}
-                </div>
-                <div className="p-3 rounded-lg" style={{ background: `${color}15` }}><Icon size={20} style={{ color }} /></div>
-            </div>
-        </div>
-    );
-}
-
 interface OrderItem { quantity: number; unitPrice: number; productId?: string; }
 interface Order { id: string; status: string; totalAmount: number; shippingCost?: number; createdAt: string; items?: OrderItem[]; }
 
@@ -82,12 +67,12 @@ const TOOLTIP_STYLE = { backgroundColor: '#1e1e3a', border: '1px solid rgba(201,
 const PIE_COLORS = ['#fbbf24', '#60a5fa', '#34d399', '#f87171', '#a78bfa'];
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { color?: string; name?: string; value?: number | string }[]; label?: string | number }) => {
     if (!active || !payload?.length) return null;
     return (
         <div style={TOOLTIP_STYLE} className="px-3 py-2">
             <p className="text-[10px] text-white/50 mb-1">{label}</p>
-            {payload.map((p: any, i: number) => (
+            {payload.map((p, i: number) => (
                 <p key={i} style={{ color: p.color }} className="text-xs font-medium">
                     {p.name}: {typeof p.value === 'number' ? `${p.value.toFixed(2)} MAD` : p.value}
                 </p>
@@ -356,7 +341,7 @@ const emptyPF: PF = { slug: "", nameFr: "", nameAr: "", nameEn: "", descriptionF
 
 export function ProductsTab({ products, categories, onCreate, onUpdate, onDelete }: {
     products: Product[]; categories: Category[];
-    onCreate: (d: any) => Promise<void>; onUpdate: (id: string, d: any) => Promise<void>; onDelete: (id: string) => Promise<void>;
+    onCreate: (d: Record<string, unknown>) => Promise<void>; onUpdate: (id: string, d: Record<string, unknown>) => Promise<void>; onDelete: (id: string) => Promise<void>;
 }) {
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
@@ -371,10 +356,10 @@ export function ProductsTab({ products, categories, onCreate, onUpdate, onDelete
     const set = (k: keyof PF, v: string) => setForm(f => ({ ...f, [k]: v }));
     const submit = async (e: React.FormEvent) => {
         e.preventDefault(); setSaving(true);
-        const payload: any = { slug: form.slug, nameFr: form.nameFr, nameAr: form.nameAr, nameEn: form.nameEn, descriptionFr: form.descriptionFr, descriptionAr: form.descriptionAr, descriptionEn: form.descriptionEn, price: parseFloat(form.price), images: form.images.split(",").map(s => s.trim()).filter(Boolean), categoryId: form.categoryId, status: form.status };
+        const payload: Record<string, unknown> = { slug: form.slug, nameFr: form.nameFr, nameAr: form.nameAr, nameEn: form.nameEn, descriptionFr: form.descriptionFr, descriptionAr: form.descriptionAr, descriptionEn: form.descriptionEn, price: parseFloat(form.price), images: form.images.split(",").map(s => s.trim()).filter(Boolean), categoryId: form.categoryId, status: form.status };
         if (form.compareAtPrice) payload.compareAtPrice = parseFloat(form.compareAtPrice);
         if (!editId) payload.variants = [{ color: "#000000", colorNameFr: "Noir", colorNameAr: "أسود", colorNameEn: "Black", stock: 0, sku: `${form.slug}-BLK` }];
-        try { editId ? await onUpdate(editId, payload) : await onCreate(payload); setShowForm(false); } catch (err) { console.error(err); } finally { setSaving(false); }
+        try { if (editId) await onUpdate(editId, payload); else await onCreate(payload); setShowForm(false); } catch (err) { console.error(err); } finally { setSaving(false); }
     };
 
     const inp = "w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E] rounded";
@@ -477,7 +462,7 @@ export function BannersTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {banners.map((b, i) => (
                     <div key={i} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden relative group aspect-[16/7]">
-                        <img src={b.imageUrl} className="w-full h-full object-cover" />
+                        <img src={b.imageUrl} alt={b.title || "Banner"} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
                             <button onClick={() => { setEditIdx(i); setForm(b); }} className="bg-white/20 p-2 rounded hover:bg-white/40"><Pencil size={14}/></button>
                             <button onClick={() => saveBanners(banners.filter((_, j) => j !== i))} className="bg-red-500/50 p-2 rounded hover:bg-red-500/80"><Trash2 size={14}/></button>
@@ -490,7 +475,7 @@ export function BannersTab() {
 }
 
 // ─── Categories Tab ───────────────────────────────────────────────────────────
-export function CategoriesTab({ categories, onCreate, onDelete }: { categories: Category[], onCreate: (d: any) => Promise<void>, onDelete: (id: string) => Promise<void> }) {
+export function CategoriesTab({ categories, onCreate, onDelete }: { categories: Category[], onCreate: (d: Record<string, unknown>) => Promise<void>, onDelete: (id: string) => Promise<void> }) {
     const [form, setForm] = useState({ slug: "", nameEn: "", nameFr: "", nameAr: "" });
     const inp = "w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white rounded mb-2";
 
@@ -550,7 +535,7 @@ export function HomepageBuilderTab() {
         return defaultConfig;
     });
     
-    const save = (c: any) => { setConfig(c); localStorage.setItem("homepageConfig", JSON.stringify(c)); };
+    const save = (c: Record<string, { title: string; subtitle: string; image: string }>) => { setConfig(c); localStorage.setItem("homepageConfig", JSON.stringify(c)); };
     const set = (section: string, field: string, value: string) => { save({ ...config, [section]: { ...(config[section] || {}), [field]: value } }); };
 
     const inp = "w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white rounded";
@@ -660,7 +645,7 @@ export function OrdersTab({ orders, onRefresh }: { orders: AdminOrderRow[]; onRe
             await updateOrderStatus(orderId, status);
             await onRefresh();
             push(`تم تحديث حالة الطلب إلى: ${label}`, 'success');
-        } catch (err: any) {
+        } catch {
             push(`فشل تحديث الحالة`, 'error');
         } finally {
             setUpdating(prev => ({ ...prev, [orderId]: false }));
@@ -669,7 +654,7 @@ export function OrdersTab({ orders, onRefresh }: { orders: AdminOrderRow[]; onRe
 
     const actionButtons = (o: AdminOrderRow) => {
         const busy = updating[o.id];
-        const btn = (label: string, status: string, color: string, Icon: any) => (
+        const btn = (label: string, status: string, color: string, Icon: LucideIcon) => (
             <button
                 key={status}
                 disabled={busy || o.status === status}

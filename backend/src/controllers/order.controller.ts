@@ -4,10 +4,12 @@ import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { bridgeOrderToAdmin, OrderForBridge } from "../lib/telegram-bridge";
 import { appendOrderToSheets, updateOrderStatusInSheets } from "../lib/notifications";
+import { createHash } from "crypto";
 
 // Guest-only checkout schema — COD only (card payments disabled)
 const createOrderSchema = z.object({
     paymentMethod: z.enum(["COD"]).default("COD"),
+    crmConsent: z.boolean().default(false),
     notes: z.string().optional(),
     customer: z.object({
         fullName: z.string().min(1, "Full name is required"),
@@ -39,167 +41,128 @@ const ORDER_INCLUDE = {
 };
 
 export async function createOrder(req: Request, res: Response) {
-    // ── Parse & validate ──────────────────────────────────────────────────
-    let body: z.infer<typeof createOrderSchema>;
-    try {
-        body = createOrderSchema.parse(req.body);
-    } catch (err) {
-        console.error("❌ [createOrder] Zod validation error:", JSON.stringify(err, null, 2));
-        console.error("❌ [createOrder] Raw request body:", JSON.stringify(req.body, null, 2));
-        throw err; // Let error middleware handle with 400 + details
+    const body = createOrderSchema.parse(req.body);
+    const key = req.header("Idempotency-Key")?.trim();
+    if (!key || !/^[a-zA-Z0-9_-]{16,128}$/.test(key)) {
+        throw new AppError("Idempotency-Key (16–128 letters/digits/_/-) required", 400);
     }
+    // The fingerprint prevents using an existing key for a different cart/consent/customer.
+    // Exclude UI-supplied price/name: the catalog determines the actual order price.
+    const requestFingerprint = createHash("sha256").update(JSON.stringify({
+        customer: body.customer, paymentMethod: body.paymentMethod,
+        crmConsent: body.crmConsent, notes: body.notes ?? null,
+        items: body.items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
+    })).digest("hex");
 
-    // Fetch products
-    const productIds = body.items.map((i) => i.productId);
-    
-    // Separate valid ObjectIDs (24 hex characters) from slugs to prevent Prisma MongoDB errors
-    const validObjectIds = productIds.filter(id => /^[a-fA-F0-9]{24}$/.test(id));
-    const slugs = productIds.filter(id => !/^[a-fA-F0-9]{24}$/.test(id));
-    
-    const orConditions: any[] = [];
-    if (validObjectIds.length > 0) orConditions.push({ id: { in: validObjectIds } });
-    if (slugs.length > 0) orConditions.push({ slug: { in: slugs } });
-
-    const products = orConditions.length > 0 ? await prisma.product.findMany({
-        where: { OR: orConditions },
-        include: { variants: true },
-    }) : [];
-
-    const orderItems: any[] = [];
-    let itemsTotal = 0;
-    
-    // Fallback data if a product isn't found
-    let fallbackProduct: any = null;
-
-    for (const item of body.items) {
-        let product = products.find((p: any) => p.id === item.productId || p.slug === item.productId);
-        let variant: any = null;
-        
-        if (product) {
-            variant = product.variants.find((v: any) => v.id === item.variantId || v.sku === item.variantId);
-            if (!variant && product.variants.length > 0) {
-                variant = product.variants[0];
-            }
-        }
-
-        if (!product || !variant) {
-            console.warn(`⚠️ Product/Variant not found for ${item.productId}. Using fallback...`);
-            if (!fallbackProduct) {
-                fallbackProduct = await prisma.product.findFirst({ include: { variants: true } });
-            }
-            if (fallbackProduct && fallbackProduct.variants.length > 0) {
-                product = fallbackProduct;
-                variant = fallbackProduct.variants[0];
-            } else {
-                throw new AppError("No valid fallback products in DB to map order. Please seed DB.", 500);
-            }
-        }
-        
-        // Take price directly from the payload to avoid breaking checkout
-        const unitPrice = item.price ?? Number(product.price);
-
-        orderItems.push({
-            productId: product.id,
-            variantId: variant.id,
-            quantity: item.quantity,
-            unitPrice: unitPrice
-        });
-        itemsTotal += unitPrice * item.quantity;
-    }
-
-    if (orderItems.length === 0) {
-        console.error("❌ [createOrder] No valid order items resolved.");
-        throw new AppError("جميع المنتجات في سلة التسوق غير متوفرة أو غير صالحة.", 400);
-    }
-
-    // Calculate totals
-    const settings = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
-    const shippingCost = settings?.shippingCost ?? 30;
-    const freeShippingMin = settings?.freeShippingMin ?? 500;
-
-
-
-    const appliedShipping = itemsTotal >= freeShippingMin ? 0 : Number(shippingCost);
-    const totalAmount = itemsTotal + appliedShipping;
-
-    // Create the order (no Address/User row — guest checkout is anonymous)
-    const order = await prisma.order.create({
-        data: {
-            customerName: body.customer.fullName,
-            customerPhone: body.customer.phone,
-            customerEmail: body.customer.email || null,
-            fullName: body.customer.fullName,
-            phone: body.customer.phone,
-            street: body.customer.street,
-            city: body.customer.city,
-            region: body.customer.region,
-            postalCode: body.customer.postalCode,
-            paymentMethod: "COD",
-            paymentStatus: "PENDING",
-            status: "PENDING",
-            totalAmount,
-            shippingCost: appliedShipping,
-            notes: body.notes,
-            items: { create: orderItems },
-            events: {
-                create: {
-                    type: "created",
-                    message: `New COD order from ${body.customer.fullName}`,
-                },
-            },
-        },
-        include: { ...ORDER_INCLUDE, events: true },
+    const findPrevious = () => prisma.order.findUnique({
+        where: { idempotencyKey: key }, include: { ...ORDER_INCLUDE, events: true },
     });
+    const previous = await findPrevious();
+    if (previous) {
+        if (previous.requestFingerprint !== requestFingerprint) throw new AppError("Idempotency key already used for another order", 409);
+        return res.status(200).json({ success: true, data: previous, idempotentReplay: true });
+    }
 
-    // Decrement stock (best-effort: don't fail the order if this fails)
-    Promise.all(
-        orderItems.map((item) =>
-            prisma.productVariant.update({
-                where: { id: item.variantId },
-                data: { stock: { decrement: item.quantity } },
-            })
-        )
-    ).catch((err) => console.error("⚠️ [createOrder] Stock decrement failed (non-fatal):", err));
+    let order: Awaited<ReturnType<typeof findPrevious>> = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            order = await prisma.$transaction(async (tx) => {
+                const ids = body.items.map(i => i.productId);
+                const objectIds = ids.filter(id => /^[a-fA-F0-9]{24}$/.test(id));
+                const slugs = ids.filter(id => !/^[a-fA-F0-9]{24}$/.test(id));
+                const products = await tx.product.findMany({
+                    where: { OR: [...(objectIds.length ? [{ id: { in: objectIds } }] : []),
+                                  ...(slugs.length ? [{ slug: { in: slugs } }] : [])] },
+                    include: { variants: true },
+                });
+                const grouped = new Map<string, { quantity: number; productId: string }>();
+                const orderItems: {productId: string; variantId: string; quantity: number; unitPrice: number}[] = [];
+                let itemsTotal = 0;
+                for (const item of body.items) {
+                    const product = products.find(p => p.id === item.productId || p.slug === item.productId);
+                    if (!product || product.status !== "ACTIVE") throw new AppError("Requested product is unavailable", 400);
+                    const variant = product.variants.find(v => v.id === item.variantId || v.sku === item.variantId);
+                    if (!variant || variant.productId !== product.id) throw new AppError("Requested variant is unavailable", 400);
+                    const aggregate = grouped.get(variant.id);
+                    grouped.set(variant.id, { quantity: (aggregate?.quantity ?? 0) + item.quantity, productId: product.id });
+                    const unitPrice = Number(product.price);
+                    if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new AppError("Invalid product price", 400);
+                    orderItems.push({ productId: product.id, variantId: variant.id, quantity: item.quantity, unitPrice });
+                    itemsTotal += unitPrice * item.quantity;
+                }
+                // Conditional inventory reservations ensure no overselling. Any failure aborts all writes.
+                for (const [variantId, requested] of grouped) {
+                    const reserved = await tx.productVariant.updateMany({
+                        where: { id: variantId, productId: requested.productId, stock: { gte: requested.quantity } },
+                        data: { stock: { decrement: requested.quantity } },
+                    });
+                    if (reserved.count !== 1) throw new AppError("Insufficient stock", 409);
+                }
+                const settings = await tx.storeSettings.findUnique({ where: { id: "settings" } });
+                const appliedShipping = itemsTotal >= (settings?.freeShippingMin ?? 500) ? 0 : Number(settings?.shippingCost ?? 30);
+                const created = await tx.order.create({
+                    data: {
+                        idempotencyKey: key, requestFingerprint,
+                        customerName: body.customer.fullName, customerPhone: body.customer.phone,
+                        customerEmail: body.customer.email || null,
+                        fullName: body.customer.fullName, phone: body.customer.phone,
+                        street: body.customer.street, city: body.customer.city,
+                        region: body.customer.region, postalCode: body.customer.postalCode,
+                        paymentMethod: "COD", paymentStatus: "PENDING", status: "PENDING",
+                        totalAmount: itemsTotal + appliedShipping, shippingCost: appliedShipping,
+                        notes: body.notes,
+                        items: { create: orderItems },
+                        events: { create: { type: "created", message: `New COD order from ${body.customer.fullName}` } },
+                    }, include: { ...ORDER_INCLUDE, events: true },
+                });
+                // The CRM event is committed together with order and stock, only with explicit consent.
+                if (body.crmConsent) {
+                    await tx.deskcommOutbox.create({data: {
+                        orderId: created.id,
+                        payload: {
+                            id: created.id, name: created.customerName ?? "", phone: created.customerPhone ?? "",
+                            email: created.customerEmail ?? undefined, street: created.street ?? "",
+                            city: created.city ?? "", region: created.region ?? "",
+                            totalAmount: created.totalAmount, shippingCost: created.shippingCost,
+                            status: created.status, paymentMethod: created.paymentMethod,
+                            items: created.items.map(i => ({
+                                name: i.product?.nameFr || i.product?.nameAr || i.product?.nameEn || "Produit",
+                                quantity: i.quantity, unitPrice: i.unitPrice,
+                            })),
+                        },
+                    }});
+                }
+                return created;
+            }, { maxWait: 5000, timeout: 15000 });
+            break;
+        } catch (err: unknown) {
+            const code = (err as {code?: string})?.code;
+            if (code === "P2002") {
+                const existing = await findPrevious();
+                if (existing) {
+                    if (existing.requestFingerprint !== requestFingerprint) throw new AppError("Idempotency key already used for another order", 409);
+                    return res.status(200).json({ success: true, data: existing, idempotentReplay: true });
+                }
+            }
+            if (code === "P2034" && attempt < 2) continue;
+            throw err;
+        }
+    }
+    if (!order) throw new AppError("Order transaction could not complete", 503);
 
-    // ── Telegram → WhatsApp Bridge ──────────────────────────────────────
-    // Telegram is the hub. The admin gets the order via Telegram (with a
-    // wa.me link they can tap to open WhatsApp). If the customer has linked
-    // their phone to the bot, they also receive an instant acknowledgment.
-    // The whole pipeline is best-effort and never blocks the order.
+    // External notifications are invoked ONLY after transaction commit; retries reuse the saved order.
     const locale = (req.headers["x-locale"] as "ar" | "fr" | "en" | undefined) ?? "fr";
     const bridgePayload: OrderForBridge = {
-        id: order.id,
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        customerEmail: order.customerEmail ?? null,
-        fullName: order.fullName ?? null,
-        city: order.city ?? null,
-        region: order.region ?? null,
-        totalAmount: order.totalAmount,
+        id: order.id, customerName: order.customerName, customerPhone: order.customerPhone,
+        customerEmail: order.customerEmail ?? null, fullName: order.fullName ?? null,
+        city: order.city ?? null, region: order.region ?? null, totalAmount: order.totalAmount,
         paymentMethod: "COD",
-        items: order.items.map((item: any, index: number) => ({
-            name: body.items[index]?.name || item.product?.nameFr || "Produit",
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-        })),
+        items: order.items.map(i => ({name: i.product?.nameFr || "Produit", quantity: i.quantity, unitPrice: i.unitPrice})),
         notes: order.notes ?? null,
     };
-
-    bridgeOrderToAdmin(bridgePayload, { locale })
-        .then((result) => {
-            console.log(`🌉 Bridge result for #${order.id.slice(-6)}:`, result);
-            if (result.manualActionNeeded) {
-                console.warn(`⚠️ Manual follow-up required for order ${order.id}`);
-            }
-        })
-        .catch((err) => console.error("Telegram bridge failed:", err));
-
-    // Google Sheets append (best-effort, non-blocking)
-    appendOrderToSheets(order).catch((err) =>
-        console.error("Google Sheets append failed:", err)
-    );
-
-    res.status(201).json({ success: true, data: order });
+    bridgeOrderToAdmin(bridgePayload, {locale}).catch(() => console.error("Telegram bridge failed"));
+    appendOrderToSheets(order).catch(() => console.error("Google Sheets append failed"));
+    return res.status(201).json({ success: true, data: order });
 }
 
 export async function getOrder(req: Request, res: Response) {
