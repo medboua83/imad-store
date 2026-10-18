@@ -8,7 +8,7 @@ Updated 2026-10-18. This document describes an observed development state, not a
 - Source code used during testing: `/Users/jobamafa/Downloads/imad_crm_phase01/candidates/phase08-20261017T115243Z-42791` (local Mac path; not portable).
 - Backend Prisma schema: `backend/prisma/schema.prisma`.
 
-## Verified functional state (2026-10-18)
+## Earlier functional observations (2026-10-18; historical)
 - Products collection: 11 ACTIVE products, of which 10 are labeled `[TEST 19A]`; these 10 have no images and no variants. Their test categories were all assigned to Bags. These are synthetic test records, not ready for commerce.
 - `/api/products` returned HTTP 200 with 11 items; user confirmed catalog visibility subsequently.
 - DeskcommCRM integration via encrypted config, order outbox, and periodic worker; observed TICK/ACTIVE markers at ~15-second spacing.
@@ -22,7 +22,8 @@ Updated 2026-10-18. This document describes an observed development state, not a
 - Every phase should emit a new, uniquely named TXT report, without overwriting prior reports.
 
 ## Git sync status
-On 2026-10-18 a read-only comparison with `medboua83/imad-store` branch `Master` at `b9c6c0ed78b3` identified 15 changed files and 8 locally-only files (including generated TS artifacts), with 67 identical. Git Memory 03 creates an isolated comparison candidate; no push or commit should be presumed.
+
+The synchronization and browser corrections were merged through PR #2 into Master on 2026-10-18. The corrected frontend was subsequently copied to the active local application with backups. Old preparation reports describing an unpushed candidate are historical.
 
 ## Synchronization follow-up — 2026-10-18
 
@@ -31,3 +32,9 @@ The prepared candidate was copied into an isolated workspace, compared with the 
 ## Browser QA follow-up — 2026-10-18
 
 Read-only browser testing used the existing API with an isolated frontend on port 3100. Fixed API access, mock homepage cart entries, missing standalone image rendering, contact navigation, checkout field labels and shipping mismatch. Test-only catalog records were retained. No successful checkout or CRM delivery was attempted. API_UPSTREAM_URL selects the same-origin proxy target at build time; defaults to the local API on port 4000. Explicit NEXT_PUBLIC_API_URL overrides the browser base URL and requires matching backend CORS configuration.
+
+## Authorized checkout verification and subsequent audit — 2026-10-18
+
+After explicit user authorization, one synthetic checkout was submitted. One local order, one outbox event sent on its first attempt, one CRM receipt and one pipeline lead were observed. The received reference, product, quantity and total matched. No forced replay or retry test was performed; historical pending entries remained unchanged. The synthetic order was retained as pending and reserved one unit of stock.
+
+A later audit, documented in AUDIT_SITE_2026-10-18.md, identified 21 open findings and updated ROADMAP.md. Audit checks were read-only apart from a temporary browser cart addition that was removed. The audit did not implement the proposed application fixes. Dependency warnings are package-lock findings and require configuration-specific triage. Performance targets in the report are proposed acceptance criteria, not measured scores.
