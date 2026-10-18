@@ -28,6 +28,7 @@ const result = spawnSync(
         "tests/integration.test.ts",
         "tests/cart.test.ts",
         "tests/admin-summary.test.ts",
+        "tests/admin-products.test.ts",
     ],
     { env, stdio: "inherit" },
 );

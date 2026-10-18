@@ -249,6 +249,7 @@ export default function AdminPage() {
         const r = await getAdminProducts({ limit: 100 });
         setProducts(r.data);
         setProductTotal(r.total);
+        return r.data;
     }
     async function refreshOrders() {
         const r = await getAllOrders({ limit: 100 });
@@ -488,17 +489,18 @@ export default function AdminPage() {
                                         products={products}
                                         categories={categories}
                                         total={productTotal}
+                                        onRefresh={refreshProducts}
                                         onCreate={async (d) => {
                                             await createProduct(d);
-                                            await refreshProducts();
+                                            try { await refreshProducts(); return true; } catch { return false; }
                                         }}
                                         onUpdate={async (id, d) => {
                                             await updateProduct(id, d);
-                                            await refreshProducts();
+                                            try { await refreshProducts(); return true; } catch { return false; }
                                         }}
                                         onDelete={async (id) => {
                                             await deleteProduct(id);
-                                            await refreshProducts();
+                                            try { await refreshProducts(); return true; } catch { return false; }
                                         }}
                                     />
                                 </div>
