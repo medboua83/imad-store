@@ -393,3 +393,235 @@ test("Competing independent orders never oversell the last unit", async () => {
         0,
     );
 });
+
+test("Publication keeps drafts private, detects conflicts and supports rollback", async () => {
+    const initial = await request(app).get("/api/content");
+    assert.equal(initial.status, 200);
+    const base = initial.body.data;
+    assert.equal((await request(app).get("/api/content/admin")).status, 401);
+    const edited = { ...base, heroTitle: "Titre privé de vérification" };
+    const save = await request(app)
+        .post("/api/content/draft")
+        .set(admin())
+        .send({ expectedRevision: 0, content: edited });
+    assert.equal(save.status, 200, JSON.stringify(save.body));
+    assert.equal((await request(app).get("/api/content")).body.data.heroTitle, base.heroTitle);
+    assert.equal(
+        (await request(app).post("/api/content/publish").set(admin()).send({ expectedRevision: 0 }))
+            .status,
+        409,
+    );
+    const publish = await request(app)
+        .post("/api/content/publish")
+        .set(admin())
+        .send({ expectedRevision: 1 });
+    assert.equal(publish.status, 200);
+    assert.equal((await request(app).get("/api/content")).body.data.heroTitle, edited.heroTitle);
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/content/rollback")
+                .set(admin())
+                .send({ expectedRevision: 2 })
+        ).status,
+        200,
+    );
+    assert.equal((await request(app).get("/api/content")).body.data.heroTitle, base.heroTitle);
+    const privateResponse = await request(app).get("/api/content/admin").set(admin());
+    assert.match(privateResponse.headers["cache-control"], /no-store/);
+});
+test("Commercial text requires explicit review and unsafe banner URLs are rejected", async () => {
+    const base = (await request(app).get("/api/content/admin").set(admin())).body.data;
+    const content = { ...base.draft, deliveryText: "Texte non validé", policiesVerified: false };
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/content/draft")
+                .set(admin())
+                .send({ expectedRevision: base.revision, content })
+        ).status,
+        200,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/content/publish")
+                .set(admin())
+                .send({ expectedRevision: base.revision + 1 })
+        ).status,
+        400,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/content/draft")
+                .set(admin())
+                .send({
+                    expectedRevision: base.revision + 1,
+                    content: {
+                        ...content,
+                        banners: [
+                            {
+                                title: "Unsafe",
+                                image: "/images/hero-1.png",
+                                href: "javascript:alert(1)",
+                            },
+                        ],
+                    },
+                })
+        ).status,
+        400,
+    );
+});
+test("Catalog search, price, stock, sort and pagination cover products beyond the first page", async () => {
+    const records = Array.from({ length: 14 }, (_, i) => {
+        const body = payload();
+        return {
+            ...body,
+            slug: `browse-${String(i).padStart(2, "0")}`,
+            price: 20 + i,
+            nameFr: `Recherche ${i}`,
+            nameAr: `تصفّح ${i}`,
+            nameEn: `Discovery ${i}`,
+            variants: { create: body.variants },
+        };
+    });
+    for (const data of records) await prisma.product.create({ data });
+    const page = await request(app).get(
+        "/api/products?search=Discovery&limit=12&page=2&sort=price-asc",
+    );
+    assert.equal(page.status, 200);
+    assert.equal(page.body.total, 14);
+    assert.equal(page.body.data.length, 2);
+    assert.equal(page.body.data[0].price, 32);
+    const filtered = await request(app).get(
+        "/api/products?search=Recherche&minPrice=25&maxPrice=27&sort=price-desc&availability=in-stock",
+    );
+    assert.equal(filtered.body.total, 3);
+    assert.equal(filtered.body.data[0].price, 27);
+    assert.equal((await request(app).get("/api/products?minPrice=100&maxPrice=1")).status, 400);
+    assert.equal((await request(app).get("/api/products?sort=unsafe")).status, 400);
+    assert.equal(
+        (await request(app).get("/api/products?search=" + encodeURIComponent("تصفّح"))).body.total,
+        14,
+    );
+});
+test("Changed checkout totals require another review and do not reserve stock", async () => {
+    await prisma.productVariant.update({
+        where: { id: product.variants[0].id },
+        data: { stock: 3 },
+    });
+    const before = await prisma.order.count();
+    const response = await request(app)
+        .post("/api/orders")
+        .set("Idempotency-Key", key())
+        .send({ ...checkout(), expectedTotal: 1 });
+    assert.equal(response.status, 409);
+    assert.equal(await prisma.order.count(), before);
+    assert.equal(
+        (await prisma.productVariant.findUnique({ where: { id: product.variants[0].id } })).stock,
+        3,
+    );
+});
+test("Refresh rotates sessions, rejects replay and logout revokes the refresh token", async () => {
+    const { default: bcrypt } = await import("bcryptjs");
+    const email = "session@example.invalid";
+    await prisma.user.create({
+        data: {
+            email,
+            passwordHash: await bcrypt.hash("Isolated-session-test", 10),
+            firstName: "Session",
+            lastName: "Test",
+            role: "ADMIN",
+        },
+    });
+    const login = await request(app)
+        .post("/api/auth/login")
+        .send({ email, password: "Isolated-session-test" });
+    assert.equal(login.status, 200);
+    const expired = jwt.sign(
+        { id: "123456789012345678901234", role: "ADMIN" },
+        process.env.JWT_SECRET!,
+        { expiresIn: -1 },
+    );
+    assert.equal(
+        (await request(app).get("/api/content/admin").set("Authorization", `Bearer ${expired}`))
+            .status,
+        401,
+    );
+    const old = login.body.data.refreshToken;
+    const refreshed = await request(app).post("/api/auth/refresh").send({ token: old });
+    assert.equal(refreshed.status, 200);
+    assert.notEqual(refreshed.body.data.refreshToken, old);
+    assert.equal((await request(app).post("/api/auth/refresh").send({ token: old })).status, 401);
+    assert.equal(
+        (
+            await request(app)
+                .get("/api/content/admin")
+                .set("Authorization", `Bearer ${refreshed.body.data.accessToken}`)
+        ).status,
+        200,
+    );
+    await request(app).post("/api/auth/logout").send({ token: refreshed.body.data.refreshToken });
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/auth/refresh")
+                .send({ token: refreshed.body.data.refreshToken })
+        ).status,
+        401,
+    );
+});
+
+test("Demo seeding refuses a live database and startup has no automatic fixture side effects", async () => {
+    const { ensureProductionData } = await import("../backend/src/lib/seedAdmin");
+    const original = process.env.DATABASE_URL;
+    try {
+        process.env.DATABASE_URL = "mongodb://127.0.0.1:27017/imad_store_test?replicaSet=rs0";
+        await assert.rejects(ensureProductionData(), /restricted/);
+    } finally {
+        process.env.DATABASE_URL = original;
+    }
+    await assert.rejects(ensureProductionData(true), /restricted/);
+});
+
+test("An empty server startup does not publish demo data even with a legacy seed flag", async () => {
+    const { spawn } = await import("node:child_process");
+    const isolated = `imad_ci_${randomBytes(8).toString("hex")}`;
+    const child = spawn(process.execPath, ["--import", "tsx", "backend/src/index.ts"], {
+        cwd: process.cwd(),
+        env: {
+            ...process.env,
+            DATABASE_URL: `mongodb://127.0.0.1:27017/${isolated}?replicaSet=rs0`,
+            PORT: "0",
+            IMAD_SEED_DEMO: "true",
+            DESKCOMM_OUTBOX_WORKER_ENABLED: "false",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+    });
+    try {
+        const port = await new Promise<number>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("Startup timeout")), 8000);
+            child.stdout.on("data", (chunk) => {
+                const match = String(chunk).match(/http:\/\/localhost:(\d+)/);
+                if (match) {
+                    clearTimeout(timer);
+                    resolve(Number(match[1]));
+                }
+            });
+            child.on("exit", () => {
+                clearTimeout(timer);
+                reject(new Error("Server exited"));
+            });
+        });
+        const response = await fetch(`http://127.0.0.1:${port}/health`);
+        assert.equal(response.status, 200);
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        assert.equal(await mongo.db(isolated).collection("products").countDocuments(), 0);
+        assert.equal(await mongo.db(isolated).collection("site_content").countDocuments(), 0);
+    } finally {
+        child.kill("SIGTERM");
+        await new Promise((resolve) => child.once("exit", resolve));
+        if (/^imad_ci_[a-f0-9]{16}$/.test(isolated)) await mongo.db(isolated).dropDatabase();
+    }
+});

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
@@ -23,13 +24,12 @@ function generateTokens(user: { id: string; email: string; role: string }) {
     const accessToken = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET as string,
-        { expiresIn: (process.env.JWT_EXPIRES_IN ?? "15m") as jwt.SignOptions["expiresIn"] }
+        { expiresIn: (process.env.JWT_EXPIRES_IN ?? "15m") as jwt.SignOptions["expiresIn"] },
     );
-    const refreshToken = jwt.sign(
-        { id: user.id },
-        process.env.JWT_REFRESH_SECRET as string,
-        { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? "7d") as jwt.SignOptions["expiresIn"] }
-    );
+    const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET as string, {
+        expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? "7d") as jwt.SignOptions["expiresIn"],
+        jwtid: randomUUID(),
+    });
     return { accessToken, refreshToken };
 }
 
@@ -62,7 +62,6 @@ export async function login(req: Request, res: Response) {
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
 
-
     if (!user) {
         throw new AppError("Invalid credentials", 401);
     }
@@ -80,17 +79,31 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function refreshToken(req: Request, res: Response) {
-    const { token } = req.body;
-    if (!token) throw new AppError("Refresh token required", 400);
+    const { token } = z.object({ token: z.string().min(1).max(4096) }).parse(req.body);
+    let identity: jwt.JwtPayload;
+    try {
+        identity = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as jwt.JwtPayload;
+    } catch {
+        throw new AppError("Invalid refresh token", 401);
+    }
 
-    const stored = await prisma.refreshToken.findUnique({ where: { token }, include: { user: true } });
-    if (!stored || stored.expiresAt < new Date()) throw new AppError("Invalid refresh token", 401);
+    const stored = await prisma.refreshToken.findUnique({
+        where: { token },
+        include: { user: true },
+    });
+    if (!stored || stored.userId !== identity.id || stored.expiresAt < new Date())
+        throw new AppError("Invalid refresh token", 401);
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(stored.user);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
-    await prisma.refreshToken.create({ data: { token: newRefreshToken, userId: stored.userId, expiresAt } });
+    await prisma.$transaction(async (tx) => {
+        const removed = await tx.refreshToken.deleteMany({ where: { id: stored.id, token } });
+        if (removed.count !== 1) throw new AppError("Session expirée. Reconnectez-vous.", 401);
+        await tx.refreshToken.create({
+            data: { token: newRefreshToken, userId: stored.userId, expiresAt },
+        });
+    });
 
     res.json({ success: true, data: { accessToken, refreshToken: newRefreshToken } });
 }
@@ -106,7 +119,15 @@ export async function logout(req: Request, res: Response) {
 export async function getMe(req: AuthRequest, res: Response) {
     const user = await prisma.user.findUnique({
         where: { id: req.user!.id },
-        select: { id: true, email: true, firstName: true, lastName: true, phone: true, role: true, createdAt: true },
+        select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+        },
     });
     res.json({ success: true, data: user });
 }

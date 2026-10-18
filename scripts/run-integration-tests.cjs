@@ -21,7 +21,7 @@ for (const key of Object.keys(env))
     if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_)/.test(key)) delete env[key];
 const result = spawnSync(
     process.execPath,
-    ["--import", "tsx", "--test", "tests/integration.test.ts"],
+    ["--import", "tsx", "--test", "tests/integration.test.ts", "tests/cart.test.ts"],
     { env, stdio: "inherit" },
 );
 process.exit(result.status ?? 1);

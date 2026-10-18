@@ -3,29 +3,40 @@ import { prisma } from "./prisma";
 /** Never auto-create or reset admin credentials on startup. */
 async function ensureAdminExists(): Promise<void> {
     const count = await prisma.user.count({ where: { role: "ADMIN" } });
-    if (count === 0) console.warn("No admin account exists; provision with a restricted offline operation.");
+    if (count === 0)
+        console.warn("No admin account exists; provision with a restricted offline operation.");
 }
 
 const REAL_CATEGORIES = [
     { slug: "bags", nameAr: "الحقائب", nameFr: "Sacs", nameEn: "Bags" },
     { slug: "abayas", nameAr: "العبايات", nameFr: "Abayas", nameEn: "Abayas" },
     { slug: "shawls", nameAr: "شيلان", nameFr: "Châles", nameEn: "Shawls" },
-    { slug: "womens-shoes", nameAr: "أحذية نسائية", nameFr: "Chaussures Femme", nameEn: "Women's Shoes" },
-    { slug: "mens-clogs", nameAr: "صابو رجالي", nameFr: "Sabots Homme", nameEn: "Men's Clogs" }
+    {
+        slug: "womens-shoes",
+        nameAr: "أحذية نسائية",
+        nameFr: "Chaussures Femme",
+        nameEn: "Women's Shoes",
+    },
+    { slug: "mens-clogs", nameAr: "صابو رجالي", nameFr: "Sabots Homme", nameEn: "Men's Clogs" },
 ];
 
 /** Ensures at least one category + product exist so checkout never fails on empty DB. */
 async function ensureSampleProducts(clean = false): Promise<void> {
     try {
         if (clean) {
-            console.log("🧹 Clean flag provided. Deleting all products, variants, and categories...");
+            console.log(
+                "🧹 Clean flag provided. Deleting all products, variants, and categories...",
+            );
             await prisma.productVariant.deleteMany({});
             await prisma.product.deleteMany({});
             await prisma.category.deleteMany({});
             console.log("🧹 Cleanup complete.");
         } else {
             // Remove the legacy 'robes' category if it exists and has no products
-            const robes = await prisma.category.findUnique({ where: { slug: "robes" }, include: { products: true } });
+            const robes = await prisma.category.findUnique({
+                where: { slug: "robes" },
+                include: { products: true },
+            });
             if (robes && robes.products.length === 0) {
                 await prisma.category.delete({ where: { id: robes.id } });
             }
@@ -114,8 +125,16 @@ async function ensureStoreSettings(): Promise<void> {
     }
 }
 
-/** Master seed function — runs on every boot. Fully idempotent. */
+/** Explicit fixture seeding for an isolated test database only. */
 export async function ensureProductionData(clean = false): Promise<void> {
+    const url = new URL(process.env.DATABASE_URL || "mongodb://invalid");
+    if (
+        process.env.NODE_ENV !== "test" ||
+        !["localhost", "127.0.0.1"].includes(url.hostname) ||
+        !/^\/imad_ci_[a-f0-9]{16}$/.test(url.pathname) ||
+        clean
+    )
+        throw new Error("Demo seeding is restricted to isolated test databases without cleanup");
     console.log(`🌱 Running production data checks... (clean=${clean})`);
     await ensureAdminExists();
     await ensureSampleProducts(clean);

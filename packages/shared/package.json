@@ -1,14 +1,14 @@
 {
-    "name": "@imad-store/shared",
-    "version": "0.0.1",
-    "description": "Shared TypeScript types and utilities for Imad Store",
-    "main": "./src/index.ts",
-    "types": "./src/index.ts",
-    "scripts": {
-        "build": "npx tsc",
-        "lint": "npx tsc --noEmit"
-    },
-    "dependencies": {
-        "typescript": "^5.9.3"
-    }
+  "name": "@imad-store/shared",
+  "version": "0.0.1",
+  "description": "Shared TypeScript types and utilities for Imad Store",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "lint": "npx tsc --noEmit"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  }
 }

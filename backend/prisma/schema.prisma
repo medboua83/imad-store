@@ -281,3 +281,15 @@ model DeskcommIntegration {
   updatedAt         DateTime @updatedAt
   @@map("deskcomm_integrations")
 }
+
+// Explicit draft/publication history; public reads never expose a draft.
+model SiteContent {
+  id String @id @map("_id")
+  revision Int @default(0)
+  draft Json
+  published Json
+  previous Json?
+  updatedAt DateTime @updatedAt
+  publishedAt DateTime?
+  @@map("site_content")
+}

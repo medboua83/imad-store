@@ -42,7 +42,7 @@ export type ProductStatus = "ACTIVE" | "DRAFT" | "ARCHIVED";
 
 export interface ProductVariant {
     id: string;
-    color: string;       // hex or color name
+    color: string; // hex or color name
     colorNameFr: string;
     colorNameAr: string;
     size?: string;
@@ -59,9 +59,9 @@ export interface Product {
     descriptionFr: string;
     descriptionAr: string;
     descriptionEn: string;
-    price: number;          // in MAD
+    price: number; // in MAD
     compareAtPrice?: number;
-    images: string[];       // Supabase Storage URLs
+    images: string[]; // Supabase Storage URLs
     status: ProductStatus;
     categoryId: string;
     category?: Category;
@@ -124,3 +124,6 @@ export interface PaginatedResponse<T> {
     limit: number;
     totalPages: number;
 }
+
+export { defaultSiteContent } from "./site-content";
+export type { SiteContent } from "./site-content";
