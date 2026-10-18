@@ -5,6 +5,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Local browser previews use both loopback hostnames; never allow arbitrary origins.
+    allowedDevOrigins: ["127.0.0.1", "localhost"],
     output: "standalone",
     outputFileTracingRoot: path.join(__dirname, "../../"),
     async rewrites() {
