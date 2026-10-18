@@ -21,13 +21,15 @@ function ShopContent() {
   const { addItem, items } = useCartStore();
   useEffect(() => {
     let active = true;
+    const reset = window.setTimeout(() => {
     setLoading(true);
     setError("");
+    }, 0);
     getProducts({limit: 100, status: "ACTIVE", ...(category !== "all" ? {category} : {})})
-      .then(r => { if(active) setProducts(r.data); })
+      .then(r => { if(active) { window.clearTimeout(reset); setProducts(r.data); } })
       .catch(() => { if(active) setError("تعذر تحميل المنتجات. حاول مجدداً."); })
       .finally(() => { if(active) setLoading(false); });
-    return () => {active = false;};
+    return () => {active = false; window.clearTimeout(reset);};
   },[category]);
   const filtered = useMemo(() => products.filter(p => [p.nameAr,p.nameFr,p.nameEn].some(n => n.toLowerCase().includes(query.trim().toLowerCase()))),[products,query]);
   return <main className="min-h-screen bg-[#FDFAF6] pt-32 pb-20 px-6" dir="rtl">
@@ -39,7 +41,7 @@ function ShopContent() {
         const active=p.status==="ACTIVE" && validId.test(p.id) && !!variant;
         const img=p.images.find(safeImage);
         return <article key={p.id} className="bg-white shadow-sm"><Link href={`/products/${encodeURIComponent(p.slug)}`} className="relative aspect-[3/4] bg-[#F5EDE0] block">{img ? <Image src={img} alt={p.nameAr || p.nameFr} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-cover"/> : <span className="absolute inset-0 flex items-center justify-center text-gray-400">لا توجد صورة</span>}</Link><div className="p-5"><Link href={`/products/${encodeURIComponent(p.slug)}`} className="block text-lg mb-3 hover:underline">{p.nameAr || p.nameFr || p.nameEn}</Link><p className="mb-4">{p.price.toLocaleString()} MAD</p><button type="button" disabled={!active} onClick={()=>{if(variant) addItem(p,variant,1);}} className="w-full py-3 bg-[#1A1A2E] text-white disabled:opacity-40">{active ? "أضف إلى السلة" : "غير متوفر"}</button></div></article>;
-      })}</div>{filtered.length===0 && <p className="mt-8">لا توجد منتجات مطابقة</p>}</>}
+      })}</div>{filtered.length===0 && <div className="mt-8 space-y-3"><p>{query ? "لا توجد منتجات مطابقة لبحثك" : "نعمل على تجهيز مجموعتنا الجديدة. تواصلوا معنا للاستفسار عن المنتجات المتوفرة."}</p><Link href="/contact" className="underline">تواصل معنا</Link></div>}</>}
     </div>
   </main>;
 }

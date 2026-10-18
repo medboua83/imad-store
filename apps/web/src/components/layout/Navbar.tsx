@@ -30,10 +30,10 @@ export function Navbar() {
     const count = mounted ? cartItems.reduce((acc, i) => acc + i.quantity, 0) : 0;
 
     useEffect(() => {
-        setMounted(true);
+        const task = window.setTimeout(() => setMounted(true), 0);
         const fn = () => setScrolled(window.scrollY > 40);
         window.addEventListener("scroll", fn, { passive: true });
-        return () => window.removeEventListener("scroll", fn);
+        return () => { window.clearTimeout(task); window.removeEventListener("scroll", fn); };
     }, []);
 
     return (

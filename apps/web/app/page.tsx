@@ -170,8 +170,7 @@ function HeroSection() {
     );
 }
 
-function MarqueeBar() {
-    const BUBBLE_ITEMS = [
+const BUBBLE_ITEMS = [
         { img: "/images/cat-abayas.png", slug: "bags", labelAr: "الحقائب" },
         { img: "/images/cat-abayas.png", slug: "abayas", labelAr: "العبايات" },
         { img: "/images/hero-1.png", slug: "shailan", labelAr: "شيلان" },
@@ -180,7 +179,7 @@ function MarqueeBar() {
         { img: "/images/cat-shoes.png", slug: "shoes-men", labelAr: "سابو رجالي" },
     ];
 
-    const MarqueeBlock = () => (
+function MarqueeBlock() { return (
         <div className="flex gap-6 md:gap-12 items-center px-3 md:px-6">
             {BUBBLE_ITEMS.map((item, i) => (
                 <Link
@@ -202,8 +201,9 @@ function MarqueeBar() {
                 </Link>
             ))}
         </div>
-    );
+    ); }
 
+function MarqueeBar() {
     return (
         <div className="bg-[#FDFAF6] py-14 md:py-24 border-b border-[#1A1A2E]/5 overflow-hidden">
             <div className="text-center mb-10 md:mb-14">
@@ -327,7 +327,7 @@ function CatalogHighlights({ products, loading, error }: { products: Product[]; 
     return <section className="bg-[#1A1A2E] py-20 text-white" dir="rtl">
         <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-wrap items-center justify-between gap-5 mb-10"><h2 className="text-3xl text-[#C9A96E]">مختارات من المتجر</h2><Link href="/shop" className="underline underline-offset-4">عرض المجموعة</Link></div>
-            {loading ? <p role="status">جارٍ تحميل المنتجات...</p> : error ? <p role="alert">تعذر تحميل المنتجات. <Link href="/shop" className="underline">الانتقال إلى المتجر</Link></p> : products.length === 0 ? <p>لا توجد منتجات متاحة حالياً.</p> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? <p role="status">جارٍ تحميل المنتجات...</p> : error ? <p role="alert">تعذر تحميل المنتجات. <Link href="/shop" className="underline">الانتقال إلى المتجر</Link></p> : products.length === 0 ? <div className="py-12 text-center" dir="rtl"><p>نعمل على تجهيز مجموعتنا الجديدة.</p><p className="mt-3">تواصلوا معنا للاستفسار عن المنتجات المتوفرة.</p><Link href="/contact" className="inline-block mt-5 underline">تواصل معنا</Link></div> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map(product => {
                     const name = product.nameAr || product.nameFr || product.nameEn;
                     const image = product.images.find(value => (value.startsWith("/") && !value.startsWith("//")) || /^https:\/\/(res\.cloudinary\.com|placeholder\.co)\//.test(value));

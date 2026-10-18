@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useMemo, useCallback } from "react";
-import { DollarSign, ShoppingCart, Plus, Pencil, Trash2, Save, X, UploadCloud, TrendingUp, TrendingDown, Banknote, Target, CheckCircle2, XCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { DollarSign, ShoppingCart, Pencil, Trash2, UploadCloud, TrendingUp, TrendingDown, Banknote, Target, CheckCircle2, XCircle, RefreshCw, ExternalLink } from "lucide-react";
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -38,6 +38,8 @@ const ImageUploadArea = ({ onUpload, currentImage, className = "" }: { onUpload:
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
+            role="button" tabIndex={0} aria-label="Choisir une image"
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inputRef.current?.click(); } }}
             onClick={() => inputRef.current?.click()}
             className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors overflow-hidden group ${dragging ? 'border-[#C9A96E] bg-[#C9A96E]/10' : 'border-white/20 hover:border-white/40'} ${className}`}
         >
@@ -58,6 +60,16 @@ const ImageUploadArea = ({ onUpload, currentImage, className = "" }: { onUpload:
         </div>
     );
 };
+
+    const CATEGORY_LABELS: Record<string, string> = {
+        'bags':         'الحقائب',
+        'abayas':       'العبايات',
+        'shawls':       'شيلان',
+        'womens-shoes': 'أحذية نسائية',
+        'mens-clogs':   'صابو رجالي',
+    };
+    // All 5 columns always present — start with zero revenue
+    const ORDERED_CATS = Object.keys(CATEGORY_LABELS);
 
 interface OrderItem { quantity: number; unitPrice: number; productId?: string; }
 interface Order { id: string; status: string; totalAmount: number; shippingCost?: number; createdAt: string; items?: OrderItem[]; }
@@ -125,6 +137,7 @@ export function OverviewTab({ orders, products }: { orders: Order[]; products: P
 
     // ── Revenue trend (last 14 days) ──────────────────────────────────────────
     const revenueTrend = useMemo(() => {
+        const now = new Date();
         const days: Record<string, { revenue: number; orders: number }> = {};
         for (let i = 13; i >= 0; i--) {
             const d = new Date(now);
@@ -141,17 +154,8 @@ export function OverviewTab({ orders, products }: { orders: Order[]; products: P
 
     // ── Category revenue ──────────────────────────────────────────────────────
     // Slug → Arabic label mapping (matches exactly what seedAdmin inserts)
-    const CATEGORY_LABELS: Record<string, string> = {
-        'bags':         'الحقائب',
-        'abayas':       'العبايات',
-        'shawls':       'شيلان',
-        'womens-shoes': 'أحذية نسائية',
-        'mens-clogs':   'صابو رجالي',
-    };
-    // All 5 columns always present — start with zero revenue
-    const ORDERED_CATS = Object.keys(CATEGORY_LABELS);
 
-    const categoryRevenue = useMemo(() => {
+    const categoryRevenue = (() => {
         // Base map with 0 for every category so all bars render
         const catMap: Record<string, number> = {};
         ORDERED_CATS.forEach(slug => { catMap[CATEGORY_LABELS[slug]] = 0; });
@@ -169,7 +173,7 @@ export function OverviewTab({ orders, products }: { orders: Order[]; products: P
 
         // Preserve the canonical order (not sorted by revenue) so columns are stable
         return ORDERED_CATS.map(slug => ({ category: CATEGORY_LABELS[slug], revenue: catMap[CATEGORY_LABELS[slug]] }));
-    }, [orders, products]);
+    })();
 
     // ── Order status pie ──────────────────────────────────────────────────────
     const statusData = [
@@ -336,94 +340,7 @@ export function OverviewTab({ orders, products }: { orders: Order[]; products: P
 }
 
 // ─── Products Tab ─────────────────────────────────────────────────────────────
-interface PF { slug: string; nameFr: string; nameAr: string; nameEn: string; descriptionFr: string; descriptionAr: string; descriptionEn: string; price: string; compareAtPrice: string; images: string; categoryId: string; status: string; }
-const emptyPF: PF = { slug: "", nameFr: "", nameAr: "", nameEn: "", descriptionFr: "", descriptionAr: "", descriptionEn: "", price: "", compareAtPrice: "", images: "", categoryId: "", status: "ACTIVE" };
-
-export function ProductsTab({ products, categories, onCreate, onUpdate, onDelete }: {
-    products: Product[]; categories: Category[];
-    onCreate: (d: Record<string, unknown>) => Promise<void>; onUpdate: (id: string, d: Record<string, unknown>) => Promise<void>; onDelete: (id: string) => Promise<void>;
-}) {
-    const [showForm, setShowForm] = useState(false);
-    const [editId, setEditId] = useState<string | null>(null);
-    const [form, setForm] = useState<PF>(emptyPF);
-    const [saving, setSaving] = useState(false);
-
-    const openNew = () => { setEditId(null); setForm(emptyPF); setShowForm(true); };
-    const openEdit = (p: Product) => {
-        setEditId(p.id); setShowForm(true);
-        setForm({ slug: p.slug, nameFr: p.nameFr, nameAr: p.nameAr, nameEn: p.nameEn, descriptionFr: p.descriptionFr, descriptionAr: p.descriptionAr, descriptionEn: p.descriptionEn, price: String(p.price), compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "", images: p.images.join(", "), categoryId: p.category?.id ?? "", status: p.status });
-    };
-    const set = (k: keyof PF, v: string) => setForm(f => ({ ...f, [k]: v }));
-    const submit = async (e: React.FormEvent) => {
-        e.preventDefault(); setSaving(true);
-        const payload: Record<string, unknown> = { slug: form.slug, nameFr: form.nameFr, nameAr: form.nameAr, nameEn: form.nameEn, descriptionFr: form.descriptionFr, descriptionAr: form.descriptionAr, descriptionEn: form.descriptionEn, price: parseFloat(form.price), images: form.images.split(",").map(s => s.trim()).filter(Boolean), categoryId: form.categoryId, status: form.status };
-        if (form.compareAtPrice) payload.compareAtPrice = parseFloat(form.compareAtPrice);
-        if (!editId) payload.variants = [{ color: "#000000", colorNameFr: "Noir", colorNameAr: "أسود", colorNameEn: "Black", stock: 0, sku: `${form.slug}-BLK` }];
-        try { if (editId) await onUpdate(editId, payload); else await onCreate(payload); setShowForm(false); } catch (err) { console.error(err); } finally { setSaving(false); }
-    };
-
-    const inp = "w-full bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#C9A96E] rounded";
-
-    return (
-        <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg tracking-widest uppercase">Products</h2>
-                <button onClick={openNew} className="flex items-center gap-1.5 bg-[#C9A96E] hover:bg-[#b09055] text-[#1A1A2E] text-[10px] tracking-[0.2em] uppercase font-bold px-4 py-2 rounded transition-colors"><Plus size={12} /> Add Product</button>
-            </div>
-            {showForm && (
-                <form onSubmit={submit} className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6 space-y-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs tracking-[0.2em] uppercase text-[#C9A96E]">{editId ? "Edit Product" : "New Product"}</h3>
-                        <button type="button" onClick={() => setShowForm(false)} className="p-1 hover:bg-white/10 rounded"><X size={14} /></button>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-4 mb-4">
-                        <ImageUploadArea onUpload={(url) => set("images", url)} currentImage={form.images.split(',')[0]} className="w-full md:w-48 h-48" />
-                        <div className="flex-1 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <input className={inp} placeholder="Slug" value={form.slug} onChange={e => set("slug", e.target.value)} required />
-                                <input className={inp} placeholder="Name (FR)" value={form.nameFr} onChange={e => set("nameFr", e.target.value)} required />
-                                <input className={inp} placeholder="Name (EN)" value={form.nameEn} onChange={e => set("nameEn", e.target.value)} required />
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <input className={inp} type="number" step="0.01" placeholder="Price (MAD)" value={form.price} onChange={e => set("price", e.target.value)} required />
-                                <select className={inp} value={form.categoryId} onChange={e => set("categoryId", e.target.value)} required>
-                                    <option value="">Select Category</option>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.nameEn}</option>)}
-                                </select>
-                                <select className={inp} value={form.status} onChange={e => set("status", e.target.value)}>
-                                    <option value="ACTIVE">Active</option><option value="DRAFT">Draft</option><option value="ARCHIVED">Archived</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" disabled={saving} className="flex items-center gap-1.5 bg-[#C9A96E] hover:bg-[#b09055] text-[#1A1A2E] text-[10px] tracking-[0.2em] uppercase font-bold px-6 py-2.5 rounded transition-colors disabled:opacity-50">
-                        <Save size={12} /> {saving ? "Saving..." : editId ? "Update" : "Create"}
-                    </button>
-                </form>
-            )}
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead><tr className="text-left text-[10px] tracking-widest uppercase text-white/40 border-b border-white/10">
-                        <th className="py-3 px-2">Image</th><th className="py-3 px-2">Name</th><th className="py-3 px-2">Price</th><th className="py-3 px-2">Category</th><th className="py-3 px-2">Status</th><th className="py-3 px-2">Actions</th>
-                    </tr></thead>
-                    <tbody>{products.map(p => (
-                        <tr key={p.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                            <td className="py-2 px-2"><img src={p.images?.[0] || "https://placehold.co/600x600/e2e8f0/1e293b?text=No+Image"} alt="" className="w-10 h-10 object-cover rounded" /></td>
-                            <td className="py-2 px-2"><p className="font-medium">{p.nameEn}</p><p className="text-[10px] text-white/40 font-mono">{p.slug}</p></td>
-                            <td className="py-2 px-2 text-[#C9A96E]">{p.price.toFixed(2)} MAD</td>
-                            <td className="py-2 px-2 text-white/60">{p.category?.nameEn ?? "—"}</td>
-                            <td className="py-2 px-2"><span className={`text-[10px] tracking-widest uppercase px-2 py-0.5 rounded ${p.status === "ACTIVE" ? "bg-emerald-500/20 text-emerald-300" : p.status === "DRAFT" ? "bg-yellow-500/20 text-yellow-300" : "bg-red-500/20 text-red-300"}`}>{p.status}</span></td>
-                            <td className="py-2 px-2"><div className="flex gap-1">
-                                <button onClick={() => openEdit(p)} className="p-1.5 hover:bg-white/10 rounded transition-colors" title="Edit"><Pencil size={13} className="text-[#C9A96E]" /></button>
-                                <button onClick={() => { if (confirm("Archive this product?")) onDelete(p.id); }} className="p-1.5 hover:bg-white/10 rounded transition-colors" title="Archive"><Trash2 size={13} className="text-red-400" /></button>
-                            </div></td>
-                        </tr>
-                    ))}</tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
+export { ProductsTab } from "./products-tab";
 
 // ─── Banners Tab ──────────────────────────────────────────────────────────────
 interface Banner { imageUrl: string; linkUrl: string; title: string; }
@@ -578,6 +495,8 @@ export function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismi
                             ? 'bg-[#1e2d1e] border-emerald-500/40 text-emerald-300'
                             : 'bg-[#2d1e1e] border-red-500/40 text-red-300'
                     }`}
+                    role="button" tabIndex={0} aria-label={`Fermer : ${t.message}`}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDismiss(t.id); } }}
                     onClick={() => onDismiss(t.id)}
                 >
                     {t.type === 'success' ? <CheckCircle2 size={16} className="shrink-0" /> : <XCircle size={16} className="shrink-0" />}

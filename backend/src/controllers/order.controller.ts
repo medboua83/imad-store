@@ -5,30 +5,32 @@ import { AppError } from "../middleware/error.middleware";
 import { bridgeOrderToAdmin, OrderForBridge } from "../lib/telegram-bridge";
 import { appendOrderToSheets, updateOrderStatusInSheets } from "../lib/notifications";
 import { createHash } from "crypto";
+import { paginationSchema, statusSchema } from "../lib/validation";
+import { transitionOrderStatus } from "../lib/order-lifecycle";
 
 // Guest-only checkout schema — COD only (card payments disabled)
 const createOrderSchema = z.object({
     paymentMethod: z.enum(["COD"]).default("COD"),
     crmConsent: z.boolean().default(false),
-    notes: z.string().optional(),
+    notes: z.string().max(2000).optional(),
     customer: z.object({
-        fullName: z.string().min(1, "Full name is required"),
+        fullName: z.string().trim().min(2, "Full name is required").max(120),
         phone: z.string().regex(/^(?:\+212|0)[5-7]\d{8}$/, "رقم الهاتف غير صالح"),
         email: z.string().email().optional().or(z.literal("")),
-        street: z.string().min(1, "Address is required"),
-        city: z.string().min(1, "City is required"),
-        region: z.string().min(1, "Region is required"),
-        postalCode: z.string().optional(),
+        street: z.string().trim().min(3, "Address is required").max(500),
+        city: z.string().trim().min(1, "City is required").max(120),
+        region: z.string().trim().min(1, "Region is required").max(120),
+        postalCode: z.string().max(20).optional(),
     }).strict(),
     items: z.array(
         z.object({
             productId: z.string(),
             variantId: z.string(),
-            quantity: z.number().int().min(1),
+            quantity: z.number().int().min(1).max(10000),
             price: z.number().optional(),
             name: z.string().optional(),
         }).strict()
-    ).min(1, "Cart cannot be empty"),
+    ).min(1, "Cart cannot be empty").max(100),
 }).strict();
 
 const ORDER_INCLUDE = {
@@ -64,7 +66,7 @@ export async function createOrder(req: Request, res: Response) {
     }
 
     let order: Awaited<ReturnType<typeof findPrevious>> = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
         try {
             order = await prisma.$transaction(async (tx) => {
                 const ids = body.items.map(i => i.productId);
@@ -99,10 +101,11 @@ export async function createOrder(req: Request, res: Response) {
                     if (reserved.count !== 1) throw new AppError("Insufficient stock", 409);
                 }
                 const settings = await tx.storeSettings.findUnique({ where: { id: "settings" } });
+                if (settings?.codEnabled === false) throw new AppError("Le paiement à la livraison est temporairement indisponible", 409);
                 const appliedShipping = itemsTotal >= (settings?.freeShippingMin ?? 500) ? 0 : Number(settings?.shippingCost ?? 30);
                 const created = await tx.order.create({
                     data: {
-                        idempotencyKey: key, requestFingerprint,
+                        idempotencyKey: key, requestFingerprint, inventoryReserved: true,
                         customerName: body.customer.fullName, customerPhone: body.customer.phone,
                         customerEmail: body.customer.email || null,
                         fullName: body.customer.fullName, phone: body.customer.phone,
@@ -144,7 +147,7 @@ export async function createOrder(req: Request, res: Response) {
                     return res.status(200).json({ success: true, data: existing, idempotentReplay: true });
                 }
             }
-            if (code === "P2034" && attempt < 2) continue;
+            if (code === "P2034" && attempt < 4) { await new Promise(resolve => setTimeout(resolve, 30 * 2 ** attempt + Math.random() * 30)); continue; }
             throw err;
         }
     }
@@ -167,17 +170,17 @@ export async function createOrder(req: Request, res: Response) {
 
 export async function getOrder(req: Request, res: Response) {
     const { id } = req.params;
-    const order = await prisma.order.findUnique({ where: { id }, include: ORDER_INCLUDE });
+    const order = await prisma.order.findUnique({ where: { id }, select: { id: true, status: true, paymentStatus: true, createdAt: true } });
+    res.setHeader("Cache-Control", "no-store");
     if (!order) throw new AppError("Order not found", 404);
     res.json({ success: true, data: order });
 }
 
 export async function listOrders(req: Request, res: Response) {
-    const { status, page = "1", limit = "20" } = req.query;
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-
-    const skip = (Number(page) - 1) * Number(limit);
+    const { page, limit } = paginationSchema.parse(req.query);
+    const status = req.query.status === undefined ? undefined : statusSchema.parse(req.query.status);
+    const where = status ? { status } : {};
+    const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
         prisma.order.findMany({ where, include: ORDER_INCLUDE, skip, take: Number(limit), orderBy: { createdAt: "desc" } }),
         prisma.order.count({ where }),
@@ -188,25 +191,8 @@ export async function listOrders(req: Request, res: Response) {
 
 export async function updateOrderStatus(req: Request, res: Response) {
     const { id } = req.params;
-    const { status } = z.object({ status: z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]) }).parse(req.body);
-
-    const order = await prisma.order.update({
-        where: { id },
-        data: {
-            status,
-            events: { create: { type: "status_changed", message: `Order marked as ${status}` } },
-        },
-        include: ORDER_INCLUDE,
-    });
-
-    await prisma.adminNotification.create({
-        data: {
-            type: "order_status",
-            title: `Order #${order.id.slice(-6).toUpperCase()} → ${status}`,
-            message: `${order.customerName} — ${order.totalAmount.toFixed(2)} MAD`,
-            orderId: order.id,
-        },
-    });
+    const { status } = z.object({ status: statusSchema }).strict().parse(req.body);
+    const { order } = await transitionOrderStatus(id, status);
 
     // Google Sheets status update sync (best-effort, non-blocking)
     updateOrderStatusInSheets(order.id, status).catch((err) =>

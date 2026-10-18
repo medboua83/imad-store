@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, Suspense } from "react";
 
 import { useCartStore } from "@/store/cart.store";
@@ -58,6 +59,7 @@ function CheckoutContent() {
 
             setOrderId(order.id);
             setSuccess(true);
+            window.scrollTo({ top: 0, behavior: "instant" });
             clearCart();
             setCheckoutKey(null);
         } catch (err: unknown) {
@@ -79,7 +81,7 @@ function CheckoutContent() {
 
     if (success) {
         return (
-            <div className="min-h-[70vh] flex flex-col justify-center items-center px-4 max-w-lg mx-auto text-center" dir="rtl">
+            <div role="status" className="min-h-[70vh] pt-36 pb-12 flex flex-col justify-center items-center px-4 max-w-lg mx-auto text-center" dir="rtl">
                 <CheckCircle size={56} strokeWidth={1} className="text-emerald-500 mb-8" />
                 <h1 className="text-4xl font-light text-[#1A1A2E] tracking-wide mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                     تم استلام طلبكم
@@ -100,12 +102,12 @@ function CheckoutContent() {
                 >
                     <span className="text-xl">💬</span> تأكيد الطلب عبر الواتساب
                 </a>
-                <a
+                <Link
                     href="/"
                     className="inline-block bg-[#1A1A2E] text-white text-[10px] tracking-[0.25em] uppercase font-bold py-4 px-10 hover:bg-[#C9A96E] transition-colors duration-300"
                 >
                     العودة للرئيسية
-                </a>
+                </Link>
             </div>
         );
     }
@@ -228,7 +230,6 @@ function CheckoutContent() {
                             {/* Active option — Cash on Delivery */}
                             <label
                                 className="flex items-center justify-between p-6 border border-[#C9A96E] bg-[#fbf8f3] cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
                             >
                                 <div className="flex items-center gap-4">
                                     <input

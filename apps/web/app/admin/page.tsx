@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell, Package, LogOut, Check, LayoutDashboard, ShoppingBag, Image as ImageIcon, Grid, Settings } from "lucide-react";
-import { adminLogin, getAdminNotifications, markAllNotificationsRead, markNotificationRead, getAllOrders, getProducts, getCategories, createProduct, updateProduct, deleteProduct, createCategory, deleteCategory, Product, Category } from "@/lib/api";
+import { adminLogin, getAdminNotifications, markAllNotificationsRead, markNotificationRead, getAllOrders, getAdminProducts, getCategories, createProduct, updateProduct, deleteProduct, createCategory, deleteCategory, Product, Category } from "@/lib/api";
 import DeskcommTab from "./deskcomm-tab";
 import { OverviewTab, ProductsTab, BannersTab, CategoriesTab, HomepageBuilderTab, OrdersTab } from "./tabs";
 
@@ -51,13 +51,14 @@ export default function AdminPage() {
     // Load token from localStorage on mount
     useEffect(() => {
         const t = localStorage.getItem("adminToken");
-        if (t) setToken(t);
+        const task = window.setTimeout(() => { if (t) setToken(t); }, 0);
+        return () => window.clearTimeout(task);
     }, []);
 
     // Initial load of products and categories
     useEffect(() => {
         if (!token) return;
-        getProducts({ limit: 100 }).then(res => setProducts(res.data)).catch(console.error);
+        getAdminProducts({ limit: 100 }).then(res => setProducts(res.data)).catch(console.error);
         getCategories().then(setCategories).catch(console.error);
     }, [token]);
 
@@ -226,9 +227,9 @@ export default function AdminPage() {
                     <ProductsTab 
                         products={products} 
                         categories={categories}
-                        onCreate={async (d) => { await createProduct(d); const res = await getProducts({ limit: 100 }); setProducts(res.data); }}
-                        onUpdate={async (id, d) => { await updateProduct(id, d); const res = await getProducts({ limit: 100 }); setProducts(res.data); }}
-                        onDelete={async (id) => { await deleteProduct(id); const res = await getProducts({ limit: 100 }); setProducts(res.data); }}
+                        onCreate={async (d) => { await createProduct(d); const res = await getAdminProducts({ limit: 100 }); setProducts(res.data); }}
+                        onUpdate={async (id, d) => { await updateProduct(id, d); const res = await getAdminProducts({ limit: 100 }); setProducts(res.data); }}
+                        onDelete={async (id) => { await deleteProduct(id); const res = await getAdminProducts({ limit: 100 }); setProducts(res.data); }}
                     />
                 )}
 
@@ -265,6 +266,8 @@ export default function AdminPage() {
                                 notifications.map((n) => (
                                     <div
                                         key={n.id}
+                                        role="button" tabIndex={0}
+                                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
                                         onClick={() => !n.read && markNotificationRead(n.id).then(() => {
                                             setNotifications((ns) => ns.map((x) => x.id === n.id ? { ...x, read: true } : x));
                                             setUnread((u) => u - 1);

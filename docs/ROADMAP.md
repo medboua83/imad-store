@@ -1,21 +1,22 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
-Audit de référence : [18 octobre 2026](AUDIT_SITE_2026-10-18.md). Les éléments ci-dessous sont à réaliser ; l’audit ne les a pas corrigés.
+Audit de référence : [18 octobre 2026](AUDIT_SITE_2026-10-18.md). Le lot P1 est implémenté et testé ; voir [les corrections et leurs limites](PRIORITY_FIXES_2026-10-18.md). Les autres éléments restent à réaliser.
 
 ## Lot 1 — Sécurité et intégrité
 
-- [ ] A01 : limiter le suivi invité aux informations autorisées.
-- [ ] A02 : authentifier les notifications et l’association des numéros Telegram.
-- [ ] A03 : verrouiller la capacité de paiement inutilisée ; vérifier les montants avant toute activation.
-- [ ] A04 : centraliser les transitions de commande et la restitution du stock.
-- [ ] A08 : valider les paramètres API et supprimer les diagnostics internes des réponses publiques.
-- [ ] A09 : trier les avis de dépendances et appliquer les correctifs sur une branche dédiée.
-- [ ] A21 : créer une CI avec base et CRM de test isolés, sans accès aux clients réels.
+- [x] A01 : limiter le suivi invité aux informations autorisées.
+- [x] A02 : authentifier les notifications et l’association des numéros Telegram.
+- [x] A03 : verrouiller la capacité de paiement inutilisée ; vérifier les montants avant toute activation.
+- [x] A04 : centraliser les transitions de commande et la restitution du stock.
+- [x] A08 : valider les paramètres API et supprimer les diagnostics internes des réponses publiques.
+- [x] A09 : trier les avis de dépendances et appliquer les correctifs sur une branche dédiée.
+- [x] A21 : créer une CI avec base et CRM de test isolés, sans accès aux clients réels.
 
 ## Lot 2 — Catalogue et administration utilisables
 
-- [ ] A05–A06 : formulaire produit complet, variantes/stock et véritable stockage des images.
-- [ ] A07 : faire valider les fiches de démonstration, les vraies photos et catégories, puis la sélection d’accueil.
+- [x] A05–A06 : formulaire produit complet, variantes/stock et véritable stockage des images.
+- [x] A07 : isoler les démonstrations, contrôler la publication et afficher uniquement le catalogue prêt.
+- [ ] Catalogue réel : fournir et valider photos, descriptions et variantes avant la mise en vente.
 - [ ] A10 : contrôler les quantités du panier et les variations de prix/disponibilité.
 - [ ] A11 : configuration du site persistée côté serveur avec brouillon, aperçu et publication.
 - [ ] A12–A13 : recherche, tri, pagination et reprise après erreur réseau.

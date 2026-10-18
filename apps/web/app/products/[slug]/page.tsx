@@ -25,18 +25,21 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     let active = true;
+    const reset = window.setTimeout(() => {
     setLoading(true);
     setProduct(null);
     setVariantId("");
     setError("");
+    }, 0);
     getProduct(slug).then(p => {
       if (!active) return;
+      window.clearTimeout(reset);
       if (p.status !== "ACTIVE") { setError("هذا المنتج غير متاح حالياً"); return; }
       setProduct(p);
       setVariantId(p.variants.find(v => v.stock > 0 && objectId.test(v.id))?.id || "");
     }).catch((err: unknown) => { if (active) setError(axios.isAxiosError(err) && err.response?.status === 404 ? "المنتج غير موجود" : "تعذر تحميل المنتج. حاول مجدداً."); })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; window.clearTimeout(reset); };
   }, [slug]);
 
   const variant: ProductVariant | undefined = product?.variants.find(v => v.id === variantId);

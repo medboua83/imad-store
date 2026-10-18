@@ -1,3 +1,5 @@
+import { transitionOrderStatus } from "./order-lifecycle";
+import { statusSchema, objectIdSchema } from "./validation";
 import { google } from "googleapis";
 import { prisma } from "./prisma";
 
@@ -156,7 +158,7 @@ export async function syncSheetsToDatabase(): Promise<void> {
 
         for (const row of rows) {
             const [id, , , , , , , , , , , , , , sheetStatus] = row;
-            if (!id) continue;
+            if (!objectIdSchema.safeParse(id).success) continue;
 
             const order = await prisma.order.findUnique({
                 where: { id },
@@ -165,31 +167,12 @@ export async function syncSheetsToDatabase(): Promise<void> {
 
             if (!order) continue;
 
-            if (sheetStatus && sheetStatus !== order.status) {
-                await prisma.order.update({
-                    where: { id },
-                    data: {
-                        status: sheetStatus as "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED",
-                        events: {
-                            create: {
-                                type: "status_changed",
-                                message: `Order status synced from Google Sheets: ${sheetStatus}`,
-                            },
-                        },
-                    },
-                });
-
-                await prisma.adminNotification.create({
-                    data: {
-                        type: "order_status",
-                        title: `Order #${id.slice(-6).toUpperCase()} → ${sheetStatus} (from Sheets)`,
-                        message: `Order status updated via Google Sheets sync`,
-                        orderId: id,
-                    },
-                });
-
-                console.log(`🔄 Synced order ${id} status from Sheets to DB: ${sheetStatus}`);
+            const parsed = statusSchema.safeParse(sheetStatus);
+            if (parsed.success && parsed.data !== order.status) {
+                try { await transitionOrderStatus(id, parsed.data, "sheets"); }
+                catch { console.warn("Sheets status transition rejected"); }
             }
+
         }
     } catch (err) {
         console.error("❌ Google Sheets sync error:", err);

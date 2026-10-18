@@ -1,24 +1,25 @@
 # Current Status — 2026-10-18
 
-## Completed
+## Priority fixes implemented and locally verified
 
-- Local storefront and CRM synchronization merged into Master through PR #2.
-- Frontend production build, including lint and type checks, passed during synchronization; backend TypeScript verification passed using the existing dependency installation.
-- The corrected frontend was applied to the active local application with file backups. Development-server restart and browser checks were observed.
-- A separately authorized synthetic checkout succeeded: one local order, one SENT outbox event with one attempt, one CRM receipt and one pipeline lead. Order reference, item, quantity and total were verified in the CRM. No duplicate was observed for that single test; historical pending jobs remained unchanged.
-- Public seed endpoints remain disabled and CRM configuration requires administrator authorization.
+See [PRIORITY_FIXES_2026-10-18.md](PRIORITY_FIXES_2026-10-18.md) for the ten P1 corrections, operating instructions and remaining limits.
 
-## Current audit
+- Next 16.4.2, React 19.3.1 and Tailwind 4.3.3: backend compilation, frontend lint, type checks and production build pass. Fresh candidate dependency installation was used; npm audit reports zero vulnerabilities at verification time.
+- Twelve isolated integration scenarios pass, including concurrent checkout, one local CRM event per order, stable retry keys, competing stock reservations and repeated cancellation. A local CRM simulator receives delivery tests.
+- Browser verification in the isolated production build: administrator login, product name/stock update, storefront and successful checkout. Confirmation now scrolls into view. Narrow viewport measured 386 CSS pixels without horizontal overflow.
+- Tested source and independently copied dependencies applied to the active local application after backup. Frontend and backend restarted; port 3000 storefront and API proxy verified. The existing pre-migration frontend supervisor needs the local development flag supplied through `.env.development.local`; a fresh `npm run dev` sets this automatically. No private environment file is tracked.
+- Eleven known test/demo product records preserved as DRAFT after backing up their previous values. No ready commercial products remain in the storefront; actual product information and photographs must be supplied before sales.
+- Active local order count, all eight CRM outbox states/attempt counts and manually maintained order indexes unchanged after application. Historical outbox cutoff preserved.
+- CI verifies compilation, lint, build, isolated integration tests and dependency advisories on pull requests and updates of Master.
 
-- See [AUDIT_SITE_2026-10-18.md](AUDIT_SITE_2026-10-18.md): 21 findings, including 10 P1 items and 11 P2 items.
-- Public catalog: 11 active records, 10 without images and variants, one purchasable record, all mapped to bags. The demo image is not a real product photo.
-- Prioritize guest-order confidentiality, integration authentication, payment gating, stock transitions, product administration and input validation before commercial launch.
-- Production dependency-lock audit reports 22 vulnerable package entries (2 critical, 9 high, 11 moderate); exploitability depends on configuration and is not established by this count.
-- No production Lighthouse/field performance score was measured. Narrow-browser CSS width observed was 484 px; smaller breakpoints still need verification.
-- This audit changed documentation only: no new orders, payments, product changes, webhook deliveries or application fixes were performed during the audit.
+## Previous integration proof
+
+PR #2 synchronized the local storefront and CRM integration; PR #3 recorded the audit. An earlier separately authorized synthetic checkout was observed as one local order, one SENT outbox row, one CRM receipt and one pipeline lead. No new order was sent to the real CRM for this correction batch.
 
 ## Remaining limits
 
-- Forced retry/concurrency scenarios, cancellation stock reconciliation, authenticated administrator mutations and a clean dependency installation remain unverified.
-- No complete security, accessibility, production deployment or legal compliance certification is claimed.
-- Preserve the historical CRM outbox cutoff and manually managed database indexes. Never replay historical jobs as part of tests.
+- Telegram requires matching webhook-secret configuration and verified contact sharing before receiving customer notifications. Unverified old associations are ignored.
+- Card-payment endpoints are closed; COD remains available. Stripe must be redesigned and tested before reactivation.
+- Historical orders without a verified reservation require stock reconciliation before cancellation. No historical stock adjustment was guessed.
+- The eleven P2 audit findings remain in the roadmap. This is not a complete security or performance certification; no production Lighthouse or field-performance score was measured.
+- Preserve the historical CRM cutoff and manually managed database indexes. Never replay historical jobs as part of tests.

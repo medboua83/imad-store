@@ -167,6 +167,7 @@ model ProductVariant {
 
 model Order {
   idempotencyKey        String?       @unique
+  inventoryReserved     Boolean?
   requestFingerprint    String?
   id                    String        @id @default(auto()) @map("_id") @db.ObjectId
   userId                String?       @db.ObjectId
@@ -247,6 +248,7 @@ model TelegramCustomer {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   phone     String   @unique
   chatId    String
+  verifiedAt DateTime?
   firstName String?
   username  String?
   createdAt DateTime @default(now())

@@ -52,6 +52,7 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
   const url = await resolveDeskcommWebhookUrl();
   if (!url) throw new Error("DeskcommCRM webhook not configured or disabled");
   const parsed = new URL(url);
+  if (process.env.NODE_ENV === "test" && !["127.0.0.1", "localhost"].includes(parsed.hostname)) throw new Error("Tests require a local CRM simulator");
   const isLocalDev = process.env.NODE_ENV !== "production" &&
     (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost");
   if (parsed.protocol !== "https:" && !isLocalDev && !(process.env.NODE_ENV !== "production" && process.env.DESKCOMM_ALLOW_HTTP_DEV === "true")) {
