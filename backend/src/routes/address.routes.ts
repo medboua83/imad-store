@@ -1,3 +1,4 @@
+import { validateObjectId } from "../lib/validation";
 import { Router, IRouter } from "express";
 import {
     getAddresses,
@@ -8,6 +9,7 @@ import {
 import { authenticate } from "../middleware/auth.middleware";
 
 export const addressRoutes: IRouter = Router();
+addressRoutes.param("id", validateObjectId);
 
 addressRoutes.get("/", authenticate, getAddresses);
 addressRoutes.post("/", authenticate, createAddress);

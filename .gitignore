@@ -55,3 +55,7 @@ backups/
 candidates/
 .local/
 coverage/
+
+# Durable local product images and isolated test data
+backend/uploads/
+.test-runtime/

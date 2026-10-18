@@ -307,3 +307,7 @@ Les deux entrées classées critiques concernent notamment Next.js et proxy-addr
 ## Limites
 
 L’administration authentifiée n’a pas été modifiée ni testée par création/édition pendant cet audit ; les défauts correspondants proviennent de la lecture des composants et contrôleurs. Aucun test d’intrusion, de charge, de paiement réel, de restauration complète de sauvegarde ou de délivrabilité externe n’a été réalisé. La conformité juridique, la provenance des témoignages et les droits sur les visuels n’ont pas été certifiés. Les captures, chemins locaux, données de test détaillées et rapports bruts restent hors du dépôt public.
+
+## Suivi du lot prioritaire
+
+Les dix constats P1 ont été traités dans une livraison distincte de l’audit initial. Voir [corrections, vérifications et limites opérationnelles](PRIORITY_FIXES_2026-10-18.md). Les observations ci-dessus décrivent l’état initial ; elles ne doivent pas être interprétées comme l’état actuel du site.

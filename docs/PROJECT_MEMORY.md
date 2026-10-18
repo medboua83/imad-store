@@ -38,3 +38,7 @@ Read-only browser testing used the existing API with an isolated frontend on por
 After explicit user authorization, one synthetic checkout was submitted. One local order, one outbox event sent on its first attempt, one CRM receipt and one pipeline lead were observed. The received reference, product, quantity and total matched. No forced replay or retry test was performed; historical pending entries remained unchanged. The synthetic order was retained as pending and reserved one unit of stock.
 
 A later audit, documented in AUDIT_SITE_2026-10-18.md, identified 21 open findings and updated ROADMAP.md. Audit checks were read-only apart from a temporary browser cart addition that was removed. The audit did not implement the proposed application fixes. Dependency warnings are package-lock findings and require configuration-specific triage. Performance targets in the report are proposed acceptance criteria, not measured scores.
+
+## Priority remediation (2026-10-18)
+
+The ten P1 findings are implemented; see `docs/PRIORITY_FIXES_2026-10-18.md` and `docs/CURRENT_STATUS.md` for test evidence and operational limits. Dependency migration was explicitly authorized with backup and tests. Active demo/test fixtures are now DRAFT; optional `inventoryReserved` and `verifiedAt` fields preserve safe treatment of historical records. Never infer legacy stock reservations or reactivate unverified Telegram links.

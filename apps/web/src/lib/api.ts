@@ -244,3 +244,6 @@ export const updateSettings = async (payload: Partial<StoreSettings>) => {
 };
 
 export default api;
+
+export async function getAdminProducts(params: Record<string, unknown> = {}) { return (await api.get<ProductsResponse>("/products/admin/catalog", { params })).data; }
+export async function uploadProductImage(file: File): Promise<string> { return (await api.post("/uploads", file, { headers: { "Content-Type": file.type } })).data.data.url; }

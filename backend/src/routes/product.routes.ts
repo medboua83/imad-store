@@ -1,6 +1,8 @@
+import { validateObjectId } from "../lib/validation";
 import { Router, IRouter } from "express";
 import {
     getProducts,
+    getAdminProducts,
     getProduct,
     createProduct,
     updateProduct,
@@ -9,9 +11,11 @@ import {
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 
 export const productRoutes: IRouter = Router();
+productRoutes.param("id", validateObjectId);
 
 // Public
 productRoutes.get("/", getProducts);
+productRoutes.get("/admin/catalog", authenticate, requireAdmin, getAdminProducts);
 productRoutes.get("/:slug", getProduct);
 
 // Admin only

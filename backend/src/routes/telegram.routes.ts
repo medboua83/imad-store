@@ -1,79 +1,70 @@
-import { Router, IRouter, Request, Response } from "express";
-import https from "node:https";
+import { Router, IRouter } from "express";
+import { timingSafeEqual } from "node:crypto";
 import { prisma } from "../lib/prisma";
+import { AppError } from "../middleware/error.middleware";
 
 export const telegramRoutes: IRouter = Router();
-
-/**
- * Telegram Bot webhook — when a customer messages the bot for the first
- * time, we record their phone → chat_id mapping so the bridge can DM them.
- *
- * The customer is expected to send `/start +212600000000` (their phone) so
- * we can correlate. Anything else triggers a friendly onboarding message.
- */
-telegramRoutes.post("/webhook", async (req: Request, res: Response) => {
-    try {
-        const update = req.body;
-        const message = update?.message;
-        if (!message) return res.sendStatus(200);
-
-        const chatId = String(message.chat.id);
-        const text: string = (message.text ?? "").trim();
-        const firstName: string | undefined = message.chat.first_name;
-        const username: string | undefined = message.chat.username;
-
-        // Match `/start <phone>` to link a phone number to this chat.
-        const match = text.match(/^\/start(?:\s+(\+?\d[\d\s-]{6,}))?$/i);
-        if (match && match[1]) {
-            const phone = match[1].replace(/[\s-]/g, "");
-            await prisma.telegramCustomer.upsert({
-                where: { phone },
-                create: { phone, chatId, firstName, username },
-                update: { chatId, firstName, username },
-            });
-            await replyToTelegram(chatId,
-                `✅ Merci ${firstName ?? ""} !\n\nVotre compte est lié. Vous recevrez désormais les confirmations de vos commandes ici.`
-            );
-        } else if (/^\/start$/i.test(text)) {
-            await replyToTelegram(chatId,
-                `👋 Bienvenue chez IMAD Mode !\n\nPour recevoir vos confirmations de commande, envoyez :\n/start +212600000000\n\n(Remplacez par votre numéro de téléphone)`
-            );
-        } else {
-            await replyToTelegram(chatId,
-                `Envoyez /start suivi de votre numéro de téléphone pour activer les notifications.\n\nExemple : /start +212600000000`
-            );
-        }
-
-        res.sendStatus(200);
-    } catch (err) {
-        console.error("Telegram webhook error:", err);
-        res.sendStatus(200); // Always 200 to avoid Telegram retries
+telegramRoutes.post("/webhook", async (req, res) => {
+    const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (!secret) throw new AppError("Notifications Telegram non configurées", 503);
+    const supplied = req.get("X-Telegram-Bot-Api-Secret-Token") || "";
+    const expectedBytes = Buffer.from(secret),
+        suppliedBytes = Buffer.from(supplied);
+    if (
+        expectedBytes.length !== suppliedBytes.length ||
+        !timingSafeEqual(expectedBytes, suppliedBytes)
+    ) {
+        throw new AppError("Accès refusé", 403);
     }
-});
-
-function replyToTelegram(chatId: string, text: string): Promise<void> {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) return Promise.resolve();
-
-    const postData = new URLSearchParams({ chat_id: chatId, text }).toString();
-    const options = {
-        hostname: "api.telegram.org",
-        port: 443,
-        path: `/bot${botToken}/sendMessage`,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Content-Length": Buffer.byteLength(postData),
-        },
-    };
-
-    return new Promise((resolve) => {
-        const req = https.request(options, (res) => {
-            res.on("data", () => {});
-            res.on("end", () => resolve());
+    const message = req.body?.message;
+    if (!message) return res.sendStatus(200);
+    if (
+        message.chat?.type !== "private" ||
+        !Number.isSafeInteger(message.from?.id) ||
+        message.chat.id !== message.from.id
+    ) {
+        throw new AppError("Conversation privée requise", 400);
+    }
+    const contact = message.contact;
+    if (contact) {
+        if (contact.user_id !== message.from.id || typeof contact.phone_number !== "string") {
+            throw new AppError("Partagez votre propre contact", 400);
+        }
+        const digits = contact.phone_number.replace(/[\s+()-]/g, "");
+        if (!/^\d{8,15}$/.test(digits)) throw new AppError("Numéro invalide", 400);
+        const phone = `+${digits}`;
+        const data = {
+            chatId: String(message.chat.id),
+            firstName: String(message.from.first_name || "").slice(0, 120),
+            verifiedAt: new Date(),
+        };
+        await prisma.telegramCustomer.upsert({
+            where: { phone },
+            create: { phone, ...data },
+            update: data,
         });
-        req.on("error", () => resolve());
-        req.write(postData);
-        req.end();
-    });
-}
+    }
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (token && process.env.NODE_ENV !== "test") {
+        const reply = contact
+            ? {
+                  text: "Votre compte est lié. Vous recevrez vos confirmations ici.",
+                  reply_markup: { remove_keyboard: true },
+              }
+            : {
+                  text: "Pour activer vos confirmations, partagez votre propre numéro avec le bouton ci-dessous.",
+                  reply_markup: {
+                      keyboard: [[{ text: "Partager mon numéro", request_contact: true }]],
+                      resize_keyboard: true,
+                      one_time_keyboard: true,
+                  },
+              };
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: message.chat.id, ...reply }),
+            signal: AbortSignal.timeout(5000),
+        }).catch(() => undefined);
+    }
+    res.sendStatus(200);
+});
