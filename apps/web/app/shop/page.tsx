@@ -47,6 +47,7 @@ export default async function ShopPage({
                 <p>كل القطع، في مكان واحد. اختاري الفئة والتفاصيل التي تناسبكِ.</p>
             </div>
             <form
+                key={JSON.stringify(params)}
                 action="/shop"
                 method="get"
                 className="shop-filters grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
