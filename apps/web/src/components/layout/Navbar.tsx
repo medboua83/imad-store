@@ -1,6 +1,7 @@
 "use client";
 import { trapDialogFocus } from "./dialog-focus";
 import Link from "next/link";
+import { ShoppingBag, Menu, ArrowUpLeft } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { useCartStore } from "@/store/cart.store";
 import { usePathname } from "next/navigation";
@@ -24,21 +25,30 @@ export function Navbar() {
     }, []);
     return (
         <header className="site-header">
-            <div className="max-w-7xl mx-auto flex justify-between items-center gap-3 p-4">
+            <div className="nav-inner">
                 <Link
                     href="/"
                     aria-label="IMAD Mode — الرئيسية"
-                    className="text-2xl tracking-widest"
+                    className="brand-wordmark"
+                    dir="ltr"
                 >
-                    IMAD <span className="text-sm">MODE</span>
+                    IMAD <span>MODE</span>
                 </Link>
                 <nav aria-label="التنقل الرئيسي" className="hidden md:flex gap-5">
                     {links.map(([href, label]) => (
                         <Link
                             key={href}
                             href={href}
-                            aria-current={path === href ? "page" : undefined}
-                            className="action hover:underline"
+                            aria-current={
+                                (
+                                    href === "/shop"
+                                        ? path.startsWith("/shop") || path.startsWith("/products/")
+                                        : path === href
+                                )
+                                    ? "page"
+                                    : undefined
+                            }
+                            className="action nav-link"
                         >
                             {label}
                         </Link>
@@ -46,24 +56,33 @@ export function Navbar() {
                 </nav>
                 <div className="flex gap-2">
                     <button
-                        className="action"
+                        className="action cart-toggle"
                         aria-label={`فتح السلة، ${count} قطعة`}
                         onClick={() => useCartStore.getState().openCart()}
                     >
-                        السلة ({count})
+                        <ShoppingBag size={20} aria-hidden="true" />
+                        <span className="cart-label">السلة</span>
+                        <span className="cart-count">{count}</span>
                     </button>
                     <button
                         className="action mobile-menu-toggle"
                         aria-label="فتح القائمة"
                         onClick={() => menu.current?.showModal()}
                     >
-                        ☰ القائمة
+                        <Menu size={22} aria-hidden="true" />
+                        <span className="sr-only">القائمة</span>
                     </button>
                 </div>
             </div>
-            <p className="text-center bg-[#F5EDE0] text-sm py-2 px-4">
-                الدفع عند الاستلام · رسوم التوصيل واضحة قبل تأكيد الطلب
-            </p>
+            <div className="announcement-bar">
+                <p>
+                    الدفع عند الاستلام <span aria-hidden="true">✦</span> تفاصيل واضحة قبل تأكيد
+                    الطلب
+                </p>
+                <Link href="/delivery">
+                    معلومات التوصيل <ArrowUpLeft size={14} aria-hidden="true" />
+                </Link>
+            </div>
             <dialog
                 onKeyDown={trapDialogFocus}
                 className="menu-dialog"

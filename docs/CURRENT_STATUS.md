@@ -33,3 +33,7 @@ Applied follow-up: the active port 3000 frontend and port 4000 backend have been
 ## Explicitly authorized local test catalogue
 
 The owner clarified that new catalogue entries are for testing, not real merchandise. Three labelled synthetic products with built-in imagegen WebP images and five variants were installed on local port 3000. See `catalogue/local-test/README.md` for fictional prices, provenance, strict opt-in installation and archive rollback. One browser checkout was verified, cancelled and its reserved stock restored; no new CRM event and no change to the eight previous outbox records. Real commercial product information remains outstanding.
+
+## Storefront UI/UX redesign
+
+See `STOREFRONT_DESIGN_2026-10-18.md`. The storefront uses a consistent ivory/forest palette, editorial home layout, category tiles, redesigned product cards, navigation and footer. Self-hosted Tajawal improves Arabic body text while Amiri headings and a Cormorant wordmark provide contrast. Product/checkout presentation and filter disclosure were refined. Backend and CRM logic are unchanged.

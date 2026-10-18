@@ -112,7 +112,7 @@ export default function CheckoutPage() {
             </section>
         );
     return (
-        <section className="page-shell">
+        <section className="page-shell checkout-page">
             <h1 className="text-3xl mb-4">إتمام الطلب</h1>
             <p className="mb-8">لا حاجة لإنشاء حساب. الدفع عند الاستلام.</p>
             {!items.length ? (
@@ -124,7 +124,7 @@ export default function CheckoutPage() {
                 </p>
             ) : (
                 <div className="grid lg:grid-cols-2 gap-10">
-                    <form onSubmit={submit} noValidate className="space-y-5">
+                    <form onSubmit={submit} noValidate className="space-y-5 checkout-form">
                         <h2 className="text-2xl">معلومات التوصيل</h2>
                         {(["fullName", "phone", "city", "address"] as const).map((field, i) => (
                             <div key={field}>
@@ -215,7 +215,7 @@ export default function CheckoutPage() {
                             .
                         </p>
                     </form>
-                    <aside className="bg-white border rounded-xl p-6 h-fit space-y-4">
+                    <aside className="checkout-summary p-6 h-fit space-y-4">
                         <h2 className="text-2xl">ملخص الطلب</h2>
                         {items.map((i) => (
                             <div key={i.variantId} className="border-b pb-3">
