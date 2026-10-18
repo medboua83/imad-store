@@ -267,7 +267,7 @@ export function OrdersTab({
                             aria-haspopup="dialog"
                             onClick={() => {
                                 setSelected(o.id);
-                                setMessage("");
+                                if (!reloadRequired) setMessage("");
                             }}
                         >
                             Voir les détails{" "}

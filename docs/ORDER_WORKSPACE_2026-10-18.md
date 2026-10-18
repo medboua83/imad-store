@@ -10,7 +10,7 @@ La progression représente le statut actuel, sans inventer de dates de passage. 
 
 ## Changements de statut
 
-Chaque action demande une confirmation identifiant la référence, le client et le total. Une annulation explique le traitement du stock réservé. Le verrou synchrone bloque les envois répétés pendant une requête. Si le résultat d’une écriture est incertain, ou si l’écriture réussit mais que la lecture suivante échoue, les actions sont désactivées jusqu’à une actualisation manuelle réussie; le message distingue ces deux cas. Le serveur conserve l’autorité sur les transitions et la réservation du stock.
+Chaque action demande une confirmation identifiant la référence, le client et le total. Une annulation explique le traitement du stock réservé. Le verrou synchrone bloque les envois répétés pendant une requête. Si le résultat d’une écriture est incertain, ou si l’écriture réussit mais que la lecture suivante échoue, les actions sont désactivées jusqu’à une actualisation manuelle réussie; le message distingue ces deux cas et reste visible après fermeture/réouverture d’une fiche tant qu’une actualisation reste requise. Le serveur conserve l’autorité sur les transitions et la réservation du stock.
 
 Aucun changement du backend, des dépendances, de l’authentification, du schéma ou des paramètres CRM. Aucune ancienne entrée CRM rejouée.
 
