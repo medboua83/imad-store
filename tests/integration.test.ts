@@ -626,31 +626,125 @@ test("An empty server startup does not publish demo data even with a legacy seed
     }
 });
 
-
 test("CRM diagnostics are admin-only, read-only and distinguish missing events", async () => {
-    assert.equal((await request(app).get("/api/integrations/deskcomm/orders/12345678")).status,401);
-    assert.equal((await request(app).get("/api/integrations/deskcomm/orders/invalid").set(admin())).status,400);
+    assert.equal(
+        (await request(app).get("/api/integrations/deskcomm/orders/12345678")).status,
+        401,
+    );
+    assert.equal(
+        (await request(app).get("/api/integrations/deskcomm/orders/invalid").set(admin())).status,
+        400,
+    );
     const createdProduct = await request(app).post("/api/products").set(admin()).send(payload());
-    assert.equal(createdProduct.status,201);
+    assert.equal(createdProduct.status, 201);
     const p = createdProduct.body.data;
-    const body = {...checkout(),crmConsent:false,items:[{productId:p.id,variantId:p.variants[0].id,quantity:1}]};
-    const created = await request(app).post("/api/orders").set("Idempotency-Key",key()).send(body);
-    assert.equal(created.status,201);
-    const id=created.body.data.id;
-    const before=await prisma.deskcommOutbox.count();
-    const status=await request(app).get(`/api/integrations/deskcomm/orders/${id.slice(-8)}`).set(admin());
-    assert.equal(status.status,200);
-    assert.equal(status.headers["cache-control"],"no-store");
-    assert.equal(status.body.data.state,"NO_EVENT");
-    assert.equal(status.body.data.attempts,0);
-    assert.equal(JSON.stringify(status.body).includes(body.customer.phone),false);
-    const consented=await request(app).post("/api/orders").set("Idempotency-Key",key()).send({...body,crmConsent:true});
-    assert.equal(consented.status,201);
-    const pending=await request(app).get(`/api/integrations/deskcomm/orders/${consented.body.data.id}`).set(admin());
-    assert.equal(pending.body.data.state,"PENDING");
-    assert.equal(await prisma.deskcommOutbox.count(),before+1);
-    const config=await request(app).get("/api/integrations/deskcomm").set(admin());
-    assert.equal(typeof config.body.data.worker.scheduled,"boolean");
-    assert.equal(config.body.data.webhookCiphertext,undefined);
-    assert.equal(config.body.data.webhookUrl,undefined);
+    const body = {
+        ...checkout(),
+        crmConsent: false,
+        items: [{ productId: p.id, variantId: p.variants[0].id, quantity: 1 }],
+    };
+    assert.equal(
+        (await request(app).put("/api/integrations/deskcomm").set(admin()).send({ enabled: false }))
+            .status,
+        200,
+    );
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(body);
+    assert.equal(created.status, 201);
+    const id = created.body.data.id;
+    const before = await prisma.deskcommOutbox.count();
+    const status = await request(app)
+        .get(`/api/integrations/deskcomm/orders/${id.slice(-8)}`)
+        .set(admin());
+    assert.equal(status.status, 200);
+    assert.equal(status.headers["cache-control"], "no-store");
+    assert.equal(status.body.data.state, "NO_EVENT");
+    assert.equal(status.body.data.attempts, 0);
+    assert.equal(JSON.stringify(status.body).includes(body.customer.phone), false);
+    assert.equal(
+        (await request(app).put("/api/integrations/deskcomm").set(admin()).send({ enabled: true }))
+            .status,
+        200,
+    );
+    const consented = await request(app)
+        .post("/api/orders")
+        .set("Idempotency-Key", key())
+        .send({ ...body, crmConsent: true });
+    assert.equal(consented.status, 201);
+    const pending = await request(app)
+        .get(`/api/integrations/deskcomm/orders/${consented.body.data.id}`)
+        .set(admin());
+    assert.equal(pending.body.data.state, "PENDING");
+    assert.equal(await prisma.deskcommOutbox.count(), before + 1);
+    const config = await request(app).get("/api/integrations/deskcomm").set(admin());
+    assert.equal(typeof config.body.data.worker.scheduled, "boolean");
+    assert.equal(config.body.data.webhookCiphertext, undefined);
+    assert.equal(config.body.data.webhookUrl, undefined);
+});
+
+test("Only the administrator controls CRM queueing; pause preserves jobs and enabling never backfills", async () => {
+    const response = await request(app).post("/api/products").set(admin()).send(payload());
+    assert.equal(response.status, 201);
+    const p = response.body.data;
+    const body = {
+        ...checkout(),
+        items: [{ productId: p.id, variantId: p.variants[0].id, quantity: 1 }],
+    };
+    delete (body as { crmConsent?: boolean }).crmConsent;
+    const off = await request(app)
+        .put("/api/integrations/deskcomm")
+        .set(admin())
+        .send({ enabled: false });
+    assert.equal(off.status, 200);
+    const beforePause = await prisma.deskcommOutbox.findMany({
+        orderBy: { id: "asc" },
+        select: { id: true, status: true, attempts: true },
+    });
+    const receiptsBefore = receipts.length;
+    const { processDeskcommOutbox } = await import("../backend/src/lib/deskcomm-outbox");
+    await processDeskcommOutbox();
+    assert.deepEqual(
+        await prisma.deskcommOutbox.findMany({
+            orderBy: { id: "asc" },
+            select: { id: true, status: true, attempts: true },
+        }),
+        beforePause,
+    );
+    assert.equal(receipts.length, receiptsBefore);
+    const disabledOrder = await request(app)
+        .post("/api/orders")
+        .set("Idempotency-Key", key())
+        .send({ ...body, crmConsent: true });
+    assert.equal(disabledOrder.status, 201);
+    assert.equal(
+        await prisma.deskcommOutbox.findUnique({ where: { orderId: disabledOrder.body.data.id } }),
+        null,
+    );
+    assert.equal(
+        (await request(app).put("/api/integrations/deskcomm").set(admin()).send({ enabled: true }))
+            .status,
+        200,
+    );
+    const idem = key();
+    const calls = await Promise.all(
+        [1, 2].map(() => request(app).post("/api/orders").set("Idempotency-Key", idem).send(body)),
+    );
+    for (const call of calls) assert.ok([200, 201].includes(call.status));
+    assert.equal(calls[0].body.data.id, calls[1].body.data.id);
+    assert.equal(
+        await prisma.deskcommOutbox.count({ where: { orderId: calls[0].body.data.id } }),
+        1,
+    );
+    const legacyFalse = await request(app)
+        .post("/api/orders")
+        .set("Idempotency-Key", key())
+        .send({ ...body, crmConsent: false });
+    assert.equal(legacyFalse.status, 201);
+    assert.equal(
+        await prisma.deskcommOutbox.count({ where: { orderId: legacyFalse.body.data.id } }),
+        1,
+    );
+    assert.equal(
+        await prisma.deskcommOutbox.findUnique({ where: { orderId: disabledOrder.body.data.id } }),
+        null,
+    );
 });

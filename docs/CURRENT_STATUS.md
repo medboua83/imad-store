@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Administrator-managed CRM orders — 2026-10-19
+
+See `ADMIN_MANAGED_CRM_2026-10-19.md`. The owner has replaced client choice with the saved administrator integration setting. Checkout no longer shows or sends a CRM option. New orders are queued atomically only when the integration is enabled/configured; disabled cycles leave pending jobs/attempts unchanged. Historical entries are not reconstructed and the cutoff remains unchanged. This supersedes earlier descriptions of optional customer CRM consent; privacy information remains on the privacy page.
+
 ## Hosted CRM diagnostic and opt-in scheduler — 2026-10-19
 
 See `HOSTED_CRM_DELIVERY_2026-10-19.md`. Admin diagnostics distinguish missing events from pending/sent/failed jobs and show actual hosted scheduler registration. The combined launcher supports a separately gated scheduler, inactive by default without the new hosted opt-in. Isolated tests/build pass. Deployment does not authorize replay or activate delivery; operational verification is recorded separately.

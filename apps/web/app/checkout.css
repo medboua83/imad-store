@@ -499,46 +499,6 @@
     color: white;
     flex-shrink: 0;
 }
-.checkout-consent-panel {
-    margin-top: 18px;
-    border-bottom: 1px solid #e0e5d7;
-}
-.checkout-consent-panel summary {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    cursor: pointer;
-    list-style: none;
-    padding: 12px 0;
-    min-height: 48px;
-    font-size: 12px;
-}
-.checkout-consent-panel summary::-webkit-details-marker {
-    display: none;
-}
-.checkout-consent-panel summary span {
-    font-size: 10px;
-    color: #6c7a63;
-    background: #edf0e6;
-    border-radius: 20px;
-    padding: 3px 9px;
-    margin-inline-start: auto;
-}
-.checkout-consent-panel label {
-    display: flex;
-    gap: 12px;
-    font-size: 12px;
-    color: #586b51;
-    line-height: 2;
-    padding-bottom: 18px;
-}
-.checkout-consent-panel input {
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    margin-top: 3px;
-    accent-color: #29473b;
-}
 .checkout-alert {
     margin-top: 16px;
     background: #fff2eb;
