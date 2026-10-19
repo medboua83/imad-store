@@ -138,8 +138,13 @@ export default function DeskcommTab() {
             {config && (
                 <p className="text-sm admin-muted">
                     Retour des confirmations CRM :{" "}
-                    {config.confirmationSync ? "Configuré" : "Non configuré"}. Ce retour confirme
-                    uniquement une commande existante ; il ne crée ni commande ni paiement.
+                    {config.confirmationSync
+                        ? "Configuré"
+                        : config.connection?.configured
+                          ? "En pause"
+                          : "Non configuré"}
+                    . Ce retour confirme uniquement une commande existante ; il ne crée ni commande
+                    ni paiement.
                 </p>
             )}
             <form className="space-y-3" onSubmit={checkOrder}>
