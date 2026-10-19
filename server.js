@@ -34,6 +34,7 @@ if (process.env.IMAD_HOSTING_MODE === "combined") {
   }).catch((error) => {
     // Never print configuration values or database connection strings.
     console.error("Hosted startup failed. Check the build and required server configuration.");
+    if (/^[A-Za-z0-9_]+$/.test(error?.name || "")) console.error(`Startup type: ${error.name}`);
     if (/^[A-Z_0-9]+$/.test(error?.code || "")) console.error(`Startup code: ${error.code}`);
     process.exit(1);
   });

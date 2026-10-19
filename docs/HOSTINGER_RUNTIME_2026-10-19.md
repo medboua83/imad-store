@@ -22,8 +22,9 @@ Passenger normally intercepts the first HTTP listener. The combined entrypoint
 disables automatic interception, starts a private ephemeral loopback listener
 for server-side data requests, then binds precisely one public hosting socket. Hostinger runtime verification also
 identified LiteSpeed, whose adapter ignores a second `http.Server.listen()`.
-For that adapter, the private loopback listener uses its preserved
-`originalListen` method; only the public server is installed into LiteSpeed.
+The private loopback listener binds through Node's native `net.Server.listen`,
+which HTTP servers inherit; only the public HTTP listener is installed into the
+hosting adapter. No adapter-specific global marker or saved method is required.
 Browser API and upload requests go directly to the existing Express routes on
 the same public listener. No fixed private port or build-time localhost proxy
 is needed. JWT checks, publication rules and rate limits remain in force.
