@@ -59,7 +59,7 @@ function assertPublishable(product: any) {
     }
 }
 const include = { category: true, variants: true };
-async function list(req: Request, res: Response, admin: boolean) {
+async function list(queryInput: unknown, admin: boolean) {
     const query = paginationSchema
         .extend({
             category: slugSchema.optional(),
@@ -70,7 +70,7 @@ async function list(req: Request, res: Response, admin: boolean) {
             availability: z.enum(["all", "in-stock"]).default("all"),
             sort: z.enum(["newest", "price-asc", "price-desc", "name"]).default("newest"),
         })
-        .parse(req.query);
+        .parse(queryInput);
     if (!admin && query.status && query.status !== "ACTIVE")
         throw new AppError("Accès refusé", 403);
     const where: any = admin
@@ -116,23 +116,24 @@ async function list(req: Request, res: Response, admin: boolean) {
         }),
         prisma.product.count({ where }),
     ]);
-    if (!admin) res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-    res.json({
+    return {
         success: true,
         data: products,
         total,
         page: query.page,
         totalPages: Math.ceil(total / query.limit),
-    });
+    };
 }
 export async function getProducts(req: Request, res: Response) {
-    return list(req, res, false);
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    res.json(await readPublicProducts(req.query));
 }
 export async function getAdminProducts(req: Request, res: Response) {
-    return list(req, res, true);
+    res.json(await list(req.query, true));
 }
-export async function getProduct(req: Request, res: Response) {
-    const slug = slugSchema.parse(req.params.slug);
+export const readPublicProducts = (query: unknown) => list(query, false);
+export async function readPublicProduct(slugInput: unknown) {
+    const slug = slugSchema.parse(slugInput);
     const product = await prisma.product.findUnique({ where: { slug }, include });
     if (
         !product ||
@@ -141,8 +142,11 @@ export async function getProduct(req: Request, res: Response) {
         !product.images.length
     )
         throw new AppError("Produit introuvable", 404);
+    return { success: true, data: product };
+}
+export async function getProduct(req: Request, res: Response) {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-    res.json({ success: true, data: product });
+    res.json(await readPublicProduct(req.params.slug));
 }
 export async function createProduct(req: Request, res: Response) {
     const body = productSchema.parse(req.body);

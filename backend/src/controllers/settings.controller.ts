@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 
-export async function getSettings(_req: Request, res: Response) {
+export async function readSettings() {
     const settings = (await prisma.storeSettings.findUnique({ where: { id: "settings" } })) || {
         id: "settings",
         whatsappPhone: "212660560522",
@@ -10,8 +10,11 @@ export async function getSettings(_req: Request, res: Response) {
         freeShippingMin: 500,
         codEnabled: true,
     };
+    return { success: true, data: settings };
+}
+export async function getSettings(_req: Request, res: Response) {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-    res.json({ success: true, data: settings });
+    res.json(await readSettings());
 }
 
 const settingsSchema = z.object({
