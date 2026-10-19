@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./storefront.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 
