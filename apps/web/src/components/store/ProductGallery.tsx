@@ -4,13 +4,20 @@ import { Expand, X, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
-    const [active, setActive] = useState(0);
+    const [selected, setSelected] = useState(images[0]);
+    const [failed, setFailed] = useState<Set<string>>(() => new Set());
+    const available = [...new Set(images.filter((src) => src && !failed.has(src)))];
+    const active = Math.max(0, available.indexOf(selected));
+    function fail(src: string) {
+        setFailed((previous) => (previous.has(src) ? previous : new Set([...previous, src])));
+    }
     const [zoomOpen, setZoomOpen] = useState(false);
     const zoom = useRef<HTMLDialogElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
-    const src = images[active];
+    const src = available[active];
     function move(offset: number) {
-        if (images.length > 1) setActive((i) => (i + offset + images.length) % images.length);
+        if (available.length > 1)
+            setSelected(available[(active + offset + available.length) % available.length]);
     }
     useEffect(() => {
         if (!zoomOpen) return;
@@ -21,7 +28,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
         };
     }, [zoomOpen]);
     const controls = (inZoom = false) =>
-        images.length > 1 && (
+        available.length > 1 && (
             <div
                 className={inZoom ? "gallery-navigation zoom-navigation" : "gallery-navigation"}
                 dir="ltr"
@@ -30,7 +37,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                     <ChevronLeft size={20} aria-hidden="true" />
                 </button>
                 <span aria-live="polite">
-                    {active + 1} / {images.length}
+                    {active + 1} / {available.length}
                 </span>
                 <button type="button" aria-label="الصورة التالية" onClick={() => move(1)}>
                     <ChevronRight size={20} aria-hidden="true" />
@@ -43,6 +50,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 {src ? (
                     <Image
                         src={src}
+                        onError={() => fail(src)}
                         alt={`${name} — الصورة ${active + 1}`}
                         fill
                         preload={active === 0}
@@ -71,24 +79,31 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                     </button>
                 )}
                 <span className="gallery-position" dir="ltr">
-                    {images.length ? active + 1 : 0} / {images.length}
+                    {available.length ? active + 1 : 0} / {available.length}
                 </span>
             </div>
             <div className="gallery-caption">
                 <p>{src ? "شاهدي التفاصيل عن قرب" : "تواصلي معنا للاستفسار عن صور القطعة"}</p>
                 {controls()}
             </div>
-            {images.length > 1 && (
+            {available.length > 1 && (
                 <div className="gallery-thumbnails" role="group" aria-label="صور المنتج">
-                    {images.map((image, i) => (
+                    {available.map((image, i) => (
                         <button
                             key={`${image}-${i}`}
                             type="button"
                             aria-label={`عرض الصورة ${i + 1}`}
                             aria-pressed={active === i}
-                            onClick={() => setActive(i)}
+                            onClick={() => setSelected(image)}
                         >
-                            <Image src={image} alt="" fill sizes="80px" className="gallery-photo" />
+                            <Image
+                                src={image}
+                                alt=""
+                                fill
+                                sizes="80px"
+                                className="gallery-photo"
+                                onError={() => fail(image)}
+                            />
                         </button>
                     ))}
                 </div>
@@ -125,14 +140,20 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                     </button>
                 </div>
                 <div className="zoom-photo">
-                    {src && (
+                    {src ? (
                         <Image
                             src={src}
+                            onError={() => fail(src)}
                             alt={`${name} — الصورة ${active + 1}`}
                             fill
                             sizes="100vw"
                             className="gallery-photo"
                         />
+                    ) : (
+                        <div className="gallery-empty">
+                            <ImageIcon size={36} aria-hidden="true" />
+                            <p>الصورة قيد التحضير</p>
+                        </div>
                     )}
                 </div>
                 {controls(true)}
