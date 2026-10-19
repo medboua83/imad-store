@@ -1,4 +1,4 @@
-# Premier contact WhatsApp après commande — candidat
+# Premier contact WhatsApp après commande — déployé et testé
 
 La connexion des commandes et le retour des statuts restent indépendants du premier contact IA. Une commande déjà transmise avec `aiConsent: false` n’est pas réécrite ou rejouée pour autoriser l’IA.
 
@@ -31,4 +31,12 @@ Si le service IA n’est pas prêt, garder sa règle en pause. La réception de 
 
 ## Recette locale
 
-40 tests MongoDB jetables, 6 tests du kit et 50 tests CRM ciblés ; compilations et typage complets, lint. Contrôles négatifs détectant une version de notice ignorée et des publications historiques recomptées, puis code restauré. Dans Chrome sur base indépendante : demande décochée, refus d’un téléphone local pour WhatsApp, commande fictive enregistrée avec accord/version/date, paiement en attente ; signature fictive sauvegardée et champ effacé. Workers désactivés et destinataire `.invalid`, aucun envoi externe. La mise en production et le test WhatsApp réel restent à effectuer.
+40 tests MongoDB jetables, 6 tests du kit et 50 tests CRM ciblés ; compilations et typage complets, lint. Contrôles négatifs détectant une version de notice ignorée et des publications historiques recomptées, puis code restauré. Dans Chrome sur base indépendante : demande décochée, refus d’un téléphone local pour WhatsApp, commande fictive enregistrée avec accord/version/date, paiement en attente ; signature fictive sauvegardée et champ effacé. Workers désactivés et destinataire `.invalid`, aucun envoi externe. La recette réelle et les conditions de mise en service sont décrites ci-dessous.
+
+## Premier contact WhatsApp — déployé et vérifié le 19 octobre 2026
+
+PR boutique #29 fusionnée (`77b1163`) et correctif CRM privé #5 fusionné (`6ab8bc664`, image testée `saas-ad41d981d`). Les trois services CRM sont sains ; configuration, identités et retour des confirmations conservés. Signature HMAC dédiée raccordée à la source existante, transmission boutique réactivée et règle existante de premier contact activée. Routeur partagé inactif ; agent conseil archivé avec versions conservées ; agent de confirmation seul sur le numéro réservé.
+
+Recette réelle autorisée : deux commandes distinctes fictives marquées NE PAS EXPÉDIER. Une première tentative a respecté la prise en charge humaine existante. Après restitution autorisée du contact, la tentative de la seconde commande a été reprise via le moteur métier, avec l’événement original et tous les contrôles conservés. Résultat : un prospect par référence, un seul message initial pour la seconde commande, statut WhatsApp `delivered`. Les réponses du propriétaire sont traitées par l’agent de confirmation ; les traces attribuées à un agent ne montrent que cet agent. Aucune troisième commande, paiement ou création de colis. Les anciennes commandes réelles ne sont pas rejouées.
+
+Après le test aller-retour et accord explicite du propriétaire, le canal a été ouvert aux clients ; l’interface affiche « L’IA ouverte au public ». La liste de test ne limite plus les réponses entrantes. Le premier contact sur commande exige toujours la demande d’assistance reçue dans la capture signée. Les demandes d’assistance explicites, les oppositions, le traitement humain, les budgets et la validation humaine avant livraison restent appliqués. Les échecs précédents restent visibles dans l’activité ; ils ne constituent pas des prospects supplémentaires.

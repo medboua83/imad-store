@@ -1,1 +1,2 @@
 - [Admin login page fixed - posts to /api/auth/login and stores token in localStorage](apps/web/app/admin/page.tsx.md) — Fixed template literal syntax, JSX bracket mismatches, and conditional rendering to enable proper admin authentication flow.
+- Premier contact WhatsApp déployé et testé le 19 octobre 2026 : voir `docs/WHATSAPP_ORDER_CAPTURE_2026-10-19.md`. Les états de mode test et de mise en service y sont distingués.
