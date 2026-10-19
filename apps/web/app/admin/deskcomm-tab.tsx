@@ -3,7 +3,18 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getBaseUrl } from "@/lib/api";
 const base = getBaseUrl();
-type Config = { enabled: boolean; configured: boolean; updatedAt: string | null };
+type Config = {
+    enabled: boolean;
+    configured: boolean;
+    updatedAt: string | null;
+    worker?: {
+        hosted: boolean;
+        enabled: boolean;
+        hostedEnabled: boolean;
+        cutoffConfigured: boolean;
+        scheduled: boolean;
+    };
+};
 export default function DeskcommTab() {
     const [config, setConfig] = useState<Config | null>(null),
         [url, setUrl] = useState(""),
@@ -11,6 +22,35 @@ export default function DeskcommTab() {
         [clearWebhook, setClear] = useState(false),
         [loading, setLoading] = useState(false),
         [message, setMessage] = useState("");
+    const [reference, setReference] = useState("");
+    const [delivery, setDelivery] = useState<{
+        reference: string;
+        state: string;
+        attempts: number;
+    } | null>(null);
+    const [diagnosticError, setDiagnosticError] = useState("");
+    const [checking, setChecking] = useState(false);
+    async function checkOrder(e: React.FormEvent) {
+        e.preventDefault();
+        setChecking(true);
+        setDelivery(null);
+        setDiagnosticError("");
+        try {
+            const r = await axios.get(
+                base + "/integrations/deskcomm/orders/" + encodeURIComponent(reference.trim()),
+                { headers: headers() },
+            );
+            setDelivery(r.data.data);
+        } catch (e) {
+            setDiagnosticError(
+                axios.isAxiosError(e)
+                    ? e.response?.data?.error || "Vérification impossible"
+                    : "Erreur réseau",
+            );
+        } finally {
+            setChecking(false);
+        }
+    }
     const headers = () => ({
         Authorization: "Bearer " + (localStorage.getItem("adminToken") || ""),
     });
@@ -57,9 +97,79 @@ export default function DeskcommTab() {
                 Le lien enregistré est chiffré côté serveur et n&apos;est jamais réaffiché.
             </p>
             <p className="text-sm">
-                Statut : {config?.configured ? "Webhook enregistré" : "Aucun webhook"} —{" "}
-                {config?.enabled ? "Activé" : "Désactivé"}
+                Statut :{" "}
+                {!config
+                    ? "Chargement…"
+                    : config?.configured
+                      ? "Webhook enregistré"
+                      : "Aucun webhook"}{" "}
+                — {!config ? "" : config.enabled ? "Activé" : "Désactivé"}
             </p>
+            {config?.worker && (
+                <p className="text-sm" role="status">
+                    Service d’envoi :{" "}
+                    {config.worker.hosted
+                        ? config.worker.scheduled
+                            ? "Programmé"
+                            : "Arrêté sur cet hébergement"
+                        : config.worker.enabled && config.worker.cutoffConfigured
+                          ? "Configuré — vérifier le processus serveur"
+                          : "Non configuré"}
+                    . Un webhook actif ne suffit pas si le service d’envoi est arrêté.
+                </p>
+            )}
+            <form className="space-y-3" onSubmit={checkOrder}>
+                <h3 className="font-semibold">Suivi CRM d’une commande</h3>
+                <label className="block text-sm">
+                    Référence de commande
+                    <input
+                        className="admin-field mt-2"
+                        value={reference}
+                        onChange={(e) => {
+                            setReference(e.target.value);
+                            setDelivery(null);
+                            setDiagnosticError("");
+                        }}
+                        placeholder="Ex. 29EF8EA4"
+                        pattern="[a-fA-F0-9]{8}|[a-fA-F0-9]{24}"
+                        required
+                    />
+                </label>
+                <button type="submit" className="admin-button" disabled={checking}>
+                    {checking ? "Vérification…" : "Vérifier l’envoi CRM"}
+                </button>
+                {delivery && (
+                    <div className="text-sm space-y-2" role="status">
+                        <p>
+                            #{delivery.reference} —{" "}
+                            {{
+                                NO_EVENT: "Aucun envoi CRM prévu",
+                                PENDING: "En attente d’envoi",
+                                PROCESSING: "En cours d’envoi",
+                                SENT: "Transmis au webhook",
+                                FAILED: "Échec après plusieurs tentatives",
+                            }[delivery.state] || delivery.state}{" "}
+                            · Tentatives : {delivery.attempts}
+                        </p>
+                        <p>
+                            {delivery.state === "NO_EVENT"
+                                ? "Aucun événement n’a été créé. Dans le parcours actuel, l’envoi est facultatif et nécessite la case d’autorisation CRM au paiement. Ce diagnostic ne transmet aucune donnée et ne reconstitue pas un consentement historique."
+                                : delivery.state === "SENT"
+                                  ? "Le webhook a accepté la requête. Vérifiez aussi la réception et le classement dans le CRM."
+                                  : "L’événement reste enregistré. Un service actif et un webhook valide sont nécessaires. Ne recréez pas la commande."}
+                        </p>
+                    </div>
+                )}
+                {diagnosticError && (
+                    <p role="alert" className="text-sm">
+                        {diagnosticError}
+                    </p>
+                )}
+                <p className="text-xs admin-muted">
+                    Vérification en lecture seule : aucune création ni relance de prospect.
+                </p>
+            </form>
+            <hr />
             <form className="space-y-5" onSubmit={save}>
                 <label className="block text-sm">
                     URL du webhook (vide = conserver l&apos;existante)

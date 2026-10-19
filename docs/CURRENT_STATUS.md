@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Hosted CRM diagnostic and opt-in scheduler — 2026-10-19
+
+See `HOSTED_CRM_DELIVERY_2026-10-19.md`. Admin diagnostics distinguish missing events from pending/sent/failed jobs and show actual hosted scheduler registration. The combined launcher supports a separately gated scheduler, inactive by default without the new hosted opt-in. Isolated tests/build pass. Deployment does not authorize replay or activate delivery; operational verification is recorded separately.
+
 ## Mobile product detail — 2026-10-19
 
 See `PRODUCT_DETAILS_2026-10-19.md`. Gallery/zoom controls, separate stock-aware colour/size choices and compact mobile identity improve presentation without changing catalogue data. Build/lint, read-only local variant fixtures, five-size and temporary local cart checks pass. Production validation is recorded separately; no order or CRM action.

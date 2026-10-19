@@ -625,3 +625,32 @@ test("An empty server startup does not publish demo data even with a legacy seed
         if (/^imad_ci_[a-f0-9]{16}$/.test(isolated)) await mongo.db(isolated).dropDatabase();
     }
 });
+
+
+test("CRM diagnostics are admin-only, read-only and distinguish missing events", async () => {
+    assert.equal((await request(app).get("/api/integrations/deskcomm/orders/12345678")).status,401);
+    assert.equal((await request(app).get("/api/integrations/deskcomm/orders/invalid").set(admin())).status,400);
+    const createdProduct = await request(app).post("/api/products").set(admin()).send(payload());
+    assert.equal(createdProduct.status,201);
+    const p = createdProduct.body.data;
+    const body = {...checkout(),crmConsent:false,items:[{productId:p.id,variantId:p.variants[0].id,quantity:1}]};
+    const created = await request(app).post("/api/orders").set("Idempotency-Key",key()).send(body);
+    assert.equal(created.status,201);
+    const id=created.body.data.id;
+    const before=await prisma.deskcommOutbox.count();
+    const status=await request(app).get(`/api/integrations/deskcomm/orders/${id.slice(-8)}`).set(admin());
+    assert.equal(status.status,200);
+    assert.equal(status.headers["cache-control"],"no-store");
+    assert.equal(status.body.data.state,"NO_EVENT");
+    assert.equal(status.body.data.attempts,0);
+    assert.equal(JSON.stringify(status.body).includes(body.customer.phone),false);
+    const consented=await request(app).post("/api/orders").set("Idempotency-Key",key()).send({...body,crmConsent:true});
+    assert.equal(consented.status,201);
+    const pending=await request(app).get(`/api/integrations/deskcomm/orders/${consented.body.data.id}`).set(admin());
+    assert.equal(pending.body.data.state,"PENDING");
+    assert.equal(await prisma.deskcommOutbox.count(),before+1);
+    const config=await request(app).get("/api/integrations/deskcomm").set(admin());
+    assert.equal(typeof config.body.data.worker.scheduled,"boolean");
+    assert.equal(config.body.data.webhookCiphertext,undefined);
+    assert.equal(config.body.data.webhookUrl,undefined);
+});
