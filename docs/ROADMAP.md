@@ -43,3 +43,8 @@ Chaque lot doit fournir un résultat vérifiable et une possibilité de retour a
 
 - [ ] Fournir et valider les délais, conditions de retour et identité/adresse commerciale avant publication.
 - [ ] Observer les performances terrain après une éventuelle mise en ligne sur le domaine final.
+
+## Reusable company installations — 2026-10-19
+
+- [x] Fresh isolated profile generator, database identity/index bootstrap, encrypted per-company confirmation setup and isolated tests. See COMPANY_STORE_TEMPLATE_2026-10-19.md.
+- [ ] Optional future CRM-side self-service provisioning of enterprises, sources and rules; outside this store repository.

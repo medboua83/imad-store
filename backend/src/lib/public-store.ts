@@ -1,3 +1,4 @@
+import { assertStoreInstallation } from "./store-installation";
 import { ZodError } from "zod";
 import { readPublicProducts, readPublicProduct } from "../controllers/product.controller";
 import { readCategories } from "../controllers/category.controller";
@@ -11,6 +12,7 @@ export async function readPublicStore(path: string) {
     if (!path.startsWith("/") || path.startsWith("//")) throw new Error("Invalid public read path");
     const url = new URL(path, "http://internal.invalid");
     try {
+        await assertStoreInstallation();
         let body: unknown;
         if (url.pathname === "/products") body = await readPublicProducts(Object.fromEntries(url.searchParams));
         else if (/^\/products\/[a-z0-9-]+$/.test(url.pathname)) body = await readPublicProduct(url.pathname.slice(10));

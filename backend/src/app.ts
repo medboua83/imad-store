@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { receiveDeskcommConfirmation } from "./controllers/deskcomm-status.controller";
+import { assertStoreInstallation } from "./lib/store-installation";
 import rateLimit from "express-rate-limit";
 import "express-async-errors";
 
@@ -31,6 +32,10 @@ app.use(
     }),
 );
 app.use(morgan("dev"));
+app.use(async (_req, _res, next) => {
+    await assertStoreInstallation();
+    next();
+});
 
 // raw body for Stripe webhooks — must come BEFORE express.json()
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));

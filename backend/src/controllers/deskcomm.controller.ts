@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
-import { createCipheriv, randomBytes } from "crypto";
+import { encryptDeskcommValue as encrypt, decryptDeskcommValue } from "../lib/deskcomm-config";
+import { storeIdentity } from "../lib/store-installation";
+import { AppError } from "../middleware/error.middleware";
 import { z } from "zod";
 import { crmStatusConfig } from "./deskcomm-status.controller";
 import { prisma } from "../lib/prisma";
@@ -10,14 +12,6 @@ const schema = z
         clearWebhook: z.boolean().optional(),
     })
     .strict();
-function encrypt(value: string): string {
-    const raw = process.env.DESKCOMM_ENCRYPTION_KEY;
-    if (!raw || !/^[0-9a-fA-F]{64}$/.test(raw)) throw new Error("DESKCOMM_ENCRYPTION_KEY invalid");
-    const iv = randomBytes(12),
-        cipher = createCipheriv("aes-256-gcm", Buffer.from(raw, "hex"), iv);
-    const bytes = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
-    return [iv, cipher.getAuthTag(), bytes].map((b) => b.toString("base64url")).join(".");
-}
 function validateUrl(value: string) {
     const url = new URL(value);
     const allowDevHttp =
@@ -117,12 +111,26 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
             configured: Boolean(c?.webhookCiphertext),
             updatedAt: c?.updatedAt ?? null,
             worker: workerStatus(),
-            confirmationSync: Boolean(crmStatusConfig()),
+            confirmationSync: Boolean(await crmStatusConfig()),
+            connection: await publicConnection(),
         },
     });
 }
 export async function putDeskcommConfig(req: Request, res: Response) {
     const b = schema.parse(req.body);
+    if (storeIdentity() && (b.clearWebhook || b.webhookUrl)) {
+        const existing = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+        const replacing =
+            existing?.webhookCiphertext &&
+            (b.clearWebhook ||
+                (b.webhookUrl &&
+                    b.webhookUrl !== decryptDeskcommValue(existing.webhookCiphertext)));
+        if (replacing && (await prisma.deskcommOutbox.count()))
+            throw new AppError(
+                "Cette boutique est liée à sa source CRM. Utilisez une nouvelle installation pour une autre entreprise.",
+                409,
+            );
+    }
     if (b.clearWebhook && b.webhookUrl) {
         res.status(400).json({ success: false, error: "Choisir suppression ou remplacement" });
         return;
@@ -159,7 +167,81 @@ export async function putDeskcommConfig(req: Request, res: Response) {
             configured: Boolean(c.webhookCiphertext),
             updatedAt: c.updatedAt,
             worker: workerStatus(),
-            confirmationSync: Boolean(crmStatusConfig()),
+            confirmationSync: Boolean(await crmStatusConfig()),
+            connection: await publicConnection(),
         },
     });
+}
+
+const connectionInput = z
+    .object({
+        enabled: z.boolean(),
+        pipeline: z.string().uuid(),
+        stage: z.string().uuid(),
+        field: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
+        secret: z
+            .string()
+            .regex(/^[a-f0-9]{64}$/i)
+            .optional(),
+    })
+    .strict();
+async function publicConnection() {
+    const identity = storeIdentity();
+    if (!identity) return null;
+    const saved = await prisma.deskcommConnection.findUnique({ where: { id: "deskcomm" } });
+    if (!saved)
+        return {
+            ...identity,
+            enabled: false,
+            configured: false,
+            pipeline: "",
+            stage: "",
+            field: "pedido_id",
+        };
+    const c = JSON.parse(decryptDeskcommValue(saved.ciphertext));
+    return {
+        ...identity,
+        enabled: c.enabled,
+        configured: true,
+        pipeline: c.pipeline,
+        stage: c.stage,
+        field: c.field,
+    };
+}
+export async function putDeskcommConnection(req: Request, res: Response) {
+    const identity = storeIdentity();
+    if (!identity)
+        throw new AppError(
+            "Installez un profil entreprise indépendant avant de configurer cette connexion",
+            409,
+        );
+    const input = connectionInput.parse(req.body);
+    const saved = await prisma.deskcommConnection.findUnique({ where: { id: "deskcomm" } });
+    const previous = saved ? JSON.parse(decryptDeskcommValue(saved.ciphertext)) : null;
+    if (previous && (previous.pipeline !== input.pipeline || previous.field !== input.field))
+        throw new AppError(
+            "Le pipeline et le champ de référence sont liés à cette installation",
+            409,
+        );
+    const secret = input.secret || previous?.secret;
+    if (!secret) throw new AppError("Une clé de signature dédiée est requise", 400);
+    const config = {
+        ...identity,
+        ...input,
+        secret,
+        cutoff: previous?.cutoff || new Date().toISOString(),
+    };
+    const ciphertext = encrypt(JSON.stringify(config));
+    if (saved) {
+        const updated = await prisma.deskcommConnection.updateMany({
+            where: { id: "deskcomm", ciphertext: saved.ciphertext },
+            data: { ciphertext },
+        });
+        if (updated.count !== 1)
+            throw new AppError("Configuration modifiée entre-temps. Actualisez.", 409);
+    } else {
+        await prisma.deskcommConnection.create({ data: { id: "deskcomm", ciphertext } });
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ success: true, data: await publicConnection() });
 }
