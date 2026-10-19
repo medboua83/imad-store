@@ -26,7 +26,6 @@ export default function CheckoutPage() {
     const [busy, setBusy] = useState(false);
     const [orderId, setOrderId] = useState("");
     const [key, setKey] = useState("");
-    const [consent, setConsent] = useState(false);
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
         refreshCart()
@@ -67,7 +66,6 @@ export default function CheckoutPage() {
             const order = await createOrder(
                 {
                     paymentMethod: "COD",
-                    crmConsent: consent,
                     expectedTotal: shipping.total ?? undefined,
                     customer: {
                         fullName: form.fullName.trim(),
@@ -287,23 +285,6 @@ export default function CheckoutPage() {
                                 <p>راجعي المبلغ الكامل قبل تأكيد الطلب.</p>
                             </div>
                         </div>
-                        <details className="checkout-consent-panel">
-                            <summary>
-                                تواصل إضافي عبر واتساب <span>اختياري</span>
-                                <ChevronDown size={16} aria-hidden="true" />
-                            </summary>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={consent}
-                                    disabled={busy}
-                                    onChange={(event) => setConsent(event.target.checked)}
-                                />
-                                أوافق اختيارياً على مشاركة بيانات طلبي مع فريق خدمة العملاء عبر
-                                DeskcommCRM للتواصل بشأن طلبي عبر واتساب. يمكن إتمام الطلب دون هذه
-                                الموافقة.
-                            </label>
-                        </details>
                         {error && (
                             <p role="alert" className="checkout-alert">
                                 {error}

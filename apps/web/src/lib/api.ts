@@ -165,7 +165,6 @@ export interface ProductsResponse {
 // Guest-only checkout — no user account required
 export interface GuestCheckoutPayload {
     paymentMethod: "COD";
-    crmConsent?: boolean;
     expectedTotal?: number;
     customer: {
         fullName: string;

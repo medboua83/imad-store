@@ -153,7 +153,7 @@ export default function DeskcommTab() {
                         </p>
                         <p>
                             {delivery.state === "NO_EVENT"
-                                ? "Aucun événement n’a été créé. Dans le parcours actuel, l’envoi est facultatif et nécessite la case d’autorisation CRM au paiement. Ce diagnostic ne transmet aucune donnée et ne reconstitue pas un consentement historique."
+                                ? "Aucun événement n’a été créé pour cette commande. Vérifiez si le CRM était activé à sa création ou si elle provient de l’ancien parcours à autorisation client. Les anciennes commandes ne sont pas ajoutées automatiquement à la file."
                                 : delivery.state === "SENT"
                                   ? "Le webhook a accepté la requête. Vérifiez aussi la réception et le classement dans le CRM."
                                   : "L’événement reste enregistré. Un service actif et un webhook valide sont nécessaires. Ne recréez pas la commande."}
@@ -170,6 +170,14 @@ export default function DeskcommTab() {
                 </p>
             </form>
             <hr />
+            <p className="text-sm admin-muted">
+                Ce réglage appartient uniquement à l’administration. Lorsqu’il est actif et qu’un
+                webhook est enregistré, les nouvelles commandes sont mises en file automatiquement.
+                Lorsqu’il est désactivé, aucune nouvelle commande n’est ajoutée et les envois en
+                attente sont suspendus sans consommer de tentative. La réactivation reprend les
+                événements existants éligibles à la limite de date ; elle ne crée pas d’événement
+                pour les commandes passées.
+            </p>
             <form className="space-y-5" onSubmit={save}>
                 <label className="block text-sm">
                     URL du webhook (vide = conserver l&apos;existante)
@@ -188,7 +196,7 @@ export default function DeskcommTab() {
                         checked={enabled}
                         onChange={(e) => setEnabled(e.target.checked)}
                     />
-                    Activer l&apos;envoi de nouvelles commandes
+                    Transmettre automatiquement les nouvelles commandes au CRM
                 </label>
                 <label className="flex items-center gap-3 text-sm admin-danger">
                     <input

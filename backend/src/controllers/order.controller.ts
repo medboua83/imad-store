@@ -12,6 +12,7 @@ import { transitionOrderStatus } from "../lib/order-lifecycle";
 const createOrderSchema = z
     .object({
         paymentMethod: z.enum(["COD"]).default("COD"),
+        // Accepted only for old clients/idempotent retries; never controls CRM delivery.
         crmConsent: z.boolean().default(false),
         expectedTotal: z.number().nonnegative().optional(),
         notes: z.string().max(2000).optional(),
@@ -202,8 +203,13 @@ export async function createOrder(req: Request, res: Response) {
                         },
                         include: { ...ORDER_INCLUDE, events: true },
                     });
-                    // The CRM event is committed together with order and stock, only with explicit consent.
-                    if (body.crmConsent) {
+                    // Delivery is controlled by the saved administrator integration setting.
+                    // Keep the event atomic with the order/stock and never backfill older orders.
+                    const crmIntegration = await tx.deskcommIntegration.findUnique({
+                        where: { id: "deskcomm" },
+                        select: { enabled: true, webhookCiphertext: true },
+                    });
+                    if (crmIntegration?.enabled && crmIntegration.webhookCiphertext) {
                         await tx.deskcommOutbox.create({
                             data: {
                                 orderId: created.id,
