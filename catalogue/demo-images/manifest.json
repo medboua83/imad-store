@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "demo-mens-clogs",
+    "name": "Men's Clogs Sample",
+    "image": "/uploads/8cce892edd25a0f357b65af0fccca7196971ec0699b8626f23bcca01fa5b64b3.webp",
+    "bytes": 97610,
+    "sha256": "8cce892edd25a0f357b65af0fccca7196971ec0699b8626f23bcca01fa5b64b3",
+    "generated": true
+  },
+  {
+    "slug": "demo-womens-shoes",
+    "name": "Women's Shoes Sample",
+    "image": "/uploads/d672c6abae309a550ff89cf1381982a754097936e286625f108d2f5ac5381d99.webp",
+    "bytes": 75110,
+    "sha256": "d672c6abae309a550ff89cf1381982a754097936e286625f108d2f5ac5381d99",
+    "generated": true
+  },
+  {
+    "slug": "demo-shawls",
+    "name": "Shawls Sample",
+    "image": "/uploads/6efbf6344c1d85abcd87bd82a38ab880187c4cb522c706ff7541e597df87dba2.webp",
+    "bytes": 146290,
+    "sha256": "6efbf6344c1d85abcd87bd82a38ab880187c4cb522c706ff7541e597df87dba2",
+    "generated": true
+  },
+  {
+    "slug": "demo-abayas",
+    "name": "Abayas Sample",
+    "image": "/uploads/630154c0785fe1868836c9b84aa19b71bd71b930e94012ce5c1b3e02e7f2289c.webp",
+    "bytes": 24942,
+    "sha256": "630154c0785fe1868836c9b84aa19b71bd71b930e94012ce5c1b3e02e7f2289c",
+    "generated": true
+  },
+  {
+    "slug": "robe-elegante-sample",
+    "name": "Robe Élégante",
+    "image": "/uploads/61d199348a3d2929c698f0e60770b1edf12cf93cc8befbfe303d9dfa577b25b4.webp",
+    "bytes": 26930,
+    "sha256": "61d199348a3d2929c698f0e60770b1edf12cf93cc8befbfe303d9dfa577b25b4",
+    "generated": true
+  }
+]

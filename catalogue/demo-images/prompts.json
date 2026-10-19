@@ -1,0 +1,25 @@
+{
+  "mode": "built-in imagegen",
+  "prompts": [
+    {
+      "name": "sabots-homme",
+      "prompt": "Use case: product-mockup. Asset type: single ecommerce catalogue product photo for IMAD Mode test catalogue. Subject: A pair of matte midnight navy men's slip-on clogs, closed rounded toes, clean unbranded minimalist molded design, comfortable sculpted footbed and sturdy sole, three-quarter view showing both shoes. Style: premium photorealistic studio product photography. Composition: square individual image, complete product centered with generous clean margins, no collage. Backdrop: seamless warm cream background. Lighting: soft diffused window-like studio light from upper left, delicate realistic contact shadows. Carefully rendered fabric or material texture. Constraints: no people, no hands, no text, no labels, no brand logos, no watermark, no props unrelated to the product. This is a fictional sample product."
+    },
+    {
+      "name": "chaussures-femme",
+      "prompt": "Use case: product-mockup. Asset type: single ecommerce catalogue product photo for IMAD Mode test catalogue. Subject: A pair of elegant midnight navy women's closed-toe ballet flats, subtle rounded almond toes, low flat heel, soft leather texture, understated design with no ornament, three-quarter view. Style: premium photorealistic studio product photography. Composition: square individual image, complete product centered with generous clean margins, no collage. Backdrop: seamless warm cream background. Lighting: soft diffused window-like studio light from upper left, delicate realistic contact shadows. Carefully rendered fabric or material texture. Constraints: no people, no hands, no text, no labels, no brand logos, no watermark, no props unrelated to the product. This is a fictional sample product."
+    },
+    {
+      "name": "chale",
+      "prompt": "Use case: product-mockup. Asset type: single ecommerce catalogue product photo for IMAD Mode test catalogue. Subject: A luxurious midnight navy shawl, lightweight finely woven fabric, laid loosely on a warm ivory studio plinth with flowing folds and a gently frayed edge, clear textile texture. Style: premium photorealistic studio product photography. Composition: square individual image, complete product centered with generous clean margins, no collage. Backdrop: seamless warm cream background. Lighting: soft diffused window-like studio light from upper left, delicate realistic contact shadows. Carefully rendered fabric or material texture. Constraints: no people, no hands, no text, no labels, no brand logos, no watermark, no props unrelated to the product. This is a fictional sample product."
+    },
+    {
+      "name": "abaya",
+      "prompt": "Use case: product-mockup. Asset type: single ecommerce catalogue product photo for IMAD Mode test catalogue. Subject: A modest full-length midnight navy abaya with long sleeves, opaque fluid fabric, loose graceful straight silhouette, subtle tonal stitching, displayed naturally on an invisible mannequin, complete garment including sleeves and hem. Style: premium photorealistic studio product photography. Composition: square individual image, complete product centered with generous clean margins, no collage. Backdrop: seamless warm cream background. Lighting: soft diffused window-like studio light from upper left, delicate realistic contact shadows. Carefully rendered fabric or material texture. Constraints: no people, no hands, no text, no labels, no brand logos, no watermark, no props unrelated to the product. This is a fictional sample product."
+    },
+    {
+      "name": "robe-elegante",
+      "prompt": "Use case: product-mockup. Asset type: single ecommerce catalogue product photo for IMAD Mode test catalogue. Subject: An elegant black midi-to-ankle-length dress, size M appearance, long sleeves, opaque crepe fabric, modest round neckline, gently defined waist and softly flowing skirt, shown on an invisible mannequin, full garment visible. Style: premium photorealistic studio product photography. Composition: square individual image, complete product centered with generous clean margins, no collage. Backdrop: seamless warm cream background. Lighting: soft diffused window-like studio light from upper left, delicate realistic contact shadows. Carefully rendered fabric or material texture. Constraints: no people, no hands, no text, no labels, no brand logos, no watermark, no props unrelated to the product. This is a fictional sample product."
+    }
+  ]
+}

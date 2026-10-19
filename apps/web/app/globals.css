@@ -831,6 +831,24 @@ dialog::backdrop {
     font-size: 14px;
     line-height: 2;
 }
+.footer-main .footer-socials {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+}
+.footer-main .footer-socials a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #ffffff40;
+    border-radius: 6px;
+}
+.footer-main .footer-socials a:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 3px;
+}
 .footer-help .text-link {
     margin-top: 12px;
 }
