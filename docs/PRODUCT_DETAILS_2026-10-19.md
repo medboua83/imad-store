@@ -1,0 +1,9 @@
+# Mobile product details — 2026-10-19
+
+Product identity/price now precede the gallery on phones. Portrait photographs remain uncropped, with thumbnails, previous/next controls and a full-screen-style native zoom dialog. Zoom supports arrow keys, focus wrapping, Escape, focus restoration and background scroll locking. Missing photographs retain an explicit placeholder.
+
+Separate labelled colour and size fieldsets replace the combined select. Colour buttons show the recorded name plus a swatch only for valid recorded hex values. Sizes unavailable for the chosen colour are disabled and struck through. Selecting a colour preserves an available matching size or picks the first available combination; changes reset quantity to one. Exact existing variant IDs, per-variant stock and the cart add method remain authoritative. Single/no-size variants and completely unavailable products are handled without inventing options. Information is grouped into native description and delivery disclosures, with a contact link instead of invented size measurements.
+
+Validation: frontend lint, TypeScript and production build pass. Read-only loopback fixtures (not database records or production routes) exercise two images, multiple colours, stockouts, missing colour/size combinations, missing photos and no variants. Browser checks cover quantity ceiling/reset, thumbnail and arrow navigation, zoom keyboard/focus/scroll behavior and disabled purchase controls. Five portrait/landscape/tablet/desktop sizes show no horizontal overflow; colour/size targets are 48 px high. A temporary local cart item retained the real black/M variant and was removed. Published checks and screenshots are recorded in the phase TXT report.
+
+No catalogue, price, stock, order, account, backend or CRM mutation is included. No new image or dependency. Rollback: revert this commit; no migration is needed.

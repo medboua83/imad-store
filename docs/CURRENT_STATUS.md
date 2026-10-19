@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Mobile product detail — 2026-10-19
+
+See `PRODUCT_DETAILS_2026-10-19.md`. Gallery/zoom controls, separate stock-aware colour/size choices and compact mobile identity improve presentation without changing catalogue data. Build/lint, read-only local variant fixtures, five-size and temporary local cart checks pass. Production validation is recorded separately; no order or CRM action.
+
 ## Header and mobile menu — 2026-10-19
 
 See `HEADER_MENU_2026-10-19.md`. Search remains available on phones; the native menu adds search, catalogue categories and practical links, with focus/scroll management and responsive presentation. Build/lint and portrait/landscape navigation checks pass; publication evidence is recorded separately. No commerce or CRM writes.
