@@ -37,21 +37,6 @@
     object-position: center 60%;
     transition: transform 0.4s;
 }
-.category-image-note {
-    position: absolute;
-    inset-inline-start: 50%;
-    bottom: -12px;
-    transform: translateX(50%);
-    white-space: nowrap;
-    background: #fffefaf2;
-    border: 1px solid #e5e8df;
-    border-radius: 4px;
-    padding: 2px 5px;
-    color: #34483d;
-    font:
-        8px/1.5 "Tajawal",
-        sans-serif;
-}
 .category-photo-empty {
     display: grid;
     place-items: center;

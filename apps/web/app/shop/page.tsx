@@ -1,13 +1,22 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories } from "@/lib/server-api";
-import { SlidersHorizontal } from "lucide-react";
+import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
+import { categoryThumbnail } from "@/components/store/category-visuals";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
     title: "المتجر",
     description: "تصفحي المنتجات حسب الفئة والسعر والتوفر.",
     alternates: { canonical: "/shop" },
+};
+const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability"] as const;
+const sortLabels: Record<string, string> = {
+    newest: "الأحدث",
+    "price-asc": "السعر: من الأقل",
+    "price-desc": "السعر: من الأعلى",
+    name: "الاسم",
 };
 export default async function ShopPage({
     searchParams,
@@ -17,90 +26,120 @@ export default async function ShopPage({
     const raw = await searchParams;
     const value = (key: string) => (typeof raw[key] === "string" ? (raw[key] as string) : "");
     const params: Record<string, string | number> = { limit: 12 };
-    for (const key of ["search", "category", "sort", "minPrice", "maxPrice", "availability"]) {
-        const v = value(key);
-        if (v) params[key] = v;
-    }
+    for (const key of filterKeys) if (value(key)) params[key] = value(key);
     const page = Number(value("page") || 1);
     params.page = Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
+    const categories = await publicCategories();
     let result;
     let invalid = false;
     try {
         result = await publicProducts(params);
-    } catch {
-        if (Object.keys(params).length > 2) {
+    } catch (error) {
+        // Only invalid filter input falls back. An upstream outage must remain an error.
+        if (error instanceof Error && error.message.endsWith("(400)")) {
             invalid = true;
             result = await publicProducts({ page: 1, limit: 12 });
-        } else throw new Error("Store unavailable");
+        } else throw error;
     }
-    const categories = await publicCategories();
-    const pageLink = (page: number) => {
+    const queryLink = (changes: Record<string, string | number | null> = {}) => {
         const query = new URLSearchParams();
-        for (const [key, v] of Object.entries(params)) query.set(key, String(v));
-        query.set("page", String(page));
-        return `/shop?${query}`;
+        for (const key of filterKeys) if (value(key)) query.set(key, value(key));
+        for (const [key, v] of Object.entries(changes)) {
+            if (v === null || v === "") query.delete(key);
+            else query.set(key, String(v));
+        }
+        return `/shop${query.size ? `?${query}` : ""}`;
     };
+    const active = filterKeys.filter(
+        (key) =>
+            value(key) &&
+            !(key === "sort" && value(key) === "newest") &&
+            !(key === "availability" && value(key) === "all"),
+    );
+    const category = categories.find((c) => c.slug === value("category"));
+    const chipLabel = (key: (typeof filterKeys)[number]) =>
+        ({
+            search: `بحث: ${value(key)}`,
+            category: category?.nameAr || category?.nameFr || value(key),
+            minPrice: `من ${value(key)} MAD`,
+            maxPrice: `حتى ${value(key)} MAD`,
+            availability: "المتوفر فقط",
+            sort: sortLabels[value(key)] || value(key),
+        })[key];
     return (
-        <section className="page-shell shop-page">
+        <section className="page-shell shop-page refined-shop">
+            <nav className="shop-breadcrumb" aria-label="مسار التصفح">
+                <Link href="/">الرئيسية</Link>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">المتجر</span>
+            </nav>
             <div className="shop-intro">
-                <p className="eyebrow">THE IMAD EDIT</p>
-                <h1>اكتشفي ما يشبهكِ.</h1>
-                <p>كل القطع، في مكان واحد. اختاري الفئة والتفاصيل التي تناسبكِ.</p>
+                <div>
+                    <p className="eyebrow">THE IMAD EDIT</p>
+                    <h1>{category?.nameAr || "اكتشفي ما يشبهكِ."}</h1>
+                    <p>قطع تختارينها بطريقتكِ. تصفحي، قارني التفاصيل واختاري ما يناسبكِ.</p>
+                </div>
+                <span className="shop-intro-note">
+                    <LayoutGrid size={19} aria-hidden="true" /> مجموعتكِ، بتفاصيل أوضح
+                </span>
             </div>
             <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
-                <Link href="/shop" aria-current={!value("category") ? "page" : undefined}>
+                <Link
+                    href={queryLink({ category: null })}
+                    aria-current={!value("category") ? "page" : undefined}
+                >
+                    <LayoutGrid size={18} aria-hidden="true" />
                     كل القطع
                 </Link>
                 {categories.map((c) => (
                     <Link
                         key={c.id}
-                        href={`/shop?category=${c.slug}`}
+                        href={queryLink({ category: c.slug })}
                         aria-current={value("category") === c.slug ? "page" : undefined}
                     >
+                        {categoryThumbnail(c.slug) && (
+                            <Image src={categoryThumbnail(c.slug)} width={30} height={30} alt="" />
+                        )}
                         {c.nameAr || c.nameFr}
                     </Link>
                 ))}
             </nav>
             <details
+                key={JSON.stringify(raw)}
                 id="catalog-search"
-                className="filter-panel"
-                open={
-                    !!(
-                        value("filters") === "open" ||
-                        value("search") ||
-                        value("minPrice") ||
-                        value("maxPrice") ||
-                        value("availability") ||
-                        value("sort")
-                    )
-                }
+                className="filter-panel catalog-filter-panel"
+                open={value("filters") === "open" || invalid}
             >
                 <summary>
-                    <SlidersHorizontal size={18} aria-hidden="true" />
-                    <span>البحث والتصفية</span>
-                    <span className="filter-result-count">{result.total} منتج</span>
+                    <SlidersHorizontal size={19} aria-hidden="true" />
+                    <span>البحث والفلاتر</span>
+                    {active.length > 0 && (
+                        <span className="active-filter-count">{active.length}</span>
+                    )}
+                    <span className="filter-result-count">الفئة، السعر والتوفر</span>
                 </summary>
-                <form
-                    key={JSON.stringify(params)}
-                    action="/shop"
-                    method="get"
-                    className="shop-filters grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-                >
-                    <label className="col-span-2 sm:col-span-1">
+                <form action="/shop" method="get" className="shop-filters catalog-filter-form">
+                    <div className="filter-form-heading">
+                        <h2>اختاري التفاصيل المناسبة</h2>
+                        <p>يمكنكِ الجمع بين أكثر من فلتر، ثم عرض النتائج.</p>
+                    </div>
+                    <label className="filter-search">
                         البحث عن منتج
-                        <input
-                            className="store-input mt-2"
-                            type="search"
-                            name="search"
-                            maxLength={120}
-                            defaultValue={value("search")}
-                            placeholder="بالعربية، français, English"
-                        />
+                        <span className="filter-search-field">
+                            <Search size={18} aria-hidden="true" />
+                            <input
+                                type="search"
+                                name="search"
+                                maxLength={120}
+                                defaultValue={value("search")}
+                                placeholder="اسم القطعة أو كلمة تبحثين عنها"
+                            />
+                        </span>
                     </label>
-                    <label className="col-span-2 sm:col-span-1">
+                    <label>
                         الفئة
                         <select
-                            className="store-input mt-2"
+                            className="store-input"
                             name="category"
                             defaultValue={value("category")}
                         >
@@ -112,119 +151,155 @@ export default async function ShopPage({
                             ))}
                         </select>
                     </label>
-                    <button className="btn-primary self-end" type="submit">
-                        تطبيق الفلاتر
-                    </button>
-                    <Link className="action self-end underline" href="/shop">
-                        مسح الفلاتر
-                    </Link>
-                    <details
-                        className="col-span-2 lg:col-span-4 border-t pt-3"
-                        open={
-                            !!(
-                                (value("sort") && value("sort") !== "newest") ||
-                                (value("availability") && value("availability") !== "all") ||
-                                value("minPrice") ||
-                                value("maxPrice")
-                            )
-                        }
-                    >
-                        <summary className="action cursor-pointer">الترتيب والسعر والتوفر</summary>
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
-                            {" "}
+                    <label>
+                        الترتيب
+                        <select
+                            className="store-input"
+                            name="sort"
+                            defaultValue={value("sort") || "newest"}
+                        >
+                            {Object.entries(sortLabels).map(([v, label]) => (
+                                <option key={v} value={v}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <fieldset className="filter-price-range">
+                        <legend>ميزانيتكِ (MAD)</legend>
+                        <div>
                             <label>
-                                الترتيب
-                                <select
-                                    className="store-input mt-2"
-                                    name="sort"
-                                    defaultValue={value("sort") || "newest"}
-                                >
-                                    <option value="newest">الأحدث</option>
-                                    <option value="price-asc">السعر: من الأقل</option>
-                                    <option value="price-desc">السعر: من الأعلى</option>
-                                    <option value="name">الاسم</option>
-                                </select>
-                            </label>
-                            <label>
-                                التوفر
-                                <select
-                                    className="store-input mt-2"
-                                    name="availability"
-                                    defaultValue={value("availability") || "all"}
-                                >
-                                    <option value="all">جميع المنتجات</option>
-                                    <option value="in-stock">المتوفر فقط</option>
-                                </select>
-                            </label>
-                            <label>
-                                أقل سعر (MAD)
+                                من
                                 <input
-                                    className="store-input mt-2"
+                                    className="store-input"
                                     type="number"
+                                    inputMode="decimal"
+                                    step="0.01"
                                     name="minPrice"
                                     min="0"
                                     max="1000000"
                                     defaultValue={value("minPrice")}
+                                    placeholder="0"
                                 />
                             </label>
+                            <span aria-hidden="true">—</span>
                             <label>
-                                أعلى سعر (MAD)
+                                إلى
                                 <input
-                                    className="store-input mt-2"
+                                    className="store-input"
                                     type="number"
+                                    inputMode="decimal"
+                                    step="0.01"
                                     name="maxPrice"
                                     min="0"
                                     max="1000000"
                                     defaultValue={value("maxPrice")}
+                                    placeholder="بدون حد"
                                 />
                             </label>
                         </div>
-                    </details>
+                    </fieldset>
+                    <label className="filter-stock-choice">
+                        <input
+                            type="checkbox"
+                            name="availability"
+                            value="in-stock"
+                            defaultChecked={value("availability") === "in-stock"}
+                        />
+                        <span>
+                            عرض المنتجات المتوفرة فقط
+                            <small>القطع التي لديها خيار واحد متوفر على الأقل</small>
+                        </span>
+                    </label>
+                    <div className="filter-form-actions">
+                        <button className="btn-primary" type="submit">
+                            عرض النتائج <ArrowUpLeft size={18} aria-hidden="true" />
+                        </button>
+                        <Link href="/shop">مسح الفلاتر</Link>
+                    </div>
                 </form>
             </details>
             {invalid && (
-                <p role="alert" className="mb-6">
-                    بعض الفلاتر غير صالحة. تم عرض المجموعة الكاملة.
+                <p role="alert" className="shop-filter-error">
+                    بعض الفلاتر غير صالحة. تحققي من نطاق السعر، ثم أعيدي المحاولة. تظهر المجموعة
+                    الكاملة مؤقتاً.
                 </p>
             )}
-            <p className="mb-5" role="status">
-                {result.total} منتج — الصفحة {result.page} من {Math.max(1, result.totalPages)}
-            </p>
+            {active.length > 0 && (
+                <nav className="active-filter-chips" aria-label="الفلاتر المطبقة">
+                    {active.map((key) => (
+                        <Link
+                            key={key}
+                            href={queryLink({ [key]: null })}
+                            aria-label={`إزالة الفلتر: ${chipLabel(key)}`}
+                        >
+                            <span>{chipLabel(key)}</span>
+                            <X size={14} aria-hidden="true" />
+                        </Link>
+                    ))}
+                    <Link className="clear-all-filters" href="/shop">
+                        مسح الكل
+                    </Link>
+                </nav>
+            )}
+            <div className="catalog-results-heading">
+                <div>
+                    <h2> {category?.nameAr || "كل القطع"}</h2>
+                    <p role="status">
+                        {result.total} {result.total === 1 ? "منتج" : "منتجات"}
+                        {result.totalPages > 1 &&
+                            ` · الصفحة ${result.page} من ${result.totalPages}`}
+                    </p>
+                </div>
+                <Link
+                    className={`stock-quick-filter ${value("availability") === "in-stock" ? "is-active" : ""}`}
+                    href={queryLink({
+                        availability: value("availability") === "in-stock" ? null : "in-stock",
+                    })}
+                    aria-label={
+                        value("availability") === "in-stock"
+                            ? "إلغاء فلتر المتوفر فقط"
+                            : "المتوفر فقط"
+                    }
+                >
+                    <Check size={15} aria-hidden="true" />
+                    المتوفر فقط
+                </Link>
+            </div>
             {result.data.length ? (
                 <div className="catalog-grid">
                     {result.data.map((p) => (
-                        <ProductCard product={p} key={p.id} />
+                        <ProductCard product={p} key={p.id} headingLevel={3} />
                     ))}
                 </div>
             ) : (
-                <div className="space-y-4 py-10">
+                <div className="shop-empty-state">
+                    <Search size={30} aria-hidden="true" />
+                    <h3>
+                        {active.length
+                            ? "لم نجد القطعة بهذه التفاصيل."
+                            : "مجموعتنا الجديدة قيد التحضير."}
+                    </h3>
                     <p>
-                        {value("search") || value("category")
-                            ? "لا توجد منتجات مطابقة. جربي تغيير الفلاتر."
-                            : "نعمل على تجهيز مجموعتنا الجديدة."}
+                        {active.length
+                            ? "جرّبي إزالة فلتر أو توسيع نطاق السعر."
+                            : "تواصلي معنا للاستفسار عن القطع المتوفرة."}
                     </p>
-                    <Link className="action underline" href="/contact">
-                        تواصل معنا
+                    <Link className="btn-primary" href={active.length ? "/shop" : "/contact"}>
+                        {active.length ? "عرض كل القطع" : "تواصل معنا"}
                     </Link>
                 </div>
             )}
             {result.totalPages > 1 && (
-                <nav aria-label="صفحات المنتجات" className="flex flex-wrap items-center gap-4 mt-8">
+                <nav aria-label="صفحات المنتجات" className="shop-pagination">
                     {result.page > 1 && (
-                        <Link
-                            className="action border rounded px-5"
-                            href={pageLink(result.page - 1)}
-                        >
-                            الصفحة السابقة
-                        </Link>
+                        <Link href={queryLink({ page: result.page - 1 })}>الصفحة السابقة</Link>
                     )}
+                    <span>
+                        {result.page} / {result.totalPages}
+                    </span>
                     {result.page < result.totalPages && (
-                        <Link
-                            className="action border rounded px-5"
-                            href={pageLink(result.page + 1)}
-                        >
-                            الصفحة التالية
-                        </Link>
+                        <Link href={queryLink({ page: result.page + 1 })}>الصفحة التالية</Link>
                     )}
                 </nav>
             )}
