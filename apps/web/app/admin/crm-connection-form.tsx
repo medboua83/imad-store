@@ -25,6 +25,15 @@ export default function CrmConnectionForm({
     const [secret, setSecret] = useState("");
     const [busy, setBusy] = useState(false),
         [message, setMessage] = useState("");
+    const [copied, setCopied] = useState(false);
+    async function copyStoreId() {
+        try {
+            await navigator.clipboard.writeText(connection.storeId);
+            setCopied(true);
+        } catch {
+            setMessage("Copie impossible. Sélectionnez l’identifiant pour le copier.");
+        }
+    }
     async function save(e: React.FormEvent) {
         e.preventDefault();
         setBusy(true);
@@ -66,7 +75,12 @@ export default function CrmConnectionForm({
                 </div>
                 <div>
                     <dt>Identifiant de la boutique</dt>
-                    <dd>{connection.storeId}</dd>
+                    <dd className="flex flex-wrap items-center gap-2">
+                        <span dir="ltr">{connection.storeId}</span>
+                        <button type="button" className="admin-button text-xs" onClick={() => void copyStoreId()}>
+                            {copied ? "Identifiant copié" : "Copier l’identifiant"}
+                        </button>
+                    </dd>
                 </div>
             </dl>
             <label className="block text-sm">

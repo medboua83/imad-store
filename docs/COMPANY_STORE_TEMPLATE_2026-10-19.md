@@ -8,6 +8,14 @@ Au premier démarrage, l’installation réserve l’identité dans une base vid
 
 Les installations historiques sans profil continuent de fonctionner avec leur configuration existante. Ne pas ajouter un nouveau profil à leur base remplie : la protection refuserait l’adoption. La migration d’une boutique existante vers un profil identifié doit être traitée séparément avec sauvegarde et rapprochement explicite.
 
+## Identifiant visible dans l’administration
+
+Après provisionnement d’un nouveau profil, Administration → Intégration CRM affiche l’identifiant de boutique en lecture seule, avec un bouton de copie, ainsi que l’entreprise CRM. Cet identifiant provient de l’installation ; il n’est ni une référence de commande ni un identifiant de source.
+
+Dans le CRM disposant du module, utiliser Webhooks → Boutiques connectées pour préparer la source et la règle en pause, puis reporter les paramètres dans cette administration. La clé est dédiée, identique des deux côtés et ne se réaffiche pas. Les étapes manuelles ci-dessous restent utiles si le CRM ne possède pas encore ce module.
+
+Une installation historique sans profil affiche cette absence d’identité explicitement. Utiliser le rattachement de sa source et de sa règle existantes dans le CRM ; ne pas générer arbitrairement un profil sur sa base remplie. La garde de séparation reste active.
+
 ## Créer une boutique
 
 Depuis un checkout propre du dépôt :

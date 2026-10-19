@@ -30,7 +30,8 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
   ].join("\n");
   const form = new URLSearchParams();
   form.set("nome", order.name);
-  form.set("telefone", order.phone);
+  // Checkout accepts Moroccan local numbers. Make the country explicit for the CRM.
+  form.set("telefone", order.phone.replace(/^0([5-7]\d{8})$/, "+212$1"));
   if (order.email) form.set("email", order.email);
   // Optional custom fields; their persistence in CRM has NOT been validated.
   form.set("pedido_id", order.id);
