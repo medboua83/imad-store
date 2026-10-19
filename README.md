@@ -542,3 +542,6 @@ Built with ❤️ for Moroccan women
 🌙 **Imad Store** — *الأناقة في كل خطوة*
 
 </div>
+## Installer le modèle pour une autre entreprise
+
+Voir [le kit d’installation](docs/STORE_INSTALLATION_KIT.md) : archive de code, profil privé, identifiant indépendant, premier administrateur et raccordement au module CRM.

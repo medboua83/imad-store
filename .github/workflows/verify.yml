@@ -30,6 +30,7 @@ jobs:
                     sleep 1
                   done
             - run: npm run check
+            - run: npm run test:installer
             - run: npm test
             - name: Build and verify the combined hosting runtime
               run: |

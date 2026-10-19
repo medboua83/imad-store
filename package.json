@@ -18,7 +18,10 @@
     "check": "npm --prefix packages/shared run build && npm --prefix backend run build && npm --prefix apps/web run lint && npm run build",
     "predev": "npm --prefix packages/shared run build",
     "store:create": "node scripts/create-company-store.cjs",
-    "store:admin": "node --import tsx backend/scripts/provision-company-admin.ts"
+    "store:admin": "node --import tsx backend/scripts/provision-company-admin.ts",
+    "store:run": "node scripts/run-company-store.cjs",
+    "test:installer": "node --test tests/store-installer.test.cjs",
+    "store:bundle": "node scripts/bundle-company-store.cjs"
   },
   "devDependencies": {
     "eslint": "^9.39.0",
@@ -40,7 +43,8 @@
     "react-is": "19.3.1",
     "recharts": "^3.10.1",
     "sanitize-html": "^2.18.1",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "dotenv": "16.6.1"
   },
   "overrides": {
     "proxy-addr": "2.0.8",
