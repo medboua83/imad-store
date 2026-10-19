@@ -293,3 +293,14 @@ model SiteContent {
   publishedAt DateTime?
   @@map("site_content")
 }
+
+// One immutable receipt per signed CRM delivery; no customer payload retained.
+model DeskcommStatusReceipt {
+  id          String   @id @map("_id")
+  orderId     String   @db.ObjectId
+  leadId      String
+  fingerprint String
+  changed     Boolean
+  createdAt   DateTime @default(now())
+  @@map("deskcomm_status_receipts")
+}

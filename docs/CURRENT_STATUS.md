@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Signed CRM confirmation receiver — 2026-10-19
+
+See `CRM_CONFIRMATION_CALLBACK_2026-10-19.md`. Candidate receiver and transactional deduplication pass 31 isolated tests, build and lint. Feature is disabled until dedicated credentials and verified CRM mapping are activated; no production status synchronization is yet claimed.
+
 ## Administrator-managed CRM orders — 2026-10-19
 
 See `ADMIN_MANAGED_CRM_2026-10-19.md`. The owner has replaced client choice with the saved administrator integration setting. Checkout no longer shows or sends a CRM option. New orders are queued atomically only when the integration is enabled/configured; disabled cycles leave pending jobs/attempts unchanged. Historical entries are not reconstructed and the cutoff remains unchanged. This supersedes earlier descriptions of optional customer CRM consent; privacy information remains on the privacy page.

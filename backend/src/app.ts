@@ -3,6 +3,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { receiveDeskcommConfirmation } from "./controllers/deskcomm-status.controller";
 import rateLimit from "express-rate-limit";
 import "express-async-errors";
 
@@ -34,6 +35,13 @@ app.use(morgan("dev"));
 // raw body for Stripe webhooks — must come BEFORE express.json()
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 
+// Signed CRM callbacks must retain exact bytes and never use an administrator session.
+app.post(
+    "/api/integrations/deskcomm/status-callback",
+    rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false }),
+    express.raw({ type: "application/json", limit: "128kb" }),
+    receiveDeskcommConfirmation,
+);
 app.use(express.json());
 
 // ─── Health Check ────────────────────────────────────────────────────────────

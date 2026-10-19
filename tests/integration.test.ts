@@ -1,7 +1,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomUUID, randomBytes } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { MongoClient } from "mongodb";
 import request from "supertest";
@@ -747,4 +747,157 @@ test("Only the administrator controls CRM queueing; pause preserves jobs and ena
         await prisma.deskcommOutbox.findUnique({ where: { orderId: disabledOrder.body.data.id } }),
         null,
     );
+});
+
+test("Signed CRM confirmations update one existing order exactly once and never regress status", async () => {
+    const prefix = "DESKCOMM_STATUS_";
+    const saved = Object.fromEntries(
+        Object.entries(process.env).filter(([k]) => k.startsWith(prefix)),
+    );
+    const pipeline = randomUUID(),
+        stage = randomUUID(),
+        lead = randomUUID();
+    const secret = "cd".repeat(32);
+    Object.assign(process.env, {
+        DESKCOMM_STATUS_CALLBACK_ENABLED: "true",
+        DESKCOMM_STATUS_CALLBACK_SECRET: secret,
+        DESKCOMM_STATUS_PIPELINE_ID: pipeline,
+        DESKCOMM_STATUS_CONFIRMED_STAGE_ID: stage,
+        DESKCOMM_STATUS_ORDER_FIELD: "pedido_id",
+        DESKCOMM_STATUS_MIN_OCCURRED_AT: "2026-01-01T00:00:00.000Z",
+    });
+    const endpoint = "/api/integrations/deskcomm/status-callback";
+    const send = (body: any, timestamp = Math.floor(Date.now() / 1000), signingSecret = secret) => {
+        const raw = JSON.stringify(body);
+        const signature = createHmac("sha256", signingSecret)
+            .update(`${timestamp}.${body.delivery_id}.${raw}`)
+            .digest("hex");
+        return request(app)
+            .post(endpoint)
+            .set("Content-Type", "application/json")
+            .set("X-Webhook-Delivery", body.delivery_id)
+            .set("X-Webhook-Signature", `t=${timestamp},v1=${signature}`)
+            .send(raw);
+    };
+    try {
+        const createdProduct = await request(app)
+            .post("/api/products")
+            .set(admin())
+            .send(payload());
+        assert.equal(createdProduct.status, 201);
+        const p = createdProduct.body.data;
+        const created = await request(app)
+            .post("/api/orders")
+            .set("Idempotency-Key", key())
+            .send({
+                ...checkout(),
+                items: [{ productId: p.id, variantId: p.variants[0].id, quantity: 1 }],
+            });
+        assert.equal(created.status, 201);
+        const id = created.body.data.id;
+        const event = {
+            event: "lead.stage_changed",
+            delivery_id: randomUUID(),
+            happened_at: new Date().toISOString(),
+            data: {
+                to_stage_id: stage,
+                lead: {
+                    id: lead,
+                    pipeline_id: pipeline,
+                    stage_id: stage,
+                    custom_fields: { pedido_id: id },
+                },
+            },
+        };
+        assert.equal((await request(app).post(endpoint).send(event)).status, 401);
+        assert.equal((await send(event, Math.floor(Date.now() / 1000) - 301)).status, 401);
+        assert.equal((await send(event, undefined, "ef".repeat(32))).status, 401);
+        assert.equal(
+            (
+                await send({
+                    ...event,
+                    data: {
+                        ...event.data,
+                        lead: { ...event.data.lead, pipeline_id: randomUUID() },
+                    },
+                })
+            ).status,
+            403,
+        );
+        assert.equal(
+            (await send({ ...event, happened_at: "2025-01-01T00:00:00.000Z" })).body.ignored,
+            true,
+        );
+        assert.equal(
+            (await send({ ...event, data: { ...event.data, to_stage_id: randomUUID() } })).body
+                .ignored,
+            true,
+        );
+        assert.equal(
+            (
+                await send({
+                    ...event,
+                    data: {
+                        ...event.data,
+                        lead: { ...event.data.lead, custom_fields: { pedido_id: id.slice(-8) } },
+                    },
+                })
+            ).status,
+            400,
+        );
+        assert.equal((await send(event)).status, 409);
+        await prisma.deskcommOutbox.update({ where: { orderId: id }, data: { status: "SENT" } });
+        const counts = {
+            orders: await prisma.order.count(),
+            outbox: await prisma.deskcommOutbox.count(),
+            events: await prisma.orderEvent.count({ where: { orderId: id } }),
+            notifications: await prisma.adminNotification.count({ where: { orderId: id } }),
+        };
+        const stock = (await prisma.productVariant.findUnique({ where: { id: p.variants[0].id } }))
+            .stock;
+        const calls = await Promise.all([send(event), send(event), send(event)]);
+        assert.deepEqual(
+            calls.map((r) => r.status),
+            [200, 200, 200],
+        );
+        assert.equal(calls.filter((r) => r.body.data.changed).length, 1);
+        assert.equal(
+            (await send({ ...event, occurred_at: new Date().toISOString() })).body.data.changed,
+            false,
+        );
+        assert.equal(
+            (await send({ ...event, delivery_id: randomUUID() })).body.data.changed,
+            false,
+        );
+        assert.equal(
+            (await send({ ...event, happened_at: new Date(Date.now() + 1000).toISOString() }))
+                .status,
+            409,
+        );
+        assert.equal(await prisma.order.count(), counts.orders);
+        assert.equal(await prisma.deskcommOutbox.count(), counts.outbox);
+        assert.equal(await prisma.orderEvent.count({ where: { orderId: id } }), counts.events + 1);
+        assert.equal(
+            await prisma.adminNotification.count({ where: { orderId: id } }),
+            counts.notifications + 1,
+        );
+        assert.equal(
+            (await prisma.productVariant.findUnique({ where: { id: p.variants[0].id } })).stock,
+            stock,
+        );
+        assert.equal((await prisma.order.findUnique({ where: { id } })).paymentStatus, "PENDING");
+        await prisma.order.update({ where: { id }, data: { status: "SHIPPED" } });
+        assert.equal(
+            (await send({ ...event, delivery_id: randomUUID() })).body.data.status,
+            "SHIPPED",
+        );
+        await prisma.order.update({ where: { id }, data: { status: "CANCELLED" } });
+        assert.equal((await send({ ...event, delivery_id: randomUUID() })).status, 409);
+        assert.equal((await prisma.order.findUnique({ where: { id } })).status, "CANCELLED");
+        delete process.env.DESKCOMM_STATUS_CALLBACK_ENABLED;
+        assert.equal((await send(event)).status, 503);
+    } finally {
+        for (const k of Object.keys(process.env)) if (k.startsWith(prefix)) delete process.env[k];
+        Object.assign(process.env, saved);
+    }
 });

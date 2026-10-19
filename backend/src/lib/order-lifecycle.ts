@@ -22,14 +22,51 @@ const transitions: Record<OrderStatus, readonly OrderStatus[]> = {
 export async function transitionOrderStatus(
     id: string,
     nextStatus: OrderStatus,
-    source: "admin" | "sheets" = "admin",
+    source: "admin" | "sheets" | "crm" = "admin",
+    crmReceipt?: { deliveryId: string; leadId: string; fingerprint: string },
 ) {
+    if (source === "crm" && (!crmReceipt || nextStatus !== "CONFIRMED"))
+        throw new AppError("Unsupported CRM transition", 403);
     for (let attempt = 0; attempt < 5; attempt++) {
         try {
             return await prisma.$transaction(async (tx) => {
                 const order = await tx.order.findUnique({ where: { id }, include: orderInclude });
                 if (!order) throw new AppError("Commande introuvable", 404);
-                if (order.status === nextStatus) return { order, changed: false };
+                async function recordReceipt(changed: boolean) {
+                    if (crmReceipt)
+                        await tx.deskcommStatusReceipt.create({
+                            data: {
+                                id: crmReceipt.deliveryId,
+                                orderId: id,
+                                leadId: crmReceipt.leadId,
+                                fingerprint: crmReceipt.fingerprint,
+                                changed,
+                            },
+                        });
+                }
+                if (crmReceipt) {
+                    const prior = await tx.deskcommStatusReceipt.findUnique({
+                        where: { id: crmReceipt.deliveryId },
+                    });
+                    if (prior) {
+                        if (prior.orderId !== id || prior.fingerprint !== crmReceipt.fingerprint)
+                            throw new AppError("CRM delivery identity conflict", 409);
+                        return { order, changed: false };
+                    }
+                    const sent = await tx.deskcommOutbox.findUnique({
+                        where: { orderId: id },
+                        select: { status: true },
+                    });
+                    if (sent?.status !== "SENT")
+                        throw new AppError("Order has no accepted CRM delivery", 409);
+                }
+                if (
+                    order.status === nextStatus ||
+                    (source === "crm" && ["SHIPPED", "DELIVERED"].includes(order.status))
+                ) {
+                    await recordReceipt(false);
+                    return { order, changed: false };
+                }
                 if (!transitions[order.status].includes(nextStatus))
                     throw new AppError("Changement de statut non autorisé", 409);
                 if (nextStatus === "CANCELLED" && order.inventoryReserved === null) {
@@ -80,6 +117,7 @@ export async function transitionOrderStatus(
                         orderId: id,
                     },
                 });
+                await recordReceipt(true);
                 return {
                     order: await tx.order.findUniqueOrThrow({
                         where: { id },
@@ -89,7 +127,12 @@ export async function transitionOrderStatus(
                 };
             });
         } catch (error) {
-            if ((error as { code?: string }).code === "P2034" && attempt < 4) {
+            if (
+                ["P2034", ...(crmReceipt ? ["P2002"] : [])].includes(
+                    (error as { code?: string }).code || "",
+                ) &&
+                attempt < 4
+            ) {
                 await new Promise((resolve) =>
                     setTimeout(resolve, 30 * 2 ** attempt + Math.random() * 30),
                 );
