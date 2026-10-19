@@ -58,29 +58,50 @@ export default async function ProductPage({ params }: Props) {
             </nav>
             <div className="product-layout">
                 <ProductGallery images={product.images} name={name} />
-                <div className="space-y-6 product-detail">
-                    <p>{product.category.nameAr || product.category.nameFr}</p>
-                    <h1 className="text-4xl">{name}</h1>
-                    <p className="text-2xl">{product.price.toFixed(2)} MAD</p>
-                    <p className="whitespace-pre-line leading-8">
-                        {product.descriptionAr || product.descriptionFr || product.descriptionEn}
-                    </p>
-                    <div className="product-service-note">
-                        <PackageCheck size={20} aria-hidden="true" />
-                        <span>الدفع عند الاستلام · بدون إنشاء حساب</span>
+                <div className="product-detail refined-detail">
+                    <div className="product-identity">
+                        <Link
+                            className="product-category-label"
+                            href={`/shop?category=${product.category.slug}`}
+                        >
+                            {product.category.nameAr || product.category.nameFr}
+                        </Link>
+                        <h1>{name}</h1>
+                        <div className="product-price-row">
+                            <p dir="ltr">
+                                {product.price.toFixed(2)} <span>MAD</span>
+                            </p>
+                            <span className="product-stock-label">
+                                {inStock ? "متوفر الآن" : "غير متوفر حالياً"}
+                            </span>
+                        </div>
+                        <div className="product-service-note">
+                            <PackageCheck size={17} aria-hidden="true" />
+                            <span>الدفع عند الاستلام · بدون إنشاء حساب</span>
+                        </div>
                     </div>
                     <ProductOptions product={product} />
-                    <nav className="flex gap-5 flex-wrap">
-                        <Link className="underline action" href="/delivery">
-                            التوصيل
-                        </Link>
-                        <Link className="underline action" href="/returns">
-                            الاستبدال والإرجاع
-                        </Link>
-                    </nav>
-                    <div className="product-delivery-note">
-                        <Truck size={19} aria-hidden="true" />
-                        <p>راجعي رسوم التوصيل وشروط المتجر قبل تأكيد طلبكِ.</p>
+                    <div className="product-information">
+                        <details open>
+                            <summary>تفاصيل القطعة</summary>
+                            <p className="product-description">
+                                {product.descriptionAr ||
+                                    product.descriptionFr ||
+                                    product.descriptionEn ||
+                                    "تواصلي معنا لمزيد من التفاصيل حول هذه القطعة."}
+                            </p>
+                        </details>
+                        <details>
+                            <summary>التوصيل والاستبدال</summary>
+                            <p>راجعي رسوم التوصيل وشروط المتجر قبل تأكيد طلبكِ.</p>
+                            <nav aria-label="معلومات التوصيل والاستبدال">
+                                <Link href="/delivery">
+                                    <Truck size={17} aria-hidden="true" />
+                                    معلومات التوصيل
+                                </Link>
+                                <Link href="/returns">الاستبدال والإرجاع</Link>
+                            </nav>
+                        </details>
                     </div>
                 </div>
             </div>
