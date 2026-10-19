@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories } from "@/lib/server-api";
+import { SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -46,107 +47,141 @@ export default async function ShopPage({
                 <h1>اكتشفي ما يشبهكِ.</h1>
                 <p>كل القطع، في مكان واحد. اختاري الفئة والتفاصيل التي تناسبكِ.</p>
             </div>
-            <form
-                key={JSON.stringify(params)}
-                action="/shop"
-                method="get"
-                className="shop-filters grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-            >
-                <label className="col-span-2 sm:col-span-1">
-                    البحث عن منتج
-                    <input
-                        className="store-input mt-2"
-                        type="search"
-                        name="search"
-                        maxLength={120}
-                        defaultValue={value("search")}
-                        placeholder="بالعربية، français, English"
-                    />
-                </label>
-                <label className="col-span-2 sm:col-span-1">
-                    الفئة
-                    <select
-                        className="store-input mt-2"
-                        name="category"
-                        defaultValue={value("category")}
-                    >
-                        <option value="">جميع الفئات</option>
-                        {categories.map((c) => (
-                            <option key={c.id} value={c.slug}>
-                                {c.nameAr || c.nameFr}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <button className="btn-primary self-end" type="submit">
-                    تطبيق الفلاتر
-                </button>
-                <Link className="action self-end underline" href="/shop">
-                    مسح الفلاتر
+            <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
+                <Link href="/shop" aria-current={!value("category") ? "page" : undefined}>
+                    كل القطع
                 </Link>
-                <details
-                    className="col-span-2 lg:col-span-4 border-t pt-3"
-                    open={
-                        !!(
-                            (value("sort") && value("sort") !== "newest") ||
-                            (value("availability") && value("availability") !== "all") ||
-                            value("minPrice") ||
-                            value("maxPrice")
-                        )
-                    }
+                {categories.map((c) => (
+                    <Link
+                        key={c.id}
+                        href={`/shop?category=${c.slug}`}
+                        aria-current={value("category") === c.slug ? "page" : undefined}
+                    >
+                        {c.nameAr || c.nameFr}
+                    </Link>
+                ))}
+            </nav>
+            <details
+                id="catalog-search"
+                className="filter-panel"
+                open={
+                    !!(
+                        value("filters") === "open" ||
+                        value("search") ||
+                        value("minPrice") ||
+                        value("maxPrice") ||
+                        value("availability") ||
+                        value("sort")
+                    )
+                }
+            >
+                <summary>
+                    <SlidersHorizontal size={18} aria-hidden="true" />
+                    <span>البحث والتصفية</span>
+                    <span className="filter-result-count">{result.total} منتج</span>
+                </summary>
+                <form
+                    key={JSON.stringify(params)}
+                    action="/shop"
+                    method="get"
+                    className="shop-filters grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
                 >
-                    <summary className="action cursor-pointer">الترتيب والسعر والتوفر</summary>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
-                        {" "}
-                        <label>
-                            الترتيب
-                            <select
-                                className="store-input mt-2"
-                                name="sort"
-                                defaultValue={value("sort") || "newest"}
-                            >
-                                <option value="newest">الأحدث</option>
-                                <option value="price-asc">السعر: من الأقل</option>
-                                <option value="price-desc">السعر: من الأعلى</option>
-                                <option value="name">الاسم</option>
-                            </select>
-                        </label>
-                        <label>
-                            التوفر
-                            <select
-                                className="store-input mt-2"
-                                name="availability"
-                                defaultValue={value("availability") || "all"}
-                            >
-                                <option value="all">جميع المنتجات</option>
-                                <option value="in-stock">المتوفر فقط</option>
-                            </select>
-                        </label>
-                        <label>
-                            أقل سعر (MAD)
-                            <input
-                                className="store-input mt-2"
-                                type="number"
-                                name="minPrice"
-                                min="0"
-                                max="1000000"
-                                defaultValue={value("minPrice")}
-                            />
-                        </label>
-                        <label>
-                            أعلى سعر (MAD)
-                            <input
-                                className="store-input mt-2"
-                                type="number"
-                                name="maxPrice"
-                                min="0"
-                                max="1000000"
-                                defaultValue={value("maxPrice")}
-                            />
-                        </label>
-                    </div>
-                </details>
-            </form>
+                    <label className="col-span-2 sm:col-span-1">
+                        البحث عن منتج
+                        <input
+                            className="store-input mt-2"
+                            type="search"
+                            name="search"
+                            maxLength={120}
+                            defaultValue={value("search")}
+                            placeholder="بالعربية، français, English"
+                        />
+                    </label>
+                    <label className="col-span-2 sm:col-span-1">
+                        الفئة
+                        <select
+                            className="store-input mt-2"
+                            name="category"
+                            defaultValue={value("category")}
+                        >
+                            <option value="">جميع الفئات</option>
+                            {categories.map((c) => (
+                                <option key={c.id} value={c.slug}>
+                                    {c.nameAr || c.nameFr}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <button className="btn-primary self-end" type="submit">
+                        تطبيق الفلاتر
+                    </button>
+                    <Link className="action self-end underline" href="/shop">
+                        مسح الفلاتر
+                    </Link>
+                    <details
+                        className="col-span-2 lg:col-span-4 border-t pt-3"
+                        open={
+                            !!(
+                                (value("sort") && value("sort") !== "newest") ||
+                                (value("availability") && value("availability") !== "all") ||
+                                value("minPrice") ||
+                                value("maxPrice")
+                            )
+                        }
+                    >
+                        <summary className="action cursor-pointer">الترتيب والسعر والتوفر</summary>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
+                            {" "}
+                            <label>
+                                الترتيب
+                                <select
+                                    className="store-input mt-2"
+                                    name="sort"
+                                    defaultValue={value("sort") || "newest"}
+                                >
+                                    <option value="newest">الأحدث</option>
+                                    <option value="price-asc">السعر: من الأقل</option>
+                                    <option value="price-desc">السعر: من الأعلى</option>
+                                    <option value="name">الاسم</option>
+                                </select>
+                            </label>
+                            <label>
+                                التوفر
+                                <select
+                                    className="store-input mt-2"
+                                    name="availability"
+                                    defaultValue={value("availability") || "all"}
+                                >
+                                    <option value="all">جميع المنتجات</option>
+                                    <option value="in-stock">المتوفر فقط</option>
+                                </select>
+                            </label>
+                            <label>
+                                أقل سعر (MAD)
+                                <input
+                                    className="store-input mt-2"
+                                    type="number"
+                                    name="minPrice"
+                                    min="0"
+                                    max="1000000"
+                                    defaultValue={value("minPrice")}
+                                />
+                            </label>
+                            <label>
+                                أعلى سعر (MAD)
+                                <input
+                                    className="store-input mt-2"
+                                    type="number"
+                                    name="maxPrice"
+                                    min="0"
+                                    max="1000000"
+                                    defaultValue={value("maxPrice")}
+                                />
+                            </label>
+                        </div>
+                    </details>
+                </form>
+            </details>
             {invalid && (
                 <p role="alert" className="mb-6">
                     بعض الفلاتر غير صالحة. تم عرض المجموعة الكاملة.

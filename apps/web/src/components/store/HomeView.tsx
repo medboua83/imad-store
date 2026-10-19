@@ -13,6 +13,15 @@ export function HomeView({
     products: Product[];
     categories: Category[];
 }) {
+    const featured = products.find((p) => p.category?.slug === "abayas") || products[0];
+    const detail =
+        products.find((p) => p.category?.slug === "shawls") ||
+        products.find((p) => p.id !== featured?.id);
+    // The legacy default points to a missing asset; use an actual catalogue image.
+    const useCatalogue = !content.heroImage || content.heroImage === "/images/hero-1.png";
+    const heroImage = useCatalogue
+        ? featured?.images[0] || "/images/catalogue-test/abaya.webp"
+        : content.heroImage;
     return (
         <div className="storefront-home">
             <section className="editorial-hero">
@@ -41,13 +50,42 @@ export function HomeView({
                 </div>
                 <div className="hero-visual">
                     <Image
-                        src={content.heroImage}
-                        alt={content.heroTitle}
+                        src={heroImage}
+                        alt={
+                            useCatalogue && featured
+                                ? featured.nameAr || featured.nameFr
+                                : content.heroTitle
+                        }
                         fill
-                        priority
+                        preload
                         sizes="(max-width: 767px) 100vw, 55vw"
                         className="hero-photo"
                     />
+                    {useCatalogue && featured && (
+                        <Link className="hero-product-tag" href={`/products/${featured.slug}`}>
+                            <span>{featured.nameAr || featured.nameFr}</span>
+                            <span dir="ltr">{featured.price.toFixed(2)} MAD</span>
+                            <ArrowUpLeft size={18} aria-hidden="true" />
+                        </Link>
+                    )}
+                    {useCatalogue && detail?.images[0] && (
+                        <Link
+                            href={`/products/${detail.slug}`}
+                            className="hero-detail-card"
+                            aria-label={detail.nameAr || detail.nameFr}
+                        >
+                            <Image
+                                src={detail.images[0]}
+                                alt=""
+                                fill
+                                sizes="180px"
+                                className="object-cover"
+                            />
+                            <span>
+                                التفاصيل تصنع الفرق <ArrowUpLeft size={16} aria-hidden="true" />
+                            </span>
+                        </Link>
+                    )}
                     <span className="hero-image-label" dir="ltr">
                         THE IMAD EDIT
                     </span>

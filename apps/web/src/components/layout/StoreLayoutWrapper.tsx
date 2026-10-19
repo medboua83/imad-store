@@ -14,7 +14,7 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
     }
 
     return (
-        <>
+        <div className="store-shell">
             <a className="skip-link" href="#main-content">
                 الانتقال إلى المحتوى
             </a>
@@ -22,6 +22,6 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
             <CartDrawer />
             <main id="main-content">{children}</main>
             <Footer />
-        </>
+        </div>
     );
 }

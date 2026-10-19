@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Professional responsive storefront — 2026-10-19
+
+See `RESPONSIVE_STOREFRONT_2026-10-19.md`. A real catalogue image replaces the missing legacy hero default; the storefront adds a refined editorial layout, two-column phone catalogue, compact search/filter disclosure, category rail, mobile navigation, uncropped gallery/zoom, quantity controls and mobile purchase bar. Existing social destinations remain. Candidate production build/lint and browser checks at 320/390/768/1280 px pass, including zoom focus restoration, filtered search and temporary local cart interactions. No checkout, inventory or CRM write is part of this change; publication checks are recorded separately.
+
 ## Hosted demonstration photographs — 2026-10-19
 
 The owner's follow-up identified missing social links after the earlier footer redesign. The original WhatsApp, Instagram, Facebook and TikTok destinations have been restored from Git history with keyboard-focus treatment and touch-sized links. No social message is sent by this change.

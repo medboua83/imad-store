@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
+import { ProductGallery } from "@/components/store/ProductGallery";
+import { PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, siteOrigin } from "@/lib/server-api";
 import { ProductOptions } from "@/components/store/ProductOptions";
@@ -55,30 +56,8 @@ export default async function ProductPage({ params }: Props) {
                 </Link>{" "}
                 / {name}
             </nav>
-            <div className="grid lg:grid-cols-2 gap-8">
-                <div>
-                    <div className="relative aspect-[4/5] bg-[#F5EDE0] product-main-image overflow-hidden">
-                        <Image
-                            src={product.images[0]}
-                            alt={name}
-                            fill
-                            priority
-                            sizes="(max-width: 1024px) 100vw, 50vw"
-                            className="object-cover"
-                        />
-                    </div>
-                    {product.images.slice(1).map((image, i) => (
-                        <div className="relative aspect-[4/5] mt-4" key={image}>
-                            <Image
-                                src={image}
-                                alt={`${name} — ${i + 2}`}
-                                fill
-                                sizes="(max-width: 1024px) 100vw, 50vw"
-                                className="object-cover"
-                            />
-                        </div>
-                    ))}
-                </div>
+            <div className="product-layout">
+                <ProductGallery images={product.images} name={name} />
                 <div className="space-y-6 product-detail">
                     <p>{product.category.nameAr || product.category.nameFr}</p>
                     <h1 className="text-4xl">{name}</h1>
@@ -86,6 +65,10 @@ export default async function ProductPage({ params }: Props) {
                     <p className="whitespace-pre-line leading-8">
                         {product.descriptionAr || product.descriptionFr || product.descriptionEn}
                     </p>
+                    <div className="product-service-note">
+                        <PackageCheck size={20} aria-hidden="true" />
+                        <span>الدفع عند الاستلام · بدون إنشاء حساب</span>
+                    </div>
                     <ProductOptions product={product} />
                     <nav className="flex gap-5 flex-wrap">
                         <Link className="underline action" href="/delivery">
@@ -95,6 +78,10 @@ export default async function ProductPage({ params }: Props) {
                             الاستبدال والإرجاع
                         </Link>
                     </nav>
+                    <div className="product-delivery-note">
+                        <Truck size={19} aria-hidden="true" />
+                        <p>راجعي رسوم التوصيل وشروط المتجر قبل تأكيد طلبكِ.</p>
+                    </div>
                 </div>
             </div>
         </section>

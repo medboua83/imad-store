@@ -21,7 +21,7 @@ export function ProductCard({
                         src={p.images[0]}
                         alt={name}
                         fill
-                        sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 25vw"
+                        sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
                         className="object-cover"
                     />
                 )}
