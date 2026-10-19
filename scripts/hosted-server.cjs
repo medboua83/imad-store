@@ -18,7 +18,9 @@ async function startHostedServer() {
   globalThis[readerKey] = readPublicStore;
   const publicServer = createServer();
   let web;
+  let stopCrmWorker = async () => {};
   const close = async () => {
+    await stopCrmWorker();
     if (publicServer.listening) await new Promise((resolve) => {
       publicServer.close(resolve);
       publicServer.closeIdleConnections?.();
@@ -48,7 +50,8 @@ async function startHostedServer() {
       if (passenger) publicServer.listen("passenger", bound);
       else publicServer.listen(Number(process.env.PORT || 3000), process.env.HOSTNAME || "0.0.0.0", bound);
     });
-    console.log("Imad Store ready: one public listener for storefront and API; background workers disabled.");
+    stopCrmWorker = require("./hosted-crm-worker.cjs").startHostedCrmWorker();
+    console.log("Imad Store ready: one public listener; CRM scheduler requires explicit hosted opt-in.");
     return { publicServer, close };
   } catch (error) {
     await close();

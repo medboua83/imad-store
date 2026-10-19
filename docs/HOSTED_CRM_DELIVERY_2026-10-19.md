@@ -1,0 +1,9 @@
+# Hosted CRM delivery diagnostics — 2026-10-19
+
+Incident: a hosted checkout was recorded but the owner could not find its CRM lead. The combined launcher previously did not schedule the outbox at all. An active encrypted webhook alone did not establish delivery. Separately, checkout creates an outbox event only when crmConsent is true; the diagnostic must distinguish absence of an event from an existing queued/failed delivery.
+
+Admin-only GET /api/integrations/deskcomm/orders/:reference returns delivery state/attempt counts/timestamps without customer data or the payload. An eight-character reference searches only the 100 newest orders; the full identifier supports older orders. It performs no enqueue, retry or write. Config additionally reports hosted scheduler state. The UI does not label loading as an absent webhook.
+
+The hosted launcher now supports a lifecycle-managed scheduler only when all gates are explicitly set: DESKCOMM_HOSTED_DELIVERY_ENABLED=true (new opt-in), DESKCOMM_OUTBOX_WORKER_ENABLED=true and a valid UTC DESKCOMM_OUTBOX_MIN_CREATED_AT. Existing deployments remain inert without the new flag. The existing cutoff/atomic claim/idempotency implementation remains authoritative. Do not enable old cutoffs or send historical jobs as part of deploying this code. Stop drains a running cycle before database disconnect. Sheets polling remains off.
+
+Tests: 29 isolated integration cases, including admin-only/read-only diagnostics, missing-event versus pending-event status and no secret/customer field exposure, pass. Two scheduler tests verify inert defaults, malformed cutoff rejection, no overlapping cycles, duplicate registration prevention and graceful shutdown. Frontend lint, backend compilation, TypeScript and full production build pass. No active database schema, order, stock or CRM write is part of diagnostic deployment. Live delivery requires explicit authorization for the exact order/data transfer and future worker activation.

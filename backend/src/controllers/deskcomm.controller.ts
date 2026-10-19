@@ -2,34 +2,161 @@ import { Request, Response } from "express";
 import { createCipheriv, randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
-const schema = z.object({enabled:z.boolean(),webhookUrl:z.string().trim().max(2048).optional(),clearWebhook:z.boolean().optional()}).strict();
-function encrypt(value:string): string {
-  const raw=process.env.DESKCOMM_ENCRYPTION_KEY;
-  if(!raw || !/^[0-9a-fA-F]{64}$/.test(raw)) throw new Error("DESKCOMM_ENCRYPTION_KEY invalid");
-  const iv=randomBytes(12),cipher=createCipheriv("aes-256-gcm",Buffer.from(raw,"hex"),iv);
-  const bytes=Buffer.concat([cipher.update(value,"utf8"),cipher.final()]);
-  return [iv,cipher.getAuthTag(),bytes].map(b=>b.toString("base64url")).join(".");
+const schema = z
+    .object({
+        enabled: z.boolean(),
+        webhookUrl: z.string().trim().max(2048).optional(),
+        clearWebhook: z.boolean().optional(),
+    })
+    .strict();
+function encrypt(value: string): string {
+    const raw = process.env.DESKCOMM_ENCRYPTION_KEY;
+    if (!raw || !/^[0-9a-fA-F]{64}$/.test(raw)) throw new Error("DESKCOMM_ENCRYPTION_KEY invalid");
+    const iv = randomBytes(12),
+        cipher = createCipheriv("aes-256-gcm", Buffer.from(raw, "hex"), iv);
+    const bytes = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
+    return [iv, cipher.getAuthTag(), bytes].map((b) => b.toString("base64url")).join(".");
 }
-function validateUrl(value:string){
-  const url=new URL(value);
-  const allowDevHttp = process.env.NODE_ENV !== "production" && process.env.DESKCOMM_ALLOW_HTTP_DEV === "true";
-  if(!((url.protocol==="https:") || (url.protocol==="http:" && allowDevHttp)) || url.username || url.password || url.hash) throw new Error("HTTPS obligatoire ; HTTP uniquement pour test local explicitement active");
-  if (["localhost","127.0.0.1","0.0.0.0"].includes(url.hostname) && !(url.protocol==="http:" && allowDevHttp)) throw new Error("Adresse locale interdite pour un webhook distant");
+function validateUrl(value: string) {
+    const url = new URL(value);
+    const allowDevHttp =
+        process.env.NODE_ENV !== "production" && process.env.DESKCOMM_ALLOW_HTTP_DEV === "true";
+    if (
+        !(url.protocol === "https:" || (url.protocol === "http:" && allowDevHttp)) ||
+        url.username ||
+        url.password ||
+        url.hash
+    )
+        throw new Error("HTTPS obligatoire ; HTTP uniquement pour test local explicitement active");
+    if (
+        ["localhost", "127.0.0.1", "0.0.0.0"].includes(url.hostname) &&
+        !(url.protocol === "http:" && allowDevHttp)
+    )
+        throw new Error("Adresse locale interdite pour un webhook distant");
 }
-export async function getDeskcommConfig(_req:Request,res:Response){
-  const c=await prisma.deskcommIntegration.findUnique({where:{id:"deskcomm"}});
-  res.setHeader("Cache-Control","no-store");
-  res.json({success:true,data:{enabled:c?.enabled??false,configured:Boolean(c?.webhookCiphertext),updatedAt:c?.updatedAt??null}});
+function workerStatus() {
+    const cutoff = process.env.DESKCOMM_OUTBOX_MIN_CREATED_AT;
+    const validCutoff = Boolean(
+        cutoff &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(cutoff) &&
+        Number.isFinite(Date.parse(cutoff)) &&
+        new Date(cutoff).toISOString() === cutoff,
+    );
+    return {
+        hosted: process.env.IMAD_HOSTING_MODE === "combined",
+        enabled: process.env.DESKCOMM_OUTBOX_WORKER_ENABLED === "true",
+        hostedEnabled: process.env.DESKCOMM_HOSTED_DELIVERY_ENABLED === "true",
+        cutoffConfigured: validCutoff,
+        scheduled: Boolean(
+            (globalThis as unknown as Record<symbol, unknown>)[Symbol.for("imad.hostedCrmWorker")],
+        ),
+    };
 }
-export async function putDeskcommConfig(req:Request,res:Response){
-  const b=schema.parse(req.body);
-  if(b.clearWebhook && b.webhookUrl){res.status(400).json({success:false,error:"Choisir suppression ou remplacement"});return;}
-  const cur=await prisma.deskcommIntegration.findUnique({where:{id:"deskcomm"}});
-  let cipher=cur?.webhookCiphertext??null;
-  if(b.clearWebhook)cipher=null;
-  if(b.webhookUrl){try{validateUrl(b.webhookUrl);cipher=encrypt(b.webhookUrl);}catch(e){res.status(400).json({success:false,error:e instanceof Error?e.message:"Invalid URL"});return;}}
-  if(b.enabled && !cipher){res.status(400).json({success:false,error:"Saisir une URL avant activation"});return;}
-  const c=await prisma.deskcommIntegration.upsert({where:{id:"deskcomm"},create:{id:"deskcomm",enabled:b.enabled,webhookCiphertext:cipher},update:{enabled:b.enabled,webhookCiphertext:cipher}});
-  res.setHeader("Cache-Control","no-store");
-  res.json({success:true,data:{enabled:c.enabled,configured:Boolean(c.webhookCiphertext),updatedAt:c.updatedAt}});
+export async function getDeskcommOrderStatus(req: Request, res: Response) {
+    res.setHeader("Cache-Control", "no-store");
+    const reference = String(req.params.reference).trim().toLowerCase();
+    if (!/^(?:[a-f0-9]{8}|[a-f0-9]{24})$/.test(reference)) {
+        res.status(400).json({
+            success: false,
+            error: "Référence attendue : 8 ou 24 caractères hexadécimaux",
+        });
+        return;
+    }
+    const matches =
+        reference.length === 24
+            ? [
+                  await prisma.order.findUnique({ where: { id: reference }, select: { id: true } }),
+              ].filter(Boolean)
+            : (
+                  await prisma.order.findMany({
+                      orderBy: { createdAt: "desc" },
+                      take: 100,
+                      select: { id: true },
+                  })
+              ).filter((order) => order.id.endsWith(reference));
+    if (matches.length !== 1) {
+        res.status(matches.length ? 409 : 404).json({
+            success: false,
+            error: matches.length
+                ? "Utilisez l'identifiant complet"
+                : "Commande introuvable parmi les 100 plus récentes ; utilisez l'identifiant complet",
+        });
+        return;
+    }
+    const id = matches[0]!.id;
+    const job = await prisma.deskcommOutbox.findUnique({
+        where: { orderId: id },
+        select: {
+            status: true,
+            attempts: true,
+            createdAt: true,
+            updatedAt: true,
+            nextAttemptAt: true,
+        },
+    });
+    res.json({
+        success: true,
+        data: {
+            reference: id.slice(-8).toUpperCase(),
+            state: job?.status || "NO_EVENT",
+            attempts: job?.attempts || 0,
+            createdAt: job?.createdAt || null,
+            updatedAt: job?.updatedAt || null,
+            nextAttemptAt: job?.nextAttemptAt || null,
+        },
+    });
+}
+export async function getDeskcommConfig(_req: Request, res: Response) {
+    const c = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+    res.setHeader("Cache-Control", "no-store");
+    res.json({
+        success: true,
+        data: {
+            enabled: c?.enabled ?? false,
+            configured: Boolean(c?.webhookCiphertext),
+            updatedAt: c?.updatedAt ?? null,
+            worker: workerStatus(),
+        },
+    });
+}
+export async function putDeskcommConfig(req: Request, res: Response) {
+    const b = schema.parse(req.body);
+    if (b.clearWebhook && b.webhookUrl) {
+        res.status(400).json({ success: false, error: "Choisir suppression ou remplacement" });
+        return;
+    }
+    const cur = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+    let cipher = cur?.webhookCiphertext ?? null;
+    if (b.clearWebhook) cipher = null;
+    if (b.webhookUrl) {
+        try {
+            validateUrl(b.webhookUrl);
+            cipher = encrypt(b.webhookUrl);
+        } catch (e) {
+            res.status(400).json({
+                success: false,
+                error: e instanceof Error ? e.message : "Invalid URL",
+            });
+            return;
+        }
+    }
+    if (b.enabled && !cipher) {
+        res.status(400).json({ success: false, error: "Saisir une URL avant activation" });
+        return;
+    }
+    const c = await prisma.deskcommIntegration.upsert({
+        where: { id: "deskcomm" },
+        create: { id: "deskcomm", enabled: b.enabled, webhookCiphertext: cipher },
+        update: { enabled: b.enabled, webhookCiphertext: cipher },
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.json({
+        success: true,
+        data: {
+            enabled: c.enabled,
+            configured: Boolean(c.webhookCiphertext),
+            updatedAt: c.updatedAt,
+            worker: workerStatus(),
+        },
+    });
 }
