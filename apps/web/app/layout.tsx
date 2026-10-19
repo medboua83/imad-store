@@ -3,6 +3,7 @@ import "./globals.css";
 import "./storefront.css";
 import "./checkout.css";
 import "./footer.css";
+import "./header.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 

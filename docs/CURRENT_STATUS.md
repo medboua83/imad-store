@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Header and mobile menu — 2026-10-19
+
+See `HEADER_MENU_2026-10-19.md`. Search remains available on phones; the native menu adds search, catalogue categories and practical links, with focus/scroll management and responsive presentation. Build/lint and portrait/landscape navigation checks pass; publication evidence is recorded separately. No commerce or CRM writes.
+
 ## Professional footer — 2026-10-19
 
 See `FOOTER_2026-10-19.md`. Responsive shopping/help navigation, a support card and dedicated social links preserve all original destinations. Frontend build/lint and four viewport checks pass. No commerce data or CRM change.
