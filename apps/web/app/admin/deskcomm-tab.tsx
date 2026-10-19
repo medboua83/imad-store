@@ -7,6 +7,7 @@ type Config = {
     enabled: boolean;
     configured: boolean;
     updatedAt: string | null;
+    confirmationSync?: boolean;
     worker?: {
         hosted: boolean;
         enabled: boolean;
@@ -116,6 +117,13 @@ export default function DeskcommTab() {
                           ? "Configuré — vérifier le processus serveur"
                           : "Non configuré"}
                     . Un webhook actif ne suffit pas si le service d’envoi est arrêté.
+                </p>
+            )}
+            {config && (
+                <p className="text-sm admin-muted">
+                    Retour des confirmations CRM :{" "}
+                    {config.confirmationSync ? "Configuré" : "Non configuré"}. Ce retour confirme
+                    uniquement une commande existante ; il ne crée ni commande ni paiement.
                 </p>
             )}
             <form className="space-y-3" onSubmit={checkOrder}>

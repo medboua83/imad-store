@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { createCipheriv, randomBytes } from "crypto";
 import { z } from "zod";
+import { crmStatusConfig } from "./deskcomm-status.controller";
 import { prisma } from "../lib/prisma";
 const schema = z
     .object({
@@ -116,6 +117,7 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
             configured: Boolean(c?.webhookCiphertext),
             updatedAt: c?.updatedAt ?? null,
             worker: workerStatus(),
+            confirmationSync: Boolean(crmStatusConfig()),
         },
     });
 }
@@ -157,6 +159,7 @@ export async function putDeskcommConfig(req: Request, res: Response) {
             configured: Boolean(c.webhookCiphertext),
             updatedAt: c.updatedAt,
             worker: workerStatus(),
+            confirmationSync: Boolean(crmStatusConfig()),
         },
     });
 }
