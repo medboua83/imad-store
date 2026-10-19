@@ -16,7 +16,8 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
   let runtime;
   const { Server } = require("node:http");
   const originalListen = Server.prototype.listen;
-  const savedOriginalListen = Server.prototype.originalListen;
+  const { Server: TcpServer } = require("node:net");
+  const originalTcpListen = TcpServer.prototype.listen;
   let configured = false, publicBinding = false;
   if (passengerMode) {
     // Emulate Passenger's documented reverse-port-binding contract using real
@@ -29,7 +30,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     };
   } else if (mode === "litespeed") {
     // No marker or originalListen: actual hosted adapters need not expose them.
-    Server.prototype.listen = function(...args) {
+    TcpServer.prototype.listen = function(...args) {
       assert.equal(publicBinding, false, "LiteSpeed permits only one installed public listener");
       publicBinding = true;
       return originalListen.apply(this, args);
@@ -49,13 +50,21 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     process.env.DESKCOMM_OUTBOX_WORKER_ENABLED = "true";
     runtime = await require("../scripts/hosted-server.cjs").startHostedServer();
     const origin = `http://127.0.0.1:${runtime.publicServer.address().port}`;
-    assert.notEqual(runtime.privateServer.address().port, runtime.publicServer.address().port);
+    assert.equal("privateServer" in runtime, false);
+    const read = globalThis[Symbol.for("imad.publicStoreRead")];
+    assert.equal((await read("/products?status=DRAFT")).status, 403);
+    assert.equal((await read("/products/admin/catalog")).status, 404);
+    assert.equal((await read("/orders")).status, 404);
     if (mode !== "tcp") assert.equal(publicBinding, true);
     const get = (route, options) => fetch(origin + route, options);
     assert.equal((await get("/health")).status, 200);
     assert.equal((await get("/api/products/admin/catalog")).status, 401);
     const products = await (await get("/api/products")).json();
     assert.match(JSON.stringify(products), /HOSTED CATALOGUE TEST/);
+    assert.deepEqual((await read("/products")).body, products);
+    assert.equal((await read("/products/not-published")).status, 404);
+    const detail = await get("/products/hosted-product-test");
+    assert.equal(detail.status, 200); assert.match(await detail.text(), /HOSTED CATALOGUE TEST/);
     const shop = await get("/shop");
     assert.equal(shop.status, 200); assert.match(await shop.text(), /HOSTED CATALOGUE TEST/);
     assert.equal((await get("/")).status, 200);
@@ -77,8 +86,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     assert.equal(await mongo.db(name).collection("deskcomm_outbox").countDocuments(), 0);
   } finally {
     Server.prototype.listen = originalListen;
-    if (savedOriginalListen) Server.prototype.originalListen = savedOriginalListen;
-    else delete Server.prototype.originalListen;
+    TcpServer.prototype.listen = originalTcpListen;
     delete global.PhusionPassenger;
     delete global.LitespeedNodeJS;
     await runtime?.close();

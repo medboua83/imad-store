@@ -18,16 +18,19 @@ has omitted build dependencies, the combined build restores them with
 The combined Next build uses the regular output, as required by the official
 custom-server API. Local standalone builds remain available without the flag.
 
-Passenger normally intercepts the first HTTP listener. The combined entrypoint
-disables automatic interception, starts a private ephemeral loopback listener
-for server-side data requests, then binds precisely one public hosting socket. Hostinger runtime verification also
-identified LiteSpeed, whose adapter ignores a second `http.Server.listen()`.
-The private loopback listener binds through Node's native `net.Server.listen`,
-which HTTP servers inherit; only the public HTTP listener is installed into the
-hosting adapter. No adapter-specific global marker or saved method is required.
-Browser API and upload requests go directly to the existing Express routes on
-the same public listener. No fixed private port or build-time localhost proxy
-is needed. JWT checks, publication rules and rate limits remain in force.
+The combined entrypoint binds exactly one public HTTP/TCP listener for Next and
+Express, including on hosting adapters that intercept net.Server.listen. Public
+server-rendered pages call shared read-only backend services in the same process.
+The same services implement the HTTP public endpoints, preserving publication
+filters, query validation, JSON serialization and 404 behavior. The internal
+reader has an explicit public-path whitelist; it exposes no orders, accounts,
+admin catalogue, draft content or mutation operation. Server-only code retains
+the eight-second read timeout and request-level React memoization.
+
+Browser API and upload requests go through the existing Express routes on that
+same public listener. JWT checks, publication rules and rate limits remain in
+force. There is no private port, second server, startup data seed or public-URL
+loopback. Ordinary local standalone mode retains its existing HTTP API client.
 
 References: [Passenger reverse port binding](https://www.phusionpassenger.com/docs/advanced_guides/in_depth/node/reverse_port_binding.html),
 [Next custom servers](https://nextjs.org/docs/app/guides/custom-server).
@@ -65,6 +68,6 @@ missing-API limitation will return. Keep current database credentials unchanged.
 `IMAD_HOSTING_MODE=combined NEXT_PUBLIC_API_URL=/api npm run build`, then
 `npm run test:hosted`. The latter runs three separate processes with a disposable,
 strictly guarded MongoDB test database: real TCP, a Passenger binding-contract
-simulation and a LiteSpeed single-public-listener simulation. It checks public SSR/catalogue, login, protected admin access,
+simulation and a LiteSpeed simulation that rejects any second net.Server listener. It checks public SSR/catalogue, login, protected admin access,
 authenticated photos, static assets and absence of orders/outbox writes. Actual
 Passenger/platform compatibility must also be checked after deployment.

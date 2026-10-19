@@ -11,12 +11,15 @@ const categorySchema = z.object({
     image: z.string().url().optional(),
 });
 
-export async function getCategories(_req: Request, res: Response) {
+export async function readCategories() {
     const categories = await prisma.category.findMany({
         include: { _count: { select: { products: true } } },
         orderBy: { nameFr: "asc" },
     });
-    res.json({ success: true, data: categories });
+    return { success: true, data: categories };
+}
+export async function getCategories(_req: Request, res: Response) {
+    res.json(await readCategories());
 }
 
 export async function getCategory(req: Request, res: Response) {

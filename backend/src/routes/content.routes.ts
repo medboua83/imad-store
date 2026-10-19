@@ -4,6 +4,7 @@ import { defaultSiteContent } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
+import { readPublicContent } from "../lib/public-content";
 import { isPublishableImage } from "../lib/validation";
 const text = z.string().trim().max(5000);
 const contentSchema = z
@@ -36,13 +37,8 @@ const contentSchema = z
     .strict();
 export const contentRoutes: IRouter = Router();
 contentRoutes.get("/", async (_req, res) => {
-    const row = await prisma.siteContent.findUnique({ where: { id: "site" } });
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-    res.json({
-        success: true,
-        data: row?.published || defaultSiteContent,
-        revision: row?.revision || 0,
-    });
+    res.json(await readPublicContent());
 });
 contentRoutes.use(authenticate, requireAdmin);
 contentRoutes.get("/admin", async (_req, res) => {
