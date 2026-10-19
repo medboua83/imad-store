@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+import { categoryThumbnail } from "../store/category-visuals";
 import { trapDialogFocus } from "./dialog-focus";
 import Link from "next/link";
 import {
@@ -208,14 +210,20 @@ export function Navbar() {
                         </Link>
                         <nav className="menu-categories" aria-label="فئات المنتجات">
                             <h3>تسوّقي حسب الفئة</h3>
-                            {categories.map(([slug, label], index) => (
+                            {categories.map(([slug, label]) => (
                                 <Link
                                     href={`/shop?category=${slug}`}
                                     key={slug}
                                     onClick={closeMenu}
                                 >
-                                    <span className="menu-category-number" aria-hidden="true">
-                                        {String(index + 1).padStart(2, "0")}
+                                    <span className="menu-category-icon" aria-hidden="true">
+                                        <Image
+                                            src={categoryThumbnail(slug)}
+                                            alt=""
+                                            width={42}
+                                            height={42}
+                                            className="menu-category-photo"
+                                        />
                                     </span>
                                     <span>{label}</span>
                                     <ArrowUpLeft size={16} aria-hidden="true" />

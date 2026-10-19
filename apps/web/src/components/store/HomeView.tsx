@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, Truck } from "lucide-react";
 import type { SiteContent } from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
+import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
 export function HomeView({
     content,
@@ -129,20 +130,43 @@ export function HomeView({
                     </p>
                 </div>
                 <nav aria-label="فئات المتجر" className="collection-grid">
-                    {categories.map((c, i) => (
-                        <Link
-                            prefetch={false}
-                            className="collection-tile"
-                            key={c.id}
-                            href={`/shop?category=${c.slug}`}
-                        >
-                            <span className="collection-number" aria-hidden="true">
-                                0{i + 1}
-                            </span>
-                            <span>{c.nameAr || c.nameFr}</span>
-                            <ArrowUpLeft size={22} aria-hidden="true" />
-                        </Link>
-                    ))}
+                    {categories.map((c) => {
+                        const visual = categoryVisual(c, products);
+                        return (
+                            <Link
+                                prefetch={false}
+                                className="collection-tile"
+                                key={c.id}
+                                href={`/shop?category=${c.slug}`}
+                            >
+                                <span className="collection-photo">
+                                    {visual.src ? (
+                                        <Image
+                                            src={visual.src}
+                                            alt=""
+                                            fill
+                                            sizes="96px"
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <span className="category-photo-empty" aria-hidden="true">
+                                            IMAD
+                                        </span>
+                                    )}
+                                    {visual.illustrative && visual.src && (
+                                        <small className="category-image-note">صورة توضيحية</small>
+                                    )}
+                                </span>
+                                <span className="collection-name">
+                                    {c.nameAr || c.nameFr}
+                                    {c.nameAr && c.nameAr !== c.nameFr && (
+                                        <small dir="ltr">{c.nameFr}</small>
+                                    )}
+                                </span>
+                                <ArrowUpLeft size={22} aria-hidden="true" />
+                            </Link>
+                        );
+                    })}
                 </nav>
             </section>
             {!!content.banners.length && (

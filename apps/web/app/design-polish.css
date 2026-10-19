@@ -1,0 +1,215 @@
+/* Local assets and compact category photos; no icon fonts or third-party scripts. */
+.store-shell .collection-grid {
+    border: 0;
+    gap: 14px;
+}
+.store-shell .collection-tile {
+    position: relative;
+    align-items: center;
+    text-align: center;
+    justify-content: flex-start;
+    gap: 15px;
+    min-height: 214px;
+    padding: 24px 12px 30px;
+    border: 1px solid #dde3d8;
+    border-radius: 18px;
+    background: #fffefa;
+    box-shadow: 0 3px 15px #172e2804;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        transform 0.2s;
+}
+.collection-photo {
+    position: relative;
+    display: block;
+    width: 96px;
+    height: 96px;
+    aspect-ratio: 1;
+    background: #eae9e1;
+    border-radius: 50%;
+    border: 4px solid #f4f1e8;
+    box-shadow: 0 0 0 1px #e0e5d8;
+    flex-shrink: 0;
+}
+.collection-photo img {
+    border-radius: 50%;
+    object-position: center 60%;
+    transition: transform 0.4s;
+}
+.category-image-note {
+    position: absolute;
+    inset-inline-start: 50%;
+    bottom: -12px;
+    transform: translateX(50%);
+    white-space: nowrap;
+    background: #fffefaf2;
+    border: 1px solid #e5e8df;
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: #34483d;
+    font:
+        8px/1.5 "Tajawal",
+        sans-serif;
+}
+.category-photo-empty {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: #62765d;
+    letter-spacing: 0.2em;
+}
+.store-shell .collection-tile > span.collection-name {
+    font-family: "Amiri", serif;
+    font-weight: 400;
+    font-size: 25px;
+    line-height: 1.4;
+}
+.collection-name small {
+    display: block;
+    margin-top: 6px;
+    font:
+        11px/1.5 "DM Sans",
+        sans-serif;
+    color: #626f64;
+    letter-spacing: 0.025em;
+}
+.store-shell .collection-tile > svg {
+    position: absolute;
+    bottom: 15px;
+    inset-inline-end: 17px;
+    color: #62765d;
+    width: 17px;
+    height: 17px;
+}
+.store-menu .menu-category-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #eef1e8;
+}
+.menu-category-photo {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+.store-shell .refined-footer .footer-socials a {
+    min-height: 56px;
+    gap: 11px;
+    border-radius: 12px;
+    padding: 8px 13px 8px 8px;
+    background: #ffffff06;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
+}
+.social-brand-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: #ffffff12;
+    color: #fff;
+    flex-shrink: 0;
+}
+.refined-footer [data-network="whatsapp"] .social-brand-icon {
+    background: #245e43;
+}
+.refined-footer [data-network="instagram"] .social-brand-icon {
+    background: #754253;
+}
+.refined-footer [data-network="facebook"] .social-brand-icon {
+    background: #325b8c;
+}
+.refined-footer [data-network="tiktok"] .social-brand-icon {
+    background: #111c1a;
+}
+.store-shell .catalog-card-image {
+    border-radius: 16px;
+}
+.store-shell .catalog-card-body {
+    padding-top: 17px;
+}
+.store-shell .card-category {
+    letter-spacing: 0.015em;
+}
+.store-shell .card-bottom {
+    padding-top: 12px;
+    border-top: 1px solid #e1e5db;
+    margin-top: 13px;
+}
+.store-shell .guide-grid > div {
+    border-radius: 16px;
+}
+@media (hover: hover) {
+    .store-shell .collection-tile:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px #172e280c;
+    }
+    .collection-tile:hover .collection-photo img {
+        transform: scale(1.04);
+    }
+    .store-shell .refined-footer .footer-socials a:hover {
+        background: #ffffff12;
+        border-color: #ffffff70;
+    }
+}
+@media (max-width: 767px) {
+    .store-shell .collection-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: visible;
+        gap: 12px;
+    }
+    .store-shell .collection-tile {
+        min-height: 188px;
+        padding: 20px 10px 27px;
+        gap: 15px;
+        border-radius: 15px;
+    }
+    .collection-photo {
+        width: 76px;
+        height: 76px;
+    }
+    .store-shell .collection-tile > span.collection-name {
+        font-size: 21px;
+    }
+    .collection-name small {
+        font-size: 10px;
+    }
+    .store-shell .collection-tile:last-child:nth-child(odd) {
+        grid-column: 1/-1;
+        flex-direction: row;
+        min-height: 112px;
+        padding: 16px;
+        gap: 23px;
+    }
+    .store-shell .refined-footer .footer-socials {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+    .store-shell .refined-footer .footer-socials a {
+        min-width: 0;
+        justify-content: flex-start;
+    }
+    .store-shell .refined-footer .footer-socials a > svg:last-child {
+        margin-inline-start: auto;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .store-shell .collection-tile,
+    .collection-photo img {
+        transition: none;
+    }
+    .store-shell .collection-tile:hover,
+    .collection-tile:hover .collection-photo img {
+        transform: none;
+    }
+}
