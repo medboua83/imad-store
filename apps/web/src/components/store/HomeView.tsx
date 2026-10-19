@@ -153,9 +153,6 @@ export function HomeView({
                                             IMAD
                                         </span>
                                     )}
-                                    {visual.illustrative && visual.src && (
-                                        <small className="category-image-note">صورة توضيحية</small>
-                                    )}
                                 </span>
                                 <span className="collection-name">
                                     {c.nameAr || c.nameFr}
