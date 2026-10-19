@@ -5,6 +5,7 @@ import "./checkout.css";
 import "./footer.css";
 import "./header.css";
 import "./product.css";
+import "./design-polish.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SocialIcon } from "../store/StoreIcons";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, MessageCircle } from "lucide-react";
 
 const socials = [
@@ -107,8 +108,13 @@ export function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             dir="ltr"
+                            data-network={label.toLowerCase()}
+                            aria-label={`${label} — نافذة جديدة`}
                         >
-                            {label}
+                            <span className="social-brand-icon">
+                                <SocialIcon network={label} />
+                            </span>
+                            <span>{label}</span>
                             <ArrowUpLeft size={14} aria-hidden="true" />
                         </a>
                     ))}
