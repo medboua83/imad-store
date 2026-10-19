@@ -1,4 +1,4 @@
-/* Shared visual language for category navigation and social links. */
+/* Local assets and compact category photos; no icon fonts or third-party scripts. */
 .store-shell .collection-grid {
     border: 0;
     gap: 14px;
@@ -8,9 +8,9 @@
     align-items: center;
     text-align: center;
     justify-content: flex-start;
-    gap: 17px;
-    min-height: 236px;
-    padding: 28px 18px 36px;
+    gap: 15px;
+    min-height: 214px;
+    padding: 24px 12px 30px;
     border: 1px solid #dde3d8;
     border-radius: 18px;
     background: #fffefa;
@@ -20,22 +20,48 @@
         box-shadow 0.2s,
         transform 0.2s;
 }
-.store-shell .collection-icon {
+.collection-photo {
+    position: relative;
+    display: block;
+    width: 96px;
+    height: 96px;
+    aspect-ratio: 1;
+    background: #eae9e1;
+    border-radius: 50%;
+    border: 4px solid #f4f1e8;
+    box-shadow: 0 0 0 1px #e0e5d8;
+    flex-shrink: 0;
+}
+.collection-photo img {
+    border-radius: 50%;
+    object-position: center 60%;
+    transition: transform 0.4s;
+}
+.category-image-note {
+    position: absolute;
+    inset-inline-start: 50%;
+    bottom: -12px;
+    transform: translateX(50%);
+    white-space: nowrap;
+    background: #fffefaf2;
+    border: 1px solid #e5e8df;
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: #34483d;
+    font:
+        8px/1.5 "Tajawal",
+        sans-serif;
+}
+.category-photo-empty {
     display: grid;
     place-items: center;
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: #eef1e8;
-    color: #345447;
-}
-.store-shell .collection-icon svg {
-    margin: 0;
-    align-self: auto;
-    stroke-width: 1.6;
+    height: 100%;
+    color: #62765d;
+    letter-spacing: 0.2em;
 }
 .store-shell .collection-tile > span.collection-name {
     font-family: "Amiri", serif;
+    font-weight: 400;
     font-size: 25px;
     line-height: 1.4;
 }
@@ -62,9 +88,15 @@
     width: 42px;
     height: 42px;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: 50%;
+    overflow: hidden;
     background: #eef1e8;
-    color: #345447;
+}
+.menu-category-photo {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
 }
 .store-shell .refined-footer .footer-socials a {
     min-height: 56px;
@@ -118,8 +150,10 @@
 @media (hover: hover) {
     .store-shell .collection-tile:hover {
         transform: translateY(-4px);
-        border-color: #9dac92;
         box-shadow: 0 12px 30px #172e280c;
+    }
+    .collection-tile:hover .collection-photo img {
+        transform: scale(1.04);
     }
     .store-shell .refined-footer .footer-socials a:hover {
         background: #ffffff12;
@@ -134,31 +168,27 @@
         gap: 12px;
     }
     .store-shell .collection-tile {
-        min-height: 198px;
-        padding: 20px 10px 32px;
-        gap: 12px;
+        min-height: 188px;
+        padding: 20px 10px 27px;
+        gap: 15px;
         border-radius: 15px;
     }
-    .store-shell .collection-icon {
-        width: 70px;
-        height: 70px;
-    }
-    .store-shell .collection-icon svg {
-        width: 39px;
-        height: 45px;
+    .collection-photo {
+        width: 76px;
+        height: 76px;
     }
     .store-shell .collection-tile > span.collection-name {
-        font-size: 23px;
+        font-size: 21px;
     }
     .collection-name small {
         font-size: 10px;
     }
     .store-shell .collection-tile:last-child:nth-child(odd) {
-        min-height: 110px;
+        grid-column: 1/-1;
         flex-direction: row;
-        justify-content: center;
-        gap: 22px;
-        padding-block: 18px;
+        min-height: 112px;
+        padding: 16px;
+        gap: 23px;
     }
     .store-shell .refined-footer .footer-socials {
         display: grid;
@@ -174,77 +204,11 @@
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    .store-shell .collection-tile {
-        transition: none;
-    }
-    .store-shell .collection-tile:hover {
-        transform: none;
-    }
-}
-
-/* Category photography keeps its aspect ratio while images are loading. */
-.store-shell .collection-tile {
-    padding: 0 0 26px;
-    overflow: hidden;
-    gap: 17px;
-    min-height: 0;
-}
-.collection-photo {
-    position: relative;
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 5;
-    background: #eae9e1;
-    overflow: hidden;
-}
-.collection-photo img {
-    transition: transform 0.4s;
-}
-.category-image-note {
-    position: absolute;
-    inset-inline-start: 8px;
-    bottom: 8px;
-    background: #fffefae8;
-    border-radius: 4px;
-    padding: 3px 6px;
-    color: #34483d;
-    font:
-        10px/1.5 "Tajawal",
-        sans-serif;
-}
-.category-photo-empty {
-    display: grid;
-    place-items: center;
-    height: 100%;
-    color: #62765d;
-    letter-spacing: 0.2em;
-}
-@media (hover: hover) {
-    .collection-tile:hover .collection-photo img {
-        transform: scale(1.04);
-    }
-}
-@media (max-width: 767px) {
-    .store-shell .collection-tile {
-        padding: 0 0 28px;
-        min-height: 0;
-        gap: 12px;
-    }
-    .store-shell .collection-tile:last-child:nth-child(odd) {
-        grid-column: auto;
-        flex-direction: column;
-        padding: 0 0 28px;
-        gap: 12px;
-        min-height: 0;
-    }
-    .store-shell .collection-tile > span.collection-name {
-        font-size: 21px;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
+    .store-shell .collection-tile,
     .collection-photo img {
         transition: none;
     }
+    .store-shell .collection-tile:hover,
     .collection-tile:hover .collection-photo img {
         transform: none;
     }

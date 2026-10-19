@@ -145,7 +145,7 @@ export function HomeView({
                                             src={visual.src}
                                             alt=""
                                             fill
-                                            sizes="(max-width: 767px) 50vw, 20vw"
+                                            sizes="96px"
                                             className="object-cover"
                                         />
                                     ) : (

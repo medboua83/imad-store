@@ -10,6 +10,8 @@ const categoryIllustrations: Record<string, string> = {
         "/images/catalogue-demo/8cce892edd25a0f357b65af0fccca7196971ec0699b8626f23bcca01fa5b64b3.webp",
     bags: "/images/catalogue-test/sac.webp",
 };
+export const categoryThumbnail = (slug: string) => categoryIllustrations[slug];
+
 function isIllustration(src: string) {
     return (
         src.includes("/catalogue-") ||

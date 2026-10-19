@@ -1,5 +1,6 @@
 "use client";
-import { CategoryIcon } from "../store/StoreIcons";
+import Image from "next/image";
+import { categoryThumbnail } from "../store/category-visuals";
 import { trapDialogFocus } from "./dialog-focus";
 import Link from "next/link";
 import {
@@ -216,7 +217,13 @@ export function Navbar() {
                                     onClick={closeMenu}
                                 >
                                     <span className="menu-category-icon" aria-hidden="true">
-                                        <CategoryIcon slug={slug} size={27} />
+                                        <Image
+                                            src={categoryThumbnail(slug)}
+                                            alt=""
+                                            width={42}
+                                            height={42}
+                                            className="menu-category-photo"
+                                        />
                                     </span>
                                     <span>{label}</span>
                                     <ArrowUpLeft size={16} aria-hidden="true" />
