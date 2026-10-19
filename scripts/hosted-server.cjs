@@ -11,6 +11,7 @@ async function startHostedServer() {
   for (const key of ["DATABASE_URL", "JWT_SECRET", "JWT_REFRESH_SECRET"]) {
     if (!process.env[key]) throw new Error(`Missing required configuration: ${key}`);
   }
+  process.env.DATABASE_URL = await require("./resolve-hosted-database.cjs").resolveHostedDatabase(process.env.DATABASE_URL);
   const { createServer } = require("node:http");
   const next = require("next");
   console.log("Hosted startup: loading the compiled API.");
@@ -22,7 +23,12 @@ async function startHostedServer() {
   const listen = (server, ...args) => new Promise((resolve, reject) => {
     const failed = (error) => reject(error);
     server.once("error", failed);
-    server.listen(...args, () => { server.removeListener("error", failed); resolve(); });
+    // LiteSpeed exposes the original TCP method but intercepts every listen(),
+    // allowing only one installed public server. Use its saved method ONLY for
+    // the private loopback API; leave the public host listener untouched.
+    const method = server === privateServer && global.LitespeedNodeJS && typeof server.originalListen === "function"
+      ? server.originalListen : server.listen;
+    method.call(server, ...args, () => { server.removeListener("error", failed); resolve(); });
   });
   const closeServer = (server) => new Promise((resolve) => {
     if (!server.listening) return resolve();
@@ -37,6 +43,7 @@ async function startHostedServer() {
   try {
     // No fixed private port: separate Passenger processes cannot collide.
     await listen(privateServer, 0, "127.0.0.1");
+    if (!privateServer.address()?.port) throw new Error("Private API TCP listener unavailable");
     process.env.API_UPSTREAM_URL = `http://127.0.0.1:${privateServer.address().port}`;
     console.log("Hosted startup: preparing the storefront.");
     web = next({ dev: false, dir: path.resolve(__dirname, "../apps/web"), httpServer: publicServer });

@@ -8,13 +8,15 @@ const name = process.env.TEST_DATABASE_NAME || "";
 if (!/^imad_ci_[a-f0-9]{16}$/.test(name) || process.env.DATABASE_URL !== `mongodb://127.0.0.1:27017/${name}?replicaSet=rs0`)
   throw new Error("Run scripts/test-hosted-runtime.cjs with an isolated database");
 
-const passengerMode = process.env.TEST_PASSENGER === "true";
-test(`Hosted ${passengerMode ? "Passenger" : "TCP"} listener serves SSR, API, admin and photos without workers`, { timeout: 120000 }, async () => {
+const mode = process.env.TEST_HOST_MODE;
+const passengerMode = mode === "passenger";
+test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`, { timeout: 120000 }, async () => {
   const { prisma } = require("../backend/dist/lib/prisma.js");
   const mongo = new MongoClient(process.env.DATABASE_URL);
   let runtime;
   const { Server } = require("node:http");
   const originalListen = Server.prototype.listen;
+  const savedOriginalListen = Server.prototype.originalListen;
   let configured = false, publicBinding = false;
   if (passengerMode) {
     // Emulate Passenger's documented reverse-port-binding contract using real
@@ -23,6 +25,14 @@ test(`Hosted ${passengerMode ? "Passenger" : "TCP"} listener serves SSR, API, ad
     Server.prototype.listen = function(...args) {
       assert.equal(configured, true, "Disable automatic interception before ANY listener");
       if (args[0] === "passenger") { publicBinding = true; args = [0, "127.0.0.1", args.at(-1)]; }
+      return originalListen.apply(this, args);
+    };
+  } else if (mode === "litespeed") {
+    global.LitespeedNodeJS = {};
+    Server.prototype.originalListen = originalListen;
+    Server.prototype.listen = function(...args) {
+      assert.equal(publicBinding, false, "LiteSpeed permits only one installed public listener");
+      publicBinding = true;
       return originalListen.apply(this, args);
     };
   }
@@ -41,7 +51,7 @@ test(`Hosted ${passengerMode ? "Passenger" : "TCP"} listener serves SSR, API, ad
     runtime = await require("../scripts/hosted-server.cjs").startHostedServer();
     const origin = `http://127.0.0.1:${runtime.publicServer.address().port}`;
     assert.notEqual(runtime.privateServer.address().port, runtime.publicServer.address().port);
-    if (passengerMode) assert.equal(publicBinding, true);
+    if (mode !== "tcp") assert.equal(publicBinding, true);
     const get = (route, options) => fetch(origin + route, options);
     assert.equal((await get("/health")).status, 200);
     assert.equal((await get("/api/products/admin/catalog")).status, 401);
@@ -68,7 +78,10 @@ test(`Hosted ${passengerMode ? "Passenger" : "TCP"} listener serves SSR, API, ad
     assert.equal(await mongo.db(name).collection("deskcomm_outbox").countDocuments(), 0);
   } finally {
     Server.prototype.listen = originalListen;
+    if (savedOriginalListen) Server.prototype.originalListen = savedOriginalListen;
+    else delete Server.prototype.originalListen;
     delete global.PhusionPassenger;
+    delete global.LitespeedNodeJS;
     await runtime?.close();
     await prisma.$disconnect();
     await mongo.db(name).dropDatabase();
