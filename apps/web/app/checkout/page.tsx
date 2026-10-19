@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
     const shipping = useShipping(total());
     const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
+    const [whatsappAssistance, setWhatsappAssistance] = useState(false);
     const [fields, setFields] = useState<Record<string, string>>({});
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
@@ -42,6 +44,8 @@ export default function CheckoutPage() {
             errors.phone = "أدخلي رقم هاتف مغربي صالحاً";
         if (!form.city.trim()) errors.city = "أدخلي المدينة";
         if (form.address.trim().length < 3) errors.address = "أدخلي عنوان التوصيل";
+        if (whatsappAssistance && !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
+            errors.phone = "للمساعدة عبر واتساب، أدخلي الرقم الدولي بنفسكِ: +212…";
         setFields(errors);
         if (Object.keys(errors).length) {
             document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
@@ -66,6 +70,10 @@ export default function CheckoutPage() {
             const order = await createOrder(
                 {
                     paymentMethod: "COD",
+                    aiServiceConsent: whatsappAssistance,
+                    ...(whatsappAssistance
+                        ? { aiServiceConsentVersion: ORDER_WHATSAPP_NOTICE_VERSION }
+                        : {}),
                     expectedTotal: shipping.total ?? undefined,
                     customer: {
                         fullName: form.fullName.trim(),
@@ -311,6 +319,21 @@ export default function CheckoutPage() {
                             <p role="alert" className="checkout-alert">
                                 احذفي المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
                             </p>
+                        )}
+                        {shipping.settings?.whatsappAssistanceAvailable && (
+                            <label className="checkout-policy flex items-start gap-3">
+                                <input
+                                    type="checkbox"
+                                    checked={whatsappAssistance}
+                                    onChange={(e) => setWhatsappAssistance(e.target.checked)}
+                                    aria-describedby="whatsapp-assistance-details"
+                                />
+                                <span id="whatsapp-assistance-details">
+                                    أرغب في أن تتواصل معي المساعدة الآلية للمتجر عبر واتساب لتأكيد
+                                    هذه الطلبية وتوضيح تفاصيلها. يمكنني طلب التحدث إلى الفريق أو
+                                    إيقاف المساعدة. هذا الاختيار اختياري ولا يخص الرسائل الإعلانية.
+                                </span>
+                            </label>
                         )}
                         <p className="checkout-policy">
                             قبل التأكيد، اطلعي على <Link href="/delivery">التوصيل</Link> و

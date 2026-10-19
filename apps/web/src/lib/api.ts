@@ -164,6 +164,8 @@ export interface ProductsResponse {
 
 // Guest-only checkout — no user account required
 export interface GuestCheckoutPayload {
+    aiServiceConsent?: boolean;
+    aiServiceConsentVersion?: string;
     paymentMethod: "COD";
     expectedTotal?: number;
     customer: {
@@ -234,6 +236,7 @@ export interface StoreSettings {
     shippingCost: number;
     freeShippingMin: number;
     codEnabled: boolean;
+    whatsappAssistanceAvailable?: boolean;
 }
 
 export const getSettings = async (): Promise<StoreSettings> => {

@@ -7,6 +7,7 @@ const base = getBaseUrl();
 type Config = {
     enabled: boolean;
     configured: boolean;
+    signedSending?: boolean;
     updatedAt: string | null;
     confirmationSync?: boolean;
     connection?: CompanyConnection | null;
@@ -25,6 +26,8 @@ export default function DeskcommTab() {
         [clearWebhook, setClear] = useState(false),
         [loading, setLoading] = useState(false),
         [message, setMessage] = useState("");
+    const [signingSecret, setSigningSecret] = useState("");
+    const [clearSigningSecret, setClearSigningSecret] = useState(false);
     const [reference, setReference] = useState("");
     const [delivery, setDelivery] = useState<{
         reference: string;
@@ -71,17 +74,27 @@ export default function DeskcommTab() {
         setLoading(true);
         setMessage("");
         try {
-            const body: { enabled: boolean; webhookUrl?: string; clearWebhook?: boolean } = {
+            const body: {
+                enabled: boolean;
+                webhookUrl?: string;
+                clearWebhook?: boolean;
+                signingSecret?: string;
+                clearSigningSecret?: boolean;
+            } = {
                 enabled,
                 clearWebhook,
+                clearSigningSecret,
             };
             if (url.trim()) body.webhookUrl = url.trim();
+            if (signingSecret.trim()) body.signingSecret = signingSecret.trim();
             const r = await axios.put<{ data: Config }>(base + "/integrations/deskcomm", body, {
                 headers: headers(),
             });
             setConfig(r.data.data);
             setUrl("");
             setClear(false);
+            setSigningSecret("");
+            setClearSigningSecret(false);
             setMessage("Configuration enregistrée");
         } catch (e) {
             setMessage(
@@ -97,15 +110,20 @@ export default function DeskcommTab() {
         <section className="max-w-2xl admin-panel admin-crm space-y-4">
             <h2 className="text-xl font-semibold">Connexion à votre CRM</h2>
             {config && !config.connection && (
-                <aside className="rounded-xl border p-4 space-y-2" aria-label="Identité de la boutique">
+                <aside
+                    className="rounded-xl border p-4 space-y-2"
+                    aria-label="Identité de la boutique"
+                >
                     <h3 className="font-semibold">Identité de la boutique</h3>
                     <p className="text-sm admin-muted">
-                        Installation historique : aucun identifiant de boutique n’a été attribué.
-                        Sa connexion existante peut être rattachée au module CRM sans créer une autre source.
+                        Installation historique : aucun identifiant de boutique n’a été attribué. Sa
+                        connexion existante peut être rattachée au module CRM sans créer une autre
+                        source.
                     </p>
                     <p className="text-sm admin-muted">
-                        Pour une nouvelle boutique modèle, son identifiant d’installation est affiché ici automatiquement.
-                        Une référence de commande ou un identifiant de source CRM ne le remplace pas.
+                        Pour une nouvelle boutique modèle, son identifiant d’installation est
+                        affiché ici automatiquement. Une référence de commande ou un identifiant de
+                        source CRM ne le remplace pas.
                     </p>
                 </aside>
             )}
@@ -232,6 +250,43 @@ export default function DeskcommTab() {
                         className="admin-field mt-2"
                     />
                 </label>
+                <fieldset className="space-y-3 rounded-xl border p-4">
+                    <legend className="text-sm font-semibold">
+                        Signature des envois vers le CRM
+                    </legend>
+                    <p className="text-sm admin-muted">
+                        {config?.signedSending
+                            ? "Signature configurée"
+                            : "Sans signature entrante CRM"}
+                        . Cette clé est distincte de la clé de retour des confirmations. Le premier
+                        contact IA exige aussi un agent, un canal et une règle actifs dans le CRM,
+                        ainsi que la demande du client.
+                    </p>
+                    <label className="block text-sm">
+                        Clé de la source CRM (vide = conserver)
+                        <input
+                            type="password"
+                            autoComplete="new-password"
+                            className="admin-field mt-2"
+                            pattern="[a-fA-F0-9]{64}"
+                            value={signingSecret}
+                            onChange={(e) => setSigningSecret(e.target.value)}
+                        />
+                    </label>
+                    <label className="flex items-center gap-3 text-sm">
+                        <input
+                            type="checkbox"
+                            checked={clearSigningSecret}
+                            onChange={(e) => setClearSigningSecret(e.target.checked)}
+                        />
+                        Effacer la signature d’envoi (désactiver d’abord l’IA dans le CRM)
+                    </label>
+                    <p className="text-xs admin-muted">
+                        La clé est chiffrée et ne sera jamais réaffichée. Coordonner sa mise en
+                        place avec la source CRM avant de réactiver les envois. Aucun test ni renvoi
+                        historique n’est effectué en enregistrant.
+                    </p>
+                </fieldset>
                 <label className="flex items-center gap-3 text-sm">
                     <input
                         type="checkbox"
@@ -255,7 +310,11 @@ export default function DeskcommTab() {
                 </p>
                 <button
                     type="submit"
-                    disabled={loading || (clearWebhook && Boolean(url))}
+                    disabled={
+                        loading ||
+                        (clearWebhook && Boolean(url)) ||
+                        (clearSigningSecret && Boolean(signingSecret))
+                    }
                     className="admin-button primary"
                 >
                     {loading ? "Enregistrement..." : "Enregistrer"}

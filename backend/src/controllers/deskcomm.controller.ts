@@ -10,6 +10,11 @@ const schema = z
         enabled: z.boolean(),
         webhookUrl: z.string().trim().max(2048).optional(),
         clearWebhook: z.boolean().optional(),
+        signingSecret: z
+            .string()
+            .regex(/^[a-f0-9]{64}$/i)
+            .optional(),
+        clearSigningSecret: z.boolean().optional(),
     })
     .strict();
 function validateUrl(value: string) {
@@ -109,6 +114,7 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
         data: {
             enabled: c?.enabled ?? false,
             configured: Boolean(c?.webhookCiphertext),
+            signedSending: Boolean(c?.signingCiphertext),
             updatedAt: c?.updatedAt ?? null,
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),
@@ -137,6 +143,18 @@ export async function putDeskcommConfig(req: Request, res: Response) {
     }
     const cur = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
     let cipher = cur?.webhookCiphertext ?? null;
+    if (b.clearSigningSecret && b.signingSecret)
+        throw new AppError("Choisir suppression ou remplacement de signature", 400);
+    let signingCiphertext = cur?.signingCiphertext ?? null;
+    if (
+        b.clearWebhook ||
+        (b.webhookUrl &&
+            cur?.webhookCiphertext &&
+            b.webhookUrl !== decryptDeskcommValue(cur.webhookCiphertext))
+    )
+        signingCiphertext = null;
+    if (b.clearSigningSecret) signingCiphertext = null;
+    if (b.signingSecret) signingCiphertext = encrypt(b.signingSecret);
     if (b.clearWebhook) cipher = null;
     if (b.webhookUrl) {
         try {
@@ -156,8 +174,13 @@ export async function putDeskcommConfig(req: Request, res: Response) {
     }
     const c = await prisma.deskcommIntegration.upsert({
         where: { id: "deskcomm" },
-        create: { id: "deskcomm", enabled: b.enabled, webhookCiphertext: cipher },
-        update: { enabled: b.enabled, webhookCiphertext: cipher },
+        create: {
+            id: "deskcomm",
+            enabled: b.enabled,
+            webhookCiphertext: cipher,
+            signingCiphertext,
+        },
+        update: { enabled: b.enabled, webhookCiphertext: cipher, signingCiphertext },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json({
@@ -165,6 +188,7 @@ export async function putDeskcommConfig(req: Request, res: Response) {
         data: {
             enabled: c.enabled,
             configured: Boolean(c.webhookCiphertext),
+            signedSending: Boolean(c.signingCiphertext),
             updatedAt: c.updatedAt,
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),

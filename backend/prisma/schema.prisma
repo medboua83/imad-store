@@ -167,6 +167,9 @@ model ProductVariant {
 
 model Order {
   idempotencyKey        String?       @unique
+  aiServiceConsent      Boolean?
+  aiServiceConsentVersion String?
+  aiServiceConsentAt    DateTime?
   inventoryReserved     Boolean?
   requestFingerprint    String?
   id                    String        @id @default(auto()) @map("_id") @db.ObjectId
@@ -278,6 +281,7 @@ model DeskcommIntegration {
   id                String   @id @map("_id")
   enabled           Boolean  @default(false)
   webhookCiphertext String?
+  signingCiphertext String?
   updatedAt         DateTime @updatedAt
   @@map("deskcomm_integrations")
 }

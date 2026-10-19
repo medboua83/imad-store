@@ -21,13 +21,18 @@ const token = jwt.sign(
 );
 const admin = () => ({ Authorization: `Bearer ${token}` });
 const mongo = new MongoClient(process.env.DATABASE_URL!);
-const receipts: { key?: string; body: string }[] = [];
+const receipts: { key?: string; body: string; signature?: string; contentType?: string }[] = [];
 let failDelivery = true;
 const crm = createServer((req, res) => {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", () => {
-        receipts.push({ key: req.headers["idempotency-key"] as string, body });
+        receipts.push({
+            key: req.headers["idempotency-key"] as string,
+            body,
+            signature: req.headers["x-deskcomm-signature"] as string,
+            contentType: req.headers["content-type"],
+        });
         res.writeHead(failDelivery ? 503 : 200);
         res.end("ok");
     });
@@ -900,4 +905,165 @@ test("Signed CRM confirmations update one existing order exactly once and never 
         for (const k of Object.keys(process.env)) if (k.startsWith(prefix)) delete process.env[k];
         Object.assign(process.env, saved);
     }
+});
+
+test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy orders never gain consent", async () => {
+    const { ORDER_WHATSAPP_NOTICE_VERSION: version } = await import("@imad-store/shared");
+    const secret = "73".repeat(32),
+        endpoint = "/api/integrations/deskcomm";
+    assert.equal(
+        (await request(app).put(endpoint).send({ enabled: true, signingSecret: secret })).status,
+        401,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .put(endpoint)
+                .set(admin())
+                .send({ enabled: true, signingSecret: "bad" })
+        ).status,
+        400,
+    );
+    assert.equal(
+        (await request(app).get("/api/settings")).body.data.whatsappAssistanceAvailable,
+        false,
+    );
+    const beforeJobs = await prisma.deskcommOutbox.findMany();
+    const saved = await request(app)
+        .put(endpoint)
+        .set(admin())
+        .send({ enabled: true, signingSecret: secret });
+    assert.equal(saved.status, 200);
+    assert.equal(saved.body.data.signedSending, true);
+    const publicSettings = await request(app).get("/api/settings");
+    assert.equal(publicSettings.body.data.whatsappAssistanceAvailable, true);
+    assert.doesNotMatch(JSON.stringify(publicSettings.body), new RegExp(secret));
+    assert.doesNotMatch(JSON.stringify(saved.body), new RegExp(secret));
+    const config = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+    assert.ok(config.signingCiphertext);
+    assert.doesNotMatch(config.signingCiphertext, new RegExp(secret));
+    const createdProduct = await request(app).post("/api/products").set(admin()).send(payload());
+    assert.equal(createdProduct.status, 201);
+    const p = createdProduct.body.data;
+    const body = {
+        ...checkout(),
+        aiServiceConsent: true,
+        aiServiceConsentVersion: version,
+        items: [{ productId: p.id, variantId: p.variants[0].id, quantity: 1 }],
+    };
+    const count = await prisma.order.count();
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders")
+                .set("Idempotency-Key", key())
+                .send({ ...body, aiServiceConsentVersion: "invented" })
+        ).status,
+        400,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders")
+                .set("Idempotency-Key", key())
+                .send({ ...body, aiServiceConsentVersion: undefined })
+        ).status,
+        400,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders")
+                .set("Idempotency-Key", key())
+                .send({ ...body, customer: { ...body.customer, phone: "0600000099" } })
+        ).status,
+        400,
+    );
+    assert.equal(await prisma.order.count(), count);
+    const requestKey = key();
+    const [a, b] = await Promise.all([
+        request(app).post("/api/orders").set("Idempotency-Key", requestKey).send(body),
+        request(app).post("/api/orders").set("Idempotency-Key", requestKey).send(body),
+    ]);
+    assert.deepEqual([a.status, b.status].sort(), [200, 201]);
+    assert.equal(a.body.data.id, b.body.data.id);
+    const id = a.body.data.id,
+        order = await prisma.order.findUnique({ where: { id } });
+    assert.equal(order.aiServiceConsent, true);
+    assert.equal(order.aiServiceConsentVersion, version);
+    assert.ok(order.aiServiceConsentAt);
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders")
+                .set("Idempotency-Key", requestKey)
+                .send({ ...body, aiServiceConsent: false })
+        ).status,
+        409,
+    );
+    const job = await prisma.deskcommOutbox.findUnique({ where: { orderId: id } });
+    assert.equal(job.payload.aiServiceConsent, true);
+    assert.equal(job.payload.aiServiceConsentVersion, version);
+    // Configuration writes do not rewrite old outbox payloads or replay historical orders.
+    for (const old of beforeJobs)
+        assert.deepEqual(
+            (await prisma.deskcommOutbox.findUnique({ where: { id: old.id } })).payload,
+            old.payload,
+        );
+    const { sendOrderToDeskcomm } = await import("../backend/src/lib/deskcomm-crm");
+    failDelivery = false;
+    await sendOrderToDeskcomm(job.payload);
+    const received = receipts.at(-1)!;
+    assert.match(received.contentType!, /application\/json/);
+    assert.equal(
+        received.signature,
+        createHmac("sha256", secret).update(received.body).digest("hex"),
+    );
+    const data = JSON.parse(received.body);
+    assert.equal(data.ai_service_consent, true);
+    assert.equal(data.ai_service_consent_version, version);
+    assert.equal(data.submission_status, "completed");
+    assert.equal(data.external_id, `imad-store-${id}`);
+    assert.equal(data.telefone, body.customer.phone);
+    assert.equal(data.ai_service_phone_explicit, undefined); // Established only by CRM from the original phone.
+    await sendOrderToDeskcomm({ ...job.payload, aiServiceConsentVersion: undefined });
+    assert.equal(JSON.parse(receipts.at(-1)!.body).ai_service_consent, false);
+    await sendOrderToDeskcomm({ ...job.payload, phone: "0600000099" });
+    assert.equal(JSON.parse(receipts.at(-1)!.body).ai_service_consent, false);
+    await sendOrderToDeskcomm({
+        ...job.payload,
+        aiServiceConsent: undefined,
+        aiServiceConsentVersion: undefined,
+    });
+    const historical = JSON.parse(receipts.at(-1)!.body);
+    assert.equal(historical.ai_service_consent, false);
+    assert.equal(historical.ai_service_consent_version, undefined);
+    await sendOrderToDeskcomm({
+        ...job.payload,
+        captureVersion: undefined,
+        aiServiceConsent: undefined,
+        aiServiceConsentVersion: undefined,
+    });
+    const oldDelivery = receipts.at(-1)!;
+    assert.match(oldDelivery.contentType!, /application\/x-www-form-urlencoded/);
+    assert.equal(new URLSearchParams(oldDelivery.body).get("ai_service_consent"), null);
+    assert.equal(new URLSearchParams(oldDelivery.body).get("external_id"), null);
+    assert.equal(
+        oldDelivery.signature,
+        createHmac("sha256", secret).update(oldDelivery.body).digest("hex"),
+    );
+    assert.equal(
+        (await request(app).put(endpoint).set(admin()).send({ enabled: true })).body.data
+            .signedSending,
+        true,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .put(endpoint)
+                .set(admin())
+                .send({ enabled: true, clearSigningSecret: true })
+        ).body.data.signedSending,
+        false,
+    );
 });

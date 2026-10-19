@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -14,6 +15,8 @@ const createOrderSchema = z
         paymentMethod: z.enum(["COD"]).default("COD"),
         // Accepted only for old clients/idempotent retries; never controls CRM delivery.
         crmConsent: z.boolean().default(false),
+        aiServiceConsent: z.boolean().default(false),
+        aiServiceConsentVersion: z.literal(ORDER_WHATSAPP_NOTICE_VERSION).optional(),
         expectedTotal: z.number().nonnegative().optional(),
         notes: z.string().max(2000).optional(),
         customer: z
@@ -42,7 +45,24 @@ const createOrderSchema = z
             .min(1, "Cart cannot be empty")
             .max(100),
     })
-    .strict();
+    .strict()
+    .superRefine((value, ctx) => {
+        if (
+            value.aiServiceConsent &&
+            value.aiServiceConsentVersion !== ORDER_WHATSAPP_NOTICE_VERSION
+        )
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["aiServiceConsentVersion"],
+                message: "Notice WhatsApp requise",
+            });
+        if (value.aiServiceConsent && !/^\+212[5-7]\d{8}$/.test(value.customer.phone))
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["customer", "phone"],
+                message: "Pour WhatsApp, saisissez explicitement le numéro international +212…",
+            });
+    });
 
 const ORDER_INCLUDE = {
     items: {
@@ -67,6 +87,12 @@ export async function createOrder(req: Request, res: Response) {
                 customer: body.customer,
                 paymentMethod: body.paymentMethod,
                 crmConsent: body.crmConsent,
+                ...(body.aiServiceConsent
+                    ? {
+                          aiServiceConsent: true,
+                          aiServiceConsentVersion: body.aiServiceConsentVersion,
+                      }
+                    : {}),
                 notes: body.notes ?? null,
                 items: body.items.map((i) => ({
                     productId: i.productId,
@@ -178,6 +204,11 @@ export async function createOrder(req: Request, res: Response) {
                             idempotencyKey: key,
                             requestFingerprint,
                             inventoryReserved: true,
+                            aiServiceConsent: body.aiServiceConsent,
+                            aiServiceConsentVersion: body.aiServiceConsent
+                                ? body.aiServiceConsentVersion
+                                : null,
+                            aiServiceConsentAt: body.aiServiceConsent ? new Date() : null,
                             customerName: body.customer.fullName,
                             customerPhone: body.customer.phone,
                             customerEmail: body.customer.email || null,
@@ -215,6 +246,10 @@ export async function createOrder(req: Request, res: Response) {
                                 orderId: created.id,
                                 payload: {
                                     id: created.id,
+                                    captureVersion: 1,
+                                    aiServiceConsent: created.aiServiceConsent === true,
+                                    aiServiceConsentVersion:
+                                        created.aiServiceConsentVersion ?? undefined,
                                     name: created.customerName ?? "",
                                     phone: created.customerPhone ?? "",
                                     email: created.customerEmail ?? undefined,
