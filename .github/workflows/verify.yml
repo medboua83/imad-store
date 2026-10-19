@@ -31,4 +31,8 @@ jobs:
                   done
             - run: npm run check
             - run: npm test
+            - name: Build and verify the combined hosting runtime
+              run: |
+                  IMAD_HOSTING_MODE=combined NEXT_PUBLIC_API_URL=/api npm run build
+                  npm run test:hosted
             - run: npm audit --audit-level=high

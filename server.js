@@ -25,5 +25,18 @@ const standaloneServer = path.join(
 process.env.PORT = process.env.PORT || "3000";
 process.env.NODE_ENV = process.env.NODE_ENV || "production";
 
-// Dynamically require the built standalone server
-require(standaloneServer);
+if (process.env.IMAD_HOSTING_MODE === "combined") {
+  require("./scripts/hosted-server.cjs").startHostedServer().then((runtime) => {
+    for (const signal of ["SIGTERM", "SIGINT"]) process.once(signal, () => {
+      runtime.close().finally(() => process.exit(0));
+      setTimeout(() => process.exit(1), 10_000).unref();
+    });
+  }).catch((error) => {
+    // Never print configuration values or database connection strings.
+    console.error("Hosted startup failed. Check the build and required server configuration.");
+    if (/^[A-Z_0-9]+$/.test(error?.code || "")) console.error(`Startup code: ${error.code}`);
+    process.exit(1);
+  });
+} else {
+  require(standaloneServer);
+}

@@ -9,10 +9,11 @@
   ],
   "scripts": {
     "dev": "npx turbo run dev",
-    "build": "npm --prefix packages/shared run build && npm --prefix apps/web run build && node scripts/copy-standalone-assets.js",
+    "build": "node scripts/prepare-hosted-build.cjs && npm --prefix packages/shared run build && npm --prefix backend run prisma:generate && npm --prefix backend run build && npm --prefix apps/web run build && node scripts/copy-standalone-assets.js",
     "start": "node server.js",
     "lint": "npx turbo run lint",
     "test": "npm run test:integration",
+    "test:hosted": "node scripts/test-hosted-runtime.cjs",
     "test:integration": "npm --prefix packages/shared run build && node scripts/run-integration-tests.cjs",
     "check": "npm --prefix packages/shared run build && npm --prefix backend run build && npm --prefix apps/web run lint && npm run build",
     "predev": "npm --prefix packages/shared run build"
