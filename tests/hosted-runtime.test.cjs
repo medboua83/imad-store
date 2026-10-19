@@ -28,8 +28,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
       return originalListen.apply(this, args);
     };
   } else if (mode === "litespeed") {
-    global.LitespeedNodeJS = {};
-    Server.prototype.originalListen = originalListen;
+    // No marker or originalListen: actual hosted adapters need not expose them.
     Server.prototype.listen = function(...args) {
       assert.equal(publicBinding, false, "LiteSpeed permits only one installed public listener");
       publicBinding = true;

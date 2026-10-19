@@ -13,6 +13,7 @@ async function startHostedServer() {
   }
   process.env.DATABASE_URL = await require("./resolve-hosted-database.cjs").resolveHostedDatabase(process.env.DATABASE_URL);
   const { createServer } = require("node:http");
+  const { Server: TcpServer } = require("node:net");
   const next = require("next");
   console.log("Hosted startup: loading the compiled API.");
   const { app: api } = require("../backend/dist/app.js");
@@ -23,11 +24,11 @@ async function startHostedServer() {
   const listen = (server, ...args) => new Promise((resolve, reject) => {
     const failed = (error) => reject(error);
     server.once("error", failed);
-    // LiteSpeed exposes the original TCP method but intercepts every listen(),
-    // allowing only one installed public server. Use its saved method ONLY for
-    // the private loopback API; leave the public host listener untouched.
-    const method = server === privateServer && global.LitespeedNodeJS && typeof server.originalListen === "function"
-      ? server.originalListen : server.listen;
+    // HTTP Server extends net.Server. Bind the private loopback socket through
+    // the native TCP API; host adapters may intercept ALL HTTP listen() calls
+    // and need not expose a global marker or a saved originalListen method.
+    // Only the public HTTP listener participates in the host's request routing.
+    const method = server === privateServer ? TcpServer.prototype.listen : server.listen;
     method.call(server, ...args, () => { server.removeListener("error", failed); resolve(); });
   });
   const closeServer = (server) => new Promise((resolve) => {
@@ -42,8 +43,9 @@ async function startHostedServer() {
   };
   try {
     // No fixed private port: separate Passenger processes cannot collide.
+    console.log("Hosted startup: binding the private loopback API.");
     await listen(privateServer, 0, "127.0.0.1");
-    if (!privateServer.address()?.port) throw new Error("Private API TCP listener unavailable");
+    if (!privateServer.address()?.port) throw Object.assign(new Error(), { code: "PRIVATE_API_TCP_UNAVAILABLE" });
     process.env.API_UPSTREAM_URL = `http://127.0.0.1:${privateServer.address().port}`;
     console.log("Hosted startup: preparing the storefront.");
     web = next({ dev: false, dir: path.resolve(__dirname, "../apps/web"), httpServer: publicServer });
