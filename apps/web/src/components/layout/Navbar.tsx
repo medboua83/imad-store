@@ -10,6 +10,8 @@ import {
     LayoutGrid,
     MessageCircle,
     X,
+    Truck,
+    PackageCheck,
 } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { useCartStore } from "@/store/cart.store";
@@ -19,6 +21,13 @@ const dockLinks = [
     ["/shop", "المتجر", LayoutGrid],
     ["/contact", "تواصل معنا", MessageCircle],
 ] as const;
+const categories = [
+    ["abayas", "العبايات"],
+    ["womens-shoes", "أحذية نسائية"],
+    ["shawls", "الشيلان"],
+    ["mens-clogs", "صابو رجالي"],
+    ["bags", "الحقائب"],
+];
 const links = [
     ["/", "الرئيسية"],
     ["/shop", "المتجر"],
@@ -27,6 +36,34 @@ const links = [
 export function Navbar() {
     const menu = useRef<HTMLDialogElement>(null);
     const path = usePathname();
+    const menuTrigger = useRef<HTMLButtonElement>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    function closeMenu() {
+        menu.current?.close();
+    }
+    function openMenu() {
+        menu.current?.showModal();
+        setMenuOpen(true);
+    }
+    useEffect(() => {
+        if (!menuOpen) return;
+        const oldOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = oldOverflow;
+        };
+    }, [menuOpen]);
+    useEffect(() => {
+        menu.current?.close();
+    }, [path]);
+    useEffect(() => {
+        const desktop = window.matchMedia("(min-width: 768px)");
+        const changed = () => {
+            if (desktop.matches) menu.current?.close();
+        };
+        desktop.addEventListener("change", changed);
+        return () => desktop.removeEventListener("change", changed);
+    }, []);
     const [count, setCount] = useState(0);
     useEffect(() => {
         const update = () => setCount(useCartStore.getState().itemCount());
@@ -39,7 +76,7 @@ export function Navbar() {
     }, []);
     return (
         <>
-            <header className="site-header">
+            <header className="site-header refined-header">
                 <div className="nav-inner">
                     <Link
                         href="/"
@@ -49,7 +86,7 @@ export function Navbar() {
                     >
                         IMAD <span>MODE</span>
                     </Link>
-                    <nav aria-label="التنقل الرئيسي" className="hidden md:flex gap-5">
+                    <nav aria-label="التنقل الرئيسي" className="desktop-navigation">
                         {links.map(([href, label]) => (
                             <Link
                                 key={href}
@@ -77,6 +114,7 @@ export function Navbar() {
                             aria-label="البحث في المتجر"
                         >
                             <Search size={20} aria-hidden="true" />
+                            <span className="header-search-label">بحث</span>
                         </Link>
                         <button
                             className="action cart-toggle"
@@ -90,7 +128,11 @@ export function Navbar() {
                         <button
                             className="action mobile-menu-toggle"
                             aria-label="فتح القائمة"
-                            onClick={() => menu.current?.showModal()}
+                            ref={menuTrigger}
+                            aria-haspopup="dialog"
+                            aria-controls="store-menu"
+                            aria-expanded={menuOpen}
+                            onClick={openMenu}
                         >
                             <Menu size={22} aria-hidden="true" />
                             <span className="sr-only">القائمة</span>
@@ -107,34 +149,110 @@ export function Navbar() {
                     </Link>
                 </div>
                 <dialog
+                    id="store-menu"
                     onKeyDown={trapDialogFocus}
-                    className="menu-dialog"
+                    className="menu-dialog store-menu"
                     ref={menu}
                     aria-labelledby="menu-title"
+                    onClose={() => {
+                        setMenuOpen(false);
+                        menuTrigger.current?.focus({ preventScroll: true });
+                    }}
                 >
-                    <h2 id="menu-title" className="text-xl">
-                        القائمة
-                    </h2>
-                    <button
-                        className="action menu-close"
-                        aria-label="إغلاق القائمة"
-                        onClick={() => menu.current?.close()}
-                    >
-                        <X size={22} aria-hidden="true" />
-                    </button>
-                    <nav className="flex flex-col gap-4 mt-6">
-                        {links.map(([href, label]) => (
-                            <Link
-                                className="action"
-                                href={href}
-                                key={href}
-                                onClick={() => menu.current?.close()}
-                            >
-                                {label}
+                    <div className="store-menu-top">
+                        <div>
+                            <p className="menu-eyebrow" dir="ltr">
+                                THE IMAD EDIT
+                            </p>
+                            <h2 id="menu-title">اختاري ما يشبهكِ.</h2>
+                        </div>
+                        <button
+                            type="button"
+                            className="action menu-close"
+                            aria-label="إغلاق القائمة"
+                            onClick={closeMenu}
+                        >
+                            <X size={22} aria-hidden="true" />
+                        </button>
+                    </div>
+                    <div className="store-menu-scroll">
+                        <form
+                            action="/shop"
+                            method="get"
+                            role="search"
+                            aria-label="البحث في المتجر"
+                            className="menu-search-form"
+                            onSubmit={closeMenu}
+                        >
+                            <label htmlFor="menu-search">ما الذي تبحثين عنه؟</label>
+                            <div>
+                                <input
+                                    id="menu-search"
+                                    name="search"
+                                    type="search"
+                                    placeholder="ابحثي عن قطعة…"
+                                    maxLength={100}
+                                    enterKeyHint="search"
+                                />
+                                <button type="submit" aria-label="عرض نتائج البحث">
+                                    <Search size={20} aria-hidden="true" />
+                                </button>
+                            </div>
+                        </form>
+                        <Link href="/shop" className="menu-shop-all" onClick={closeMenu}>
+                            <span>
+                                <LayoutGrid size={20} aria-hidden="true" />
+                                اكتشفي كل المنتجات
+                            </span>
+                            <ArrowUpLeft size={20} aria-hidden="true" />
+                        </Link>
+                        <nav className="menu-categories" aria-label="فئات المنتجات">
+                            <h3>تسوّقي حسب الفئة</h3>
+                            {categories.map(([slug, label], index) => (
+                                <Link
+                                    href={`/shop?category=${slug}`}
+                                    key={slug}
+                                    onClick={closeMenu}
+                                >
+                                    <span className="menu-category-number" aria-hidden="true">
+                                        {String(index + 1).padStart(2, "0")}
+                                    </span>
+                                    <span>{label}</span>
+                                    <ArrowUpLeft size={16} aria-hidden="true" />
+                                </Link>
+                            ))}
+                        </nav>
+                        <nav className="menu-practical" aria-label="روابط المساعدة">
+                            <h3>كل التفاصيل، قبل الطلب</h3>
+                            <Link href="/delivery" onClick={closeMenu}>
+                                <Truck size={18} aria-hidden="true" />
+                                التوصيل
+                                <ArrowUpLeft size={16} aria-hidden="true" />
                             </Link>
-                        ))}
-                    </nav>
-                    <p className="menu-note">اختاري قطعتكِ، وراجعي التفاصيل قبل تأكيد الطلب.</p>
+                            <Link href="/returns" onClick={closeMenu}>
+                                <PackageCheck size={18} aria-hidden="true" />
+                                الاستبدال والإرجاع
+                                <ArrowUpLeft size={16} aria-hidden="true" />
+                            </Link>
+                            <Link href="/contact" onClick={closeMenu}>
+                                <MessageCircle size={18} aria-hidden="true" />
+                                تواصل معنا
+                                <ArrowUpLeft size={16} aria-hidden="true" />
+                            </Link>
+                            <Link href="/" onClick={closeMenu}>
+                                <House size={18} aria-hidden="true" />
+                                الرئيسية
+                                <ArrowUpLeft size={16} aria-hidden="true" />
+                            </Link>
+                        </nav>
+                    </div>
+                    <div className="store-menu-bottom">
+                        <ShoppingBag size={18} aria-hidden="true" />
+                        <p>
+                            اختاري. راجعي. واطلبي بثقة.
+                            <small>الدفع عند الاستلام · بدون إنشاء حساب</small>
+                        </p>
+                    </div>
                 </dialog>
             </header>
             {!path.startsWith("/products/") && !path.startsWith("/checkout") && (
