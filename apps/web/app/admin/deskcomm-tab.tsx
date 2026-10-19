@@ -96,6 +96,19 @@ export default function DeskcommTab() {
     return (
         <section className="max-w-2xl admin-panel admin-crm space-y-4">
             <h2 className="text-xl font-semibold">Connexion à votre CRM</h2>
+            {config && !config.connection && (
+                <aside className="rounded-xl border p-4 space-y-2" aria-label="Identité de la boutique">
+                    <h3 className="font-semibold">Identité de la boutique</h3>
+                    <p className="text-sm admin-muted">
+                        Installation historique : aucun identifiant de boutique n’a été attribué.
+                        Sa connexion existante peut être rattachée au module CRM sans créer une autre source.
+                    </p>
+                    <p className="text-sm admin-muted">
+                        Pour une nouvelle boutique modèle, son identifiant d’installation est affiché ici automatiquement.
+                        Une référence de commande ou un identifiant de source CRM ne le remplace pas.
+                    </p>
+                </aside>
+            )}
             {config?.connection && (
                 <CrmConnectionForm
                     connection={config.connection}
