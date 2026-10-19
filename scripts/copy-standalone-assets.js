@@ -37,6 +37,14 @@ function copyDir(src, dst) {
   }
 }
 
+// These explicitly published demo photos must survive a fresh hosted release.
+// Keep their content-addressed /uploads URLs compatible with the admin uploader.
+// This copies files only; it never seeds or updates the product database.
+copyDir(
+  path.join(PUBLIC_SRC, "images", "catalogue-demo"),
+  path.join(__dirname, "..", "backend", "uploads")
+);
+
 if (!fs.existsSync(STANDALONE)) {
   console.log("ℹ️  Standalone output not found — skipping asset copy (dev mode?).");
   process.exit(0);
