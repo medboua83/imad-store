@@ -18,7 +18,7 @@ const env = {
     UPLOAD_DIR: path.resolve(".test-runtime", name, "uploads"),
 };
 for (const key of Object.keys(env))
-    if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_)/.test(key)) delete env[key];
+    if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|STORE_INSTANCE_ID$|CRM_COMPANY_ID$|DESKCOMM_STATUS_)/.test(key)) delete env[key];
 const result = spawnSync(
     process.execPath,
     [
@@ -27,6 +27,7 @@ const result = spawnSync(
         "--test",
         "tests/integration.test.ts",
         "tests/cart.test.ts",
+        "tests/store-template.test.ts",
         "tests/admin-summary.test.ts",
         "tests/admin-products.test.ts",
     ],

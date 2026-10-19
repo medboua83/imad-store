@@ -1,10 +1,33 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { prisma } from "../lib/prisma";
+import { decryptDeskcommValue } from "../lib/deskcomm-config";
+import { storeIdentity } from "../lib/store-installation";
 import { Request, Response } from "express";
 import { z } from "zod";
 import { transitionOrderStatus } from "../lib/order-lifecycle";
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
-export function crmStatusConfig() {
+export async function crmStatusConfig() {
+    const saved = await prisma.deskcommConnection.findUnique({ where: { id: "deskcomm" } });
+    if (saved) {
+        const config = JSON.parse(decryptDeskcommValue(saved.ciphertext));
+        const identity = storeIdentity();
+        if (
+            !identity ||
+            config.storeId !== identity.storeId ||
+            config.companyId !== identity.companyId ||
+            !config.enabled
+        )
+            return null;
+        return config as {
+            secret: string;
+            pipeline: string;
+            stage: string;
+            field: string;
+            cutoff: string;
+        };
+    }
+    if (storeIdentity()) return null; // New company profiles never inherit legacy credentials.
     const {
         DESKCOMM_STATUS_CALLBACK_ENABLED: enabled,
         DESKCOMM_STATUS_CALLBACK_SECRET: secret,
@@ -47,7 +70,7 @@ const envelope = z.object({
 });
 export async function receiveDeskcommConfirmation(req: Request, res: Response) {
     res.setHeader("Cache-Control", "no-store");
-    const config = crmStatusConfig();
+    const config = await crmStatusConfig();
     if (!config) {
         res.status(503).json({ success: false, error: "CRM confirmation sync is disabled" });
         return;

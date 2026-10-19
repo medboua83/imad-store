@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Reusable company store foundation — 2026-10-19
+
+See `COMPANY_STORE_TEMPLATE_2026-10-19.md`. New profiles use one deployment/database/storage/secrets per company, with an immutable database identity, encrypted admin-configurable confirmation mapping, a fresh-profile generator and first-admin provisioning. Existing installations retain their legacy connection. 36 isolated tests plus three hosted-runtime tests pass; local UI saving is verified. CRM enterprise/source/rule provisioning remains manual.
+
 ## Signed CRM confirmation receiver — 2026-10-19
 
 See `CRM_CONFIRMATION_CALLBACK_2026-10-19.md`. Candidate receiver and transactional deduplication pass 31 isolated tests, build and lint. Feature is disabled until dedicated credentials and verified CRM mapping are activated; no production status synchronization is yet claimed.

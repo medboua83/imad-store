@@ -1,3 +1,4 @@
+import { assertStoreInstallation } from "./store-installation";
 import { transitionOrderStatus } from "./order-lifecycle";
 import { statusSchema, objectIdSchema } from "./validation";
 import { google } from "googleapis";
@@ -132,6 +133,7 @@ export async function updateOrderStatusInSheets(orderId: string, status: string)
 
 // Background worker: poll Google Sheets for status changes every 30s
 export async function syncSheetsToDatabase(): Promise<void> {
+    await assertStoreInstallation();
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;

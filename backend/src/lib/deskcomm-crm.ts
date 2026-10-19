@@ -20,7 +20,7 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
     `${i + 1}. ${item.quantity} x ${item.name} — ${(item.quantity * item.unitPrice).toFixed(2)} MAD`
   );
   const details = [
-    `Commande Imad Store #${order.id}`,
+    `Commande ${process.env.STORE_DISPLAY_NAME || "Imad Store"} #${order.id}`,
     ...lines,
     `Total: ${order.totalAmount.toFixed(2)} MAD`,
     `Livraison: ${order.shippingCost.toFixed(2)} MAD`,
@@ -38,7 +38,9 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
   form.set("quantidade", String(order.items.reduce((n, i) => n + i.quantity, 0)));
   form.set("valor_total", order.totalAmount.toFixed(2));
   form.set("moeda", "MAD");
-  form.set("origem", "Imad Store");
+  form.set("origem", process.env.STORE_DISPLAY_NAME || "Imad Store");
+  if (process.env.STORE_INSTANCE_ID) form.set("boutique_id", process.env.STORE_INSTANCE_ID);
+  if (process.env.CRM_COMPANY_ID) form.set("entreprise_id", process.env.CRM_COMPANY_ID);
   form.set("message", details);
   // These flags are informational only; no opt-in was collected.
   form.set("aiConsent", "false");
@@ -65,7 +67,7 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Idempotency-Key": `imad-store-${order.id}`,
+        "Idempotency-Key": process.env.STORE_INSTANCE_ID ? `store-${process.env.STORE_INSTANCE_ID}-${order.id}` : `imad-store-${order.id}`,
       },
       body: encodeDeskcommForm(order).toString(),
       signal: controller.signal,

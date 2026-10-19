@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import CrmConnectionForm, { type CompanyConnection } from "./crm-connection-form";
 import { getBaseUrl } from "@/lib/api";
 const base = getBaseUrl();
 type Config = {
@@ -8,6 +9,7 @@ type Config = {
     configured: boolean;
     updatedAt: string | null;
     confirmationSync?: boolean;
+    connection?: CompanyConnection | null;
     worker?: {
         hosted: boolean;
         enabled: boolean;
@@ -93,7 +95,21 @@ export default function DeskcommTab() {
     }
     return (
         <section className="max-w-2xl admin-panel admin-crm space-y-4">
-            <h2 className="text-xl font-semibold">DeskcommCRM — Webhook</h2>
+            <h2 className="text-xl font-semibold">Connexion à votre CRM</h2>
+            {config?.connection && (
+                <CrmConnectionForm
+                    connection={config.connection}
+                    onSaved={() => {
+                        axios
+                            .get<{ data: Config }>(base + "/integrations/deskcomm", {
+                                headers: headers(),
+                            })
+                            .then((r) => setConfig(r.data.data))
+                            .catch(() => setMessage("Actualisation impossible"));
+                    }}
+                />
+            )}
+            <h3 className="font-semibold">Envoi des nouvelles commandes</h3>
             <p className="text-sm admin-muted">
                 Le lien enregistré est chiffré côté serveur et n&apos;est jamais réaffiché.
             </p>

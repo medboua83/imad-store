@@ -11,6 +11,8 @@ async function startHostedServer() {
   const { createServer } = require("node:http");
   const next = require("next");
   console.log("Hosted startup: loading the compiled API.");
+  const { assertStoreInstallation } = require("../backend/dist/lib/store-installation.js");
+  await assertStoreInstallation();
   const { app: api } = require("../backend/dist/app.js");
   const { prisma } = require("../backend/dist/lib/prisma.js");
   const { readPublicStore } = require("../backend/dist/lib/public-store.js");

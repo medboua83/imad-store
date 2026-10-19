@@ -16,7 +16,9 @@
     "test:hosted": "node scripts/test-hosted-runtime.cjs",
     "test:integration": "npm --prefix packages/shared run build && node scripts/run-integration-tests.cjs",
     "check": "npm --prefix packages/shared run build && npm --prefix backend run build && npm --prefix apps/web run lint && npm run build",
-    "predev": "npm --prefix packages/shared run build"
+    "predev": "npm --prefix packages/shared run build",
+    "store:create": "node scripts/create-company-store.cjs",
+    "store:admin": "node --import tsx backend/scripts/provision-company-admin.ts"
   },
   "devDependencies": {
     "eslint": "^9.39.0",

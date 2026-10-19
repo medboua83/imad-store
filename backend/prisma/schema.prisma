@@ -304,3 +304,21 @@ model DeskcommStatusReceipt {
   createdAt   DateTime @default(now())
   @@map("deskcomm_status_receipts")
 }
+
+// Immutable deployment identity. Each company has its own database and secrets.
+model StoreInstallation {
+  id String @id @map("_id")
+  storeId String
+  initialized Boolean @default(false)
+  companyId String
+  createdAt DateTime @default(now())
+  @@map("store_installation")
+}
+
+// Encrypted per-installation callback configuration; never returned with its secret.
+model DeskcommConnection {
+  id String @id @map("_id")
+  ciphertext String
+  updatedAt DateTime @updatedAt
+  @@map("deskcomm_connection")
+}
