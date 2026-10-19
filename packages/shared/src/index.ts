@@ -127,3 +127,6 @@ export interface PaginatedResponse<T> {
 
 export { defaultSiteContent } from "./site-content";
 export type { SiteContent } from "./site-content";
+
+// Version of the explicit checkout request for automated WhatsApp order assistance.
+export const ORDER_WHATSAPP_NOTICE_VERSION = "order-whatsapp-v1-2026-10-19";

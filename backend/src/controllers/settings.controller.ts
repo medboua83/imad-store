@@ -10,7 +10,21 @@ export async function readSettings() {
         freeShippingMin: 500,
         codEnabled: true,
     };
-    return { success: true, data: settings };
+    const integration = await prisma.deskcommIntegration.findUnique({
+        where: { id: "deskcomm" },
+        select: { enabled: true, webhookCiphertext: true, signingCiphertext: true },
+    });
+    return {
+        success: true,
+        data: {
+            ...settings,
+            whatsappAssistanceAvailable: Boolean(
+                integration?.enabled &&
+                integration.webhookCiphertext &&
+                integration.signingCiphertext,
+            ),
+        },
+    };
 }
 export async function getSettings(_req: Request, res: Response) {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
