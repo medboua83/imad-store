@@ -2,6 +2,8 @@
 
 ## Hosted demonstration photographs — 2026-10-19
 
+The owner's follow-up identified missing social links after the earlier footer redesign. The original WhatsApp, Instagram, Facebook and TikTok destinations have been restored from Git history with keyboard-focus treatment and touch-sized links. No social message is sent by this change.
+
 The owner authorized five generated product visuals on quickydev.com. The authenticated product editor replaced only the previous placeholder image lists; public before/after comparisons show prices, stock, variants, status, categories and product identities unchanged. See `catalogue/demo-images/README.md` for provenance, mapping and rollback. Five optimized WebP assets total 370,882 bytes. Build asset copying restores them into the API upload directory even when no standalone output exists, so their current content-addressed URLs survive fresh combined-hosting releases. This does not provide persistence for future arbitrary uploads and does not seed or modify the database. No checkout or CRM delivery is part of this image update.
 
 ## Hostinger runtime repair — 2026-10-19
