@@ -31,6 +31,16 @@ is needed. JWT checks, publication rules and rate limits remain in force.
 References: [Passenger reverse port binding](https://www.phusionpassenger.com/docs/advanced_guides/in_depth/node/reverse_port_binding.html),
 [Next custom servers](https://nextjs.org/docs/app/guides/custom-server).
 
+Actual Hostinger logs also exposed Prisma 5's failure to parse a host DNS resolver
+option when opening a MongoDB SRV URL. Combined startup expands that URL's SRV/TXT
+records with Node's DNS API before importing Prisma. It retains encoded credentials,
+database, query options and implicit TLS, validates target parent domains, and
+rejects unsafe/ambiguous TXT options. The stored Hostinger secret is unchanged;
+the standard seed-list URL exists only in process memory. Discovery repeats on
+process restart, while the MongoDB replica-set driver handles topology updates.
+Special SRV host-selection/service-name overrides are rejected rather than guessed.
+See [MongoDB DNS seed-list specification](https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery/initial-dns-seedlist-discovery.md).
+
 ## Operational limits and rollback
 
 The hosted entrypoint imports `backend/dist/app.js`, never the worker-bearing

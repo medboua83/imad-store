@@ -11,6 +11,7 @@ async function startHostedServer() {
   for (const key of ["DATABASE_URL", "JWT_SECRET", "JWT_REFRESH_SECRET"]) {
     if (!process.env[key]) throw new Error(`Missing required configuration: ${key}`);
   }
+  process.env.DATABASE_URL = await require("./resolve-hosted-database.cjs").resolveHostedDatabase(process.env.DATABASE_URL);
   const { createServer } = require("node:http");
   const next = require("next");
   console.log("Hosted startup: loading the compiled API.");

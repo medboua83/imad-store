@@ -12,7 +12,7 @@ const env = {
 for (const key of Object.keys(env))
   if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|ADMIN_)/.test(key)) delete env[key];
 for (const mode of ["tcp", "passenger", "litespeed"]) {
-  const result = spawnSync(process.execPath, ["--test", "tests/hosted-runtime.test.cjs"], { env: { ...env, TEST_HOST_MODE: mode }, stdio: "inherit" });
+  const result = spawnSync(process.execPath, ["--test", "tests/hosted-database.test.cjs", "tests/hosted-runtime.test.cjs"], { env: { ...env, TEST_HOST_MODE: mode }, stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
