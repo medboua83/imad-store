@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Mobile cart and checkout — 2026-10-19
+
+See `CART_CHECKOUT_2026-10-19.md`. Shared product lines/totals, a clearer drawer, compact phone order review, grouped address fields and a mobile confirmation bar continue the storefront design. Cart continuation requires verified products and available shipping fees, with recovery controls. The submit handler, COD payload, consent default and retry key are preserved. Candidate build/lint and locally intercepted failure/retry/success checks pass; no order POST is forwarded to production. Responsive and deployed checks are recorded separately.
+
 ## Professional responsive storefront — 2026-10-19
 
 See `RESPONSIVE_STOREFRONT_2026-10-19.md`. A real catalogue image replaces the missing legacy hero default; the storefront adds a refined editorial layout, two-column phone catalogue, compact search/filter disclosure, category rail, mobile navigation, uncropped gallery/zoom, quantity controls and mobile purchase bar. Existing social destinations remain. Candidate production build/lint and browser checks at 320/390/768/1280 px pass, including zoom focus restoration, filtered search and temporary local cart interactions. No checkout, inventory or CRM write is part of this change; publication checks are recorded separately.
