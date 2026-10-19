@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
@@ -23,20 +23,7 @@ export function ProductCard({
                 className="catalog-card-image"
                 aria-label={`عرض تفاصيل ${name}`}
             >
-                {p.images[0] && (
-                    <Image
-                        src={p.images[0]}
-                        alt={name}
-                        fill
-                        sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
-                        className="object-cover"
-                    />
-                )}
-                {!p.images[0] && (
-                    <span className="product-photo-placeholder" aria-hidden="true">
-                        IMAD
-                    </span>
-                )}
+                <ProductPhoto images={p.images} name={name} />
                 <span className={`stock-pill ${available ? "" : "stock-pill-empty"}`}>
                     {available ? "متوفر الآن" : "نفدت الكمية"}
                 </span>

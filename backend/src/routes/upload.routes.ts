@@ -5,7 +5,13 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
-export const uploadDirectory = process.env.UPLOAD_DIR || path.resolve(__dirname, "../../uploads");
+const { resolveUploadDirectory, seedPublishedUploads } =
+    require("../../../scripts/upload-storage.cjs") as {
+        resolveUploadDirectory: (root: string) => string;
+        seedPublishedUploads: (root: string, directory: string) => number;
+    };
+export const uploadDirectory = resolveUploadDirectory(path.resolve(__dirname, "../../.."));
+seedPublishedUploads(path.resolve(__dirname, "../../.."), uploadDirectory);
 export const uploadRoutes: IRouter = Router();
 uploadRoutes.post(
     "/",

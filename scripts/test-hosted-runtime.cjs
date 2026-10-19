@@ -11,7 +11,7 @@ const env = {
 };
 for (const key of Object.keys(env))
   if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|ADMIN_)/.test(key)) delete env[key];
-const unit = spawnSync(process.execPath, ["--test", "tests/hosted-crm-worker.test.cjs"], {stdio:"inherit"});
+const unit = spawnSync(process.execPath, ["--test", "tests/hosted-crm-worker.test.cjs", "tests/upload-storage.test.cjs"], {stdio:"inherit"});
 if (unit.status !== 0) process.exit(unit.status ?? 1);
 for (const mode of ["tcp", "passenger", "litespeed"]) {
   const result = spawnSync(process.execPath, ["--test", "tests/hosted-database.test.cjs", "tests/hosted-runtime.test.cjs"], { env: { ...env, TEST_HOST_MODE: mode }, stdio: "inherit" });

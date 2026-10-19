@@ -58,6 +58,11 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     if (mode !== "tcp") assert.equal(publicBinding, true);
     const get = (route, options) => fetch(origin + route, options);
     assert.equal((await get("/health")).status, 200);
+    const recoveredHash = "3acee980f2b69333eac269c8a0a5eba5acda4467ae26c86bd61fa57e0c992315";
+    const recovered = await get(`/uploads/${recoveredHash}.webp`);
+    assert.equal(recovered.status, 200);
+    assert.match(recovered.headers.get("content-type"), /image\/webp/);
+    assert.equal(require("node:crypto").createHash("sha256").update(Buffer.from(await recovered.arrayBuffer())).digest("hex"), recoveredHash);
     assert.equal((await get("/api/products/admin/catalog")).status, 401);
     const products = await (await get("/api/products")).json();
     assert.match(JSON.stringify(products), /HOSTED CATALOGUE TEST/);
