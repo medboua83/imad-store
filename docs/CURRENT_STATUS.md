@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Hostinger runtime repair — 2026-10-19
+
+See `HOSTINGER_RUNTIME_2026-10-19.md`. The root build now includes Prisma generation and backend compilation. An explicit combined hosting mode serves Express and Next through one public listener, accounting for Passenger reverse port binding and runtime-only internal SSR addressing. Local standalone mode is retained. The hosted entrypoint does not start background CRM/Sheets workers, seed products or change accounts; existing database and credentials remain authoritative. Production validation is recorded separately after deployment.
+
 ## Priority fixes implemented and locally verified
 
 See [PRIORITY_FIXES_2026-10-18.md](PRIORITY_FIXES_2026-10-18.md) for the ten P1 corrections, operating instructions and remaining limits.
