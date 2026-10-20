@@ -182,3 +182,7 @@ See `ORDER_WORKSPACE_2026-10-18.md`. Orders now have status counters, date/payme
 ## Product, photo and inventory follow-up
 
 See `PRODUCT_STOCK_WORKSPACE_2026-10-18.md`. The product editor groups identity, photos and variants, with multi-file uploads/progress, cover/order controls, size generation, safe duplication, loaded-stock deltas and dirty-form protection. Stock filters distinguish partial low stock, complete stockouts and missing variants. Successful writes are distinguished from failed catalogue refreshes; uncertain saves require verification. Existing backend stock concurrency and publication rules remain authoritative. Twenty-eight isolated tests pass; browser checks verify two uploads, persisted cover order, three generated variants, duplicate SKU rejection, retained inputs and concurrent stock conflict/reload recovery. Desktop/mobile layouts and read-only active port 3000 search/editor checks pass. No live catalogue, inventory, order or CRM mutation is part of this phase.
+
+## Accord WhatsApp à la soumission — candidat 20 octobre 2026
+
+Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant attente, contrôles serveur et reçu client, sans consentement précoché ni reprise historique. Tests ciblés, lint frontend et compilation backend locaux réussis ; recette complète et publication encore à vérifier.

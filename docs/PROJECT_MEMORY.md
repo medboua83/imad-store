@@ -133,3 +133,7 @@ The ten P1 findings are implemented; see `docs/PRIORITY_FIXES_2026-10-18.md` and
 ## Usability and performance remediation (2026-10-18)
 
 The remaining eleven audit items have been implemented and verified with twenty isolated scenarios and browser checks. See docs/USABILITY_PERFORMANCE_2026-10-18.md. Site content uses an explicit draft/publish/rollback collection; never publish guesses about commercial terms. Demo seeding is no longer a startup option and requires an isolated test database. Shared package runtime now uses compiled CommonJS output, built before the backend.
+
+## Accord WhatsApp à la soumission — candidat 20 octobre 2026
+
+Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant attente, contrôles serveur et reçu client, sans consentement précoché ni reprise historique. Tests ciblés, lint frontend et compilation backend locaux réussis ; recette complète et publication encore à vérifier.

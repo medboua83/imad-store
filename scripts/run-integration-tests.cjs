@@ -33,6 +33,7 @@ const result = spawnSync(
         "tests/category-visuals.test.ts",
         "tests/store-template.test.ts",
         "tests/deskcomm-form.test.ts",
+        "tests/checkout-assistance.test.ts",
         "tests/admin-summary.test.ts",
         "tests/admin-products.test.ts",
     ],

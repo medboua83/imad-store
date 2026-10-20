@@ -3,7 +3,7 @@ import { metaPurchase } from "@/lib/meta-pixel";
 import { shippingFee } from "@imad-store/shared";
 import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
+import { checkoutAssistance } from "@/lib/checkout-assistance";
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
@@ -29,6 +29,7 @@ export default function CheckoutPage() {
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [orderId, setOrderId] = useState("");
+    const [assistanceRecorded, setAssistanceRecorded] = useState(false);
     const [key, setKey] = useState("");
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
@@ -40,13 +41,14 @@ export default function CheckoutPage() {
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();
+        const assistance = checkoutAssistance(new FormData(e.currentTarget as HTMLFormElement));
         const errors: Record<string, string> = {};
         if (form.fullName.trim().length < 2) errors.fullName = "أدخلوا الاسم الكامل";
         if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
             errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
         if (!form.city.trim()) errors.city = "أدخلوا المدينة";
         if (form.address.trim().length < 3) errors.address = "أدخلوا عنوان التوصيل";
-        if (whatsappAssistance && !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
+        if (assistance.aiServiceConsent && !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
             errors.phone = "للمساعدة عبر واتساب، أدخلوا الرقم الدولي بأنفسكم: +212…";
         setFields(errors);
         if (Object.keys(errors).length) {
@@ -81,10 +83,7 @@ export default function CheckoutPage() {
             const order = await createOrder(
                 {
                     paymentMethod: "COD",
-                    aiServiceConsent: whatsappAssistance,
-                    ...(whatsappAssistance
-                        ? { aiServiceConsentVersion: ORDER_WHATSAPP_NOTICE_VERSION }
-                        : {}),
+                    ...assistance,
                     expectedTotal: confirmedTotal,
                     customer: {
                         fullName: form.fullName.trim(),
@@ -103,6 +102,7 @@ export default function CheckoutPage() {
             );
             metaPurchase(order.id, order.totalAmount);
             setOrderId(order.id);
+            setAssistanceRecorded(assistance.aiServiceConsent);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });
         } catch (failure) {
@@ -224,6 +224,7 @@ export default function CheckoutPage() {
                     رقم الطلب <strong dir="ltr">{orderId.slice(-8).toUpperCase()}</strong>
                 </p>
                 <p>سيتواصل معكم فريقنا لتأكيد التفاصيل.</p>
+                {assistanceRecorded && <p>تم حفظ موافقتكم على المساعدة الآلية عبر واتساب لتأكيد هذه الطلبية.</p>}
                 <Link href="/shop" className="btn-primary">
                     العودة إلى المتجر <ArrowLeft size={18} aria-hidden="true" />
                 </Link>
@@ -336,6 +337,9 @@ export default function CheckoutPage() {
                             <label className="checkout-policy flex items-start gap-3">
                                 <input
                                     type="checkbox"
+                                    name="aiServiceConsent"
+                                    value="true"
+                                    disabled={busy}
                                     checked={whatsappAssistance}
                                     onChange={(e) => setWhatsappAssistance(e.target.checked)}
                                     aria-describedby="whatsapp-assistance-details"
