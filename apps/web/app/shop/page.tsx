@@ -132,7 +132,7 @@ export default async function ShopPage({
                                 name="search"
                                 maxLength={120}
                                 defaultValue={value("search")}
-                                placeholder="اسم القطعة أو كلمة تبحثين عنها"
+                                placeholder="اسم المنتج أو كلمة للبحث"
                             />
                         </span>
                     </label>
