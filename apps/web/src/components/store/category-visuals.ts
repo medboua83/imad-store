@@ -18,12 +18,27 @@ function isIllustration(src: string) {
         Object.values(categoryIllustrations).some((asset) => src.endsWith(asset.split("/").pop()!))
     );
 }
-export function categoryVisual(category: Category, products: Product[]) {
+export function categoryImageSources(category: Category, products: Product[]) {
     const image = category.image?.trim();
-    if (image && !/cloudinary\.com\/demo\/|placehold(?:er)?\.|hero-1\.png/i.test(image))
-        return { src: image, illustrative: isIllustration(image) };
-    const product = products.find((p) => p.category?.slug === category.slug && p.images[0]);
-    if (product)
-        return { src: product.images[0], illustrative: product.images[0].includes("/catalogue-") };
-    return { src: categoryIllustrations[category.slug] || null, illustrative: true };
+    const custom =
+        image && !/cloudinary\.com\/demo\/|placehold(?:er)?\.|hero-1\.png/i.test(image)
+            ? [image]
+            : [];
+    const matching = products
+        .filter((p) => p.category?.slug === category.slug)
+        .flatMap((p) => p.images);
+    const illustration = categoryIllustrations[category.slug];
+    return [
+        ...new Set(
+            [...custom, ...matching, ...(illustration ? [illustration] : [])].filter(Boolean),
+        ),
+    ];
+}
+export function categoryVisual(category: Category, products: Product[]) {
+    const sources = categoryImageSources(category, products);
+    return {
+        src: sources[0] || null,
+        sources,
+        illustrative: !sources[0] || isIllustration(sources[0]),
+    };
 }

@@ -1,7 +1,19 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-export function ProductPhoto({ images, name }: { images: string[]; name: string }) {
+export function ProductPhoto({
+    images,
+    name,
+    className = "object-cover",
+    sizes = "(max-width:767px) 100vw, (max-width:1023px) 50vw, 25vw",
+    preload = false,
+}: {
+    images: string[];
+    name: string;
+    className?: string;
+    sizes?: string;
+    preload?: boolean;
+}) {
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
     const src = images.find((src) => src && !failed.has(src));
     return src ? (
@@ -9,8 +21,9 @@ export function ProductPhoto({ images, name }: { images: string[]; name: string 
             src={src}
             alt={name}
             fill
-            sizes="(max-width:767px) 100vw, (max-width:1023px) 50vw, 25vw"
-            className="object-cover"
+            sizes={sizes}
+            className={className}
+            preload={preload}
             onError={() =>
                 setFailed((previous) =>
                     previous.has(src) ? previous : new Set([...previous, src]),
@@ -20,8 +33,9 @@ export function ProductPhoto({ images, name }: { images: string[]; name: string 
     ) : (
         <span
             className="product-photo-placeholder"
-            role="img"
-            aria-label={`${name} — الصورة قيد التحضير`}
+            role={name ? "img" : undefined}
+            aria-hidden={!name || undefined}
+            aria-label={name ? `${name} — الصورة قيد التحضير` : undefined}
         >
             IMAD
         </span>

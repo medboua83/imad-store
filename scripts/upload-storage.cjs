@@ -7,7 +7,7 @@ function resolveUploadDirectory(projectRoot, configured = process.env.UPLOAD_DIR
     if (configured) return path.resolve(configured);
     const root = path.resolve(projectRoot);
     const hosted = root.match(
-        /^(.+\/domains\/[^/]+)\/hbuilds\/(?:versions\/[^/]+|source\/repository|current)$/,
+        /^(.+\/domains\/[^/]+)\/(?:hbuilds\/(?:versions\/[^/]+|source\/repository|current)(?:\/.*)?|public_html(?:\/.*)?)$/,
     );
     return hosted
         ? path.join(hosted[1], "shared", "uploads")
