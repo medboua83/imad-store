@@ -187,7 +187,7 @@ export function Navbar() {
                             className="menu-search-form"
                             onSubmit={closeMenu}
                         >
-                            <label htmlFor="menu-search">ما الذي تبحثين عنه؟</label>
+                            <label htmlFor="menu-search">ما الذي تبحثون عنه؟</label>
                             <div>
                                 <input
                                     id="menu-search"
@@ -210,7 +210,7 @@ export function Navbar() {
                             <ArrowUpLeft size={20} aria-hidden="true" />
                         </Link>
                         <nav className="menu-categories" aria-label="فئات المنتجات">
-                            <h3>تسوّقي حسب الفئة</h3>
+                            <h3>تسوقوا حسب الفئة</h3>
                             {categories.map(([slug, label]) => (
                                 <Link
                                     href={`/shop?category=${slug}`}
