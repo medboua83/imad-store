@@ -15,7 +15,7 @@
     gap: 14px;
     padding: 24px;
     background: #fffefa;
-    border-bottom: 1px solid #e2e5da;
+    border-bottom: 1px solid #e5e1da;
     flex-shrink: 0;
 }
 .bag-header .eyebrow {
@@ -34,7 +34,7 @@
         sans-serif;
     padding: 5px 10px;
     border-radius: 30px;
-    background: #eaf0e3;
+    background: #f0ebe3;
 }
 .bag-close {
     width: 44px;
@@ -42,7 +42,7 @@
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    border: 1px solid #dbe0d2;
+    border: 1px solid #e0dbd2;
     border-radius: 50%;
 }
 .bag-scroll {
@@ -57,14 +57,14 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: #456248;
+    color: #625745;
     margin-bottom: 8px;
 }
 .bag-line {
     display: flex;
     gap: 16px;
     padding-block: 20px;
-    border-bottom: 1px solid #e0e4d8;
+    border-bottom: 1px solid #e4e0d8;
 }
 .bag-line-photo {
     position: relative;
@@ -85,7 +85,7 @@
     font-size: 15px;
     line-height: 1.7;
     font-weight: 500;
-    color: #263e32;
+    color: #3e3526;
     overflow-wrap: anywhere;
 }
 .bag-line-name:hover {
@@ -94,12 +94,12 @@
 }
 .bag-line-variant {
     font-size: 12px;
-    color: #65725e;
+    color: #796c57;
     margin-top: 3px;
 }
 .bag-unit-price {
     font-size: 11px;
-    color: #64715f;
+    color: #796c57;
     margin-top: 5px;
 }
 .bag-line-controls {
@@ -113,7 +113,7 @@
 .bag-quantity {
     display: inline-flex;
     align-items: center;
-    border: 1px solid #d4ddca;
+    border: 1px solid #ddd6ca;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -122,7 +122,7 @@
     height: 44px;
     display: grid;
     place-items: center;
-    background: #eff3e9;
+    background: #f3efe9;
 }
 .bag-quantity span {
     min-width: 30px;
@@ -150,7 +150,7 @@
     font:
         600 15px "DM Sans",
         sans-serif;
-    color: #29473b;
+    color: #473c29;
     text-align: end;
     margin-top: 10px;
 }
@@ -168,8 +168,8 @@
     flex-shrink: 0;
     padding: 18px 24px max(14px, env(safe-area-inset-bottom));
     background: #fffefa;
-    border-top: 1px solid #dce2d3;
-    box-shadow: 0 -4px 22px #29473b06;
+    border-top: 1px solid #e2dcd3;
+    box-shadow: 0 -4px 22px #473c2906;
     max-height: 55dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -186,7 +186,7 @@
     gap: 14px;
 }
 .bag-totals dt {
-    color: #60705c;
+    color: #766a56;
 }
 .bag-totals dd {
     font-family: "Tajawal", "DM Sans", sans-serif;
@@ -199,25 +199,25 @@
 }
 .bag-totals .bag-grand-total {
     padding-top: 14px;
-    border-top: 1px solid #dde3d5;
+    border-top: 1px solid #e3ded5;
     margin-top: 3px;
 }
 .bag-grand-total dt {
-    color: #2a4538;
+    color: #453b2a;
     font-size: 17px;
     font-weight: 500;
 }
 .bag-grand-total dt span {
     display: block;
     font-size: 10px;
-    color: #6b7864;
+    color: #80735c;
     font-weight: 400;
     margin-top: 3px;
 }
 .bag-grand-total dd > span[dir="ltr"] {
     font-size: 23px;
     font-weight: 600;
-    color: #29473b;
+    color: #473c29;
 }
 .bag-grand-total dd small {
     font-size: 11px;
@@ -239,7 +239,7 @@
     align-items: center;
     gap: 7px;
     font-size: 11px;
-    color: #65735f;
+    color: #7a6d58;
     margin-top: 12px;
 }
 .bag-continue {
@@ -249,11 +249,11 @@
     font-size: 12px;
     text-decoration: underline;
     text-underline-offset: 4px;
-    color: #566950;
+    color: #6b604e;
 }
 .bag-notice {
     padding: 13px;
-    background: #edf1e5;
+    background: #f1ede5;
     border-radius: 9px;
     font-size: 13px;
     line-height: 1.8;
@@ -281,10 +281,10 @@
     place-items: center;
     width: 84px;
     height: 84px;
-    background: #eaf0e2;
+    background: #f0ebe2;
     border-radius: 50%;
     margin-bottom: 24px;
-    color: #3e6046;
+    color: #60543e;
 }
 .bag-empty h3 {
     font-size: 27px;
@@ -293,7 +293,7 @@
 .bag-empty p {
     font-size: 14px;
     line-height: 1.9;
-    color: #61705c;
+    color: #766a56;
     max-width: 250px;
 }
 .bag-empty .btn-primary {
@@ -310,7 +310,7 @@
     gap: 8px;
     min-height: 44px;
     font-size: 12px;
-    color: #5b6c55;
+    color: #706551;
     margin-bottom: 16px;
 }
 .checkout-heading {
@@ -330,7 +330,7 @@
 }
 .checkout-heading p:last-child {
     font-size: 14px;
-    color: #5a6a54;
+    color: #6e6350;
     line-height: 1.9;
 }
 .checkout-cod-badge {
@@ -339,8 +339,8 @@
     gap: 10px;
     padding: 12px 16px;
     border-radius: 30px;
-    background: #eaf0e2;
-    color: #395e41;
+    background: #f0ebe2;
+    color: #5e5039;
     font-size: 13px;
     flex-shrink: 0;
 }
@@ -350,16 +350,16 @@
     font-size: 12px;
     padding-bottom: 24px;
     margin-bottom: 28px;
-    border-bottom: 1px solid #dfe4d7;
+    border-bottom: 1px solid #e4dfd7;
 }
 .checkout-steps li {
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #65805b;
+    color: #80725b;
 }
 .checkout-steps li[aria-current] {
-    color: #29473b;
+    color: #473c29;
     font-weight: 700;
 }
 .checkout-steps li > span {
@@ -368,7 +368,7 @@
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: #29473b;
+    background: #473c29;
     color: white;
     font:
         11px "DM Sans",
@@ -382,7 +382,7 @@
 }
 .store-shell .checkout-details-form {
     background: #fffefa;
-    border: 1px solid #dce3d3;
+    border: 1px solid #e3ddd3;
     border-radius: 16px;
     padding: 30px;
 }
@@ -393,7 +393,7 @@
     border: 0;
 }
 .checkout-field-section + .checkout-field-section {
-    border-top: 1px solid #e4e7dc;
+    border-top: 1px solid #e7e3dc;
     padding-top: 24px;
 }
 .checkout-field-section legend {
@@ -405,7 +405,7 @@
     margin-bottom: 16px;
 }
 .checkout-field-section legend > span {
-    color: #849279;
+    color: #998b72;
     font:
         12px "DM Sans",
         sans-serif;
@@ -413,7 +413,7 @@
 .checkout-section-note {
     font-size: 12px;
     line-height: 1.8;
-    color: #65735f;
+    color: #7a6d58;
     margin: -5px 0 18px;
 }
 .checkout-fields {
@@ -431,7 +431,7 @@
     display: block;
     font-size: 13px;
     margin-bottom: 9px;
-    color: #314c3a;
+    color: #4c4231;
 }
 .checkout-field label span {
     color: #8a7856;
@@ -439,7 +439,7 @@
 .store-shell .checkout-field .store-input {
     background: #fffefb;
     min-height: 52px;
-    border-color: #d3dcc9;
+    border-color: #dcd5c9;
     width: 100%;
 }
 .checkout-field textarea {
@@ -461,7 +461,7 @@
     margin-top: 7px;
 }
 .checkout-hint {
-    color: #687760;
+    color: #7d705a;
 }
 .checkout-field-error {
     color: #9d3525;
@@ -471,10 +471,10 @@
     align-items: center;
     gap: 12px;
     padding: 18px;
-    border: 1px solid #a9bca0;
+    border: 1px solid #bcb2a0;
     border-radius: 12px;
-    background: #f0f4e9;
-    color: #36533d;
+    background: #f4f0e9;
+    color: #534836;
 }
 .checkout-payment > svg {
     flex-shrink: 0;
@@ -495,7 +495,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #385c40;
+    background: #5c4f38;
     color: white;
     flex-shrink: 0;
 }
@@ -515,7 +515,7 @@
 .checkout-policy {
     font-size: 12px;
     line-height: 2;
-    color: #69765f;
+    color: #7c6f59;
     margin: 20px 0;
 }
 .checkout-policy a {
@@ -524,7 +524,7 @@
     min-height: 44px;
     text-decoration: underline;
     text-underline-offset: 4px;
-    color: #39583f;
+    color: #584d39;
 }
 .checkout-submit-bar {
     display: flex;
@@ -542,14 +542,14 @@
 }
 .checkout-submit-note {
     font-size: 10px;
-    color: #6e7b66;
+    color: #82755e;
     line-height: 1.8;
     margin-top: 12px;
     text-align: center;
 }
 .store-shell .checkout-review {
-    background: #f0f3e9;
-    border: 1px solid #d8e0cc;
+    background: #f3efe9;
+    border: 1px solid #e0d9cc;
     border-radius: 16px;
     padding: 24px;
     position: sticky;
@@ -569,11 +569,11 @@
 .checkout-summary-title > span {
     margin-inline-start: auto;
     font-size: 12px;
-    color: #67785d;
+    color: #7c6f59;
 }
 .checkout-item-disclosure {
     padding-block: 15px;
-    border-top: 1px solid #dbe2d0;
+    border-top: 1px solid #e2dbd0;
     margin-bottom: 20px;
 }
 .checkout-item-disclosure summary {
@@ -599,7 +599,7 @@
 .checkout-item-disclosure summary small {
     display: block;
     font-size: 11px;
-    color: #67785d;
+    color: #7c6f59;
     margin-top: 5px;
 }
 .checkout-item-disclosure summary > svg {
@@ -633,7 +633,7 @@
     gap: 8px;
     font-size: 11px;
     line-height: 1.8;
-    color: #627459;
+    color: #776b56;
     padding-top: 15px;
 }
 .checkout-summary-note svg {
@@ -660,7 +660,7 @@
     padding-block: 48px;
 }
 .checkout-empty > svg {
-    color: #63805a;
+    color: #80725a;
 }
 .checkout-empty h2,
 .checkout-success h1 {
@@ -668,18 +668,18 @@
 }
 .checkout-empty p,
 .checkout-success > p {
-    color: #61735a;
+    color: #776b56;
     font-size: 14px;
     line-height: 1.9;
 }
 .checkout-success-icon {
     display: grid;
     place-items: center;
-    background: #e6eddd;
+    background: #ede7dd;
     border-radius: 50%;
     width: 88px;
     height: 88px;
-    color: #4a6a42;
+    color: #6a5b42;
     margin-bottom: 10px;
 }
 .checkout-success > p strong {
@@ -688,7 +688,7 @@
     font:
         600 24px "DM Sans",
         sans-serif;
-    color: #29473b;
+    color: #473c29;
 }
 @media (max-width: 1023px) {
     .checkout-layout {
@@ -852,10 +852,10 @@
         inset-inline: 0;
         z-index: 42;
         background: #fffefa;
-        border-top: 1px solid #dce3d2;
+        border-top: 1px solid #e3ddd2;
         padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
         gap: 20px;
-        box-shadow: 0 -5px 25px #263e2e09;
+        box-shadow: 0 -5px 25px #3e352609;
     }
     .checkout-submit-bar > p {
         display: block;
@@ -864,14 +864,14 @@
     .checkout-submit-bar > p > span {
         display: block;
         font-size: 9px;
-        color: #607456;
+        color: #756955;
     }
     .checkout-submit-bar strong {
         display: block;
         font:
             600 19px "DM Sans",
             sans-serif;
-        color: #29473b;
+        color: #473c29;
         margin-top: 4px;
     }
     .checkout-submit-bar strong small {

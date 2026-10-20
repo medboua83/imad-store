@@ -4,7 +4,7 @@
 }
 /* Header and native modal menu, scoped away from administration. */
 .store-shell .refined-header {
-    box-shadow: 0 3px 18px #172e2805;
+    box-shadow: 0 3px 18px #2e261705;
 }
 .store-shell .refined-header .nav-inner {
     min-height: 88px;
@@ -29,29 +29,29 @@
     border: 0;
     padding: 10px 12px;
     gap: 8px;
-    color: #42574c;
+    color: #595040;
     font-size: 13px;
 }
 .refined-header .cart-toggle {
-    background: #edf0e7;
-    border: 1px solid #dce3d7;
+    background: #f0ede7;
+    border: 1px solid #e3dfd7;
     padding: 9px 14px;
     border-radius: 8px;
-    color: #263f34;
+    color: #3f3626;
 }
 .refined-header .cart-count {
     background: #fcfaf6;
 }
 .refined-header .nav-actions > .action:hover {
-    background: #e5eadd;
+    background: #eae5dd;
 }
 .refined-header .mobile-menu-toggle {
     display: none;
-    border: 1px solid #dce3d7;
+    border: 1px solid #e3dfd7;
     border-radius: 8px;
 }
 .refined-header .announcement-bar {
-    background: #213e33;
+    background: #3e3321;
 }
 .store-shell .refined-header .store-menu {
     position: fixed;
@@ -66,7 +66,7 @@
     border: 0;
     border-radius: 0;
     background: #fcfaf6;
-    color: #263c31;
+    color: #3c3426;
     overflow: hidden;
 }
 .refined-header .store-menu[open] {
@@ -74,7 +74,7 @@
     flex-direction: column;
 }
 .store-menu::backdrop {
-    background: #15251f80;
+    background: #251f1580;
     backdrop-filter: blur(3px);
 }
 .store-menu .store-menu-top {
@@ -83,13 +83,13 @@
     justify-content: space-between;
     gap: 12px;
     padding: 26px 24px 22px;
-    border-bottom: 1px solid #e0e4d9;
+    border-bottom: 1px solid #e4e0d9;
     flex-shrink: 0;
 }
 .store-menu .menu-eyebrow {
     font-family: "DM Sans", sans-serif;
     letter-spacing: 0.16em;
-    color: #6e7868;
+    color: #82755e;
     font-size: 9px;
     text-align: right;
     margin-bottom: 8px;
@@ -101,7 +101,7 @@
 }
 .store-menu .menu-close {
     position: static;
-    border: 1px solid #dce3d7;
+    border: 1px solid #e3dfd7;
     border-radius: 50%;
     flex-shrink: 0;
     background: #fffdf8;
@@ -121,7 +121,7 @@
 .store-menu .menu-search-form > div {
     display: flex;
     background: white;
-    border: 1px solid #d7dece;
+    border: 1px solid #ded8ce;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -142,8 +142,8 @@
     min-height: 48px;
     display: grid;
     place-items: center;
-    color: #274437;
-    background: #edf0e7;
+    color: #443927;
+    background: #f0ede7;
 }
 .store-menu .menu-search-form button:focus-visible {
     outline-offset: -4px;
@@ -153,7 +153,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: 54px;
-    background: #263f34;
+    background: #3f3626;
     color: #f7f4eb;
     border-radius: 8px;
     padding: 14px;
@@ -168,7 +168,7 @@
 .store-menu h3 {
     font-size: 11px;
     font-weight: 700;
-    color: #667560;
+    color: #7c6f59;
     margin: 28px 0 10px;
 }
 .store-shell .refined-header .store-menu nav a {
@@ -177,24 +177,24 @@
     justify-content: flex-start;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid #e3e6dc;
+    border-bottom: 1px solid #e6e2dc;
     min-height: 52px;
     font-size: 17px;
 }
 .store-menu nav a > svg:last-child {
     margin-inline-start: auto;
-    color: #7b846f;
+    color: #8d7f66;
     flex-shrink: 0;
 }
 .store-menu .menu-category-number {
     font-size: 10px;
-    color: #89907b;
+    color: #998b72;
     font-family: "DM Sans", sans-serif;
     width: 20px;
 }
 .store-menu nav a:hover {
-    color: #172e28;
-    background: #eef1e8;
+    color: #2e2617;
+    background: #f1eee8;
 }
 .store-shell .refined-header .store-menu .menu-practical a {
     font-size: 14px;
@@ -205,14 +205,14 @@
     align-items: center;
     gap: 12px;
     padding: 18px 24px max(18px, env(safe-area-inset-bottom));
-    background: #edf0e6;
-    border-top: 1px solid #dce3d7;
+    background: #f0ece6;
+    border-top: 1px solid #e3dfd7;
     flex-shrink: 0;
     font-size: 13px;
 }
 .store-menu .store-menu-bottom small {
     display: block;
-    color: #667560;
+    color: #7c6f59;
     font-size: 11px;
     margin-top: 5px;
 }
@@ -270,7 +270,7 @@
         font-size: 9px;
         min-width: 17px;
         height: 17px;
-        background: #e7ecdf;
+        background: #ece7df;
     }
     .refined-header .mobile-menu-toggle {
         display: inline-flex;

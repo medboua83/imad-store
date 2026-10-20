@@ -1,6 +1,6 @@
 /* Storefront footer: no scripts, tracking, or external font requests. */
 .store-shell .refined-footer {
-    background: #172e28;
+    background: #2e2617;
     color: #f5f2e9;
     padding-top: 0;
 }
@@ -21,11 +21,11 @@
 }
 .refined-footer .footer-service-strip svg {
     flex-shrink: 0;
-    color: #c4cdb9;
+    color: #cdc6b9;
 }
 .refined-footer .footer-service-strip small {
     display: block;
-    color: #bdc9c0;
+    color: #cdc6b9;
     font-size: 12px;
     margin-top: 3px;
 }
@@ -42,10 +42,10 @@
     font-size: 29px;
     line-height: 1.65;
     margin-top: 20px;
-    color: #e2e6d6;
+    color: #e6e0d6;
 }
 .refined-footer .footer-brand-note {
-    color: #bdc9c0;
+    color: #cdc6b9;
     font-size: 13px;
     line-height: 1.9;
     max-width: 245px;
@@ -62,7 +62,7 @@
 .refined-footer .footer-main nav a {
     display: inline-flex;
     align-items: center;
-    color: #cdd6cc;
+    color: #d8d3ca;
     font-size: 14px;
     min-height: 44px;
 }
@@ -75,7 +75,7 @@
 }
 .refined-footer .footer-help-label {
     display: block;
-    color: #c5cdb7;
+    color: #cdc5b7;
     font-size: 11px;
     margin-bottom: 12px;
 }
@@ -88,7 +88,7 @@
 }
 .refined-footer .footer-help p {
     font-size: 13px;
-    color: #cdd6cc;
+    color: #d8d3ca;
     margin: 0 0 20px;
 }
 .refined-footer .footer-contact-button {
@@ -99,13 +99,13 @@
     min-height: 48px;
     border-radius: 6px;
     padding: 10px 14px;
-    background: #e4e8d6;
-    color: #172e28;
+    background: #e8e1d6;
+    color: #2e2617;
     font-size: 13px;
     font-weight: 700;
 }
 .refined-footer .footer-contact-button:hover {
-    background: #f3f5e9;
+    background: #f5f1e9;
 }
 .refined-footer .footer-contact-alternative {
     display: inline-flex;
@@ -114,7 +114,7 @@
     text-decoration: underline;
     text-underline-offset: 4px;
     font-size: 12px;
-    color: #cdd6cc;
+    color: #d8d3ca;
     margin-top: 4px;
 }
 .refined-footer .footer-community {
@@ -131,7 +131,7 @@
     margin-bottom: 4px;
 }
 .refined-footer .footer-community p {
-    color: #bdc9c0;
+    color: #cdc6b9;
     font-size: 12px;
 }
 .store-shell .refined-footer .footer-socials {
@@ -150,20 +150,20 @@
     border-radius: 6px;
     font-size: 12px;
     font-family: "DM Sans", sans-serif;
-    color: #e3e8de;
+    color: #e8e4de;
 }
 .refined-footer .footer-socials a:hover {
     background: #ffffff0d;
     border-color: #ffffff70;
 }
 .refined-footer a:focus-visible {
-    outline: 2px solid #eff2da;
+    outline: 2px solid #f0e9db;
     outline-offset: 4px;
 }
 .refined-footer .footer-bottom {
     padding-block: 22px;
     align-items: center;
-    color: #bdc9c0;
+    color: #cdc6b9;
 }
 .refined-footer .footer-bottom a {
     min-height: 44px;
