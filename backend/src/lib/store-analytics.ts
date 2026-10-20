@@ -31,7 +31,7 @@ async function ready() {
 async function insertOnce(id: string, document: Record<string, unknown>) {
     await ready();
     try {
-        await prisma.$runCommandRaw({
+        const result = (await prisma.$runCommandRaw({
             update: collection,
             maxTimeMS: 1500,
             updates: [
@@ -48,7 +48,9 @@ async function insertOnce(id: string, document: Record<string, unknown>) {
                     upsert: true,
                 },
             ],
-        });
+        })) as unknown as { writeErrors?: Array<{ code: number }>; writeConcernError?: unknown };
+        if (result.writeErrors?.some((error) => error.code !== 11000) || result.writeConcernError)
+            throw new Error("Analytics write failed");
     } catch (error) {
         // Concurrent upserts may race on MongoDB's built-in unique _id index.
         if (!/E11000|duplicate key/.test(String((error as Error).message))) throw error;
