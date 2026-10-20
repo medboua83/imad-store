@@ -1226,7 +1226,17 @@ test("Only real committed orders convert visits; retries and multiple orders can
     } finally {
         client.$runCommandRaw = original;
     }
-    const { recordOrderConversion } = await import("../backend/src/lib/store-analytics");
+    const { recordOrderConversion, recordPage } =
+        await import("../backend/src/lib/store-analytics");
+    client.$runCommandRaw = ((command: any) =>
+        command.update === "store_analytics"
+            ? Promise.resolve({ writeErrors: [{ code: 121 }] })
+            : original(command)) as any;
+    try {
+        await assert.rejects(() => recordPage(randomUUID(), "/", false), /Analytics write failed/);
+    } finally {
+        client.$runCommandRaw = original;
+    }
     await recordOrderConversion(randomUUID(), new Date(Date.now() - 86400_000), session, false);
     const again = (await request(app).get("/api/analytics/summary?days=7").set(admin())).body.data;
     assert.equal(again.attributedOrders, 2);
