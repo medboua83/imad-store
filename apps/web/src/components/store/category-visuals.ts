@@ -10,11 +10,18 @@ const categoryIllustrations: Record<string, string> = {
         "/images/catalogue-demo/8cce892edd25a0f357b65af0fccca7196971ec0699b8626f23bcca01fa5b64b3.webp",
     bags: "/images/catalogue-test/sac.webp",
 };
-export const categoryThumbnail = (slug: string) => categoryIllustrations[slug];
+// Owner-selected generated category artwork, bundled so deployments retain it.
+// This is category artwork, not a photograph of an actual catalogue product.
+const selectedCategoryArtwork: Record<string, string> = {
+    "mens-clogs": "/images/categories/sabots-homme-v2.webp",
+};
+export const categoryThumbnail = (slug: string) =>
+    selectedCategoryArtwork[slug] || categoryIllustrations[slug];
 
 function isIllustration(src: string) {
     return (
         src.includes("/catalogue-") ||
+        Object.values(selectedCategoryArtwork).includes(src) ||
         Object.values(categoryIllustrations).some((asset) => src.endsWith(asset.split("/").pop()!))
     );
 }
@@ -30,7 +37,12 @@ export function categoryImageSources(category: Category, products: Product[]) {
     const illustration = categoryIllustrations[category.slug];
     return [
         ...new Set(
-            [...custom, ...matching, ...(illustration ? [illustration] : [])].filter(Boolean),
+            [
+                selectedCategoryArtwork[category.slug],
+                ...custom,
+                ...matching,
+                ...(illustration ? [illustration] : []),
+            ].filter(Boolean),
         ),
     ];
 }
