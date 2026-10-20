@@ -323,20 +323,30 @@ dialog::backdrop {
     gap: 20px;
     padding: 20px clamp(20px, 4vw, 64px);
 }
+
 .brand-wordmark {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 10px;
-    letter-spacing: 0.08em;
-    font-size: 38px;
-    line-height: 1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    line-height:0;
+    color:var(--forest);
 }
-.brand-wordmark span {
-    font-family: "DM Sans", sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.3em;
+.brand-wordmark .brand-logo {
+    display:block;
+    width:164px;
+    aspect-ratio:24 / 11;
+    background-color:currentColor;
+    -webkit-mask:url("/images/brand/imad-mode-selected-v1.webp") center / contain no-repeat;
+    mask:url("/images/brand/imad-mode-selected-v1.webp") center / contain no-repeat;
+}
+.site-header .nav-inner { padding-block:12px; }
+.site-footer .brand-wordmark { color:#f7f3e9; }
+.site-footer .brand-wordmark .brand-logo { width:210px; }
+@media (max-width:767px) {
+    .site-header .nav-inner { padding-block:10px; }
+    .brand-wordmark .brand-logo { width:116px; }
+    .site-footer .brand-wordmark .brand-logo { width:170px; }
 }
 .nav-link {
     position: relative;

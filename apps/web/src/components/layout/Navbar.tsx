@@ -3,6 +3,7 @@ import Image from "next/image";
 import { categoryThumbnail } from "../store/category-visuals";
 import { trapDialogFocus } from "./dialog-focus";
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import {
     ShoppingBag,
     Menu,
@@ -86,7 +87,7 @@ export function Navbar() {
                         className="brand-wordmark"
                         dir="ltr"
                     >
-                        IMAD <span>MODE</span>
+                        <BrandLogo />
                     </Link>
                     <nav aria-label="التنقل الرئيسي" className="desktop-navigation">
                         {links.map(([href, label]) => (

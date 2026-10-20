@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import {
     ArrowUpRight,
@@ -291,7 +292,7 @@ export default function AdminPage() {
             <div className="admin-app admin-auth" dir="ltr" lang="fr">
                 <div className="admin-auth-story">
                     <Link href="/" className="brand-wordmark">
-                        IMAD <span>MODE</span>
+                        <BrandLogo />
                     </Link>
                     <div>
                         <p className="admin-eyebrow">VOTRE ESPACE BOUTIQUE</p>
@@ -371,7 +372,7 @@ export default function AdminPage() {
             </a>
             <aside className="admin-sidebar">
                 <Link href="/" className="brand-wordmark">
-                    IMAD <span>MODE</span>
+                    <BrandLogo />
                 </Link>
                 <p className="admin-sidebar-label">ESPACE ADMINISTRATION</p>
                 <button
