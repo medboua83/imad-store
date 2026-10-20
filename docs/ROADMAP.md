@@ -127,3 +127,7 @@ Chaque lot doit fournir un résultat vérifiable et une possibilité de retour a
 
 - [x] Fresh isolated profile generator, database identity/index bootstrap, encrypted per-company confirmation setup and isolated tests. See COMPANY_STORE_TEMPLATE_2026-10-19.md.
 - [ ] Optional future CRM-side self-service provisioning of enterprises, sources and rules; outside this store repository.
+
+## Accord WhatsApp à la soumission — candidat 20 octobre 2026
+
+Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant attente, contrôles serveur et reçu client, sans consentement précoché ni reprise historique. Tests ciblés, lint frontend et compilation backend locaux réussis ; recette complète et publication encore à vérifier.

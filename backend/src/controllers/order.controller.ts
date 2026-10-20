@@ -242,6 +242,10 @@ export async function createOrder(req: Request, res: Response) {
                         },
                         include: { ...ORDER_INCLUDE, events: true },
                     });
+                    // Never enqueue a silent downgrade between the validated choice and the saved receipt.
+                    if (created.aiServiceConsent !== body.aiServiceConsent ||
+                        (body.aiServiceConsent && created.aiServiceConsentVersion !== body.aiServiceConsentVersion))
+                        throw new AppError("Accord WhatsApp non enregistré ; aucune commande transmise", 503);
                     // Delivery is controlled by the saved administrator integration setting.
                     // Keep the event atomic with the order/stock and never backfill older orders.
                     const crmIntegration = await tx.deskcommIntegration.findUnique({

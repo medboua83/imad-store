@@ -1,4 +1,5 @@
 import { analyticsOrderHeaders } from "./store-analytics";
+import { assertAssistanceReceipt } from "./checkout-assistance";
 import axios from "axios";
 import type { SiteContent } from "@imad-store/shared";
 
@@ -222,7 +223,9 @@ export const createOrder = async (payload: GuestCheckoutPayload, idempotencyKey:
     const { data } = await api.post("/orders", payload, {
         headers: { "Idempotency-Key": idempotencyKey, ...analyticsOrderHeaders() },
     });
-    return data.data;
+    const order = data.data;
+    assertAssistanceReceipt(payload, order);
+    return order;
 };
 
 export const trackOrder = async (orderId: string) => {
