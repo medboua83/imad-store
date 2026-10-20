@@ -9,6 +9,8 @@ test('Hostinger builds and successive releases share media, separate domains do 
   const domain = '/home/account/domains/shop.example';
   for (const release of ['source/repository', 'versions/first', 'versions/second', 'current'])
     assert.equal(resolveUploadDirectory(`${domain}/hbuilds/${release}`, ''), `${domain}/shared/uploads`);
+  assert.equal(resolveUploadDirectory(`${domain}/public_html`, ''), `${domain}/shared/uploads`);
+  assert.equal(resolveUploadDirectory(`${domain}/hbuilds/versions/second/repository`, ''), `${domain}/shared/uploads`);
   assert.notEqual(resolveUploadDirectory('/home/account/domains/other.example/hbuilds/current', ''), `${domain}/shared/uploads`);
   assert.equal(resolveUploadDirectory('/tmp/local-store', ''), '/tmp/local-store/backend/uploads');
   assert.equal(resolveUploadDirectory(`${domain}/hbuilds/current`, '/data/media'), '/data/media');

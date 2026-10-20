@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCartStore, type CartItem } from "@/store/cart.store";
@@ -10,10 +10,9 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
         <article className="bag-line">
             <div className="bag-line-photo">
                 {item.image && (
-                    <Image
-                        src={item.image}
-                        alt={name}
-                        fill
+                    <ProductPhoto
+                        images={[item.image]}
+                        name={name}
                         sizes="88px"
                         className="object-contain"
                     />

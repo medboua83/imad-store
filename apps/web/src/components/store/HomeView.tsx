@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, Truck } from "lucide-react";
 import type { SiteContent } from "@imad-store/shared";
@@ -50,14 +50,13 @@ export function HomeView({
                     </div>
                 </div>
                 <div className="hero-visual">
-                    <Image
-                        src={heroImage}
-                        alt={
+                    <ProductPhoto
+                        images={[heroImage, ...(featured?.images ?? [])]}
+                        name={
                             useCatalogue && featured
                                 ? featured.nameAr || featured.nameFr
                                 : content.heroTitle
                         }
-                        fill
                         preload
                         sizes="(max-width: 767px) 100vw, 55vw"
                         className="hero-photo"
@@ -75,10 +74,9 @@ export function HomeView({
                             className="hero-detail-card"
                             aria-label={detail.nameAr || detail.nameFr}
                         >
-                            <Image
-                                src={detail.images[0]}
-                                alt=""
-                                fill
+                            <ProductPhoto
+                                images={detail.images}
+                                name=""
                                 sizes="180px"
                                 className="object-cover"
                             />
@@ -141,10 +139,9 @@ export function HomeView({
                             >
                                 <span className="collection-photo">
                                     {visual.src ? (
-                                        <Image
-                                            src={visual.src}
-                                            alt=""
-                                            fill
+                                        <ProductPhoto
+                                            images={visual.sources}
+                                            name=""
                                             sizes="96px"
                                             className="object-cover"
                                         />
@@ -171,10 +168,9 @@ export function HomeView({
                     {content.banners.map((banner, i) => (
                         <Link prefetch={false} href={banner.href} key={i} className="campaign-card">
                             <div className="relative aspect-[2/1]">
-                                <Image
-                                    src={banner.image}
-                                    alt={banner.title}
-                                    fill
+                                <ProductPhoto
+                                    images={[banner.image]}
+                                    name={banner.title}
                                     sizes="(max-width: 768px) 100vw, 33vw"
                                     className="object-cover"
                                 />
