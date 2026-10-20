@@ -18,7 +18,7 @@ import { CartTotals } from "../store/CartTotals";
 export function CartDrawer() {
     const dialog = useRef<HTMLDialogElement>(null);
     const { items, isOpen, closeCart, total, refreshCart, itemCount } = useCartStore();
-    const shipping = useShipping(total());
+    const shipping = useShipping(total(), items);
     const [notice, setNotice] = useState("");
     const [review, setReview] = useState<"checking" | "ready" | "error">("checking");
     const [refreshVersion, setRefreshVersion] = useState(0);

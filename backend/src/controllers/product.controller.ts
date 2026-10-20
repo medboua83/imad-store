@@ -29,6 +29,7 @@ const productSchema = z.object({
     descriptionEn: z.string().max(20000),
     price: z.number().positive().max(1000000),
     compareAtPrice: z.number().positive().max(1000000).nullable().optional(),
+    freeShipping: z.boolean().optional(),
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
         .max(12),
@@ -40,6 +41,7 @@ export function isFixture(slug: string) {
     return slug.startsWith("test-19a-") || slug === "demo-bag-sample";
 }
 function assertPublishable(product: any) {
+    if (product.compareAtPrice != null && product.compareAtPrice <= product.price) throw new AppError("Le prix initial doit dépasser le prix promotionnel.", 400);
     if (product.status !== "ACTIVE") return;
     if (
         isFixture(product.slug) ||

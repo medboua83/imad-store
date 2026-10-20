@@ -1,7 +1,11 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { shippingFee } from "@imad-store/shared";
 import { getSettings } from "@/lib/api";
-export function useShipping(subtotal: number) {
+export function useShipping(
+    subtotal: number,
+    items: { freeShipping?: boolean; quantity: number }[] = [],
+) {
     const query = useQuery({
         queryKey: ["store-settings"],
         queryFn: getSettings,
@@ -9,11 +13,7 @@ export function useShipping(subtotal: number) {
         retry: 2,
     });
     const settings = query.data ?? null;
-    const fee = settings
-        ? subtotal >= settings.freeShippingMin
-            ? 0
-            : settings.shippingCost
-        : null;
+    const fee = settings ? shippingFee(subtotal, items, settings) : null;
     return {
         settings,
         fee,

@@ -132,6 +132,7 @@ model Product {
   descriptionEn  String
   price          Float
   compareAtPrice Float?
+  freeShipping   Boolean @default(false)
   images         String[]         // Native array — no JSON hack needed!
   status         ProductStatus    @default(DRAFT)
   categoryId     String           @db.ObjectId
@@ -240,6 +241,8 @@ model StoreSettings {
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
   codEnabled      Boolean @default(true)
+  metaPixelEnabled Boolean @default(false)
+  metaPixelId      String?
 
   @@map("store_settings")
 }

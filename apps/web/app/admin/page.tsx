@@ -55,6 +55,7 @@ const CategoriesTab = dynamic(() => import("./tabs").then((m) => m.CategoriesTab
 const ProductsTab = dynamic(() => import("./products-tab").then((m) => m.ProductsTab), {
     loading: pendingView,
 });
+const CommerceTab = dynamic(() => import("./commerce-tab"), { loading: pendingView });
 const ContentTab = dynamic(() => import("./content-tab"), { loading: pendingView });
 const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: pendingView });
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: pendingView });
@@ -66,7 +67,8 @@ type Tab =
     | "content"
     | "deskcomm"
     | "notifications"
-    | "analytics";
+    | "analytics"
+    | "commerce";
 type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
 const sections = [
     {
@@ -103,6 +105,12 @@ const sections = [
         id: "content" as Tab,
         label: "Contenu du site",
         description: "Préparez vos textes et visuels avant publication.",
+        icon: Settings2,
+    },
+    {
+        id: "commerce" as Tab,
+        label: "Livraison et Pixel",
+        description: "Configurez les frais, la livraison offerte et Meta Pixel.",
         icon: Settings2,
     },
     {
@@ -554,6 +562,7 @@ export default function AdminPage() {
                                 </div>
                             )}
                             {activeTab === "analytics" && <AnalyticsTab />}
+                            {activeTab === "commerce" && <CommerceTab />}
                             {activeTab === "deskcomm" && <DeskcommTab />}
                             {activeTab === "notifications" && (
                                 <section className="admin-panel">

@@ -67,7 +67,13 @@ export default async function ProductPage({ params }: Props) {
                             {product.category.nameAr || product.category.nameFr}
                         </Link>
                         <h1>{name}</h1>
+                        {product.freeShipping && (
+                            <p className="product-shipping-badge">التوصيل مجاني لهذا المنتج</p>
+                        )}
                         <div className="product-price-row">
+                            {product.compareAtPrice && product.compareAtPrice > product.price ? (
+                                <del>{product.compareAtPrice.toFixed(2)} MAD</del>
+                            ) : null}
                             <p dir="ltr">
                                 {product.price.toFixed(2)} <span>MAD</span>
                             </p>

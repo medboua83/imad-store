@@ -15,6 +15,7 @@ export interface CartItem {
     colorNameEn: string;
     size?: string;
     price: number;
+    freeShipping?: boolean;
     quantity: number;
     stock: number;
 }
@@ -53,6 +54,7 @@ export const useCartStore = create<CartStore>()(
                                           ...i,
                                           stock: variant.stock,
                                           price: product.price,
+                                          freeShipping: Boolean(product.freeShipping),
                                           quantity: Math.min(
                                               variant.stock,
                                               i.quantity + Math.floor(quantity),
@@ -76,6 +78,7 @@ export const useCartStore = create<CartStore>()(
                         colorNameEn: variant.colorNameEn,
                         size: variant.size,
                         price: product.price,
+                        freeShipping: Boolean(product.freeShipping),
                         quantity: Math.min(variant.stock, Math.floor(quantity)),
                         stock: variant.stock,
                     };
@@ -130,9 +133,20 @@ export const useCartStore = create<CartStore>()(
                         const stock = variant?.stock ?? 0,
                             price = product?.price ?? item.price;
                         const quantity = Math.min(item.quantity, stock);
-                        if (price !== item.price || quantity !== item.quantity || stock === 0)
+                        if (
+                            price !== item.price ||
+                            quantity !== item.quantity ||
+                            stock === 0 ||
+                            Boolean(product?.freeShipping) !== Boolean(item.freeShipping)
+                        )
                             changed = true;
-                        return { ...item, price, stock, quantity };
+                        return {
+                            ...item,
+                            price,
+                            stock,
+                            quantity,
+                            freeShipping: Boolean(product?.freeShipping),
+                        };
                     }),
                 }));
                 return changed;

@@ -1,3 +1,4 @@
+import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
 import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
@@ -189,10 +190,15 @@ export async function createOrder(req: Request, res: Response) {
                             "Le paiement à la livraison est temporairement indisponible",
                             409,
                         );
-                    const appliedShipping =
-                        itemsTotal >= (settings?.freeShippingMin ?? 500)
-                            ? 0
-                            : Number(settings?.shippingCost ?? 30);
+                    itemsTotal = Math.round(itemsTotal * 100) / 100;
+                    const appliedShipping = shippingFee(
+                        itemsTotal,
+                        products.map((p) => ({ freeShipping: p.freeShipping, quantity: 1 })),
+                        {
+                            freeShippingMin: settings?.freeShippingMin ?? 500,
+                            shippingCost: settings?.shippingCost ?? 30,
+                        },
+                    );
                     if (
                         body.expectedTotal !== undefined &&
                         Math.abs(body.expectedTotal - (itemsTotal + appliedShipping)) > 0.005

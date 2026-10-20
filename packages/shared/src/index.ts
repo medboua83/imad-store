@@ -61,6 +61,7 @@ export interface Product {
     descriptionEn: string;
     price: number; // in MAD
     compareAtPrice?: number;
+    freeShipping?: boolean;
     images: string[]; // Supabase Storage URLs
     status: ProductStatus;
     categoryId: string;
@@ -130,3 +131,17 @@ export type { SiteContent } from "./site-content";
 
 // Version of the explicit checkout request for automated WhatsApp order assistance.
 export const ORDER_WHATSAPP_NOTICE_VERSION = "order-whatsapp-v1-2026-10-19";
+
+/** Any eligible product grants delivery to the whole basket; threshold is inclusive. */
+export function shippingFee(
+    subtotal: number,
+    items: { freeShipping?: boolean; quantity: number }[],
+    settings: { shippingCost: number; freeShippingMin: number },
+) {
+    if (
+        items.some((item) => item.quantity > 0 && item.freeShipping) ||
+        Math.round(subtotal * 100) >= Math.round(settings.freeShippingMin * 100)
+    )
+        return 0;
+    return Math.round(settings.shippingCost * 100) / 100;
+}

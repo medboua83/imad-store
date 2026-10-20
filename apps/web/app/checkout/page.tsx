@@ -1,4 +1,6 @@
 "use client";
+import { metaPurchase } from "@/lib/meta-pixel";
+import { shippingFee } from "@imad-store/shared";
 import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
@@ -20,7 +22,7 @@ import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
 export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
-    const shipping = useShipping(total());
+    const shipping = useShipping(total(), items);
     const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
     const [whatsappAssistance, setWhatsappAssistance] = useState(false);
     const [fields, setFields] = useState<Record<string, string>>({});
@@ -55,7 +57,7 @@ export default function CheckoutPage() {
         setError("");
         try {
             const changed = await refreshCart();
-            await shipping.retry({ throwOnError: true });
+            const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
                 setError("تغير السعر أو التوفر. راجعي المجموع الجديد ثم أكدي مجدداً.");
                 return;
@@ -63,6 +65,15 @@ export default function CheckoutPage() {
             const cart = useCartStore.getState().items;
             if (!cart.length || cart.some((i) => i.quantity < 1 || i.quantity > i.stock)) {
                 setError("احذفي المنتجات غير المتوفرة من السلة قبل المتابعة.");
+                return;
+            }
+            if (!freshSettings) throw new Error("Shipping settings unavailable");
+            const subtotal =
+                Math.round(cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100) /
+                100;
+            const confirmedTotal = subtotal + shippingFee(subtotal, cart, freshSettings);
+            if (shipping.total === null || Math.abs(confirmedTotal - shipping.total) > 0.005) {
+                setError("تغيرت رسوم التوصيل. راجعي الإجمالي الجديد ثم أكدي مجدداً.");
                 return;
             }
             const activeKey = key || crypto.randomUUID();
@@ -74,7 +85,7 @@ export default function CheckoutPage() {
                     ...(whatsappAssistance
                         ? { aiServiceConsentVersion: ORDER_WHATSAPP_NOTICE_VERSION }
                         : {}),
-                    expectedTotal: shipping.total ?? undefined,
+                    expectedTotal: confirmedTotal,
                     customer: {
                         fullName: form.fullName.trim(),
                         phone: form.phone.replace(/[\s()-]/g, ""),
@@ -90,6 +101,7 @@ export default function CheckoutPage() {
                 },
                 activeKey,
             );
+            metaPurchase(order.id, order.totalAmount);
             setOrderId(order.id);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });

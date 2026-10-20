@@ -1209,3 +1209,10 @@ dialog::backdrop {
         padding-block: 15px 6px;
     }
 }
+
+.product-shipping-badge { display:inline-block; color:#244c3b; background:#edf3e8; border-radius:6px; padding:4px 8px; font-size:12px; }
+.pixel-choice { position:fixed; bottom:85px; inset-inline:16px; z-index:80; max-width:520px; margin-inline:auto; padding:18px; border:1px solid #ccd4c7; background:#fffdf8; color:#233d31; border-radius:14px; box-shadow:0 6px 32px #0002; }
+.pixel-choice p { margin-bottom:12px; font-size:14px; line-height:1.6; }
+.pixel-choice button { padding:10px 16px; border:1px solid #244c3b; border-radius:7px; margin:4px; }
+.pixel-choice button:first-of-type { background:#244c3b; color:white; }
+.pixel-preference { display:block; margin:12px auto; padding:8px; text-decoration:underline; font-size:12px; }

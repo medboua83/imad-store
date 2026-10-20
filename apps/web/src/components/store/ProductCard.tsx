@@ -40,6 +40,7 @@ export function ProductCard({
                         </Link>
                     </Heading>
                     <p className="card-price" dir="ltr">
+                        {p.freeShipping && <span className="product-shipping-badge">توصيل مجاني</span>}
                         {p.compareAtPrice && p.compareAtPrice > p.price ? (
                             <del>{p.compareAtPrice.toFixed(2)} MAD</del>
                         ) : null}
