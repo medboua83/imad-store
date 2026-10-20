@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import "express-async-errors";
 
 import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
+import { analyticsRoutes } from "./routes/analytics.routes";
 import { contentRoutes } from "./routes/content.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { productRoutes } from "./routes/product.routes";
@@ -86,6 +87,7 @@ app.use("/api", (req, res, next) => {
     next();
 });
 app.use("/api/content", contentRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use(

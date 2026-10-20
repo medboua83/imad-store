@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
     ArrowUpRight,
+    ChartNoAxesCombined,
     Bell,
     CheckCheck,
     Grid2X2,
@@ -55,9 +56,17 @@ const ProductsTab = dynamic(() => import("./products-tab").then((m) => m.Product
     loading: pendingView,
 });
 const ContentTab = dynamic(() => import("./content-tab"), { loading: pendingView });
+const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: pendingView });
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: pendingView });
 type Tab =
-    "overview" | "orders" | "products" | "categories" | "content" | "deskcomm" | "notifications";
+    | "overview"
+    | "orders"
+    | "products"
+    | "categories"
+    | "content"
+    | "deskcomm"
+    | "notifications"
+    | "analytics";
 type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
 const sections = [
     {
@@ -65,6 +74,12 @@ const sections = [
         label: "Vue d’ensemble",
         description: "Les repères essentiels de votre boutique.",
         icon: LayoutDashboard,
+    },
+    {
+        id: "analytics" as Tab,
+        label: "Statistiques",
+        description: "Comprenez les visites, les produits consultés et les commandes.",
+        icon: ChartNoAxesCombined,
     },
     {
         id: "orders" as Tab,
@@ -492,15 +507,30 @@ export default function AdminPage() {
                                         onRefresh={refreshProducts}
                                         onCreate={async (d) => {
                                             await createProduct(d);
-                                            try { await refreshProducts(); return true; } catch { return false; }
+                                            try {
+                                                await refreshProducts();
+                                                return true;
+                                            } catch {
+                                                return false;
+                                            }
                                         }}
                                         onUpdate={async (id, d) => {
                                             await updateProduct(id, d);
-                                            try { await refreshProducts(); return true; } catch { return false; }
+                                            try {
+                                                await refreshProducts();
+                                                return true;
+                                            } catch {
+                                                return false;
+                                            }
                                         }}
                                         onDelete={async (id) => {
                                             await deleteProduct(id);
-                                            try { await refreshProducts(); return true; } catch { return false; }
+                                            try {
+                                                await refreshProducts();
+                                                return true;
+                                            } catch {
+                                                return false;
+                                            }
                                         }}
                                     />
                                 </div>
@@ -523,6 +553,7 @@ export default function AdminPage() {
                                     <ContentTab />
                                 </div>
                             )}
+                            {activeTab === "analytics" && <AnalyticsTab />}
                             {activeTab === "deskcomm" && <DeskcommTab />}
                             {activeTab === "notifications" && (
                                 <section className="admin-panel">

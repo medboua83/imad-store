@@ -1067,3 +1067,221 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
         false,
     );
 });
+
+test("Visitor statistics validate events, deduplicate concurrent views and exclude test/admin/bot traffic", async () => {
+    const db = mongo.db(name),
+        events = db.collection("store_analytics");
+    await events.deleteMany({});
+    const endpoint = "/api/analytics/events",
+        session = randomUUID();
+    assert.equal((await request(app).get("/api/analytics/summary")).status, 401);
+    const customer = jwt.sign(
+        { id: "123456789012345678901234", role: "CUSTOMER" },
+        process.env.JWT_SECRET!,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .get("/api/analytics/summary")
+                .set("Authorization", `Bearer ${customer}`)
+        ).status,
+        403,
+    );
+    for (const body of [
+        { session, page: "/admin" },
+        { session, page: "/?phone=private" },
+        { session, page: "/", companyId: randomUUID() },
+        { session, page: "/", orderId: "invented" },
+    ])
+        assert.equal((await request(app).post(endpoint).send(body)).status, 400);
+    assert.equal(
+        (
+            await request(app)
+                .post(endpoint)
+                .set("Origin", "https://unrelated.invalid")
+                .send({ session, page: "/" })
+        ).status,
+        403,
+    );
+    for (const headers of [
+        admin(),
+        { DNT: "1" },
+        { "Sec-GPC": "1" },
+        { "User-Agent": "Googlebot" },
+    ]) {
+        const response = await request(app)
+            .post(endpoint)
+            .set(headers)
+            .send({ session, page: "/" });
+        assert.equal(response.status, 202);
+        assert.equal(response.body.recorded, false);
+    }
+    const item = await prisma.product.create({
+        data: { ...payload(), variants: { create: payload().variants } },
+    });
+    await Promise.all(
+        Array.from({ length: 5 }, () =>
+            request(app)
+                .post(endpoint)
+                .send({ session, page: `/products/${item.slug}` })
+                .expect(202),
+        ),
+    );
+    await request(app).post(endpoint).send({ session, page: "/" }).expect(202);
+    await request(app)
+        .post(endpoint)
+        .send({ session: randomUUID(), page: "/", test: true })
+        .expect(202);
+    const summary = await request(app).get("/api/analytics/summary?days=7").set(admin());
+    assert.equal(summary.status, 200);
+    assert.match(summary.headers["cache-control"], /private, no-store/);
+    assert.equal(summary.body.data.visits, 1);
+    assert.equal(summary.body.data.pageViews, 2);
+    assert.equal(summary.body.data.productViews, 1);
+    assert.equal(summary.body.data.orderRate, 0);
+    assert.equal(summary.body.data.products[0].id, item.id);
+    assert.equal(
+        (await request(app).post(endpoint).send({ session, page: "/products/unpublished-missing" }))
+            .body.recorded,
+        false,
+    );
+    assert.equal(
+        (await request(app).get("/api/analytics/summary?days=365").set(admin())).status,
+        400,
+    );
+    const saved = await events.findOne({ kind: "page", test: false });
+    assert.equal(saved?.session === session, false);
+    assert.deepEqual(
+        Object.keys(saved!).sort(),
+        [
+            "_id",
+            "scope",
+            "session",
+            "kind",
+            "page",
+            "test",
+            "at",
+            "productId",
+            "productName",
+            "expiresAt",
+        ].sort(),
+    );
+    assert.ok(saved?.expiresAt instanceof Date);
+    assert.ok(
+        (await events.indexes()).some(
+            (index) => index.name === "analytics_retention" && index.expireAfterSeconds === 0,
+        ),
+    );
+});
+
+test("Only real committed orders convert visits; retries and multiple orders cannot inflate the conversion rate", async () => {
+    await mongo.db(name).collection("store_analytics").deleteMany({});
+    const session = randomUUID(),
+        other = randomUUID();
+    for (const id of [session, other])
+        await request(app)
+            .post("/api/analytics/events")
+            .send({ session: id, page: "/checkout" })
+            .expect(202);
+    const item = await prisma.product.create({
+        data: { ...payload(), variants: { create: payload().variants } },
+        include: { variants: true },
+    });
+    const body = {
+        ...checkout(),
+        aiServiceConsent: false,
+        items: [{ productId: item.id, variantId: item.variants[0].id, quantity: 1 }],
+    };
+    const key = randomUUID();
+    for (let i = 0; i < 2; i++) {
+        const response = await request(app)
+            .post("/api/orders")
+            .set("Idempotency-Key", key)
+            .set("X-Analytics-Session", session)
+            .send(body);
+        assert.equal(response.status, i === 0 ? 201 : 200);
+    }
+    await request(app)
+        .post("/api/orders")
+        .set("Idempotency-Key", randomUUID())
+        .set("X-Analytics-Session", session)
+        .send(body)
+        .expect(201);
+    const result = (await request(app).get("/api/analytics/summary?days=7").set(admin())).body.data;
+    assert.equal(result.visits, 2);
+    assert.equal(result.attributedOrders, 2);
+    assert.equal(result.convertedVisits, 1);
+    assert.equal(result.orderRate, 50);
+    // A broken analytics write must never turn a committed order into a checkout failure.
+    const { prisma: client } = await import("../backend/src/lib/prisma");
+    const original = client.$runCommandRaw.bind(client);
+    client.$runCommandRaw = (() => Promise.reject(new Error("isolated analytics failure"))) as any;
+    try {
+        await request(app)
+            .post("/api/orders")
+            .set("Idempotency-Key", randomUUID())
+            .set("X-Analytics-Session", session)
+            .send(body)
+            .expect(201);
+    } finally {
+        client.$runCommandRaw = original;
+    }
+    const { recordOrderConversion, recordPage } =
+        await import("../backend/src/lib/store-analytics");
+    client.$runCommandRaw = ((command: any) =>
+        command.update === "store_analytics"
+            ? Promise.resolve({ writeErrors: [{ code: 121 }] })
+            : original(command)) as any;
+    try {
+        await assert.rejects(() => recordPage(randomUUID(), "/", false), /Analytics write failed/);
+    } finally {
+        client.$runCommandRaw = original;
+    }
+    await recordOrderConversion(randomUUID(), new Date(Date.now() - 86400_000), session, false);
+    const again = (await request(app).get("/api/analytics/summary?days=7").set(admin())).body.data;
+    assert.equal(again.attributedOrders, 2);
+});
+
+test("Analytics scope comes from the installation, never from request inputs, and periods ignore old/test records", async () => {
+    const { analyticsScope, readAnalytics } = await import("../backend/src/lib/store-analytics");
+    const collection = mongo.db(name).collection("store_analytics");
+    await collection.deleteMany({});
+    const session = randomUUID();
+    await request(app).post("/api/analytics/events").send({ session, page: "/" }).expect(202);
+    const company = randomUUID(),
+        store = randomUUID(),
+        now = Date.now();
+    await collection.insertMany([
+        {
+            scope: `${company}:${store}`,
+            session: "other-company",
+            kind: "page",
+            test: false,
+            at: now,
+        },
+        {
+            scope: analyticsScope(),
+            session: "too-old",
+            kind: "page",
+            test: false,
+            at: now - 10 * 86400_000,
+        },
+        { scope: analyticsScope(), session: "test-only", kind: "page", test: true, at: now },
+    ]);
+    assert.equal((await readAnalytics(7)).visits, 1);
+    assert.equal((await readAnalytics(30)).visits, 2);
+    assert.equal(
+        (await request(app).get(`/api/analytics/summary?companyId=${company}`).set(admin())).status,
+        400,
+    );
+    process.env.STORE_INSTANCE_ID = store;
+    process.env.CRM_COMPANY_ID = company;
+    try {
+        assert.equal((await readAnalytics(7)).visits, 1);
+        // Rebinding the live database to another installation is rejected before any API route.
+        assert.equal((await request(app).get("/api/analytics/summary").set(admin())).status, 503);
+    } finally {
+        delete process.env.STORE_INSTANCE_ID;
+        delete process.env.CRM_COMPANY_ID;
+    }
+});

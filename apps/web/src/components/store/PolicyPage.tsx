@@ -55,6 +55,19 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                     المتجر.
                 </p>
             )}
+            {kind === "privacy" && (
+                <div className="space-y-3 leading-8">
+                    <h2 className="text-xl">إحصاءات استخدام المتجر</h2>
+                    <p>
+                        نقيس الزيارات والمنتجات التي تمت مشاهدتها ونسبة الزيارات التي أدت إلى إنشاء
+                        طلب. نستخدم معرّفاً عشوائياً مؤقتاً في تبويب المتصفح لمدة 30 دقيقة، دون
+                        ملفات تعريف ارتباط للتتبع أو بصمة للمتصفح. لا تتضمن الإحصاءات الاسم أو
+                        الهاتف أو عنوان IP أو بيانات الطلب الشخصية، وتبقى منفصلة لكل متجر. تُحذف
+                        سجلات القياس تلقائياً بعد 91 يوماً. نحترم إعدادات عدم التتبع وحماية الخصوصية
+                        في المتصفح.
+                    </p>
+                </div>
+            )}
             {content.policiesVerified && content.businessAddress && (
                 <p>
                     {content.businessName} — {content.businessAddress}

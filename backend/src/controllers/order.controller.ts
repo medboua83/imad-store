@@ -1,3 +1,4 @@
+import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
 import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { z } from "zod";
@@ -112,6 +113,7 @@ export async function createOrder(req: Request, res: Response) {
     if (previous) {
         if (previous.requestFingerprint !== requestFingerprint)
             throw new AppError("Idempotency key already used for another order", 409);
+        await recordConversion(previous.id, previous.createdAt, req);
         return res.status(200).json({ success: true, data: previous, idempotentReplay: true });
     }
 
@@ -301,6 +303,8 @@ export async function createOrder(req: Request, res: Response) {
     }
     if (!order) throw new AppError("Order transaction could not complete", 503);
 
+    await recordConversion(order.id, order.createdAt, req);
+
     // External notifications are invoked ONLY after transaction commit; retries reuse the saved order.
     const locale = (req.headers["x-locale"] as "ar" | "fr" | "en" | undefined) ?? "fr";
     const bridgePayload: OrderForBridge = {
@@ -396,4 +400,18 @@ export async function markNotificationRead(req: Request, res: Response) {
 export async function markAllNotificationsRead(_req: Request, res: Response) {
     await prisma.adminNotification.updateMany({ where: { read: false }, data: { read: true } });
     res.json({ success: true });
+}
+
+async function recordConversion(id: string, createdAt: Date, req: Request) {
+    if (req.header("DNT") === "1" || req.header("Sec-GPC") === "1") return;
+    try {
+        await recordOrderConversion(
+            id,
+            createdAt,
+            req.header("X-Analytics-Session"),
+            req.header("X-Analytics-Test") === "1",
+        );
+    } catch {
+        console.warn("Analytics attribution unavailable; order preserved");
+    }
 }
