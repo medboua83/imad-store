@@ -13,6 +13,10 @@ const categoryIllustrations: Record<string, string> = {
 // Owner-selected generated category artwork, bundled so deployments retain it.
 // This is category artwork, not a photograph of an actual catalogue product.
 const selectedCategoryArtwork: Record<string, string> = {
+    abayas: "/images/categories/abayas-v2.webp",
+    "womens-shoes": "/images/categories/chaussures-femme-v2.webp",
+    shawls: "/images/categories/chales-v2.webp",
+    bags: "/images/categories/sacs-v2.webp",
     "mens-clogs": "/images/categories/sabots-homme-v2.webp",
 };
 export const categoryThumbnail = (slug: string) =>

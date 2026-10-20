@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
@@ -789,16 +789,7 @@ export function ProductsTab({
                     {visible.map((p) => (
                         <article key={p.id}>
                             <div className="admin-product-thumb">
-                                {p.images[0] ? (
-                                    <Image
-                                        src={p.images[0]}
-                                        alt={p.nameFr}
-                                        width={64}
-                                        height={76}
-                                    />
-                                ) : (
-                                    <Package size={24} />
-                                )}
+                                <AdminProductPhoto images={p.images} name={p.nameFr} />
                             </div>
                             <div className="admin-product-name">
                                 <h3>{p.nameFr}</h3>

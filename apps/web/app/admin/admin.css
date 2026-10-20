@@ -1701,3 +1701,14 @@
  .analytics-products li { gap: 10px; grid-template-columns: 24px minmax(0,1fr) auto; }
  .analytics-count { white-space: normal; }
 }
+
+/* Failed media stays explicit in the editor; the list tries other photos of the same product. */
+.admin-app .admin-photo-unavailable {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; width:100%; height:100%; min-height:68px; padding:6px;
+    background:#eef0e7; color:#5b695c; text-align:center; font-size:10px; line-height:1.3;
+}
+.admin-app .product-photo-card > .admin-photo-unavailable { height:160px; border-radius:6px; }
+@media (max-width:640px) {
+    .admin-app .product-photo-card > .admin-photo-unavailable { height:120px; }
+}

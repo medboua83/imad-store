@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { ImagePlus, ArrowLeft, ArrowRight, Star, X } from "lucide-react";
 import { uploadProductImage } from "@/lib/api";
+import { AdminProductPhoto } from "./admin-product-photo";
 import { validatePhoto } from "./product-utils";
 export function ProductPhotos({
     images,
@@ -122,7 +123,7 @@ export function ProductPhotos({
             <div className="product-photo-grid">
                 {images.map((url, i) => (
                     <div key={`${url}-${i}`} className="product-photo-card">
-                        <img src={url} alt={`Vue ${i + 1} du produit`} width={160} height={160} />
+                        <AdminProductPhoto images={[url]} name={`Vue ${i + 1} du produit`} width={160} height={160} />
                         <span className="product-photo-position">
                             {i === 0 ? "Couverture" : `Photo ${i + 1}`}
                         </span>
