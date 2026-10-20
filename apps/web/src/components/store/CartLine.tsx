@@ -9,14 +9,12 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
     return (
         <article className="bag-line">
             <div className="bag-line-photo">
-                {item.image && (
                     <ProductPhoto
-                        images={[item.image]}
+                        images={item.images ?? [item.image]}
                         name={name}
                         sizes="88px"
                         className="object-contain"
                     />
-                )}
             </div>
             <div className="bag-line-detail">
                 <Link

@@ -7,7 +7,7 @@ import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
-import Image from "next/image";
+import { ProductPhoto } from "@/components/store/ProductPhoto";
 import {
     ArrowLeft,
     ArrowRight,
@@ -380,11 +380,10 @@ export default function CheckoutPage() {
                         <details className="checkout-item-disclosure">
                             <summary>
                                 <span className="checkout-mini-photo">
-                                    {items[0]?.image && (
-                                        <Image
-                                            src={items[0].image}
-                                            alt=""
-                                            fill
+                                    {items[0] && (
+                                        <ProductPhoto
+                                            images={items[0].images ?? [items[0].image]}
+                                            name=""
                                             sizes="52px"
                                             className="object-contain"
                                         />
