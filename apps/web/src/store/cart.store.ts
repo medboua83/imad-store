@@ -10,6 +10,7 @@ export interface CartItem {
     nameAr: string;
     nameEn: string;
     image: string;
+    images?: string[];
     colorNameFr: string;
     colorNameAr: string;
     colorNameEn: string;
@@ -55,6 +56,8 @@ export const useCartStore = create<CartStore>()(
                                           stock: variant.stock,
                                           price: product.price,
                                           freeShipping: Boolean(product.freeShipping),
+                                          image: product.images[0] ?? "",
+                                          images: [...product.images],
                                           quantity: Math.min(
                                               variant.stock,
                                               i.quantity + Math.floor(quantity),
@@ -73,6 +76,7 @@ export const useCartStore = create<CartStore>()(
                         nameAr: product.nameAr,
                         nameEn: product.nameEn,
                         image: product.images[0] ?? "",
+                        images: [...product.images],
                         colorNameFr: variant.colorNameFr,
                         colorNameAr: variant.colorNameAr,
                         colorNameEn: variant.colorNameEn,
@@ -146,6 +150,8 @@ export const useCartStore = create<CartStore>()(
                             stock,
                             quantity,
                             freeShipping: Boolean(product?.freeShipping),
+                            image: product ? product.images[0] ?? "" : item.image,
+                            images: product ? [...product.images] : item.images,
                         };
                     }),
                 }));

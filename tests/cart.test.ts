@@ -67,6 +67,14 @@ test("Cart caps repeated additions and edits, refreshes stale prices/stock and p
     assert.equal(store().items[0].quantity, 1);
     assert.equal(store().items[0].stock, 1);
     assert.equal(await store().refreshCart(), false);
+    // Old persisted carts only stored a single cover; recover the full current gallery.
+    useCartStore.setState({ items: store().items.map(({ images: _images, ...item }) => ({
+        ...item, image: "/uploads/removed-cover.webp",
+    })) });
+    changed.images = ["/uploads/current-cover.webp", "/uploads/available-alternative.webp"];
+    assert.equal(await store().refreshCart(), false, "photo updates do not change order totals");
+    assert.deepEqual(store().items[0].images, changed.images);
+    assert.equal(store().items[0].image, changed.images[0]);
     api.defaults.adapter = async () => {
         throw new Error("Offline");
     };
