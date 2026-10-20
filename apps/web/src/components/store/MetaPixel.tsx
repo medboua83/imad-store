@@ -7,7 +7,6 @@ import {
     choosePixelConsent,
     configurePixel,
     metaPage,
-    pixelConsent,
     pixelExcluded,
 } from "@/lib/meta-pixel";
 
@@ -18,15 +17,13 @@ export function MetaPixel() {
         queryFn: getSettings,
         staleTime: 60_000,
     });
-    const [choice, setChoice] = useState<string | null>(null),
-        [eligible, setEligible] = useState(false),
+    const [eligible, setEligible] = useState(false),
         [opened, setOpened] = useState(false);
     useEffect(() => {
         const task = setTimeout(() => {
         configurePixel(Boolean(data?.metaPixelEnabled), data?.metaPixelId || "");
         const permitted = Boolean(data?.metaPixelEnabled && data.metaPixelId && !pixelExcluded());
         setEligible(permitted);
-        setChoice(pixelConsent());
         if (permitted) metaPage(path);
         }, 0);
         return () => clearTimeout(task);
@@ -34,7 +31,6 @@ export function MetaPixel() {
     if (!eligible) return null;
     function choose(allow: boolean) {
         choosePixelConsent(allow);
-        setChoice(allow ? "granted" : "denied");
         setOpened(false);
         if (allow) metaPage(path);
     }
@@ -43,14 +39,15 @@ export function MetaPixel() {
             <button className="pixel-preference" onClick={() => setOpened(true)}>
                 خيارات ملفات الارتباط الإعلانية
             </button>
-            {(!choice || opened) && (
+            {opened && (
                 <section className="pixel-choice" aria-label="ملفات الارتباط الإعلانية">
                     <p>
-                        نستخدم Meta Pixel لقياس الحملات الإعلانية. هل توافقين على ملفات الارتباط
-                        الإعلانية؟ يمكنكم تغيير اختياركم في أي وقت.
+                        نستخدم Meta Pixel لقياس الحملات الإعلانية. يمكنكم إيقاف التتبع
+                        الإعلاني أو تفعيله وتغيير اختياركم في أي وقت.
                     </p>
-                    <button onClick={() => choose(true)}>أوافق</button>
-                    <button onClick={() => choose(false)}>أرفض</button>
+                    <button onClick={() => choose(true)}>تفعيل التتبع</button>
+                    <button onClick={() => choose(false)}>إيقاف التتبع</button>
+                    <button onClick={() => setOpened(false)}>إغلاق</button>
                 </section>
             )}
         </>

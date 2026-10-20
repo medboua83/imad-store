@@ -147,7 +147,7 @@ export default function CommerceTab() {
                             ajouté aux événements.
                         </p>
                         <p>
-                            Le script se charge après acceptation des cookies publicitaires.
+                            Le script se charge automatiquement, sauf refus enregistré du visiteur.
                             L’administration, les visites locales, les tests et les signaux de refus
                             de suivi sont exclus.
                         </p>
