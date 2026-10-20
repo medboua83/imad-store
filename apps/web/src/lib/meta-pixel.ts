@@ -55,7 +55,7 @@ function ready() {
         !config.enabled ||
         !/^[0-9]{5,25}$/.test(config.id) ||
         pixelExcluded() ||
-        pixelConsent() !== "granted"
+        pixelConsent() === "denied"
     )
         return false;
     if (!window.fbq) {

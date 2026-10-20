@@ -6,7 +6,7 @@ import {
     metaPage,
     metaPurchase,
 } from "../apps/web/src/lib/meta-pixel";
-test("Pixel stays unloaded until consent; excludes tests/admin; deduplicates confirmed orders", () => {
+test("Pixel loads automatically, preserves refusals, excludes tests/admin and deduplicates orders", () => {
     const storage = new Map<string, string>(),
         calls: unknown[][] = [],
         scripts: unknown[] = [];
@@ -34,13 +34,14 @@ test("Pixel stays unloaded until consent; excludes tests/admin; deduplicates con
             head: { appendChild: (s: unknown) => scripts.push(s) },
         },
     });
-    configurePixel(true, "123456789");
+    configurePixel(false, "123456789");
     metaPage("/");
     assert.equal(scripts.length, 0);
+    configurePixel(true, "123456789");
     choosePixelConsent(false);
     metaPage("/");
     assert.equal(scripts.length, 0);
-    choosePixelConsent(true);
+    storage.delete("imad-meta-consent:123456789");
     location.search = "?stats_test=1";
     metaPage("/");
     assert.equal(scripts.length, 0);
@@ -51,6 +52,7 @@ test("Pixel stays unloaded until consent; excludes tests/admin; deduplicates con
     location.pathname = "/";
     metaPage("/");
     assert.equal(scripts.length, 1);
+    assert.equal(storage.has("imad-meta-consent:123456789"), false, "automatic loading must not record visitor consent");
     const pixel = window.fbq!;
     calls.push(...pixel.queue);
     pixel.callMethod = (...args) => {
