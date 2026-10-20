@@ -239,6 +239,7 @@ export interface StoreSettings {
     freeShippingMin: number;
     metaPixelEnabled?: boolean;
     metaPixelId?: string | null;
+    metaPixelMadPerUsd?: number | null;
     codEnabled: boolean;
     whatsappAssistanceAvailable?: boolean;
 }

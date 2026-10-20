@@ -1287,6 +1287,8 @@ test("Analytics scope comes from the installation, never from request inputs, an
 });
 
 test("Commerce settings and promotions validate inputs; server decides delivery and price", async () => {
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelMadPerUsd: 0 })).status, 400);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelMadPerUsd: -2 })).status, 400);
     assert.equal((await request(app).put("/api/settings").send({ shippingCost: 0 })).status, 401);
     assert.equal((await request(app).put("/api/settings").set(admin()).send({ shippingCost: -1 })).status, 400);
     assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelId: "<script>", metaPixelEnabled: true })).status, 400);
@@ -1294,6 +1296,8 @@ test("Commerce settings and promotions validate inputs; server decides delivery 
     const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
     try {
         assert.equal((await request(app).put("/api/settings").set(admin()).send({ shippingCost: 30, freeShippingMin: 500, metaPixelEnabled: false, metaPixelId: "123456789" })).status, 200);
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelMadPerUsd: 9.78 })).status, 200);
+        assert.equal((await request(app).get("/api/settings")).body.data.metaPixelMadPerUsd, 9.78);
         const sale = await request(app).post("/api/products").set(admin()).send({ ...payload(), price: 100, compareAtPrice: 150, freeShipping: true });
         assert.equal(sale.status, 201);
         const ordinary = await request(app).post("/api/products").set(admin()).send(payload());

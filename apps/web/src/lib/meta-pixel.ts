@@ -11,7 +11,7 @@ declare global {
         _fbq?: Pixel;
     }
 }
-let config = { enabled: false, id: "" };
+let config: { enabled: boolean; id: string; madPerUsd?: number | null } = { enabled: false, id: "" };
 const initialized = new Set<string>();
 const purchases = new Set<string>();
 let lastPage = "";
@@ -43,12 +43,12 @@ export function pixelConsent(): string | null {
         return null;
     }
 }
-export function configurePixel(enabled: boolean, id: string) {
+export function configurePixel(enabled: boolean, id: string, madPerUsd?: number | null) {
     if (config.id !== id || config.enabled !== enabled) {
         window.fbq?.("consent", "revoke");
         lastPage = "";
     }
-    config = { enabled, id };
+    config = { enabled, id, madPerUsd };
 }
 function ready() {
     if (
@@ -108,14 +108,22 @@ export function metaPage(path: string) {
         /* A blocked advertising script must not affect the store. */
     }
 }
+export function purchaseUsdValue(value: number, madPerUsd?: number | null): number | null {
+    if (!Number.isFinite(value) || value < 0 || !madPerUsd ||
+        !Number.isFinite(madPerUsd) || madPerUsd < 0.000001 || madPerUsd > 1000000) return null;
+    const converted = Math.round((value / madPerUsd + Number.EPSILON) * 100) / 100;
+    return Number.isFinite(converted) ? converted : null;
+}
 export function metaPurchase(orderId: string, value: number) {
     try {
         const key = `imad-meta-purchase:${config.id}:${orderId}`;
+        const usdValue = purchaseUsdValue(value, config.madPerUsd);
         if (
-            !Number.isFinite(value) ||
-            value < 0 ||
+            !orderId ||
+            usdValue === null ||
             !ready() ||
             purchases.has(key) ||
+            localStorage.getItem(key) ||
             sessionStorage.getItem(key)
         )
             return;
@@ -123,10 +131,11 @@ export function metaPurchase(orderId: string, value: number) {
             "trackSingle",
             config.id,
             "Purchase",
-            { currency: "MAD", value },
+            { currency: "USD", value: usdValue },
             { eventID: `order-${orderId}` },
         );
         purchases.add(key);
+        localStorage.setItem(key, "1");
         sessionStorage.setItem(key, "1");
     } catch {
         /* Advertising must never interrupt a successful order. */

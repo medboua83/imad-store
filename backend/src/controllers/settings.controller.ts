@@ -39,6 +39,7 @@ const settingsSchema = z.object({
     freeShippingMin: z.number().min(0).max(1000000).optional(),
     codEnabled: z.boolean().optional(),
     metaPixelEnabled: z.boolean().optional(),
+    metaPixelMadPerUsd: z.number().finite().min(0.000001).max(1000000).nullable().optional(),
     metaPixelId: z
         .string()
         .trim()
