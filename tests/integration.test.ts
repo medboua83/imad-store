@@ -1285,3 +1285,41 @@ test("Analytics scope comes from the installation, never from request inputs, an
         delete process.env.CRM_COMPANY_ID;
     }
 });
+
+test("Commerce settings and promotions validate inputs; server decides delivery and price", async () => {
+    assert.equal((await request(app).put("/api/settings").send({ shippingCost: 0 })).status, 401);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ shippingCost: -1 })).status, 400);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelId: "<script>", metaPixelEnabled: true })).status, 400);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelId: null, metaPixelEnabled: true })).status, 400);
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    try {
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ shippingCost: 30, freeShippingMin: 500, metaPixelEnabled: false, metaPixelId: "123456789" })).status, 200);
+        const sale = await request(app).post("/api/products").set(admin()).send({ ...payload(), price: 100, compareAtPrice: 150, freeShipping: true });
+        assert.equal(sale.status, 201);
+        const ordinary = await request(app).post("/api/products").set(admin()).send(payload());
+        assert.equal(ordinary.status, 201);
+        assert.equal((await request(app).put("/api/products/" + sale.body.data.id).set(admin()).send({ compareAtPrice: 90 })).status, 400);
+        assert.equal((await prisma.product.findUnique({ where: { id: sale.body.data.id } })).compareAtPrice, 150);
+        const body = { ...checkout(), aiServiceConsent: false, crmConsent: false, expectedTotal: 200, items: [
+            { productId: sale.body.data.id, variantId: sale.body.data.variants[0].id, quantity: 1, price: 0.01 },
+            { productId: ordinary.body.data.id, variantId: ordinary.body.data.variants[0].id, quantity: 1 }
+        ] };
+        assert.equal((await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...body, items: [{ ...body.items[1], freeShipping: true }] })).status, 400);
+        const order = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(body);
+        assert.equal(order.status, 201); assert.equal(order.body.data.shippingCost, 0); assert.equal(order.body.data.totalAmount, 200);
+        const normal = { ...body, items: [body.items[1]], expectedTotal: 130 };
+        const paid = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(normal);
+        assert.equal(paid.status, 201); assert.equal(paid.body.data.shippingCost, 30);
+        const threshold = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...normal, expectedTotal: 500, items: [{ ...body.items[1], quantity: 5 }] });
+        // Replenish before checking the threshold because the previous order reserved a unit.
+        assert.equal(threshold.status, 409);
+        await prisma.productVariant.update({ where: { id: ordinary.body.data.variants[0].id }, data: { stock: 5 } });
+        const atThreshold = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...normal, expectedTotal: 500, items: [{ ...body.items[1], quantity: 5 }] });
+        assert.equal(atThreshold.status, 201); assert.equal(atThreshold.body.data.shippingCost, 0);
+    } finally {
+        if (initial) {
+            const { id, ...data } = initial;
+            await prisma.storeSettings.update({ where: { id }, data });
+        } else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});

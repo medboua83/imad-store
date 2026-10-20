@@ -68,6 +68,20 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                     </p>
                 </div>
             )}
+            {kind === "privacy" && settings.metaPixelEnabled && (
+                <p>
+                    بعد قبول ملفات الارتباط الإعلانية، قد يرسل Meta Pixel الصفحات والمنتجات التي
+                    تزورينها، وبدء الطلب وقيمته عند إنشائه، إلى Meta لقياس الحملات. يمكنكِ رفض ذلك
+                    أو تغيير اختياركِ من أسفل الصفحة. لا نضيف اسمكِ أو هاتفكِ أو عنوانكِ إلى هذه
+                    الأحداث.
+                </p>
+            )}
+            {kind === "delivery" && (
+                <p>
+                    يصبح توصيل السلة مجانياً عند احتوائها على منتج يحمل علامة التوصيل المجاني، أو
+                    بلوغ الحد الموضح، بعد احتساب التخفيضات.
+                </p>
+            )}
             {content.policiesVerified && content.businessAddress && (
                 <p>
                     {content.businessName} — {content.businessAddress}

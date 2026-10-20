@@ -23,6 +23,8 @@ const blank = {
     descriptionEn: "",
     price: "",
     compareAtPrice: "",
+    promotionEnabled: false,
+    freeShipping: false,
     categoryId: "",
     status: "DRAFT",
 };
@@ -120,6 +122,8 @@ export function ProductsTab({
                   descriptionEn: p.descriptionEn,
                   price: String(p.price),
                   compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "",
+                  promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
+                  freeShipping: Boolean(p.freeShipping),
                   categoryId: p.category.id,
                   status: p.status,
               }
@@ -204,7 +208,10 @@ export function ProductsTab({
                 throw new Error(
                     "L’adresse utilise uniquement des lettres minuscules sans accents, des chiffres et des tirets.",
                 );
-            if (form.compareAtPrice && Number(form.compareAtPrice) <= Number(form.price))
+            if (
+                form.promotionEnabled &&
+                (!form.compareAtPrice || Number(form.compareAtPrice) <= Number(form.price))
+            )
                 throw new Error(
                     "L’ancien prix doit être supérieur au prix actuel, ou laissé vide.",
                 );
@@ -215,7 +222,10 @@ export function ProductsTab({
             data = {
                 ...form,
                 price: Number(form.price),
-                compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
+                compareAtPrice:
+                    form.promotionEnabled && form.compareAtPrice
+                        ? Number(form.compareAtPrice)
+                        : null,
                 images,
                 variants: payload,
             };
@@ -376,7 +386,7 @@ export function ProductsTab({
                                 </label>
                             ))}
                             <label>
-                                Prix (MAD)
+                                Prix de vente (MAD)
                                 <input
                                     className={inputClass}
                                     required
@@ -388,14 +398,39 @@ export function ProductsTab({
                                     onChange={(e) => set("price", e.target.value)}
                                 />
                             </label>
+                            <label className="admin-option-check">
+                                <input
+                                    type="checkbox"
+                                    checked={form.promotionEnabled}
+                                    onChange={(e) =>
+                                        setForm((v) => ({
+                                            ...v,
+                                            promotionEnabled: e.target.checked,
+                                        }))
+                                    }
+                                />{" "}
+                                Produit en promotion
+                            </label>
+                            <label className="admin-option-check">
+                                <input
+                                    type="checkbox"
+                                    checked={form.freeShipping}
+                                    onChange={(e) =>
+                                        setForm((v) => ({ ...v, freeShipping: e.target.checked }))
+                                    }
+                                />{" "}
+                                Livraison offerte pour tout panier contenant ce produit
+                            </label>
                             <label>
-                                Ancien prix (facultatif)
+                                Prix initial barré (promotion)
                                 <input
                                     className={inputClass}
                                     type="number"
                                     min="0.01"
                                     max="1000000"
                                     step="0.01"
+                                    disabled={!form.promotionEnabled}
+                                    required={form.promotionEnabled}
                                     value={form.compareAtPrice}
                                     onChange={(e) => set("compareAtPrice", e.target.value)}
                                 />

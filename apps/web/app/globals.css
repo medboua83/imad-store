@@ -323,20 +323,30 @@ dialog::backdrop {
     gap: 20px;
     padding: 20px clamp(20px, 4vw, 64px);
 }
+
 .brand-wordmark {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 10px;
-    letter-spacing: 0.08em;
-    font-size: 38px;
-    line-height: 1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    line-height:0;
+    color:var(--forest);
 }
-.brand-wordmark span {
-    font-family: "DM Sans", sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.3em;
+.brand-wordmark .brand-logo {
+    display:block;
+    width:164px;
+    aspect-ratio:24 / 11;
+    background-color:currentColor;
+    -webkit-mask:url("/images/brand/imad-mode-selected-v1.webp") center / contain no-repeat;
+    mask:url("/images/brand/imad-mode-selected-v1.webp") center / contain no-repeat;
+}
+.site-header .nav-inner { padding-block:12px; }
+.site-footer .brand-wordmark { color:#f7f3e9; }
+.site-footer .brand-wordmark .brand-logo { width:210px; }
+@media (max-width:767px) {
+    .site-header .nav-inner { padding-block:10px; }
+    .brand-wordmark .brand-logo { width:116px; }
+    .site-footer .brand-wordmark .brand-logo { width:170px; }
 }
 .nav-link {
     position: relative;
@@ -1209,3 +1219,10 @@ dialog::backdrop {
         padding-block: 15px 6px;
     }
 }
+
+.product-shipping-badge { display:inline-block; color:#244c3b; background:#edf3e8; border-radius:6px; padding:4px 8px; font-size:12px; }
+.pixel-choice { position:fixed; bottom:85px; inset-inline:16px; z-index:80; max-width:520px; margin-inline:auto; padding:18px; border:1px solid #ccd4c7; background:#fffdf8; color:#233d31; border-radius:14px; box-shadow:0 6px 32px #0002; }
+.pixel-choice p { margin-bottom:12px; font-size:14px; line-height:1.6; }
+.pixel-choice button { padding:10px 16px; border:1px solid #244c3b; border-radius:7px; margin:4px; }
+.pixel-choice button:first-of-type { background:#244c3b; color:white; }
+.pixel-preference { display:block; margin:12px auto; padding:8px; text-decoration:underline; font-size:12px; }

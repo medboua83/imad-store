@@ -149,6 +149,7 @@ export interface Product {
     descriptionEn: string;
     price: number;
     compareAtPrice?: number;
+    freeShipping?: boolean;
     images: string[];
     status: string;
     category: Category;
@@ -236,6 +237,8 @@ export interface StoreSettings {
     whatsappPhone: string;
     shippingCost: number;
     freeShippingMin: number;
+    metaPixelEnabled?: boolean;
+    metaPixelId?: string | null;
     codEnabled: boolean;
     whatsappAssistanceAvailable?: boolean;
 }

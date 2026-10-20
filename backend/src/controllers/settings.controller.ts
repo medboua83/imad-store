@@ -9,6 +9,8 @@ export async function readSettings() {
         shippingCost: 30,
         freeShippingMin: 500,
         codEnabled: true,
+        metaPixelEnabled: false,
+        metaPixelId: null,
     };
     const integration = await prisma.deskcommIntegration.findUnique({
         where: { id: "deskcomm" },
@@ -36,10 +38,23 @@ const settingsSchema = z.object({
     shippingCost: z.number().min(0).max(1000000).optional(),
     freeShippingMin: z.number().min(0).max(1000000).optional(),
     codEnabled: z.boolean().optional(),
+    metaPixelEnabled: z.boolean().optional(),
+    metaPixelId: z
+        .string()
+        .trim()
+        .regex(/^(?:[0-9]{5,25})?$/, "Identifiant Meta Pixel invalide")
+        .nullable()
+        .optional(),
 });
 
 export async function updateSettings(req: Request, res: Response) {
     const body = settingsSchema.parse(req.body);
+    const current = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    const pixelId = body.metaPixelId !== undefined ? body.metaPixelId : current?.metaPixelId;
+    if ((body.metaPixelEnabled ?? current?.metaPixelEnabled) && !pixelId)
+        return res
+            .status(400)
+            .json({ error: "Renseignez un identifiant Meta Pixel avant activation." });
     const settings = await prisma.storeSettings.upsert({
         create: { id: "settings", ...body },
         where: { id: "settings" },

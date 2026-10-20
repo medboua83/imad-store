@@ -1712,3 +1712,20 @@
 @media (max-width:640px) {
     .admin-app .product-photo-card > .admin-photo-unavailable { height:120px; }
 }
+
+.admin-app .admin-option-check { display:flex; align-items:center; gap:10px; }
+.admin-app .admin-option-check input[type=checkbox] { width:20px; height:20px; flex-shrink:0; }
+.admin-app .commerce-settings { display:grid; gap:24px; max-width:800px; }
+.admin-app .commerce-settings fieldset { display:grid; gap:18px; padding:22px; border:1px solid var(--admin-line); border-radius:12px; }
+.admin-app .commerce-settings label { display:grid; gap:8px; }
+.admin-app .commerce-settings input:not([type=checkbox]) { padding:12px; border:1px solid var(--admin-line); border-radius:8px; width:100%; }
+.admin-app .commerce-settings p { color:var(--admin-muted); line-height:1.65; }
+
+/* Selected logo follows the ivory-on-forest administration palette. */
+.admin-app .brand-wordmark { color:#eef2e8; }
+.admin-app .brand-wordmark .brand-logo { width:164px; }
+.admin-app .admin-auth-story .brand-logo { width:230px; }
+@media (max-width:767px) {
+    .admin-app .brand-wordmark .brand-logo { width:120px; }
+    .admin-app .admin-auth-story .brand-logo { width:145px; }
+}

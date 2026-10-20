@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SocialIcon } from "../store/StoreIcons";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, MessageCircle } from "lucide-react";
 
@@ -41,7 +42,7 @@ export function Footer() {
                         dir="ltr"
                         aria-label="IMAD Mode — الرئيسية"
                     >
-                        IMAD <span>MODE</span>
+                        <BrandLogo />
                     </Link>
                     <p className="footer-tagline">
                         أناقة في الاختيار.
