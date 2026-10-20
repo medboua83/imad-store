@@ -44,7 +44,11 @@ export async function assertStoreInstallation() {
             prisma.deskcommStatusReceipt,
             prisma.deskcommConnection,
         ];
+        const analytics = (await prisma.$runCommandRaw({ count: "store_analytics" })) as {
+            n?: number;
+        };
         if (
+            analytics.n ||
             (
                 await Promise.all(
                     delegates.map((model) =>

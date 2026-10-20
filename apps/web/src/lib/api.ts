@@ -1,3 +1,4 @@
+import { analyticsOrderHeaders } from "./store-analytics";
 import axios from "axios";
 import type { SiteContent } from "@imad-store/shared";
 
@@ -218,7 +219,7 @@ export const getCategories = async (): Promise<Category[]> => {
 
 export const createOrder = async (payload: GuestCheckoutPayload, idempotencyKey: string) => {
     const { data } = await api.post("/orders", payload, {
-        headers: { "Idempotency-Key": idempotencyKey },
+        headers: { "Idempotency-Key": idempotencyKey, ...analyticsOrderHeaders() },
     });
     return data.data;
 };
@@ -383,4 +384,21 @@ export async function getAdminProducts(params: Record<string, unknown> = {}) {
 export async function uploadProductImage(file: File): Promise<string> {
     return (await api.post("/uploads", file, { headers: { "Content-Type": file.type } })).data.data
         .url;
+}
+
+export type StoreAnalyticsSummary = {
+    days: number;
+    start: string;
+    end: string;
+    trackingSince: string | null;
+    visits: number;
+    convertedVisits: number;
+    orderRate: number | null;
+    pageViews: number;
+    productViews: number;
+    attributedOrders: number;
+    products: { id: string; name: string; views: number }[];
+};
+export async function getStoreAnalytics(days: number): Promise<StoreAnalyticsSummary> {
+    return (await api.get("/analytics/summary", { params: { days } })).data.data;
 }
