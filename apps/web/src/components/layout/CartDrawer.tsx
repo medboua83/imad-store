@@ -37,7 +37,7 @@ export function CartDrawer() {
         refreshCart()
             .then((changed) => {
                 if (!active) return;
-                setNotice(changed ? "تم تحديث الأسعار أو الكميات. راجعوا حقيبتك قبل المتابعة." : "");
+                setNotice(changed ? "تم تحديث الأسعار أو الكميات. راجعوا حقيبتكم قبل المتابعة." : "");
                 setReview("ready");
             })
             .catch(() => {
@@ -166,7 +166,7 @@ export function CartDrawer() {
                     )}
                     {invalidItems && (
                         <p role="alert" className="bag-notice-error">
-                            احذفي القطع غير المتوفرة للمتابعة.
+                            احذفوا القطع غير المتوفرة للمتابعة.
                         </p>
                     )}
                     {shipping.settings?.codEnabled === false && (

@@ -286,7 +286,7 @@ export default async function ShopPage({
                             : "تواصلوا معنا للاستفسار عن القطع المتوفرة."}
                     </p>
                     <Link className="btn-primary" href={active.length ? "/shop" : "/contact"}>
-                        {active.length ? "عرض كل القطع" : "تواصل معنا"}
+                        {active.length ? "عرض كل القطع" : "تواصلوا معنا"}
                     </Link>
                 </div>
             )}

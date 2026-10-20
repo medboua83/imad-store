@@ -72,7 +72,7 @@ export function Footer() {
                         ["/delivery", "التوصيل"],
                         ["/returns", "الاستبدال والإرجاع"],
                         ["/privacy", "الخصوصية"],
-                        ["/contact", "تواصل معنا"],
+                        ["/contact", "تواصلوا معنا"],
                     ].map(([href, label]) => (
                         <Link key={href} href={href}>
                             {label}

@@ -31,7 +31,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     <span dir="ltr">{item.price.toFixed(2)} MAD</span> / القطعة
                 </p>
                 {!item.stock && (
-                    <p className="bag-stock-error">غير متوفر حالياً. احذفي هذه القطعة للمتابعة.</p>
+                    <p className="bag-stock-error">غير متوفر حالياً. احذفوا هذه القطعة للمتابعة.</p>
                 )}
                 <div className="bag-line-controls">
                     <div className="bag-quantity" aria-label={`كمية ${name}`}>

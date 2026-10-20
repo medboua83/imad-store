@@ -167,7 +167,7 @@ export function ProductOptions({ product }: { product: Product }) {
                     }}
                 >
                     <ShoppingBag size={19} aria-hidden="true" />
-                    {stock ? "أضف إلى السلة" : "غير متوفر حالياً"}
+                    {stock ? "إضافة إلى السلة" : "غير متوفر حالياً"}
                 </button>
             </div>
         </div>

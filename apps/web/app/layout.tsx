@@ -13,7 +13,7 @@ import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
     title: { default: "IMAD Mode — أناقة محتشمة", template: "%s | IMAD Mode" },
-    description: "تصفحوا منتجات IMAD Mode واختاروا اللون والمقاس مع ملخص واضح لطلبك.",
+    description: "تصفحوا منتجات IMAD Mode واختاروا اللون والمقاس مع ملخص واضح لطلبكم.",
     alternates: { canonical: "/" },
 };
 
