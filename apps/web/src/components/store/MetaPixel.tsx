@@ -21,13 +21,13 @@ export function MetaPixel() {
         [opened, setOpened] = useState(false);
     useEffect(() => {
         const task = setTimeout(() => {
-        configurePixel(Boolean(data?.metaPixelEnabled), data?.metaPixelId || "");
+        configurePixel(Boolean(data?.metaPixelEnabled), data?.metaPixelId || "", data?.metaPixelMadPerUsd);
         const permitted = Boolean(data?.metaPixelEnabled && data.metaPixelId && !pixelExcluded());
         setEligible(permitted);
         if (permitted) metaPage(path);
         }, 0);
         return () => clearTimeout(task);
-    }, [data?.metaPixelEnabled, data?.metaPixelId, path]);
+    }, [data?.metaPixelEnabled, data?.metaPixelId, data?.metaPixelMadPerUsd, path]);
     if (!eligible) return null;
     function choose(allow: boolean) {
         choosePixelConsent(allow);

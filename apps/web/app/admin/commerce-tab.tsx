@@ -10,6 +10,7 @@ export default function CommerceTab() {
         freeShippingMin: "500",
         metaPixelId: "",
         metaPixelEnabled: false,
+        metaPixelMadPerUsd: "",
     });
     const [ready, setReady] = useState(false),
         [busy, setBusy] = useState(false),
@@ -24,6 +25,7 @@ export default function CommerceTab() {
                 freeShippingMin: String(settings.freeShippingMin),
                 metaPixelId: settings.metaPixelId || "",
                 metaPixelEnabled: Boolean(settings.metaPixelEnabled),
+                metaPixelMadPerUsd: settings.metaPixelMadPerUsd ? String(settings.metaPixelMadPerUsd) : "",
             });
             setReady(true);
         } catch {
@@ -67,6 +69,7 @@ export default function CommerceTab() {
                                 freeShippingMin: Number(form.freeShippingMin),
                                 metaPixelId: form.metaPixelId.trim() || null,
                                 metaPixelEnabled: form.metaPixelEnabled,
+                                metaPixelMadPerUsd: form.metaPixelMadPerUsd ? Number(form.metaPixelMadPerUsd) : null,
                             });
                             await cache.invalidateQueries({ queryKey: ["store-settings"] });
                             setSaved(true);
@@ -141,6 +144,24 @@ export default function CommerceTab() {
                             />{" "}
                             Activer Meta Pixel
                         </label>
+                        <label>
+                            Conversion Meta : 1 USD = combien de MAD ?
+                            <input type="number" min="0.000001" max="1000000" step="0.000001"
+                                value={form.metaPixelMadPerUsd}
+                                onChange={(e) => setForm({ ...form, metaPixelMadPerUsd: e.target.value })}
+                                placeholder="Taux de référence à renseigner" />
+                        </label>
+                        <p>
+                            Meta ne prend pas en charge le MAD pour Purchase. Le total est divisé par
+                            ce taux et arrondi au centime USD. Les prix et commandes restent en MAD.
+                            Ce taux est manuel : mettez-le à jour selon votre référence de change.
+                        </p>
+                        {Number(form.metaPixelMadPerUsd) > 0 ? <p>
+                            Exemple : 230 MAD → {(230 / Number(form.metaPixelMadPerUsd)).toFixed(2)} USD.
+                        </p> : <p role="status">
+                            Purchase reste en pause tant que le taux n’est pas renseigné.
+                            Les visites continuent. Aucune ancienne commande ne sera rejouée.
+                        </p>}
                         <p>
                             Pages vues, produits consultés, début de commande et commande créée
                             (paiement à la livraison). Aucun nom, téléphone, e-mail ni adresse n’est

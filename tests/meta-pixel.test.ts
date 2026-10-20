@@ -5,6 +5,7 @@ import {
     choosePixelConsent,
     metaPage,
     metaPurchase,
+    purchaseUsdValue,
 } from "../apps/web/src/lib/meta-pixel";
 test("Pixel loads automatically, preserves refusals, excludes tests/admin and deduplicates orders", () => {
     const storage = new Map<string, string>(),
@@ -37,7 +38,7 @@ test("Pixel loads automatically, preserves refusals, excludes tests/admin and de
     configurePixel(false, "123456789");
     metaPage("/");
     assert.equal(scripts.length, 0);
-    configurePixel(true, "123456789");
+    configurePixel(true, "123456789", 10);
     choosePixelConsent(false);
     metaPage("/");
     assert.equal(scripts.length, 0);
@@ -64,6 +65,12 @@ test("Pixel loads automatically, preserves refusals, excludes tests/admin and de
     metaPurchase("order-one", 130);
     metaPurchase("order-one", 130);
     assert.equal(calls.filter((c) => c[2] === "Purchase").length, 1);
+    assert.deepEqual(calls.find((c) => c[2] === "Purchase")?.slice(3), [
+        { currency: "USD", value: 13 }, { eventID: "order-order-one" }
+    ]);
+    storage.set("imad-meta-purchase:123456789:previous-order", "1");
+    metaPurchase("previous-order", 130);
+    assert.equal(calls.filter((c) => c[2] === "Purchase").length, 1);
     assert.equal(calls.filter((c) => c[2] === "PageView").length, 3);
     assert.equal(calls.filter((c) => c[2] === "ViewContent").length, 1);
     choosePixelConsent(false);
@@ -78,4 +85,13 @@ test("Pixel loads automatically, preserves refusals, excludes tests/admin and de
         throw new Error("Blocked advertising SDK");
     };
     assert.doesNotThrow(() => metaPage("/shop"));
+});
+test("Purchase converts MAD to USD without inventing a missing rate", () => {
+    assert.equal(purchaseUsdValue(230, 10), 23);
+    assert.equal(purchaseUsdValue(230, 9.78), 23.52);
+    for (const rate of [null, undefined, 0, -1, Infinity, NaN]) {
+        assert.equal(purchaseUsdValue(230, rate), null);
+    }
+    assert.equal(purchaseUsdValue(-1, 10), null);
+    assert.equal(purchaseUsdValue(Infinity, 10), null);
 });
