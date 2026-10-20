@@ -64,7 +64,7 @@ export default function CheckoutPage() {
             }
             const cart = useCartStore.getState().items;
             if (!cart.length || cart.some((i) => i.quantity < 1 || i.quantity > i.stock)) {
-                setError("احذفي المنتجات غير المتوفرة من السلة قبل المتابعة.");
+                setError("احذفوا المنتجات غير المتوفرة من السلة قبل المتابعة.");
                 return;
             }
             if (!freshSettings) throw new Error("Shipping settings unavailable");
@@ -126,7 +126,7 @@ export default function CheckoutPage() {
             }
             setError(
                 response?.data?.error ||
-                    "تعذر الاتصال. بياناتك محفوظة هنا، ويمكنك المحاولة مجدداً.",
+                    "تعذر الاتصال. بياناتكم محفوظة هنا، ويمكنكم المحاولة مجدداً.",
             );
         } finally {
             setBusy(false);
@@ -329,7 +329,7 @@ export default function CheckoutPage() {
                         )}
                         {invalidItems && (
                             <p role="alert" className="checkout-alert">
-                                احذفي المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
+                                احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
                             </p>
                         )}
                         {shipping.settings?.whatsappAssistanceAvailable && (
@@ -348,7 +348,7 @@ export default function CheckoutPage() {
                             </label>
                         )}
                         <p className="checkout-policy">
-                            قبل التأكيد، اطلعي على <Link href="/delivery">التوصيل</Link> و
+                            قبل التأكيد، اطلعوا على <Link href="/delivery">التوصيل</Link> و
                             <Link href="/returns">الاستبدال والإرجاع</Link> و
                             <Link href="/privacy">الخصوصية</Link>.
                         </p>

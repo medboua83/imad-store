@@ -204,7 +204,7 @@ export function HomeView({
                         <h3>مجموعتنا الجديدة قيد التحضير.</h3>
                         <p>تواصلوا معنا للاستفسار عن المنتجات المتوفرة.</p>
                         <Link prefetch={false} href="/contact" className="btn-primary">
-                            تواصل معنا
+                            تواصلوا معنا
                         </Link>
                     </div>
                 )}

@@ -22,7 +22,7 @@ import { usePathname } from "next/navigation";
 const dockLinks = [
     ["/", "الرئيسية", House],
     ["/shop", "المتجر", LayoutGrid],
-    ["/contact", "تواصل معنا", MessageCircle],
+    ["/contact", "تواصلوا معنا", MessageCircle],
 ] as const;
 const categories = [
     ["abayas", "العبايات"],
@@ -34,7 +34,7 @@ const categories = [
 const links = [
     ["/", "الرئيسية"],
     ["/shop", "المتجر"],
-    ["/contact", "تواصل معنا"],
+    ["/contact", "تواصلوا معنا"],
 ];
 export function Navbar() {
     const menu = useRef<HTMLDialogElement>(null);
@@ -193,7 +193,7 @@ export function Navbar() {
                                     id="menu-search"
                                     name="search"
                                     type="search"
-                                    placeholder="ابحثي عن قطعة…"
+                                    placeholder="البحث عن منتج…"
                                     maxLength={100}
                                     enterKeyHint="search"
                                 />
@@ -245,7 +245,7 @@ export function Navbar() {
                             </Link>
                             <Link href="/contact" onClick={closeMenu}>
                                 <MessageCircle size={18} aria-hidden="true" />
-                                تواصل معنا
+                                تواصلوا معنا
                                 <ArrowUpLeft size={16} aria-hidden="true" />
                             </Link>
                             <Link href="/" onClick={closeMenu}>
