@@ -1,0 +1,75 @@
+/* IMAD gold identity: dark gold for readable controls, champagne on dark surfaces. */
+:root {
+    --gold: #b38a43;
+    --gold-light: #e7cf97;
+    --gold-dark: #78551f;
+    --forest: #78551f;
+    --forest-dark: #594018;
+    --ink: #30291f;
+    --soft-ink: #75654f;
+    --navy: #30291f;
+    --charcoal: #30291f;
+    --muted: #75654f;
+    --paper: #fcfaf6;
+    --warm: #f3ebdc;
+    --line: #e3d7c1;
+}
+.brand-wordmark .brand-logo {
+    background: linear-gradient(125deg, #78551f 10%, #b68c42 48%, #806025 86%);
+}
+.store-shell .announcement-bar,
+.store-shell .site-footer {
+    background: #292319;
+    color: #faf5e9;
+}
+.site-footer .brand-wordmark .brand-logo,
+.admin-sidebar .brand-wordmark .brand-logo,
+.admin-auth-story .brand-wordmark .brand-logo {
+    background: linear-gradient(120deg, #c29a50, #f1dfb1 50%, #c29a50);
+}
+.store-shell .hero-copy {
+    background: radial-gradient(ellipse at top right, #faf3e4, #eee2cb);
+}
+.store-shell .hero-copy h1 {
+    color: #44341e;
+}
+.store-shell .hero-description,
+.store-shell .hero-note {
+    color: #75654f;
+}
+.store-shell .btn-primary,
+.store-shell .pixel-choice button:first-of-type {
+    background: #78551f;
+    border-color: #78551f;
+    color: #fffaf0;
+}
+.store-shell .btn-primary:hover {
+    background: #594018;
+    border-color: #594018;
+}
+.store-shell .section-eyebrow,
+.store-shell .nav-link[aria-current="page"] {
+    color: #78551f;
+}
+.store-shell :is(a, button, input, select, summary):focus-visible {
+    outline-color: #94702e;
+}
+.store-shell .site-footer :is(a, button):focus-visible {
+    outline-color: #e7cf97;
+}
+.store-shell .btn-gold {
+    background: #78551f;
+    color: #fffaf0;
+}
+.store-shell .btn-outline-gold {
+    color: #78551f;
+    border-color: #78551f;
+}
+.store-shell .btn-outline-gold:hover {
+    background: #78551f;
+    color: #fffaf0;
+}
+::selection {
+    background: #e7cf97;
+    color: #30291f;
+}
