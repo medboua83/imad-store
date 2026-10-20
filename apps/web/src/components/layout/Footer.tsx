@@ -17,19 +17,19 @@ export function Footer() {
                 <div>
                     <PackageCheck size={22} aria-hidden="true" />
                     <span>
-                        الدفع عند الاستلام<small>راجعي المبلغ قبل تأكيد الطلب</small>
+                        الدفع عند الاستلام<small>راجعوا المبلغ قبل تأكيد الطلب</small>
                     </span>
                 </div>
                 <div>
                     <SlidersHorizontal size={22} aria-hidden="true" />
                     <span>
-                        اختيارات على مقاسكِ<small>اللون والمقاس والتوفر في كل قطعة</small>
+                        اختيارات على مقاسكم<small>اللون والمقاس والتوفر في كل قطعة</small>
                     </span>
                 </div>
                 <Link href="/contact">
                     <MessageCircle size={22} aria-hidden="true" />
                     <span>
-                        نحن هنا للمساعدة<small>سؤال عن قطعة أو عن طلبكِ؟</small>
+                        نحن هنا للمساعدة<small>سؤال عن قطعة أو عن طلبكم؟</small>
                     </span>
                     <ArrowUpLeft size={18} aria-hidden="true" />
                 </Link>
@@ -50,11 +50,11 @@ export function Footer() {
                         بساطة في التفاصيل.
                     </p>
                     <p className="footer-brand-note">
-                        قطع تختارينها بطريقتكِ، وتفاصيل واضحة في كل خطوة.
+                        قطع تختارونها بطريقتكم، وتفاصيل واضحة في كل خطوة.
                     </p>
                 </div>
-                <nav aria-label="اكتشفي المتجر">
-                    <h2>اكتشفي IMAD</h2>
+                <nav aria-label="اكتشفوا المتجر">
+                    <h2>اكتشفوا IMAD</h2>
                     {[
                         ["/shop", "كل المنتجات"],
                         ["/shop?category=abayas", "العبايات"],
@@ -67,7 +67,7 @@ export function Footer() {
                     ))}
                 </nav>
                 <nav aria-label="معلومات المتجر">
-                    <h2>معلومات تهمكِ</h2>
+                    <h2>معلومات تهمكم</h2>
                     {[
                         ["/delivery", "التوصيل"],
                         ["/returns", "الاستبدال والإرجاع"],
@@ -80,16 +80,16 @@ export function Footer() {
                     ))}
                 </nav>
                 <div className="footer-help">
-                    <span className="footer-help-label">لأن التفاصيل تهمّكِ</span>
-                    <h2>نساعدكِ على الاختيار.</h2>
-                    <p>تواصلي معنا للاستفسار عن المنتجات أو توضيح تفاصيل طلبكِ.</p>
+                    <span className="footer-help-label">لأن التفاصيل تهمّكم</span>
+                    <h2>نساعدكم على الاختيار.</h2>
+                    <p>تواصلوا معنا للاستفسار عن المنتجات أو توضيح تفاصيل طلبكم.</p>
                     <a
                         href={socials[0][0]}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="footer-contact-button"
                     >
-                        تواصلي عبر واتساب <ArrowUpLeft size={18} aria-hidden="true" />
+                        تواصلوا عبر واتساب <ArrowUpLeft size={18} aria-hidden="true" />
                     </a>
                     <Link href="/contact" className="footer-contact-alternative">
                         طرق التواصل الأخرى
@@ -99,9 +99,9 @@ export function Footer() {
             <div className="footer-community section-container">
                 <div>
                     <h2>لنكن على تواصل.</h2>
-                    <p>تابعينا على مواقع التواصل</p>
+                    <p>تابعونا على مواقع التواصل</p>
                 </div>
-                <nav className="footer-socials" aria-label="تابعينا على مواقع التواصل">
+                <nav className="footer-socials" aria-label="تابعونا على مواقع التواصل">
                     {socials.map(([href, label]) => (
                         <a
                             key={label}
@@ -123,7 +123,7 @@ export function Footer() {
             </div>
             <div className="footer-bottom section-container">
                 <p dir="ltr">© {new Date().getFullYear()} IMAD Mode</p>
-                <p>اختاري. راجعي. واطلبي بثقة.</p>
+                <p>اختاروا. راجعوا. واطلبوا بثقة.</p>
                 <Link href="/privacy">سياسة الخصوصية</Link>
             </div>
         </footer>

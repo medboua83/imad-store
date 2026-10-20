@@ -37,12 +37,12 @@ export function CartDrawer() {
         refreshCart()
             .then((changed) => {
                 if (!active) return;
-                setNotice(changed ? "تم تحديث الأسعار أو الكميات. راجعي حقيبتك قبل المتابعة." : "");
+                setNotice(changed ? "تم تحديث الأسعار أو الكميات. راجعوا حقيبتك قبل المتابعة." : "");
                 setReview("ready");
             })
             .catch(() => {
                 if (!active) return;
-                setNotice("تعذر التحقق من السعر والتوفر. أعيدي المحاولة قبل المتابعة.");
+                setNotice("تعذر التحقق من السعر والتوفر. أعيدوا المحاولة قبل المتابعة.");
                 setReview("error");
             });
         return () => {
@@ -79,9 +79,9 @@ export function CartDrawer() {
         >
             <div className="bag-header">
                 <div>
-                    <p className="eyebrow">IMAD · حقيبتكِ</p>
+                    <p className="eyebrow">IMAD · حقيبتكم</p>
                     <h2 id="cart-title">
-                        اختياراتكِ <span>{itemCount()} قطعة</span>
+                        اختياراتكم <span>{itemCount()} قطعة</span>
                     </h2>
                 </div>
                 <button
@@ -119,10 +119,10 @@ export function CartDrawer() {
                         <span className="empty-bag-icon">
                             <ShoppingBag size={32} aria-hidden="true" />
                         </span>
-                        <h3>مساحة لاختياراتكِ القادمة.</h3>
-                        <p>أضيفي القطع التي تحبينها، وستجدين تفاصيلها هنا.</p>
+                        <h3>مساحة لاختياراتكم القادمة.</h3>
+                        <p>أضيفوا القطع التي تفضلونها، وستجدون تفاصيلها هنا.</p>
                         <Link href="/shop" onClick={close} className="btn-primary">
-                            اكتشفي المجموعة <ArrowLeft size={18} aria-hidden="true" />
+                            اكتشفوا المجموعة <ArrowLeft size={18} aria-hidden="true" />
                         </Link>
                     </div>
                 ) : (

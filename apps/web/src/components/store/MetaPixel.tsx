@@ -47,7 +47,7 @@ export function MetaPixel() {
                 <section className="pixel-choice" aria-label="ملفات الارتباط الإعلانية">
                     <p>
                         نستخدم Meta Pixel لقياس الحملات الإعلانية. هل توافقين على ملفات الارتباط
-                        الإعلانية؟ يمكنكِ تغيير اختياركِ في أي وقت.
+                        الإعلانية؟ يمكنكم تغيير اختياركم في أي وقت.
                     </p>
                     <button onClick={() => choose(true)}>أوافق</button>
                     <button onClick={() => choose(false)}>أرفض</button>

@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Textes inclusifs — 20 octobre 2026
+
+À la demande du propriétaire, les textes publics arabes utilisent une adresse collective pour les femmes et les hommes : accueil, menu, catalogue, fiches, panier, commande, aide, consentement Pixel et métadonnées. Les catégories Homme/Femme et les descriptions du catalogue restent inchangées. Les valeurs par défaut du contenu sont adaptées ; les contenus personnalisés enregistrés en base restent prioritaires. PR #38 publiée au commit c7f08a98, Hostinger Completed/Current vérifié le même jour ; frais 30 DH, seuil 500 DH, Pixel désactivé sans identifiant. Aucun produit ni réglage commercial réécrit.
+
 ## Logo IMAD Mode choisi — candidat du 20 octobre 2026
 
 Le logo central de la planche fournie (sous le trait vert) a été isolé/adapté sur fond transparent. Un visuel WebP embarqué de 61 960 octets, partagé par le header, le footer, l’administration et sa connexion, est teinté par masque alpha selon les couleurs existantes : vert profond sur ivoire, ivoire sur vert. Rendu vérifié sur ordinateur et mobile sans débordement, compilation et lint réussis. Voir SELECTED_BRAND_LOGO_2026-10-20.md. La modification complète la PR #38 locale, sans publication en production.

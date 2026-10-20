@@ -34,16 +34,16 @@ export function HomeView({
                     <p className="hero-description">{content.heroSubtitle}</p>
                     <div className="hero-actions">
                         <Link prefetch={false} href="/shop" className="btn-primary">
-                            اكتشفي المجموعة <ArrowUpLeft size={19} aria-hidden="true" />
+                            اكتشفوا المجموعة <ArrowUpLeft size={19} aria-hidden="true" />
                         </Link>
                         <Link href="#collections" className="text-link">
-                            تصفحي الفئات
+                            تصفحوا الفئات
                         </Link>
                     </div>
                     <div className="hero-note">
                         <span className="hero-note-line" />
                         <p>
-                            اختاري ما يشبهكِ.
+                            اختاروا ما يشبهكم.
                             <br />
                             <span>من القطعة الأولى إلى اللمسة الأخيرة.</span>
                         </p>
@@ -89,7 +89,7 @@ export function HomeView({
                         THE IMAD EDIT
                     </span>
                     <div className="hero-image-caption">
-                        <span>ببساطة، أنتِ.</span>
+                        <span>أسلوب يناسب الجميع.</span>
                         <span dir="ltr">IMAD / MODE</span>
                     </div>
                 </div>
@@ -98,13 +98,13 @@ export function HomeView({
                 <div>
                     <PackageCheck size={23} aria-hidden="true" />
                     <p>
-                        الدفع عند الاستلام<span>أكملي طلبكِ دون إنشاء حساب</span>
+                        الدفع عند الاستلام<span>أكملوا طلبكم دون إنشاء حساب</span>
                     </p>
                 </div>
                 <div>
                     <SlidersHorizontal size={23} aria-hidden="true" />
                     <p>
-                        اختيارات على مقاسكِ<span>اللون، المقاس والتوفر في كل قطعة</span>
+                        اختيارات على مقاسكم<span>اللون، المقاس والتوفر في كل قطعة</span>
                     </p>
                 </div>
                 <Link href="/delivery">
@@ -122,9 +122,9 @@ export function HomeView({
                         <h2>لكل إطلالة، تفاصيلها.</h2>
                     </div>
                     <p className="section-description">
-                        ابدئي بالفئة التي تحبينها،
+                        ابدؤوا بالفئة التي تفضلونها،
                         <br />
-                        واكتشفي القطع المتوفرة.
+                        واكتشفوا القطع المتوفرة.
                     </p>
                 </div>
                 <nav aria-label="فئات المتجر" className="collection-grid">
@@ -186,7 +186,7 @@ export function HomeView({
             <section className="section-container featured-section">
                 <div className="section-heading">
                     <div>
-                        <p className="eyebrow">اختاري قطعتكِ القادمة</p>
+                        <p className="eyebrow">اختاروا قطعتكم القادمة</p>
                         <h2>{content.featuredTitle}</h2>
                     </div>
                     <Link prefetch={false} href="/shop" className="text-link">
@@ -202,7 +202,7 @@ export function HomeView({
                 ) : (
                     <div className="empty-collection">
                         <h3>مجموعتنا الجديدة قيد التحضير.</h3>
-                        <p>تواصلي معنا للاستفسار عن المنتجات المتوفرة.</p>
+                        <p>تواصلوا معنا للاستفسار عن المنتجات المتوفرة.</p>
                         <Link prefetch={false} href="/contact" className="btn-primary">
                             تواصل معنا
                         </Link>
@@ -211,12 +211,12 @@ export function HomeView({
             </section>
             <section className="shopping-guide section-container">
                 <p className="eyebrow">من الاختيار إلى الطلب</p>
-                <h2>تجربة بسيطة، من أجلكِ.</h2>
+                <h2>تجربة بسيطة، من أجلكم.</h2>
                 <div className="guide-grid">
                     {[
-                        ["01", "اكتشفي", "تصفحي المجموعة واختاري القطعة التي تناسبكِ."],
-                        ["02", "اختاري", "حددي اللون والمقاس والكمية المتوفرة."],
-                        ["03", "أكملي طلبكِ", "راجعي الإجمالي وأضيفي عنوانكِ. الدفع عند الاستلام."],
+                        ["01", "اكتشفوا", "تصفحوا المجموعة واختاروا القطعة التي تناسبكم."],
+                        ["02", "اختاروا", "حددوا اللون والمقاس والكمية المتوفرة."],
+                        ["03", "أكملوا طلبكم", "راجعوا الإجمالي وأضيفوا عنوانكم. الدفع عند الاستلام."],
                     ].map(([n, title, text]) => (
                         <div key={n}>
                             <span aria-hidden="true">{n}</span>

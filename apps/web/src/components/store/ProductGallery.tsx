@@ -83,7 +83,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 </span>
             </div>
             <div className="gallery-caption">
-                <p>{src ? "شاهدي التفاصيل عن قرب" : "تواصلي معنا للاستفسار عن صور القطعة"}</p>
+                <p>{src ? "شاهدوا التفاصيل عن قرب" : "تواصلوا معنا للاستفسار عن صور القطعة"}</p>
                 {controls()}
             </div>
             {available.length > 1 && (

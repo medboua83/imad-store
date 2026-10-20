@@ -8,7 +8,7 @@ export default function ContactPage() {
             <div className="max-w-2xl mx-auto space-y-6">
                 <h1 className="text-4xl text-[#1A1A2E]">تواصل معنا</h1>
                 <p className="leading-8">
-                    للاستفسار عن المنتجات أو متابعة طلبك، تواصلي مع فريق IMAD Mode عبر واتساب.
+                    للاستفسار عن المنتجات أو متابعة طلبك، تواصلوا مع فريق IMAD Mode عبر واتساب.
                 </p>
                 <a
                     href="https://wa.me/212660560522"
