@@ -153,7 +153,7 @@ export function ProductOptions({ product }: { product: Product }) {
             </div>
             <Link href="/contact" className="variant-contact">
                 <MessageCircle size={16} aria-hidden="true" />
-                سؤال عن المقاس أو اللون؟ تواصلي معنا
+                سؤال عن المقاس أو اللون؟ تواصلوا معنا
             </Link>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">

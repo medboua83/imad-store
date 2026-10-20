@@ -12,8 +12,8 @@ export interface SiteContent {
     policiesVerified: boolean;
 }
 export const defaultSiteContent: SiteContent = {
-    heroTitle: "أناقة تليق بكِ",
-    heroSubtitle: "اكتشفي مجموعتنا، اختاري اللون والمقاس، وأكملي طلبك بسهولة.",
+    heroTitle: "أناقة للجميع",
+    heroSubtitle: "اكتشفوا مجموعتنا، اختاروا اللون والمقاس، وأكملوا طلبكم بسهولة.",
     heroImage: "/images/hero-1.png",
     featuredTitle: "مختارات من المتجر",
     banners: [],

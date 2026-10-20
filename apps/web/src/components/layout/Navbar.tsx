@@ -167,7 +167,7 @@ export function Navbar() {
                             <p className="menu-eyebrow" dir="ltr">
                                 THE IMAD EDIT
                             </p>
-                            <h2 id="menu-title">اختاري ما يشبهكِ.</h2>
+                            <h2 id="menu-title">اختاروا ما يشبهكم.</h2>
                         </div>
                         <button
                             type="button"
@@ -205,7 +205,7 @@ export function Navbar() {
                         <Link href="/shop" className="menu-shop-all" onClick={closeMenu}>
                             <span>
                                 <LayoutGrid size={20} aria-hidden="true" />
-                                اكتشفي كل المنتجات
+                                اكتشفوا كل المنتجات
                             </span>
                             <ArrowUpLeft size={20} aria-hidden="true" />
                         </Link>
@@ -258,7 +258,7 @@ export function Navbar() {
                     <div className="store-menu-bottom">
                         <ShoppingBag size={18} aria-hidden="true" />
                         <p>
-                            اختاري. راجعي. واطلبي بثقة.
+                            اختاروا. راجعوا. واطلبوا بثقة.
                             <small>الدفع عند الاستلام · بدون إنشاء حساب</small>
                         </p>
                     </div>

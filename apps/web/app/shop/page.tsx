@@ -8,7 +8,7 @@ import { categoryThumbnail } from "@/components/store/category-visuals";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
     title: "المتجر",
-    description: "تصفحي المنتجات حسب الفئة والسعر والتوفر.",
+    description: "تصفحوا المنتجات حسب الفئة والسعر والتوفر.",
     alternates: { canonical: "/shop" },
 };
 const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability"] as const;
@@ -76,11 +76,11 @@ export default async function ShopPage({
             <div className="shop-intro">
                 <div>
                     <p className="eyebrow">THE IMAD EDIT</p>
-                    <h1>{category?.nameAr || "اكتشفي ما يشبهكِ."}</h1>
-                    <p>قطع تختارينها بطريقتكِ. تصفحي، قارني التفاصيل واختاري ما يناسبكِ.</p>
+                    <h1>{category?.nameAr || "اكتشفوا ما يشبهكم."}</h1>
+                    <p>قطع تختارونها بطريقتكم. تصفحوا، قارنوا التفاصيل واختاروا ما يناسبكم.</p>
                 </div>
                 <span className="shop-intro-note">
-                    <LayoutGrid size={19} aria-hidden="true" /> مجموعتكِ، بتفاصيل أوضح
+                    <LayoutGrid size={19} aria-hidden="true" /> مجموعتكم، بتفاصيل أوضح
                 </span>
             </div>
             <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
@@ -120,8 +120,8 @@ export default async function ShopPage({
                 </summary>
                 <form action="/shop" method="get" className="shop-filters catalog-filter-form">
                     <div className="filter-form-heading">
-                        <h2>اختاري التفاصيل المناسبة</h2>
-                        <p>يمكنكِ الجمع بين أكثر من فلتر، ثم عرض النتائج.</p>
+                        <h2>اختاروا التفاصيل المناسبة</h2>
+                        <p>يمكنكم الجمع بين أكثر من فلتر، ثم عرض النتائج.</p>
                     </div>
                     <label className="filter-search">
                         البحث عن منتج
@@ -166,7 +166,7 @@ export default async function ShopPage({
                         </select>
                     </label>
                     <fieldset className="filter-price-range">
-                        <legend>ميزانيتكِ (MAD)</legend>
+                        <legend>ميزانيتكم (MAD)</legend>
                         <div>
                             <label>
                                 من
@@ -221,7 +221,7 @@ export default async function ShopPage({
             </details>
             {invalid && (
                 <p role="alert" className="shop-filter-error">
-                    بعض الفلاتر غير صالحة. تحققي من نطاق السعر، ثم أعيدي المحاولة. تظهر المجموعة
+                    بعض الفلاتر غير صالحة. تحققوا من نطاق السعر، ثم أعيدوا المحاولة. تظهر المجموعة
                     الكاملة مؤقتاً.
                 </p>
             )}
@@ -282,8 +282,8 @@ export default async function ShopPage({
                     </h3>
                     <p>
                         {active.length
-                            ? "جرّبي إزالة فلتر أو توسيع نطاق السعر."
-                            : "تواصلي معنا للاستفسار عن القطع المتوفرة."}
+                            ? "حاولوا إزالة فلتر أو توسيع نطاق السعر."
+                            : "تواصلوا معنا للاستفسار عن القطع المتوفرة."}
                     </p>
                     <Link className="btn-primary" href={active.length ? "/shop" : "/contact"}>
                         {active.length ? "عرض كل القطع" : "تواصل معنا"}

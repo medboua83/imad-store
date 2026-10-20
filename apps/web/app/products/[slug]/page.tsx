@@ -94,12 +94,12 @@ export default async function ProductPage({ params }: Props) {
                                 {product.descriptionAr ||
                                     product.descriptionFr ||
                                     product.descriptionEn ||
-                                    "تواصلي معنا لمزيد من التفاصيل حول هذه القطعة."}
+                                    "تواصلوا معنا لمزيد من التفاصيل حول هذه القطعة."}
                             </p>
                         </details>
                         <details>
                             <summary>التوصيل والاستبدال</summary>
-                            <p>راجعي رسوم التوصيل وشروط المتجر قبل تأكيد طلبكِ.</p>
+                            <p>راجعوا رسوم التوصيل وشروط المتجر قبل تأكيد طلبكم.</p>
                             <nav aria-label="معلومات التوصيل والاستبدال">
                                 <Link href="/delivery">
                                     <Truck size={17} aria-hidden="true" />

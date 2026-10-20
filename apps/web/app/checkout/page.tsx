@@ -34,20 +34,20 @@ export default function CheckoutPage() {
         window.scrollTo({ top: 0, behavior: "instant" });
         refreshCart()
             .then((changed) => {
-                if (changed) setError("تم تحديث الأسعار أو الكميات. راجعي ملخص الطلب.");
+                if (changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
             })
-            .catch(() => setError("تعذر تحديث السلة. اضغطي تأكيد الطلب لإعادة التحقق."));
+            .catch(() => setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق."));
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();
         const errors: Record<string, string> = {};
-        if (form.fullName.trim().length < 2) errors.fullName = "أدخلي الاسم الكامل";
+        if (form.fullName.trim().length < 2) errors.fullName = "أدخلوا الاسم الكامل";
         if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
-            errors.phone = "أدخلي رقم هاتف مغربي صالحاً";
-        if (!form.city.trim()) errors.city = "أدخلي المدينة";
-        if (form.address.trim().length < 3) errors.address = "أدخلي عنوان التوصيل";
+            errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
+        if (!form.city.trim()) errors.city = "أدخلوا المدينة";
+        if (form.address.trim().length < 3) errors.address = "أدخلوا عنوان التوصيل";
         if (whatsappAssistance && !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
-            errors.phone = "للمساعدة عبر واتساب، أدخلي الرقم الدولي بنفسكِ: +212…";
+            errors.phone = "للمساعدة عبر واتساب، أدخلوا الرقم الدولي بأنفسكم: +212…";
         setFields(errors);
         if (Object.keys(errors).length) {
             document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
@@ -59,7 +59,7 @@ export default function CheckoutPage() {
             const changed = await refreshCart();
             const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
-                setError("تغير السعر أو التوفر. راجعي المجموع الجديد ثم أكدي مجدداً.");
+                setError("تغير السعر أو التوفر. راجعوا المجموع الجديد ثم أكدوا مجدداً.");
                 return;
             }
             const cart = useCartStore.getState().items;
@@ -73,7 +73,7 @@ export default function CheckoutPage() {
                 100;
             const confirmedTotal = subtotal + shippingFee(subtotal, cart, freshSettings);
             if (shipping.total === null || Math.abs(confirmedTotal - shipping.total) > 0.005) {
-                setError("تغيرت رسوم التوصيل. راجعي الإجمالي الجديد ثم أكدي مجدداً.");
+                setError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");
                 return;
             }
             const activeKey = key || crypto.randomUUID();
@@ -219,7 +219,7 @@ export default function CheckoutPage() {
                     <CheckCircle2 size={38} aria-hidden="true" />
                 </span>
                 <p className="eyebrow">IMAD MODE</p>
-                <h1>وصلنا طلبكِ، شكراً لكِ.</h1>
+                <h1>وصلنا طلبكم، شكراً لكم.</h1>
                 <p>
                     رقم الطلب <strong dir="ltr">{orderId.slice(-8).toUpperCase()}</strong>
                 </p>
@@ -238,8 +238,8 @@ export default function CheckoutPage() {
             <div className="checkout-heading">
                 <div>
                     <p className="eyebrow">IMAD · الخطوة الأخيرة</p>
-                    <h1>طلبكِ، بكل وضوح.</h1>
-                    <p>راجعي اختياراتكِ وأضيفي عنوانكِ. لا حاجة لإنشاء حساب.</p>
+                    <h1>طلبكم، بكل وضوح.</h1>
+                    <p>راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب.</p>
                 </div>
                 <span className="checkout-cod-badge">
                     <PackageCheck size={20} aria-hidden="true" />
@@ -260,10 +260,10 @@ export default function CheckoutPage() {
             {!items.length ? (
                 <div className="checkout-empty">
                     <ShoppingBag size={38} aria-hidden="true" />
-                    <h2>حقيبتكِ تنتظر اختياراتكِ.</h2>
-                    <p>أضيفي منتجاً من المتجر قبل إتمام الطلب.</p>
+                    <h2>حقيبتكم تنتظر اختياراتكم.</h2>
+                    <p>أضيفوا منتجاً من المتجر قبل إتمام الطلب.</p>
                     <Link className="btn-primary" href="/shop">
-                        اكتشفي المجموعة <ArrowLeft size={18} aria-hidden="true" />
+                        اكتشفوا المجموعة <ArrowLeft size={18} aria-hidden="true" />
                     </Link>
                 </div>
             ) : (
@@ -276,7 +276,7 @@ export default function CheckoutPage() {
                     >
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
-                                <span>01</span>لنتواصل بشأن طلبكِ
+                                <span>01</span>لنتواصل بشأن طلبكم
                             </legend>
                             <p className="checkout-section-note">
                                 نستخدم هذه المعلومات لتأكيد الطلب وتوضيح تفاصيله.
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
                         </fieldset>
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
-                                <span>02</span>أين نرسل طلبكِ؟
+                                <span>02</span>أين نرسل طلبكم؟
                             </legend>
                             <div className="checkout-fields">
                                 {field("city")}
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
                             <PackageCheck size={24} aria-hidden="true" />
                             <div>
                                 <h2>الدفع عند الاستلام</h2>
-                                <p>راجعي المبلغ الكامل قبل تأكيد الطلب.</p>
+                                <p>راجعوا المبلغ الكامل قبل تأكيد الطلب.</p>
                             </div>
                         </div>
                         {error && (
@@ -368,13 +368,13 @@ export default function CheckoutPage() {
                             </button>
                         </div>
                         <p className="checkout-submit-note">
-                            ستظهر لكِ رسالة التأكيد بعد تسجيل الطلب بنجاح.
+                            ستظهر لكم رسالة التأكيد بعد تسجيل الطلب بنجاح.
                         </p>
                     </form>
                     <aside className="checkout-summary checkout-review" aria-label="ملخص الطلب">
                         <div className="checkout-summary-title">
                             <ShoppingBag size={20} aria-hidden="true" />
-                            <h2>ملخص طلبكِ</h2>
+                            <h2>ملخص طلبكم</h2>
                             <span>{count} قطعة</span>
                         </div>
                         <details className="checkout-item-disclosure">
