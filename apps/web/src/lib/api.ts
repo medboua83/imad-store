@@ -304,6 +304,7 @@ export interface AdminOrder {
     notes?: string | null;
     shippingCost?: number;
     updatedAt?: string;
+    deletedAt?: string | null;
     address?: {
         fullName?: string;
         phone?: string;
@@ -326,7 +327,12 @@ export interface AdminOrder {
     createdAt: string;
 }
 
-export const getAllOrders = async (params?: { status?: string; page?: number; limit?: number }) => {
+export const getAllOrders = async (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+    trash?: boolean;
+}) => {
     const { data } = await api.get("/orders", { params });
     return data as {
         success: boolean;
@@ -409,3 +415,8 @@ export type StoreAnalyticsSummary = {
 export async function getStoreAnalytics(days: number): Promise<StoreAnalyticsSummary> {
     return (await api.get("/analytics/summary", { params: { days } })).data.data;
 }
+
+export const trashOrders = async (ids: string[], restore = false) => {
+    const { data } = await api.post("/orders/trash", { ids, restore });
+    return data as { success: boolean; count: number };
+};

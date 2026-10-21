@@ -1327,3 +1327,74 @@ test("Commerce settings and promotions validate inputs; server decides delivery 
         } else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
     }
 });
+
+test("Order trash is admin-only, reversible, atomic and preserves commerce records", async () => {
+    const create = (extra: object = {}) =>
+        prisma.order.create({
+            data: {
+                customerName: "TRASH FIXTURE",
+                paymentMethod: "COD",
+                paymentStatus: "PENDING",
+                totalAmount: 100,
+                status: "CANCELLED",
+                ...extra,
+            },
+        });
+    // Missing optional fields represent historical MongoDB records.
+    const cancelled = await create();
+    const active = await create({ status: "PENDING", inventoryReserved: true });
+    const reserved = await create({ inventoryReserved: true });
+    const stock = await prisma.productVariant.findMany();
+    const outbox = await prisma.deskcommOutbox.findMany();
+    const post = (ids: string[], restore = false) =>
+        request(app).post("/api/orders/trash").set(admin()).send({ ids, restore });
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders/trash")
+                .send({ ids: [cancelled.id] })
+        ).status,
+        401,
+    );
+    const customerToken = jwt.sign(
+        { id: "123456789012345678901234", role: "CUSTOMER" },
+        process.env.JWT_SECRET!,
+    );
+    assert.equal(
+        (
+            await request(app)
+                .post("/api/orders/trash")
+                .set("Authorization", `Bearer ${customerToken}`)
+                .send({ ids: [cancelled.id] })
+        ).status,
+        403,
+    );
+    assert.equal((await post([cancelled.id, active.id])).status, 409);
+    assert.equal((await post([reserved.id])).status, 409);
+    assert.equal((await post([cancelled.id, "000000000000000000000001"])).status, 404);
+    assert.equal((await prisma.order.findUnique({ where: { id: cancelled.id } })).deletedAt, null);
+    const before = (await request(app).get("/api/orders?limit=100").set(admin())).body.total;
+    assert.equal((await request(app).get("/api/orders?trash=invalid").set(admin())).status, 400);
+    const moved = await post([cancelled.id, cancelled.id]);
+    assert.equal(moved.status, 200);
+    assert.equal(moved.body.count, 1);
+    assert.equal((await post([cancelled.id])).body.count, 0);
+    const visible = await request(app).get("/api/orders?limit=100").set(admin());
+    assert.equal(visible.body.total, before - 1);
+    assert.ok(!visible.body.data.some((o: any) => o.id === cancelled.id));
+    const trash = await request(app).get("/api/orders?trash=true&limit=100").set(admin());
+    assert.ok(trash.body.data.some((o: any) => o.id === cancelled.id));
+    assert.ok(!trash.body.data.some((o: any) => o.id === active.id));
+    assert.equal(
+        (await prisma.order.findUnique({ where: { id: cancelled.id } })).status,
+        "CANCELLED",
+    );
+    assert.equal((await post([cancelled.id], true)).body.count, 1);
+    assert.equal((await post([cancelled.id], true)).body.count, 0);
+    const restored = await request(app).get("/api/orders?limit=100").set(admin());
+    assert.equal(restored.body.total, before);
+    assert.ok(restored.body.data.some((o: any) => o.id === cancelled.id));
+    assert.equal(await prisma.orderEvent.count({ where: { orderId: cancelled.id } }), 2);
+    assert.deepEqual(await prisma.productVariant.findMany(), stock);
+    assert.deepEqual(await prisma.deskcommOutbox.findMany(), outbox);
+});
