@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, updateOrderStatus } from "@/lib/api";
+import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
+import { OrderTrash } from "./order-trash";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
 const actionLabels: Record<string, string> = {
@@ -20,6 +21,7 @@ export function OrdersTab({
     total: number;
     onRefresh: () => Promise<void>;
 }) {
+    const [showTrash, setShowTrash] = useState(false);
     const [search, setSearch] = useState(""),
         [status, setStatus] = useState("ALL"),
         [payment, setPayment] = useState("ALL"),
@@ -113,6 +115,35 @@ export function OrdersTab({
             setBusy(false);
         }
     }
+    async function remove(ids: string[]) {
+        if (lock.current || reloadRequired || !ids.length) return;
+        if (
+            !confirm(
+                `Déplacer ${ids.length} commande(s) annulée(s) dans la corbeille ? Elles seront retirées des listes et compteurs de commandes. Restauration possible depuis la corbeille.`,
+            )
+        )
+            return;
+        lock.current = true;
+        setBusy(true);
+        setMessage("");
+        try {
+            const result = await trashOrders(ids);
+            await onRefresh();
+            setError(false);
+            setMessage(`${result.count} commande(s) déplacée(s) dans la corbeille.`);
+        } catch {
+            setError(true);
+            setReloadRequired(true);
+            setMessage(
+                "Suppression ou actualisation non confirmée. Actualisez avant de réessayer.",
+            );
+        } finally {
+            lock.current = false;
+            setBusy(false);
+        }
+    }
+    if (showTrash) return <OrderTrash onBack={() => setShowTrash(false)} onRefresh={onRefresh} />;
+    const removable = filtered.filter((o) => o.status === "CANCELLED");
     const feedback = message && (
         <p className={error ? "admin-alert" : "admin-feedback"} role={error ? "alert" : "status"}>
             {message}
@@ -132,6 +163,22 @@ export function OrdersTab({
                     <RefreshCw size={16} />
                     Actualiser
                 </button>
+            </div>
+            <div className="admin-toolbar">
+                <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
+                    Corbeille
+                </button>
+                <button
+                    className="admin-button"
+                    disabled={busy || reloadRequired || !removable.length}
+                    onClick={() => remove(removable.map((o) => o.id))}
+                >
+                    Supprimer les annulées affichées ({removable.length})
+                </button>
+                <p>
+                    Suppression réversible. Seules les commandes annulées de la sélection affichée
+                    sont concernées.
+                </p>
             </div>
             <div className="order-quick-filters" aria-label="Filtrer par statut">
                 {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
@@ -274,6 +321,15 @@ export function OrdersTab({
                             <span className="sr-only">#{o.id.slice(-8).toUpperCase()}</span>
                             <ArrowUpRight size={16} />
                         </button>
+                        {o.status === "CANCELLED" && (
+                            <button
+                                className="admin-button"
+                                disabled={busy || reloadRequired}
+                                onClick={() => remove([o.id])}
+                            >
+                                Supprimer dans la corbeille
+                            </button>
+                        )}
                         {
                             <OrderActions
                                 order={o}

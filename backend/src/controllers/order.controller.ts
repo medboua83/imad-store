@@ -243,9 +243,15 @@ export async function createOrder(req: Request, res: Response) {
                         include: { ...ORDER_INCLUDE, events: true },
                     });
                     // Never enqueue a silent downgrade between the validated choice and the saved receipt.
-                    if (created.aiServiceConsent !== body.aiServiceConsent ||
-                        (body.aiServiceConsent && created.aiServiceConsentVersion !== body.aiServiceConsentVersion))
-                        throw new AppError("Accord WhatsApp non enregistré ; aucune commande transmise", 503);
+                    if (
+                        created.aiServiceConsent !== body.aiServiceConsent ||
+                        (body.aiServiceConsent &&
+                            created.aiServiceConsentVersion !== body.aiServiceConsentVersion)
+                    )
+                        throw new AppError(
+                            "Accord WhatsApp non enregistré ; aucune commande transmise",
+                            503,
+                        );
                     // Delivery is controlled by the saved administrator integration setting.
                     // Keep the event atomic with the order/stock and never backfill older orders.
                     const crmIntegration = await tx.deskcommIntegration.findUnique({
@@ -356,7 +362,15 @@ export async function listOrders(req: Request, res: Response) {
     const { page, limit } = paginationSchema.parse(req.query);
     const status =
         req.query.status === undefined ? undefined : statusSchema.parse(req.query.status);
-    const where = status ? { status } : {};
+    const trash = z.enum(["true", "false"]).default("false").parse(req.query.trash) === "true";
+    const where = {
+        ...(status ? { status } : {}),
+        ...(trash
+            ? { deletedAt: { not: null } }
+            : {
+                  OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+              }),
+    };
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
         prisma.order.findMany({
@@ -424,4 +438,57 @@ async function recordConversion(id: string, createdAt: Date, req: Request) {
     } catch {
         console.warn("Analytics attribution unavailable; order preserved");
     }
+}
+
+// Reversible removal only. Never delete orders, stock, outbox payloads or receipts.
+export async function moveOrdersToTrash(req: Request, res: Response) {
+    const { ids, restore } = z
+        .object({
+            ids: z
+                .array(z.string().regex(/^[a-fA-F0-9]{24}$/))
+                .min(1)
+                .max(100),
+            restore: z.boolean().default(false),
+        })
+        .strict()
+        .parse(req.body);
+    const uniqueIds = [...new Set(ids)];
+    const count = await prisma.$transaction(async (tx) => {
+        const orders = await tx.order.findMany({ where: { id: { in: uniqueIds } } });
+        if (orders.length !== uniqueIds.length) throw new AppError("Commande introuvable", 404);
+        if (orders.some((o) => o.status !== "CANCELLED" || o.inventoryReserved === true))
+            throw new AppError(
+                "Seules les commandes annulées sans stock réservé peuvent être supprimées",
+                409,
+            );
+        const changed = orders.filter((o) =>
+            restore ? o.deletedAt !== null : o.deletedAt === null,
+        );
+        if (!changed.length) return 0;
+        const result = await tx.order.updateMany({
+            where: {
+                id: { in: changed.map((o) => o.id) },
+                status: "CANCELLED",
+                OR: [
+                    { inventoryReserved: false },
+                    { inventoryReserved: null },
+                    { inventoryReserved: { isSet: false } },
+                ],
+            },
+            data: { deletedAt: restore ? null : new Date() },
+        });
+        if (result.count !== changed.length)
+            throw new AppError("Commandes modifiées entre-temps. Actualisez.", 409);
+        await tx.orderEvent.createMany({
+            data: changed.map((o) => ({
+                orderId: o.id,
+                type: restore ? "restored" : "trashed",
+                message: restore
+                    ? "Commande restaurée par un administrateur"
+                    : "Commande déplacée dans la corbeille par un administrateur",
+            })),
+        });
+        return result.count;
+    });
+    res.json({ success: true, count });
 }
