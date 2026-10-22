@@ -6,6 +6,9 @@ import { decryptDeskcommValue } from "./deskcomm-config";
 export interface DeskcommOrder {
   id: string;
   captureVersion?: 1;
+  confirmationMethod?: "SITE";
+  confirmedAt?: string;
+  confirmationRequired?: false;
   aiServiceConsent?: boolean;
   aiServiceConsentVersion?: string;
   name: string;
@@ -51,6 +54,12 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
   if (process.env.STORE_INSTANCE_ID) form.set("boutique_id", process.env.STORE_INSTANCE_ID);
   if (process.env.CRM_COMPANY_ID) form.set("entreprise_id", process.env.CRM_COMPANY_ID);
   form.set("message", details);
+  if (order.confirmationMethod === "SITE") {
+    form.set("confirmation_method", "SITE");
+    if (order.confirmedAt) form.set("confirmed_at", order.confirmedAt);
+    form.set("confirmation_required", "false");
+    form.set("ai_service_consent", "false");
+  }
   // These flags are informational only; no opt-in was collected.
   form.set("aiConsent", "false");
   form.set("marketingConsent", "false");
@@ -91,6 +100,7 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
           : `imad-store-${order.id}`,
       );
     const consent =
+      order.confirmationMethod !== "SITE" &&
       order.aiServiceConsent === true &&
       order.aiServiceConsentVersion === ORDER_WHATSAPP_NOTICE_VERSION &&
       /^\+212[5-7]\d{8}$/.test(order.phone);
@@ -100,6 +110,7 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
         ? `store-${process.env.STORE_INSTANCE_ID}-${order.id}`
         : `imad-store-${order.id}`,
       submission_status: "completed",
+      ...(order.confirmationMethod === "SITE" ? { confirmation_required: false } : {}),
       aiConsent: consent,
       ai_service_consent: consent,
       ...(consent ? { ai_service_consent_version: order.aiServiceConsentVersion } : {}),

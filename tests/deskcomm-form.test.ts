@@ -30,3 +30,13 @@ test("other explicit international country codes are not silently rewritten", ()
     encodeDeskcommForm({ ...order, phone: "+12025550123" }).get("telefone"),
     "+12025550123",
   ));
+
+test("site-confirmed orders keep legacy CRM delivery but explicitly suppress confirmation", () => {
+  const form = encodeDeskcommForm({ ...order, confirmationMethod: "SITE", confirmationRequired: false, confirmedAt: "2026-10-22T08:00:00.000Z", status: "CONFIRMED" });
+  assert.equal(form.get("confirmation_required"), "false");
+  assert.equal(form.get("ai_service_consent"), "false");
+  assert.equal(form.get("confirmation_method"), "SITE");
+  assert.equal(form.get("confirmed_at"), "2026-10-22T08:00:00.000Z");
+  assert.equal(form.get("pedido_id"), order.id);
+  assert.equal(encodeDeskcommForm(order).has("confirmation_required"), false);
+});

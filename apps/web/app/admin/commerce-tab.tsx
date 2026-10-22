@@ -1,4 +1,6 @@
 "use client";
+import { OlivraisonSettings } from "./olivraison-settings";
+import { OrderSettings } from "./order-settings";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings } from "@/lib/api";
@@ -40,6 +42,8 @@ export default function CommerceTab() {
     }, []);
     return (
         <section className="admin-panel">
+            <OrderSettings />
+            <OlivraisonSettings />
             <h2>Livraison et suivi publicitaire</h2>
             {error && (
                 <p className="admin-alert" role="alert">

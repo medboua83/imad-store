@@ -1,3 +1,4 @@
+import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
@@ -15,6 +16,7 @@ import { transitionOrderStatus } from "../lib/order-lifecycle";
 const createOrderSchema = z
     .object({
         paymentMethod: z.enum(["COD"]).default("COD"),
+        confirmationMode: z.literal("SITE").optional(),
         // Accepted only for old clients/idempotent retries; never controls CRM delivery.
         crmConsent: z.boolean().default(false),
         aiServiceConsent: z.boolean().default(false),
@@ -50,6 +52,7 @@ const createOrderSchema = z
     .strict()
     .superRefine((value, ctx) => {
         if (
+            !value.confirmationMode &&
             value.aiServiceConsent &&
             value.aiServiceConsentVersion !== ORDER_WHATSAPP_NOTICE_VERSION
         )
@@ -58,7 +61,11 @@ const createOrderSchema = z
                 path: ["aiServiceConsentVersion"],
                 message: "Notice WhatsApp requise",
             });
-        if (value.aiServiceConsent && !/^\+212[5-7]\d{8}$/.test(value.customer.phone))
+        if (
+            !value.confirmationMode &&
+            value.aiServiceConsent &&
+            !/^\+212[5-7]\d{8}$/.test(value.customer.phone)
+        )
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ["customer", "phone"],
@@ -86,6 +93,7 @@ export async function createOrder(req: Request, res: Response) {
     const requestFingerprint = createHash("sha256")
         .update(
             JSON.stringify({
+                ...(body.confirmationMode ? { confirmationMode: body.confirmationMode } : {}),
                 customer: body.customer,
                 paymentMethod: body.paymentMethod,
                 crmConsent: body.crmConsent,
@@ -123,6 +131,16 @@ export async function createOrder(req: Request, res: Response) {
         try {
             order = await prisma.$transaction(
                 async (tx) => {
+                    const settings = await tx.storeSettings.findUnique({
+                        where: { id: "settings" },
+                    });
+                    const direct = settings?.directSiteConfirmation === true;
+                    if (direct !== (body.confirmationMode === "SITE"))
+                        throw new AppError(
+                            "Le mode de confirmation a changé. Actualisez et vérifiez votre commande.",
+                            409,
+                        );
+                    const acceptedAssistance = !direct && body.aiServiceConsent;
                     const ids = body.items.map((i) => i.productId);
                     const objectIds = ids.filter((id) => /^[a-fA-F0-9]{24}$/.test(id));
                     const slugs = ids.filter((id) => !/^[a-fA-F0-9]{24}$/.test(id));
@@ -182,9 +200,6 @@ export async function createOrder(req: Request, res: Response) {
                         });
                         if (reserved.count !== 1) throw new AppError("Insufficient stock", 409);
                     }
-                    const settings = await tx.storeSettings.findUnique({
-                        where: { id: "settings" },
-                    });
                     if (settings?.codEnabled === false)
                         throw new AppError(
                             "Le paiement à la livraison est temporairement indisponible",
@@ -212,11 +227,11 @@ export async function createOrder(req: Request, res: Response) {
                             idempotencyKey: key,
                             requestFingerprint,
                             inventoryReserved: true,
-                            aiServiceConsent: body.aiServiceConsent,
-                            aiServiceConsentVersion: body.aiServiceConsent
+                            aiServiceConsent: acceptedAssistance,
+                            aiServiceConsentVersion: acceptedAssistance
                                 ? body.aiServiceConsentVersion
                                 : null,
-                            aiServiceConsentAt: body.aiServiceConsent ? new Date() : null,
+                            aiServiceConsentAt: acceptedAssistance ? new Date() : null,
                             customerName: body.customer.fullName,
                             customerPhone: body.customer.phone,
                             customerEmail: body.customer.email || null,
@@ -228,7 +243,10 @@ export async function createOrder(req: Request, res: Response) {
                             postalCode: body.customer.postalCode,
                             paymentMethod: "COD",
                             paymentStatus: "PENDING",
-                            status: "PENDING",
+                            status: direct ? "CONFIRMED" : "PENDING",
+                            ...(direct
+                                ? { confirmationMethod: "SITE", confirmedAt: new Date() }
+                                : {}),
                             totalAmount: itemsTotal + appliedShipping,
                             shippingCost: appliedShipping,
                             notes: body.notes,
@@ -236,16 +254,19 @@ export async function createOrder(req: Request, res: Response) {
                             events: {
                                 create: {
                                     type: "created",
-                                    message: `New COD order from ${body.customer.fullName}`,
+                                    message: direct
+                                        ? "Commande confirmée sur le site par le client"
+                                        : `New COD order from ${body.customer.fullName}`,
                                 },
                             },
                         },
                         include: { ...ORDER_INCLUDE, events: true },
                     });
+                    await enqueueOlivraison(tx, created);
                     // Never enqueue a silent downgrade between the validated choice and the saved receipt.
                     if (
-                        created.aiServiceConsent !== body.aiServiceConsent ||
-                        (body.aiServiceConsent &&
+                        created.aiServiceConsent !== acceptedAssistance ||
+                        (acceptedAssistance &&
                             created.aiServiceConsentVersion !== body.aiServiceConsentVersion)
                     )
                         throw new AppError(
@@ -277,6 +298,13 @@ export async function createOrder(req: Request, res: Response) {
                                     totalAmount: created.totalAmount,
                                     shippingCost: created.shippingCost,
                                     status: created.status,
+                                    ...(direct
+                                        ? {
+                                              confirmationMethod: "SITE",
+                                              confirmedAt: created.confirmedAt!.toISOString(),
+                                              confirmationRequired: false,
+                                          }
+                                        : {}),
                                     paymentMethod: created.paymentMethod,
                                     items: created.items.map((i) => ({
                                         name:

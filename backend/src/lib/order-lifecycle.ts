@@ -1,3 +1,4 @@
+import { enqueueOlivraison } from "./olivraison-enqueue";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "./prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -22,7 +23,7 @@ const transitions: Record<OrderStatus, readonly OrderStatus[]> = {
 export async function transitionOrderStatus(
     id: string,
     nextStatus: OrderStatus,
-    source: "admin" | "sheets" | "crm" = "admin",
+    source: "admin" | "sheets" | "crm" | "olivraison" = "admin",
     crmReceipt?: { deliveryId: string; leadId: string; fingerprint: string },
 ) {
     if (source === "crm" && (!crmReceipt || nextStatus !== "CONFIRMED"))
@@ -117,6 +118,7 @@ export async function transitionOrderStatus(
                         orderId: id,
                     },
                 });
+                if (nextStatus === "CONFIRMED") await enqueueOlivraison(tx, { ...order, status: nextStatus });
                 await recordReceipt(true);
                 return {
                     order: await tx.order.findUniqueOrThrow({

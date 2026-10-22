@@ -21,7 +21,8 @@
     "store:admin": "node --import tsx backend/scripts/provision-company-admin.ts",
     "store:run": "node scripts/run-company-store.cjs",
     "test:installer": "node --test tests/store-installer.test.cjs",
-    "store:bundle": "node scripts/bundle-company-store.cjs"
+    "store:bundle": "node scripts/bundle-company-store.cjs",
+    "test:ui": "playwright test"
   },
   "devDependencies": {
     "eslint": "^9.39.0",
@@ -33,7 +34,8 @@
     "postcss": "^8.5.0",
     "tsx": "^4.20.0",
     "supertest": "^7.1.0",
-    "@types/supertest": "^6.0.3"
+    "@types/supertest": "^6.0.3",
+    "@playwright/test": "1.56.1"
   },
   "dependencies": {
     "express-rate-limit": "^8.7.0",

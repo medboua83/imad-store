@@ -167,6 +167,8 @@ model ProductVariant {
 // ─── Order ──────────────────────────────────────────────────────────────────
 
 model Order {
+  confirmationMethod    String?
+  confirmedAt           DateTime?
   deletedAt             DateTime?
   idempotencyKey        String?       @unique
   aiServiceConsent      Boolean?
@@ -242,6 +244,7 @@ model StoreSettings {
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
   codEnabled      Boolean @default(true)
+  directSiteConfirmation Boolean @default(false)
   metaPixelEnabled Boolean @default(false)
   metaPixelId      String?
   metaPixelMadPerUsd Float?
@@ -330,4 +333,37 @@ model DeskcommConnection {
   ciphertext String
   updatedAt DateTime @updatedAt
   @@map("deskcomm_connection")
+}
+
+// Opt-in carrier configuration. Credentials are encrypted; activation never backfills orders.
+model OlivraisonIntegration {
+  id String @id @map("_id")
+  enabled Boolean @default(false)
+  credentials String?
+  pickupAddress Json?
+  cityMapping Json?
+  autoPickup Boolean @default(true)
+  activatedAt DateTime?
+  nextRequestAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("olivraison_integration")
+}
+
+// The source order ID is the MongoDB primary key: duplicate enqueue is impossible.
+model OlivraisonShipment {
+  id String @id @map("_id")
+  trackingId String?
+  carrierStatus String?
+  state String @default("QUEUED")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  leaseToken String?
+  lockedUntil DateTime @default(now())
+  lastError String?
+  stickerUrl String?
+  slipUrl String?
+  pickupAttempted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("olivraison_shipments")
 }

@@ -971,3 +971,18 @@
         display: none;
     }
 }
+
+.checkout-final-review {
+    padding: 22px;
+    border: 1px solid var(--color-gold, #b8a275);
+    border-radius: 12px;
+    background: #faf8f1;
+    scroll-margin-top: 24px;
+}
+.checkout-final-review h2 { font-size: 1.25rem; margin-bottom: 14px; }
+.checkout-final-review address { font-style: normal; overflow-wrap: anywhere; }
+.checkout-final-review ul { padding: 0; list-style: none; margin-block: 20px; }
+.checkout-final-review li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-block: 12px; border-bottom: 1px solid #e9e4dc; }
+.checkout-final-review li > div:nth-child(2) { flex: 1; min-width: 120px; }
+.checkout-final-review p { margin-block: 8px; }
+.checkout-final-review .text-link { margin-top: 14px; min-height: 44px; }

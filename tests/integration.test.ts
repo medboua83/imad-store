@@ -1398,3 +1398,213 @@ test("Order trash is admin-only, reversible, atomic and preserves commerce recor
     assert.deepEqual(await prisma.productVariant.findMany(), stock);
     assert.deepEqual(await prisma.deskcommOutbox.findMany(), outbox);
 });
+
+test("Direct site confirmation is opt-in, persisted, server-enforced and never rewrites history", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    const history = await prisma.order.findMany({ orderBy: { id: "asc" } });
+    const oldJobs = await prisma.deskcommOutbox.findMany({ orderBy: { id: "asc" } });
+    const customer = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+    const settings = (value: boolean) => request(app).put("/api/settings").set(admin()).send({ directSiteConfirmation: value });
+    assert.equal((await request(app).get("/api/settings")).body.data.directSiteConfirmation, false);
+    assert.equal((await request(app).put("/api/settings").send({ directSiteConfirmation: true })).status, 401);
+    assert.equal((await request(app).put("/api/settings").set("Authorization", `Bearer ${customer}`).send({ directSiteConfirmation: true })).status, 403);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ directSiteConfirmation: "true" })).status, 400);
+    const item = await prisma.product.create({ data: { ...payload(), variants: { create: { ...payload().variants[0], stock: 30 } } }, include: { variants: true } });
+    const body = { ...checkout(), aiServiceConsent: true, aiServiceConsentVersion: "order-whatsapp-v1-2026-10-19", expectedTotal: 130,
+        items: [{ productId: item.id, variantId: item.variants[0].id, quantity: 1 }] };
+    const post = (b: any, idempotencyKey = key()) => request(app).post("/api/orders").set("Idempotency-Key", idempotencyKey).send(b);
+    try {
+        const standard = await post(body);
+        assert.equal(standard.status, 201);
+        assert.equal(standard.body.data.status, "PENDING");
+        assert.equal(standard.body.data.confirmationMethod, null);
+        assert.equal(standard.body.data.confirmedAt, null);
+        assert.equal(standard.body.data.aiServiceConsent, true);
+        assert.equal((await settings(true)).status, 200);
+        const publicSettings = (await request(app).get("/api/settings")).body.data;
+        assert.equal(publicSettings.directSiteConfirmation, true);
+        assert.equal(publicSettings.whatsappAssistanceAvailable, false);
+        const beforeRejected = await prisma.order.count();
+        const stockBefore = (await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock;
+        assert.equal((await post(body)).status, 409); // A stale checkout cannot silently confirm.
+        const direct = { ...body, confirmationMode: "SITE", customer: { ...body.customer, phone: "0600000099" } };
+        assert.equal((await post({ ...direct, expectedTotal: 0.01 })).status, 409);
+        assert.equal((await post({ ...direct, status: "CONFIRMED" })).status, 400);
+        assert.equal(await prisma.order.count(), beforeRejected);
+        assert.equal((await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock, stockBefore);
+        const repeatKey = key();
+        const responses = await Promise.all(Array.from({ length: 4 }, () => post(direct, repeatKey)));
+        assert.ok(responses.every(r => [200, 201].includes(r.status)), JSON.stringify(responses.map(r => r.body)));
+        const ids = new Set(responses.map(r => r.body.data.id));
+        assert.equal(ids.size, 1);
+        const saved = responses[0].body.data;
+        assert.equal(saved.status, "CONFIRMED");
+        assert.equal(saved.paymentStatus, "PENDING");
+        assert.equal(saved.confirmationMethod, "SITE");
+        assert.ok(Number.isFinite(Date.parse(saved.confirmedAt)));
+        assert.equal(saved.aiServiceConsent, false); // Even a stale/malicious consent is not forwarded.
+        assert.equal(saved.aiServiceConsentAt, null);
+        assert.equal(await prisma.order.count(), beforeRejected + 1);
+        assert.equal((await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock, stockBefore - 1);
+        assert.equal(await prisma.orderEvent.count({ where: { orderId: saved.id } }), 1);
+        const job = await prisma.deskcommOutbox.findUnique({ where: { orderId: saved.id } });
+        assert.ok(job, "Other CRM delivery is still queued");
+        assert.equal(job.payload.status, "CONFIRMED");
+        assert.equal(job.payload.confirmationMethod, "SITE");
+        assert.equal(job.payload.confirmedAt, saved.confirmedAt);
+        assert.equal(job.payload.confirmationRequired, false);
+        assert.equal(job.payload.aiServiceConsent, false);
+        assert.equal((await request(app).get("/api/orders?limit=100").set(admin())).body.data.find((o: any) => o.id === saved.id).confirmedAt, saved.confirmedAt);
+        const secret = "cb".repeat(32);
+        await request(app).put("/api/integrations/deskcomm").set(admin()).send({ enabled: true, signingSecret: secret }).expect(200);
+        const { sendOrderToDeskcomm } = await import("../backend/src/lib/deskcomm-crm");
+        failDelivery = false;
+        await sendOrderToDeskcomm({ ...job.payload, aiServiceConsent: true, aiServiceConsentVersion: body.aiServiceConsentVersion, phone: body.customer.phone });
+        const received = receipts.at(-1)!;
+        const delivered = JSON.parse(received.body);
+        assert.equal(delivered.confirmation_method, "SITE");
+        assert.equal(delivered.confirmation_required, false);
+        assert.equal(delivered.ai_service_consent, false);
+        assert.equal(delivered.aiConsent, false);
+        assert.equal(delivered.confirmed_at, saved.confirmedAt);
+        assert.equal(delivered.submission_status, "completed");
+        assert.equal(received.signature, createHmac("sha256", secret).update(received.body).digest("hex"));
+        assert.equal((await settings(false)).status, 200);
+        assert.equal((await request(app).get("/api/settings")).body.data.directSiteConfirmation, false);
+        const replay = await post(direct, repeatKey); // Frozen receipt survives a setting change.
+        assert.equal(replay.status, 200);
+        assert.equal(replay.body.data.confirmedAt, saved.confirmedAt);
+        assert.equal((await post(direct)).status, 409);
+        const normalAgain = await post(body);
+        assert.equal(normalAgain.status, 201);
+        assert.equal(normalAgain.body.data.status, "PENDING");
+        assert.equal(normalAgain.body.data.aiServiceConsent, true);
+        assert.equal(normalAgain.body.data.confirmationMethod, null);
+        await request(app).patch(`/api/orders/${saved.id}/status`).set(admin()).send({ status: "SHIPPED" }).expect(200);
+        assert.equal((await prisma.order.findUnique({ where: { id: saved.id } })).confirmedAt.toISOString(), saved.confirmedAt);
+        assert.deepEqual(await prisma.order.findMany({ where: { id: { in: history.map((o: any) => o.id) } }, orderBy: { id: "asc" } }), history);
+        assert.deepEqual(await prisma.deskcommOutbox.findMany({ where: { id: { in: oldJobs.map((o: any) => o.id) } }, orderBy: { id: "asc" } }), oldJobs);
+    } finally {
+        if (initial) { const { id, ...data } = initial; await prisma.storeSettings.update({ where: { id }, data }); }
+        else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});
+
+test("Olivraison opt-in, encrypted config, no historical replay, direct/CRM enqueue and automated shipment lifecycle", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    const { CarrierError } = await import("../backend/src/lib/olivraison-api");
+    const url = "/api/integrations/olivraison";
+    const options = { enabled: false, autoPickup: true, apiKey: "isolated-carrier-api", secretKey: "isolated-carrier-secret",
+        pickupAddress: { company: "Test", streetAddress: "Adresse fictive", city: "Rabat", phone: "+212600000099" }, cityMapping: {} };
+    const put = (body: any) => request(app).put(url).set(admin()).send(body);
+    const newOrder = async (direct = true) => {
+        await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings", directSiteConfirmation: direct }, update: { directSiteConfirmation: direct } });
+        product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), ...(direct ? { confirmationMode: "SITE" } : {}) });
+        assert.equal(r.status, 201, JSON.stringify(r.body));
+        return r.body.data;
+    };
+    try {
+        assert.equal((await request(app).get(url)).status, 401);
+        assert.equal((await request(app).put(url).send(options)).status, 401);
+        assert.equal((await request(app).get(url).set(admin())).body.data.enabled, false);
+        assert.equal((await put(options)).status, 200);
+        const saved = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
+        assert.doesNotMatch(saved.credentials, /isolated-carrier/);
+        assert.doesNotMatch(JSON.stringify((await request(app).get(url).set(admin())).body), /isolated-carrier/);
+        const historical = await newOrder();
+        assert.equal(await prisma.olivraisonShipment.count(), 0);
+        assert.equal((await put({ ...options, apiKey: undefined, secretKey: undefined, enabled: true })).status, 200);
+        await transitionOrderStatus(historical.id, "SHIPPED");
+        assert.equal(await prisma.olivraisonShipment.count(), 0);
+        const order = await newOrder();
+        assert.equal(await prisma.olivraisonShipment.count(), 1);
+        const remote = { trackingID: "ISO-TRACK-1", partnerTrackingID: order.id, status: "CREATED" };
+        const calls: any[] = []; let failCreate = true;
+        const fake = async (path: string, method = "GET", body?: any) => {
+            calls.push({ path, method, body });
+            if (path === "/cities") return [{ name: "Rabat", price: 30 }];
+            if (path === "/package/new") {
+                if (failCreate) { failCreate = false; throw new CarrierError("Timeout", true); }
+                return remote;
+            }
+            if (path === "/package/ISO-TRACK-1") return { ...remote };
+            if (path === "/package/status") { remote.status = "CONFIRMED"; return { message: "Success" }; }
+            if (path === "/pickup") {
+                assert.deepEqual(body.packages, [remote.trackingID]); remote.status = "PICKUP";
+                return { packages: [{ ...remote }], miniStickerFilePath: "/sticker.pdf", slipFilePath: "/slip.pdf" };
+            }
+            throw new Error("Unexpected mock request");
+        };
+        await processOlivraisonQueue(fake);
+        let shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.state, "RETRY");
+        await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await Promise.all([processOlivraisonQueue(fake), processOlivraisonQueue(fake)]);
+        shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.carrierStatus, "PICKUP"); assert.equal(shipment.state, "ACTIVE");
+        assert.equal(shipment.slipUrl, "https://partners.olivraison.com/slip.pdf");
+        const creates = calls.filter(c => c.path === "/package/new");
+        assert.equal(creates.length, 2); assert.deepEqual(creates[0].body, creates[1].body);
+        assert.equal(creates[0].body.orderId, order.id); assert.equal(creates[0].body.price, order.totalAmount);
+        assert.equal(calls.filter(c => c.path === "/pickup").length, 1);
+        assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "CONFIRMED");
+        for (const status of ["TRANSIT", "DELIVERED"]) {
+            remote.status = status;
+            await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+            await processOlivraisonQueue(fake);
+        }
+        const delivered = await prisma.order.findUnique({ where: { id: order.id } });
+        assert.equal(delivered.status, "DELIVERED"); assert.equal(delivered.paymentStatus, "PENDING");
+        assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: order.id } })).state, "DONE");
+        const pending = await newOrder(false);
+        assert.equal(await prisma.olivraisonShipment.count(), 1);
+        await transitionOrderStatus(pending.id, "CONFIRMED");
+        await transitionOrderStatus(pending.id, "CONFIRMED");
+        assert.equal(await prisma.olivraisonShipment.count(), 2);
+        await put({ ...options, apiKey: undefined, secretKey: undefined, enabled: false });
+        let invoked = false; await processOlivraisonQueue(async () => { invoked = true; }); assert.equal(invoked, false);
+    } finally {
+        await prisma.olivraisonIntegration.updateMany({ data: { enabled: false } });
+        await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
+    }
+});
+
+test("Olivraison reconciles an uncertain pickup without issuing it twice and stops cancelled orders", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { CarrierError } = await import("../backend/src/lib/olivraison-api");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: true, activatedAt: new Date(), autoPickup: true } });
+    await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: true } });
+    const create = async () => {
+        product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), confirmationMode: "SITE" });
+        assert.equal(r.status, 201, JSON.stringify(r.body)); return r.body.data;
+    };
+    try {
+        const order = await create(); let status = "CREATED", pickups = 0;
+        const fake = async (path: string) => {
+            if (path === "/cities") return [{ name: "Rabat" }];
+            if (path === "/package/new") return { trackingID: "UNCERTAIN", status };
+            if (path === "/package/UNCERTAIN") return { trackingID: "UNCERTAIN", partnerTrackingID: order.id, status };
+            if (path === "/package/status") { status = "CONFIRMED"; return {}; }
+            if (path === "/pickup") { pickups++; status = "PICKUP"; throw new CarrierError("Timeout", true); }
+            throw new Error("Unexpected request");
+        };
+        await processOlivraisonQueue(fake);
+        await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await processOlivraisonQueue(fake);
+        assert.equal(pickups, 1);
+        const shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.state, "ATTENTION"); assert.equal(shipment.carrierStatus, "PICKUP");
+        const cancelled = await create(); await transitionOrderStatus(cancelled.id, "CANCELLED");
+        let network = 0; await processOlivraisonQueue(async () => { network++; });
+        assert.equal(network, 0);
+        assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: cancelled.id } })).state, "ATTENTION");
+    } finally {
+        await prisma.olivraisonIntegration.updateMany({ data: { enabled: false } });
+        await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
+    }
+});
