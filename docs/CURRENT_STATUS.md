@@ -204,3 +204,7 @@ See `PRODUCT_STOCK_WORKSPACE_2026-10-18.md`. The product editor groups identity,
 ## Accord WhatsApp à la soumission — candidat 20 octobre 2026
 
 Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant attente, contrôles serveur et reçu client, sans consentement précoché ni reprise historique. Tests ciblés, lint frontend et compilation backend locaux réussis ; recette complète et publication encore à vérifier.
+
+## 2026-10-22 — Olivraison automation (pending review)
+
+A dependent branch adds opt-in automatic parcel creation, confirmation, pickup/PDFs and status polling after order confirmation. It depends on PR #48; no production deployment or real carrier call. See OLIVRAISON_AUTOMATION.md for activation, exception handling and tests. Default OFF; encrypted partner keys, no historical replay, shared rate gate and per-order lease/checkpoints.

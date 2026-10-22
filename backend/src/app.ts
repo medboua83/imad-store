@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { olivraisonRoutes } from "./routes/olivraison.routes";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -107,6 +108,7 @@ app.use("/api/telegram", telegramRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/integrations/deskcomm", deskcommRoutes);
+app.use("/api/integrations/olivraison", olivraisonRoutes);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 app.use(errorMiddleware);

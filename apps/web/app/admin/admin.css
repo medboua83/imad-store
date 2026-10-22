@@ -1737,3 +1737,9 @@
 .admin-app .status-confirmed, .admin-app .status-active { background:#e4f0df; color:#3b6b31; }
 .admin-app .status-delivered { background:#dcece4; color:#2b674b; }
 .admin-app .brand-wordmark .brand-logo { background:linear-gradient(120deg,#c29a50,#f1dfb1 50%,#c29a50); }
+
+.olivraison-settings { margin-block: 2rem; border-block: 1px solid var(--border, #ddd); padding-block: 1.5rem; }
+.olivraison-settings textarea { width: 100%; min-height: 7rem; padding: .75rem; border: 1px solid #ccc; border-radius: .5rem; font: inherit; }
+.olivraison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1rem; margin-block: 1rem; }
+.olivraison-card { padding: 1rem; border: 1px solid #ddd; border-radius: .75rem; overflow-wrap: anywhere; }
+.olivraison-card a { display: inline-block; margin-inline-end: 1rem; text-decoration: underline; }

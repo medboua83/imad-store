@@ -155,3 +155,7 @@ The remaining eleven audit items have been implemented and verified with twenty 
 ## Accord WhatsApp à la soumission — candidat 20 octobre 2026
 
 Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant attente, contrôles serveur et reçu client, sans consentement précoché ni reprise historique. Tests ciblés, lint frontend et compilation backend locaux réussis ; recette complète et publication encore à vérifier.
+
+### Olivraison integration (2026-10-22, not deployed)
+
+The carrier integration is opt-in through admin settings and depends on direct-site-confirmation PR #48. Queue only newly created orders after activation, at CONFIRMED, inside the order/status transaction. Use fixed partners.olivraison.com API, orderId idempotency, no carrier inventory reservation, owned tracking IDs for pickups, and preserve uncertain-pickup checkpoints. Never equate delivered COD with remitted payment. Do not backfill, replay or use account-wide pickup wildcards. Documentation: docs/OLIVRAISON_AUTOMATION.md.
