@@ -31,13 +31,15 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
       `${i + 1}. ${item.quantity} x ${item.name} — ${(item.quantity * item.unitPrice).toFixed(2)} MAD`,
   );
   const details = [
-    `Commande ${process.env.STORE_DISPLAY_NAME || "Imad Store"} #${order.id}`,
+    `Commande ${process.env.STORE_DISPLAY_NAME || "Imad Store"} #${order.id.slice(-8).toUpperCase()}`,
     ...lines,
     `Total: ${order.totalAmount.toFixed(2)} MAD`,
     `Livraison: ${order.shippingCost.toFixed(2)} MAD`,
     `Paiement: ${order.paymentMethod}`,
     `Statut: ${order.status}`,
+    `Adresse de livraison: ${order.street}`,
     `Ville: ${order.city}`,
+    `Région: ${order.region}`,
   ].join("\n");
   const form = new URLSearchParams();
   form.set("nome", order.name);

@@ -1,5 +1,10 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Adresse et numéro public transmis au CRM — candidat du 22 octobre 2026
+
+Le sérialiseur webhook omettait la rue pourtant enregistrée par le checkout et la file de sortie. Il transmet désormais dans message l’adresse, la ville et la région, avec le numéro public affiché au client (suffixe de huit caractères en majuscules). pedido_id, clés d’événement, accords WhatsApp et mode SITE inchangés. Aucun ancien événement rejoué ni colis créé. Neuf tests formulaire/consentement et compilation backend réussis ; assertions du JSON signé ajoutées à la recette MongoDB isolée de CI. Publication/déploiement à vérifier séparément. Voir CRM_DELIVERY_ADDRESS_2026-10-22.md.
+
+
 ## Confirmation directe sur le site — candidat du 22 octobre 2026
 
 Paramètres → Gestion des commandes : option persistante désactivée par défaut. Lorsqu’elle est activée, le checkout arabe ajoute une relecture complète modifiable, puis une validation finale. Le serveur vérifie le mode et les montants, crée une commande CONFIRMED avec confirmationMethod=SITE et confirmedAt, et neutralise la demande d’assistance de confirmation WhatsApp. Les notifications et la file CRM restent en place ; seuls les nouveaux événements SITE incluent confirmation_method, confirmed_at et confirmation_required=false. Le sender force aussi ai_service_consent=false pour SITE, en JSON signé comme dans le formulaire historique. Aucune ancienne commande ni file existante réécrite.

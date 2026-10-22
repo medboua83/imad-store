@@ -31,6 +31,35 @@ test("other explicit international country codes are not silently rewritten", ()
     "+12025550123",
   ));
 
+test("CRM receives the checkout address and the same public order number as the customer", () => {
+  const form = encodeDeskcommForm({
+    ...order,
+    id: "1234567890abcdef12ab34cd",
+    street: "12 rue du Test, appartement 3",
+    city: "Ville fictive",
+    region: "Région fictive",
+  });
+  const message = form.get("message")!;
+  assert.match(message, /#12AB34CD\n/);
+  assert.ok(message.includes("Adresse de livraison: 12 rue du Test, appartement 3\n"));
+  assert.ok(message.includes("Ville: Ville fictive\nRégion: Région fictive"));
+  // Internal identity/idempotency remains the full persisted order id.
+  assert.equal(form.get("pedido_id"), "1234567890abcdef12ab34cd");
+});
+
+test("the Arabic checkout address is preserved in the established captured message field", () => {
+  const form = encodeDeskcommForm({
+    ...order,
+    street: "عنوان تجريبي، زنقة الاختبار رقم 12",
+    city: "مدينة تجريبية",
+    region: "جهة تجريبية",
+  });
+  const message = form.get("message")!;
+  assert.ok(message.includes("Adresse de livraison: عنوان تجريبي، زنقة الاختبار رقم 12"));
+  assert.ok(message.includes("Ville: مدينة تجريبية"));
+  assert.ok(message.includes("Région: جهة تجريبية"));
+});
+
 test("site-confirmed orders keep legacy CRM delivery but explicitly suppress confirmation", () => {
   const form = encodeDeskcommForm({ ...order, confirmationMethod: "SITE", confirmationRequired: false, confirmedAt: "2026-10-22T08:00:00.000Z", status: "CONFIRMED" });
   assert.equal(form.get("confirmation_required"), "false");
