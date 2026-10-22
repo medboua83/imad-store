@@ -32,6 +32,7 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
   );
   const details = [
     `Commande ${process.env.STORE_DISPLAY_NAME || "Imad Store"} #${order.id.slice(-8).toUpperCase()}`,
+    `Client de la commande: ${order.name}`,
     ...lines,
     `Total: ${order.totalAmount.toFixed(2)} MAD`,
     `Livraison: ${order.shippingCost.toFixed(2)} MAD`,

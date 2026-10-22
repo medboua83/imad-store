@@ -1025,6 +1025,7 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.equal(data.submission_status, "completed");
     assert.equal(data.external_id, `imad-store-${id}`);
     assert.equal(data.pedido_id, id);
+    assert.ok(data.message.includes(`Client de la commande: ${body.customer.fullName}\n`));
     assert.ok(data.message.includes(`#${id.slice(-8).toUpperCase()}\n`));
     assert.ok(data.message.includes(`Adresse de livraison: ${body.customer.street}\n`));
     assert.ok(data.message.includes(`Ville: ${body.customer.city}\nRégion: ${body.customer.region}`));
