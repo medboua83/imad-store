@@ -1610,24 +1610,42 @@ test("Olivraison reconciles an uncertain pickup without issuing it twice and sto
 });
 
 
-test("carrier configuration removal requires admin, preserves history and is idempotent", async () => {
+test("carrier removal retires unfinished parcels, erases secrets and cannot replay history after reconnect", async () => {
     const url = "/api/integrations/olivraison";
     await request(app).delete(url).expect(401);
     const before = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
     assert.ok(before);
-    const pending = await prisma.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
+    const pending = await prisma.olivraisonShipment.findFirst({ where: { state: { not: "DONE" } } });
     assert.ok(pending);
+    await prisma.olivraisonShipment.update({ where: { id: pending.id }, data: { leaseToken: "isolated-running", lockedUntil: new Date(Date.now() + 300000) } });
     await request(app).delete(url).set(admin()).expect(409);
     assert.deepEqual(await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }), before);
-    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    await prisma.olivraisonShipment.update({ where: { id: pending.id }, data: { leaseToken: null, lockedUntil: new Date(0) } });
     const history = await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } });
+    const orders = await prisma.order.findMany({ orderBy: { id: "asc" } });
     for (let i = 0; i < 2; i++) {
         const result = await request(app).delete(url).set(admin()).expect(200);
         assert.equal(result.body.data.saved, false);
         assert.equal(result.body.data.configured, false);
         assert.equal(result.body.data.enabled, false);
-        assert.equal(result.body.data.pickupAddress.company, "");
     }
     assert.equal(await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }), null);
-    assert.deepEqual(await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } }), history);
+    const retired = await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } });
+    assert.equal(retired.length, history.length);
+    for (let i = 0; i < retired.length; i++) {
+        assert.equal(retired[i].state, history[i].state === "DONE" ? "DONE" : "DISCONNECTED");
+        assert.equal(retired[i].trackingId, history[i].trackingId);
+        assert.equal(retired[i].slipUrl, history[i].slipUrl);
+    }
+    assert.deepEqual(await prisma.order.findMany({ orderBy: { id: "asc" } }), orders);
+    await request(app).post(`${url}/shipments/${pending.id}/retry`).set(admin()).expect(409);
+    const config = { enabled: true, autoPickup: false, apiKey: "isolated-new", secretKey: "isolated-new-secret", pickupAddress: { company: "Test", streetAddress: "Adresse fictive", city: "Rabat", phone: "+212600000099" }, cityMapping: {} };
+    await request(app).put(url).set(admin()).send(config).expect(200);
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    let invoked = false;
+    await processOlivraisonQueue(async () => { invoked = true; });
+    assert.equal(invoked, false);
+    assert.deepEqual(await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } }), retired);
+    await request(app).put(url).set(admin()).send({ ...config, apiKey: "isolated-next" }).expect(200);
+    await request(app).delete(url).set(admin()).expect(200);
 });

@@ -169,3 +169,7 @@ Compilation backend/frontend et lint réussis. Tests UI 390/1280 px et intégrat
 ## Aperçus produits — 22 octobre 2026
 
 Diagnostic public : og:image et twitter:image pointaient vers http://localhost:3000/uploads alors que les photos étaient servies sur le domaine public. Les métadonnées utilisent maintenant SITE_URL ou le Host public de la requête (HTTPS hors boucle locale), avec nom, description, URL canonique et image absolue explicites pour Open Graph/Twitter. Même source produit serveur pour les fiches actuelles et futures. Aucun logo générique ajouté à une fiche sans photo. Tests ciblés origine multi-installation et cartes par produit ; caches externes à rafraîchir après publication.
+
+## Retrait Olivraison avec colis en cours — 22 octobre 2026
+
+Le propriétaire autorise le retrait des clés et l’arrêt du suivi automatique des deux colis existants, sans annulation chez le transporteur. DELETE conserve les références et documents, place les colis non terminés en DISCONNECTED et empêche leur reprise après reconnexion. Un échange déjà en cours (bail actif) impose seulement d’attendre sa fin. Historique affiché Suivi retiré sans bouton de reprise ; les colis retirés ne bloquent plus un changement ultérieur de compte. Tests : rejet pendant un échange, retrait idempotent, conservation commandes/références, reconnexion sans appel ni reprise historique.
