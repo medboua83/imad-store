@@ -424,3 +424,18 @@ export const trashOrders = async (ids: string[], restore = false) => {
     const { data } = await api.post("/orders/trash", { ids, restore });
     return data as { success: boolean; count: number };
 };
+
+export interface OlivraisonConfig {
+    enabled: boolean; autoPickup: boolean; configured: boolean; activatedAt: string | null;
+    pickupAddress: { company: string; streetAddress: string; city: string; phone: string };
+    cityMapping: Record<string, string>;
+}
+export interface OlivraisonShipment {
+    id: string; trackingId: string | null; carrierStatus: string | null; state: string;
+    lastError: string | null; stickerUrl: string | null; slipUrl: string | null; updatedAt: string;
+}
+export const getOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.get("/integrations/olivraison")).data.data;
+export const saveOlivraisonConfig = async (body: Omit<OlivraisonConfig, "configured" | "activatedAt"> & { apiKey?: string; secretKey?: string }): Promise<OlivraisonConfig> => (await api.put("/integrations/olivraison", body)).data.data;
+export const testOlivraison = async (): Promise<{ name: string; price: number }[]> => (await api.post("/integrations/olivraison/test")).data.data;
+export const getOlivraisonShipments = async (): Promise<OlivraisonShipment[]> => (await api.get("/integrations/olivraison/shipments")).data.data;
+export const retryOlivraison = async (id: string) => (await api.post(`/integrations/olivraison/shipments/${id}/retry`)).data.data;

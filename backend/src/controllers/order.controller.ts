@@ -1,3 +1,4 @@
+import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
@@ -261,6 +262,7 @@ export async function createOrder(req: Request, res: Response) {
                         },
                         include: { ...ORDER_INCLUDE, events: true },
                     });
+                    await enqueueOlivraison(tx, created);
                     // Never enqueue a silent downgrade between the validated choice and the saved receipt.
                     if (
                         created.aiServiceConsent !== acceptedAssistance ||

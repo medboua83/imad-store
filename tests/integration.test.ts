@@ -1489,3 +1489,122 @@ test("Direct site confirmation is opt-in, persisted, server-enforced and never r
         else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
     }
 });
+
+test("Olivraison opt-in, encrypted config, no historical replay, direct/CRM enqueue and automated shipment lifecycle", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    const { CarrierError } = await import("../backend/src/lib/olivraison-api");
+    const url = "/api/integrations/olivraison";
+    const options = { enabled: false, autoPickup: true, apiKey: "isolated-carrier-api", secretKey: "isolated-carrier-secret",
+        pickupAddress: { company: "Test", streetAddress: "Adresse fictive", city: "Rabat", phone: "+212600000099" }, cityMapping: {} };
+    const put = (body: any) => request(app).put(url).set(admin()).send(body);
+    const newOrder = async (direct = true) => {
+        await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings", directSiteConfirmation: direct }, update: { directSiteConfirmation: direct } });
+        product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), ...(direct ? { confirmationMode: "SITE" } : {}) });
+        assert.equal(r.status, 201, JSON.stringify(r.body));
+        return r.body.data;
+    };
+    try {
+        assert.equal((await request(app).get(url)).status, 401);
+        assert.equal((await request(app).put(url).send(options)).status, 401);
+        assert.equal((await request(app).get(url).set(admin())).body.data.enabled, false);
+        assert.equal((await put(options)).status, 200);
+        const saved = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
+        assert.doesNotMatch(saved.credentials, /isolated-carrier/);
+        assert.doesNotMatch(JSON.stringify((await request(app).get(url).set(admin())).body), /isolated-carrier/);
+        const historical = await newOrder();
+        assert.equal(await prisma.olivraisonShipment.count(), 0);
+        assert.equal((await put({ ...options, apiKey: undefined, secretKey: undefined, enabled: true })).status, 200);
+        await transitionOrderStatus(historical.id, "SHIPPED");
+        assert.equal(await prisma.olivraisonShipment.count(), 0);
+        const order = await newOrder();
+        assert.equal(await prisma.olivraisonShipment.count(), 1);
+        const remote = { trackingID: "ISO-TRACK-1", partnerTrackingID: order.id, status: "CREATED" };
+        const calls: any[] = []; let failCreate = true;
+        const fake = async (path: string, method = "GET", body?: any) => {
+            calls.push({ path, method, body });
+            if (path === "/cities") return [{ name: "Rabat", price: 30 }];
+            if (path === "/package/new") {
+                if (failCreate) { failCreate = false; throw new CarrierError("Timeout", true); }
+                return remote;
+            }
+            if (path === "/package/ISO-TRACK-1") return { ...remote };
+            if (path === "/package/status") { remote.status = "CONFIRMED"; return { message: "Success" }; }
+            if (path === "/pickup") {
+                assert.deepEqual(body.packages, [remote.trackingID]); remote.status = "PICKUP";
+                return { packages: [{ ...remote }], miniStickerFilePath: "/sticker.pdf", slipFilePath: "/slip.pdf" };
+            }
+            throw new Error("Unexpected mock request");
+        };
+        await processOlivraisonQueue(fake);
+        let shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.state, "RETRY");
+        await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await Promise.all([processOlivraisonQueue(fake), processOlivraisonQueue(fake)]);
+        shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.carrierStatus, "PICKUP"); assert.equal(shipment.state, "ACTIVE");
+        assert.equal(shipment.slipUrl, "https://partners.olivraison.com/slip.pdf");
+        const creates = calls.filter(c => c.path === "/package/new");
+        assert.equal(creates.length, 2); assert.deepEqual(creates[0].body, creates[1].body);
+        assert.equal(creates[0].body.orderId, order.id); assert.equal(creates[0].body.price, order.totalAmount);
+        assert.equal(calls.filter(c => c.path === "/pickup").length, 1);
+        assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "CONFIRMED");
+        for (const status of ["TRANSIT", "DELIVERED"]) {
+            remote.status = status;
+            await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+            await processOlivraisonQueue(fake);
+        }
+        const delivered = await prisma.order.findUnique({ where: { id: order.id } });
+        assert.equal(delivered.status, "DELIVERED"); assert.equal(delivered.paymentStatus, "PENDING");
+        assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: order.id } })).state, "DONE");
+        const pending = await newOrder(false);
+        assert.equal(await prisma.olivraisonShipment.count(), 1);
+        await transitionOrderStatus(pending.id, "CONFIRMED");
+        await transitionOrderStatus(pending.id, "CONFIRMED");
+        assert.equal(await prisma.olivraisonShipment.count(), 2);
+        await put({ ...options, apiKey: undefined, secretKey: undefined, enabled: false });
+        let invoked = false; await processOlivraisonQueue(async () => { invoked = true; }); assert.equal(invoked, false);
+    } finally {
+        await prisma.olivraisonIntegration.updateMany({ data: { enabled: false } });
+        await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
+    }
+});
+
+test("Olivraison reconciles an uncertain pickup without issuing it twice and stops cancelled orders", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { CarrierError } = await import("../backend/src/lib/olivraison-api");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: true, activatedAt: new Date(), autoPickup: true } });
+    await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: true } });
+    const create = async () => {
+        product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), confirmationMode: "SITE" });
+        assert.equal(r.status, 201, JSON.stringify(r.body)); return r.body.data;
+    };
+    try {
+        const order = await create(); let status = "CREATED", pickups = 0;
+        const fake = async (path: string) => {
+            if (path === "/cities") return [{ name: "Rabat" }];
+            if (path === "/package/new") return { trackingID: "UNCERTAIN", status };
+            if (path === "/package/UNCERTAIN") return { trackingID: "UNCERTAIN", partnerTrackingID: order.id, status };
+            if (path === "/package/status") { status = "CONFIRMED"; return {}; }
+            if (path === "/pickup") { pickups++; status = "PICKUP"; throw new CarrierError("Timeout", true); }
+            throw new Error("Unexpected request");
+        };
+        await processOlivraisonQueue(fake);
+        await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await processOlivraisonQueue(fake);
+        assert.equal(pickups, 1);
+        const shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(shipment.state, "ATTENTION"); assert.equal(shipment.carrierStatus, "PICKUP");
+        const cancelled = await create(); await transitionOrderStatus(cancelled.id, "CANCELLED");
+        let network = 0; await processOlivraisonQueue(async () => { network++; });
+        assert.equal(network, 0);
+        assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: cancelled.id } })).state, "ATTENTION");
+    } finally {
+        await prisma.olivraisonIntegration.updateMany({ data: { enabled: false } });
+        await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
+    }
+});
