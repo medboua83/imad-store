@@ -68,6 +68,16 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
   async function save(data: Prisma.OlivraisonShipmentUpdateManyMutationInput) {
     const result = await prisma.olivraisonShipment.updateMany({ where: owned, data });
     if (result.count !== 1) throw new CarrierError("Traitement repris par un autre processus");
+    if (data.state === "ATTENTION") {
+      await prisma.adminNotification.create({
+        data: {
+          type: "shipping_attention",
+          title: "Colis Olivraison à vérifier",
+          message: "Consultez Paramètres → Olivraison pour rapprocher le colis.",
+          orderId: candidate!.id,
+        },
+      });
+    }
   }
   async function eligible() {
     const [current, lease, order] = await Promise.all([
@@ -119,7 +129,10 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       remote = { ...remote, status: "CONFIRMED" };
     }
     await save({ carrierStatus: remote.status });
-    if (cfg.autoPickup && remote.status === "CONFIRMED") {
+    const pickupConfig = await prisma.olivraisonIntegration.findUnique({
+      where: { id: "olivraison" },
+    });
+    if (pickupConfig?.enabled && pickupConfig.autoPickup && remote.status === "CONFIRMED") {
       await eligible();
       // A timeout/crash after this checkpoint is reconciled by GET, never blindly replayed.
       if (candidate.pickupAttempted)

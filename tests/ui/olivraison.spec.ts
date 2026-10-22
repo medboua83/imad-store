@@ -49,6 +49,7 @@ for (const width of [390, 1280])
       });
     });
     await page.goto("/admin");
+    if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
     await page.getByRole("button", { name: "Paramètres", exact: true }).click();
     const toggle = page.getByRole("switch", { name: "Automatiser Olivraison" });
     await expect(toggle).not.toBeChecked();
@@ -67,6 +68,7 @@ for (const width of [390, 1280])
       page.getByRole("link", { name: "Bordereau de ramassage", exact: true }),
     ).toHaveAttribute("href", "https://partners.olivraison.com/slip.pdf");
     await page.reload();
+    if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
     await page.getByRole("button", { name: "Paramètres", exact: true }).click();
     await expect(toggle).toBeChecked();
     await toggle.uncheck();
