@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getOlivraisonConfig,
   saveOlivraisonConfig,
+  deleteOlivraisonConfig,
   testOlivraison,
   getOlivraisonShipments,
   retryOlivraison,
@@ -20,6 +21,18 @@ export function OlivraisonSettings() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
+  const [editing, setEditing] = useState(false);
+  function openEditor(c: OlivraisonConfig) {
+    setConfig(structuredClone(c));
+    setMapping(
+      Object.entries(c.cityMapping)
+        .map(([a, b]) => `${a} = ${b}`)
+        .join("\n"),
+    );
+    setKeys({ apiKey: "", secretKey: "" });
+    setCities([]);
+    setEditing(true);
+  }
   async function refreshShipments() {
     setShipments(await getOlivraisonShipments());
   }
@@ -32,6 +45,7 @@ export function OlivraisonSettings() {
           throw new Error("Invalid carrier config");
         setConfig(c);
         setSavedConfig(c);
+        setEditing(!c.saved);
         setMapping(
           Object.entries(c.cityMapping)
             .map(([a, b]) => `${a} = ${b}`)
@@ -83,13 +97,9 @@ export function OlivraisonSettings() {
         confirmation et suivi toutes les cinq minutes environ. Aucune ancienne commande n’est
         envoyée.
       </p>
-      {savedConfig && (
+      {savedConfig?.saved && !editing && (
         <div className="admin-feedback" role="status">
-          <strong>
-            {savedConfig.configured
-              ? "Société de transport déjà enregistrée : Olivraison"
-              : "Configuration transporteur à compléter"}
-          </strong>
+          <strong>Société de livraison enregistrée : Olivraison</strong>
           {savedConfig.pickupAddress.company && (
             <p>Entreprise de ramassage enregistrée : {savedConfig.pickupAddress.company}</p>
           )}
@@ -102,6 +112,42 @@ export function OlivraisonSettings() {
             Automatisation enregistrée : {savedConfig.enabled ? "activée" : "désactivée"}
             {" · "}Ramassage automatique : {savedConfig.autoPickup ? "activé" : "désactivé"}
           </p>
+          <p>
+            Adresse de ramassage : {savedConfig.pickupAddress.streetAddress},{" "}
+            {savedConfig.pickupAddress.city}
+          </p>
+          <p>Correspondances des villes : {Object.keys(savedConfig.cityMapping).length}</p>
+          <div className="admin-actions">
+            <button
+              type="button"
+              className="admin-button"
+              disabled={busy}
+              onClick={() => openEditor(savedConfig)}
+            >
+              Modifier
+            </button>
+            <button
+              type="button"
+              className="admin-button"
+              disabled={busy}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    "Supprimer la configuration Olivraison et ses clés API ? L’automatisation sera arrêtée. Les commandes et l’historique des colis seront conservés.",
+                  )
+                )
+                  return;
+                void action(async () => {
+                  const empty = await deleteOlivraisonConfig();
+                  setSavedConfig(empty);
+                  openEditor(empty);
+                  setMessage("Configuration Olivraison supprimée.");
+                });
+              }}
+            >
+              Supprimer
+            </button>
+          </div>
         </div>
       )}
       {message && (
@@ -109,7 +155,7 @@ export function OlivraisonSettings() {
           {message}
         </p>
       )}
-      {config && (
+      {config && editing && (
         <form
           className="commerce-settings"
           onSubmit={(e) => {
@@ -133,6 +179,7 @@ export function OlivraisonSettings() {
               });
               setConfig(result);
               setSavedConfig(result);
+              setEditing(false);
               setKeys({ apiKey: "", secretKey: "" });
               setMessage("Configuration Olivraison enregistrée.");
             });
@@ -221,6 +268,19 @@ export function OlivraisonSettings() {
             </label>
             <p>Une ligne par correspondance. Utilisez le nom exact renvoyé par Olivraison.</p>
           </fieldset>
+          {savedConfig?.saved && (
+            <button
+              type="button"
+              className="admin-button"
+              disabled={busy}
+              onClick={() => {
+                openEditor(savedConfig);
+                setEditing(false);
+              }}
+            >
+              Annuler
+            </button>
+          )}
           <button className="admin-button primary" disabled={busy}>
             {busy ? "Enregistrement…" : "Enregistrer Olivraison"}
           </button>

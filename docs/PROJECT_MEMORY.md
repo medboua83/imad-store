@@ -159,3 +159,9 @@ Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant a
 ### Olivraison integration (2026-10-22, not deployed)
 
 The carrier integration is opt-in through admin settings and depends on direct-site-confirmation PR #48. Queue only newly created orders after activation, at CONFIRMED, inside the order/status transaction. Use fixed partners.olivraison.com API, orderId idempotency, no carrier inventory reservation, owned tracking IDs for pickups, and preserve uncertain-pickup checkpoints. Never equate delivered COD with remitted payment. Do not backfill, replay or use account-wide pickup wildcards. Documentation: docs/OLIVRAISON_AUTOMATION.md.
+
+## Société de livraison unique — 22 octobre 2026
+
+Le formulaire Olivraison est masqué après sauvegarde et au rechargement lorsqu’une configuration existe, même désactivée ou sans clés. Le récapitulatif propose Modifier et Supprimer avec confirmation. Modifier recharge les valeurs enregistrées sans exposer les secrets ; Annuler abandonne les changements. DELETE administrateur efface le document et les clés, conserve les commandes/colis et refuse les colis non terminés. Une écriture transactionnelle partagée avec la mise en file évite la suppression concurrente à une nouvelle expédition. Aucun appel transporteur ni suppression de données de production pendant les tests.
+
+Compilation backend/frontend et lint réussis. Tests UI 390/1280 px et intégration ajoutés ; résultats finaux dans le rapport de cette intervention.

@@ -426,6 +426,7 @@ export const trashOrders = async (ids: string[], restore = false) => {
 };
 
 export interface OlivraisonConfig {
+    saved: boolean;
     enabled: boolean; autoPickup: boolean; configured: boolean; activatedAt: string | null;
     pickupAddress: { company: string; streetAddress: string; city: string; phone: string };
     cityMapping: Record<string, string>;
@@ -435,7 +436,9 @@ export interface OlivraisonShipment {
     lastError: string | null; stickerUrl: string | null; slipUrl: string | null; updatedAt: string;
 }
 export const getOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.get("/integrations/olivraison")).data.data;
-export const saveOlivraisonConfig = async (body: Omit<OlivraisonConfig, "configured" | "activatedAt"> & { apiKey?: string; secretKey?: string }): Promise<OlivraisonConfig> => (await api.put("/integrations/olivraison", body)).data.data;
+export const saveOlivraisonConfig = async (body: Omit<OlivraisonConfig, "configured" | "activatedAt" | "saved"> & { apiKey?: string; secretKey?: string }): Promise<OlivraisonConfig> => (await api.put("/integrations/olivraison", body)).data.data;
 export const testOlivraison = async (): Promise<{ name: string; price: number }[]> => (await api.post("/integrations/olivraison/test")).data.data;
 export const getOlivraisonShipments = async (): Promise<OlivraisonShipment[]> => (await api.get("/integrations/olivraison/shipments")).data.data;
 export const retryOlivraison = async (id: string) => (await api.post(`/integrations/olivraison/shipments/${id}/retry`)).data.data;
+
+export const deleteOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.delete("/integrations/olivraison")).data.data;

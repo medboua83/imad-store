@@ -4,6 +4,7 @@ for (const width of [390, 1280])
     await page.setViewportSize({ width, height: 900 });
     let saved: any;
     const cfg = {
+      saved: false,
       enabled: false,
       autoPickup: true,
       configured: false,
@@ -24,10 +25,19 @@ for (const width of [390, 1280])
       if (path === "/api/integrations/olivraison") {
         if (req.method() === "PUT") {
           saved = req.postDataJSON();
-          Object.assign(cfg, saved, { configured: true });
+          Object.assign(cfg, saved, { configured: true, saved: true });
           delete (cfg as any).apiKey;
           delete (cfg as any).secretKey;
         }
+        if (req.method() === "DELETE")
+          Object.assign(cfg, {
+            saved: false,
+            configured: false,
+            enabled: false,
+            autoPickup: true,
+            cityMapping: {},
+            pickupAddress: { company: "", streetAddress: "", city: "", phone: "" },
+          });
         data = cfg;
       } else if (path === "/api/integrations/olivraison/shipments")
         data = [
@@ -60,6 +70,9 @@ for (const width of [390, 1280])
     await expect(page.getByText("Configuration Olivraison enregistrée.")).toBeVisible();
     expect(saved.enabled).toBe(true);
     expect(saved.autoPickup).toBe(true);
+    await expect(page.getByLabel("Clé API", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Modifier", exact: true }).click();
+    await expect(page.getByLabel("Entreprise", { exact: true })).toHaveValue("Test");
     await expect(page.getByLabel("Clé API", { exact: true })).toHaveValue("");
     await page.getByRole("button", { name: "Tester la connexion et charger les villes" }).click();
     await expect(page.getByText("Connexion réussie. Aucun colis créé.")).toBeVisible();
@@ -70,11 +83,22 @@ for (const width of [390, 1280])
     await page.reload();
     if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
     await page.getByRole("button", { name: "Paramètres", exact: true }).click();
+    await expect(toggle).toHaveCount(0);
+    await page.getByRole("button", { name: "Modifier", exact: true }).click();
     await expect(toggle).toBeChecked();
     await toggle.uncheck();
     await page.getByRole("button", { name: "Enregistrer Olivraison", exact: true }).click();
     await expect(page.getByText("Configuration Olivraison enregistrée.")).toBeVisible();
     expect(saved.enabled).toBe(false);
+    await expect(toggle).toHaveCount(0);
+    page.once("dialog", (d) => d.dismiss());
+    await page.getByRole("button", { name: "Supprimer", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Modifier", exact: true })).toBeVisible();
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "Supprimer", exact: true }).click();
+    await expect(page.getByText("Configuration Olivraison supprimée.")).toBeVisible();
+    await expect(page.getByLabel("Entreprise", { exact: true })).toHaveValue("");
+    await expect(page.getByRole("button", { name: "Modifier", exact: true })).toHaveCount(0);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
