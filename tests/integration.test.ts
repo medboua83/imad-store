@@ -1608,3 +1608,32 @@ test("Olivraison reconciles an uncertain pickup without issuing it twice and sto
         await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
     }
 });
+
+test("Olivraison configuration removal is admin-only, blocks active processing and preserves history", async () => {
+    const endpoint = "/api/integrations/olivraison";
+    assert.equal((await request(app).delete(endpoint)).status, 401);
+    const customerToken = jwt.sign({ id: "123456789012345678901235", role: "CUSTOMER", email: "customer@example.invalid" }, process.env.JWT_SECRET!);
+    assert.equal((await request(app).delete(endpoint).set("Authorization", `Bearer ${customerToken}`)).status, 403);
+    const shipment = await prisma.olivraisonShipment.findFirst();
+    assert.ok(shipment);
+    const history = await prisma.olivraisonShipment.count();
+    const orders = await prisma.order.count();
+    await prisma.olivraisonShipment.update({ where: { id: shipment.id }, data: { lockedUntil: new Date(Date.now() + 60_000) } });
+    assert.equal((await request(app).delete(endpoint).set(admin())).status, 409);
+    assert.ok((await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } })).credentials);
+    await prisma.olivraisonShipment.update({ where: { id: shipment.id }, data: { lockedUntil: new Date(0) } });
+    const response = await request(app).delete(endpoint).set(admin());
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.enabled, false);
+    assert.equal(response.body.data.configured, false);
+    assert.equal(response.body.data.autoPickup, false);
+    assert.equal(response.body.data.pickupAddress.company, "");
+    assert.deepEqual(response.body.data.cityMapping, {});
+    assert.equal((await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } })).credentials, null);
+    assert.equal(await prisma.olivraisonShipment.count(), history);
+    assert.equal(await prisma.order.count(), orders);
+    assert.equal((await request(app).delete(endpoint).set(admin())).status, 200);
+    const refreshed = await request(app).get(endpoint).set(admin());
+    assert.equal(refreshed.body.data.configured, false);
+    assert.equal(refreshed.body.data.pickupAddress.company, "");
+});

@@ -1,3 +1,9 @@
+## Gestion du transporteur unique — 22 octobre 2026
+
+Le formulaire Olivraison est masqué après enregistrement et après rechargement. Le récapitulatif affiche uniquement la configuration sauvegardée. Modifier préremplit le formulaire ; Annuler restaure les valeurs sauvegardées. Supprimer demande une confirmation explicite, retire les coordonnées et clés API du singleton et désactive l’automatisation. L’historique et les colis distants restent conservés. La suppression est refusée si un traitement détient un bail actif. Le remplacement des clés reste refusé tant que des colis ne sont pas terminés, y compris après suppression de la configuration. Aucun changement de schéma ni de donnée de production pendant les tests.
+
+Compilation backend/frontend et lint réussis. Deux tests UI isolés (390/1280 px) couvrent sauvegarde/rechargement, édition/annulation, suppression annulée, erreur serveur puis suppression réussie et conservation de l’historique. Test API ajouté pour droits, bail actif, effacement des clés et conservation des commandes/colis ; exécution MongoDB confiée à la CI isolée (MongoDB ne démarre pas dans cet environnement).
+
 # Current Status — 2026-10-18
 
 ## Confirmation directe sur le site — candidat du 22 octobre 2026

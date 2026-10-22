@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getOlivraisonConfig,
   saveOlivraisonConfig,
+  deleteOlivraisonConfig,
   testOlivraison,
   getOlivraisonShipments,
   retryOlivraison,
@@ -17,6 +18,8 @@ export function OlivraisonSettings() {
   const [keys, setKeys] = useState({ apiKey: "", secretKey: "" });
   const [mapping, setMapping] = useState("");
   const [cities, setCities] = useState<string[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -32,6 +35,7 @@ export function OlivraisonSettings() {
           throw new Error("Invalid carrier config");
         setConfig(c);
         setSavedConfig(c);
+        setEditing(!c.configured && !c.pickupAddress.company.trim());
         setMapping(
           Object.entries(c.cityMapping)
             .map(([a, b]) => `${a} = ${b}`)
@@ -83,7 +87,7 @@ export function OlivraisonSettings() {
         confirmation et suivi toutes les cinq minutes environ. Aucune ancienne commande n’est
         envoyée.
       </p>
-      {savedConfig && (
+      {savedConfig && (savedConfig.configured || savedConfig.pickupAddress.company.trim()) && (
         <div className="admin-feedback" role="status">
           <strong>
             {savedConfig.configured
@@ -102,6 +106,70 @@ export function OlivraisonSettings() {
             Automatisation enregistrée : {savedConfig.enabled ? "activée" : "désactivée"}
             {" · "}Ramassage automatique : {savedConfig.autoPickup ? "activé" : "désactivé"}
           </p>
+          {!editing && (
+            <div className="admin-actions">
+              <button
+                type="button"
+                className="admin-button"
+                disabled={busy}
+                onClick={() => {
+                  setEditing(true);
+                  setMessage("");
+                  setConfirmDelete(false);
+                }}
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                className="admin-button"
+                disabled={busy}
+                onClick={() => setConfirmDelete(true)}
+              >
+                Supprimer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {confirmDelete && (
+        <div role="group" aria-label="Confirmation de suppression" className="admin-feedback">
+          <strong>Supprimer la configuration Olivraison ?</strong>
+          <p>
+            Les coordonnées et les clés API seront retirées et l’automatisation désactivée.
+            L’historique des colis sera conservé. Les colis déjà créés chez Olivraison ne seront pas
+            supprimés.
+          </p>
+          <button
+            type="button"
+            className="admin-button"
+            disabled={busy}
+            onClick={() => setConfirmDelete(false)}
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            className="admin-button"
+            disabled={busy}
+            onClick={() =>
+              void action(async () => {
+                const result = await deleteOlivraisonConfig();
+                setConfig(result);
+                setSavedConfig(result);
+                setEditing(false);
+                setCities([]);
+                setKeys({ apiKey: "", secretKey: "" });
+                setMapping("");
+                setCities([]);
+                setEditing(true);
+                setConfirmDelete(false);
+                setMessage("Configuration Olivraison supprimée. Historique des colis conservé.");
+              })
+            }
+          >
+            Confirmer la suppression
+          </button>
         </div>
       )}
       {message && (
@@ -109,7 +177,7 @@ export function OlivraisonSettings() {
           {message}
         </p>
       )}
-      {config && (
+      {config && editing && (
         <form
           className="commerce-settings"
           onSubmit={(e) => {
@@ -133,6 +201,8 @@ export function OlivraisonSettings() {
               });
               setConfig(result);
               setSavedConfig(result);
+              setEditing(false);
+              setCities([]);
               setKeys({ apiKey: "", secretKey: "" });
               setMessage("Configuration Olivraison enregistrée.");
             });
@@ -224,6 +294,27 @@ export function OlivraisonSettings() {
           <button className="admin-button primary" disabled={busy}>
             {busy ? "Enregistrement…" : "Enregistrer Olivraison"}
           </button>
+          {savedConfig && (savedConfig.configured || savedConfig.pickupAddress.company.trim()) && (
+            <button
+              type="button"
+              className="admin-button"
+              disabled={busy}
+              onClick={() => {
+                setConfig(savedConfig);
+                setMapping(
+                  Object.entries(savedConfig.cityMapping)
+                    .map(([a, b]) => `${a} = ${b}`)
+                    .join("\n"),
+                );
+                setKeys({ apiKey: "", secretKey: "" });
+                setCities([]);
+                setMessage("");
+                setEditing(false);
+              }}
+            >
+              Annuler les modifications
+            </button>
+          )}
           <button
             type="button"
             className="admin-button"
