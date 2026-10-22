@@ -176,3 +176,7 @@ Diagnostic public : og:image et twitter:image pointaient vers http://localhost:3
 ## Retrait Olivraison avec colis en cours — 22 octobre 2026
 
 Le propriétaire autorise le retrait des clés et l’arrêt du suivi automatique des deux colis existants, sans annulation chez le transporteur. DELETE conserve les références et documents, place les colis non terminés en DISCONNECTED et empêche leur reprise après reconnexion. Un échange déjà en cours (bail actif) impose seulement d’attendre sa fin. Historique affiché Suivi retiré sans bouton de reprise ; les colis retirés ne bloquent plus un changement ultérieur de compte. Tests : rejet pendant un échange, retrait idempotent, conservation commandes/références, reconnexion sans appel ni reprise historique.
+
+## Saisie guidée des villes transporteur — 22 octobre 2026
+
+Le champ texte ville=ville est remplacé par des lignes Ville sur la boutique / Ville chez Olivraison, avec ajout/retrait et suggestions natives après chargement de la liste Olivraison. Correspondances facultatives, valeurs existantes préservées, contrôle des lignes incomplètes et sources en double ; le format cityMapping et la résolution serveur restent inchangés. Aucun compte transporteur ni appel réel pendant la recette.

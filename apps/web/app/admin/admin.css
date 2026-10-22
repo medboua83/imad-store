@@ -1743,3 +1743,9 @@
 .olivraison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1rem; margin-block: 1rem; }
 .olivraison-card { padding: 1rem; border: 1px solid #ddd; border-radius: .75rem; overflow-wrap: anywhere; }
 .olivraison-card a { display: inline-block; margin-inline-end: 1rem; text-decoration: underline; }
+
+.carrier-cities { min-width:0; }
+.carrier-city-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; gap:.75rem; align-items:end; margin-block:1rem; }
+.carrier-city-row label { min-width:0; }
+.carrier-cities-empty { padding:1rem; border:1px dashed var(--admin-line); border-radius:.75rem; color:var(--admin-muted); }
+@media (max-width:767px) { .carrier-city-row { grid-template-columns:minmax(0,1fr); padding:1rem; border:1px solid var(--admin-line); border-radius:.75rem; } .carrier-city-row button { justify-self:start; } }

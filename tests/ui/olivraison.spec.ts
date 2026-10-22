@@ -15,7 +15,7 @@ for (const width of [390, 1280])
         city: "Rabat",
         phone: "+212600000099",
       },
-      cityMapping: {},
+      cityMapping: { الرباط: "Rabat" },
     };
     await page.addInitScript(() => localStorage.setItem("adminToken", "isolated-fixture"));
     await page.route("**/api/**", async (route) => {
@@ -66,9 +66,28 @@ for (const width of [390, 1280])
     await toggle.check();
     await page.getByLabel("Clé API", { exact: true }).fill("test-api");
     await page.getByLabel("Clé secrète", { exact: true }).fill("test-secret");
+    await expect(page.getByLabel("Ville sur la boutique 1", { exact: true })).toHaveValue("الرباط");
+    await page.getByRole("button", { name: "Ajouter une ville", exact: true }).click();
+    await page.getByLabel("Ville sur la boutique 2", { exact: true }).fill("Tanger");
+    await page.getByRole("button", { name: "Enregistrer Olivraison", exact: true }).click();
+    await expect(
+      page.getByText("Ligne 2 : renseignez les deux villes ou retirez cette ligne."),
+    ).toBeVisible();
+    expect(saved).toBeUndefined();
+    await page.getByLabel("Ville chez Olivraison 2", { exact: true }).fill("tangier");
+    await page.getByRole("button", { name: "Ajouter une ville", exact: true }).click();
+    await page.getByLabel("Ville sur la boutique 3", { exact: true }).fill("الرباط");
+    await page.getByLabel("Ville chez Olivraison 3", { exact: true }).fill("Other");
+    await page.getByRole("button", { name: "Enregistrer Olivraison", exact: true }).click();
+    await expect(
+      page.getByText("La ville « الرباط » figure déjà dans une autre ligne."),
+    ).toBeVisible();
+    expect(saved).toBeUndefined();
+    await page.getByRole("button", { name: "Retirer la ligne 3", exact: true }).click();
     await page.getByRole("button", { name: "Enregistrer Olivraison", exact: true }).click();
     await expect(page.getByText("Configuration Olivraison enregistrée.")).toBeVisible();
     expect(saved.enabled).toBe(true);
+    expect(saved.cityMapping).toEqual({ الرباط: "Rabat", Tanger: "tangier" });
     expect(saved.autoPickup).toBe(true);
     await expect(page.getByLabel("Clé API", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Modifier", exact: true }).click();
@@ -76,6 +95,13 @@ for (const width of [390, 1280])
     await expect(page.getByLabel("Clé API", { exact: true })).toHaveValue("");
     await page.getByRole("button", { name: "Tester la connexion et charger les villes" }).click();
     await expect(page.getByText("Connexion réussie. Aucun colis créé.")).toBeVisible();
+    const choices = await page
+      .getByLabel("Ville chez Olivraison 1", { exact: true })
+      .getAttribute("list");
+    await expect(page.locator(`datalist[id="${choices}"] option`)).toHaveAttribute(
+      "value",
+      "Rabat",
+    );
     await expect(page.getByText("Suivi : OL-TEST")).toBeVisible();
     await expect(page.getByRole("button", { name: "Revérifier le colis" })).toHaveCount(0);
     await expect(page.getByText(/Suivi retiré/)).toBeVisible();
@@ -88,10 +114,13 @@ for (const width of [390, 1280])
     await expect(toggle).toHaveCount(0);
     await page.getByRole("button", { name: "Modifier", exact: true }).click();
     await expect(toggle).toBeChecked();
+    await expect(page.getByLabel("Ville sur la boutique 2", { exact: true })).toHaveValue("Tanger");
+    await page.getByRole("button", { name: "Retirer la ligne 2", exact: true }).click();
     await toggle.uncheck();
     await page.getByRole("button", { name: "Enregistrer Olivraison", exact: true }).click();
     await expect(page.getByText("Configuration Olivraison enregistrée.")).toBeVisible();
     expect(saved.enabled).toBe(false);
+    expect(saved.cityMapping).toEqual({ الرباط: "Rabat" });
     await expect(toggle).toHaveCount(0);
     page.once("dialog", (d) => d.dismiss());
     await page.getByRole("button", { name: "Supprimer", exact: true }).click();

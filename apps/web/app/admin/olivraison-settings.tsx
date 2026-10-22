@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   getOlivraisonConfig,
   saveOlivraisonConfig,
@@ -11,12 +11,18 @@ import {
   type OlivraisonShipment,
 } from "@/lib/api";
 
+type CityRow = { id: string; source: string; target: string };
+const cityRows = (mapping: Record<string, string>): CityRow[] =>
+  Object.entries(mapping).map(([source, target]) => ({ id: `saved-${source}`, source, target }));
+
 export function OlivraisonSettings() {
   const [config, setConfig] = useState<OlivraisonConfig | null>(null);
   const [savedConfig, setSavedConfig] = useState<OlivraisonConfig | null>(null);
   const [shipments, setShipments] = useState<OlivraisonShipment[]>([]);
   const [keys, setKeys] = useState({ apiKey: "", secretKey: "" });
-  const [mapping, setMapping] = useState("");
+  const [mapping, setMapping] = useState<CityRow[]>([]);
+  const cityListId = useId();
+  const nextCityId = useRef(0);
   const [cities, setCities] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,11 +30,7 @@ export function OlivraisonSettings() {
   const [editing, setEditing] = useState(false);
   function openEditor(c: OlivraisonConfig) {
     setConfig(structuredClone(c));
-    setMapping(
-      Object.entries(c.cityMapping)
-        .map(([a, b]) => `${a} = ${b}`)
-        .join("\n"),
-    );
+    setMapping(cityRows(c.cityMapping));
     setKeys({ apiKey: "", secretKey: "" });
     setCities([]);
     setEditing(true);
@@ -46,11 +48,7 @@ export function OlivraisonSettings() {
         setConfig(c);
         setSavedConfig(c);
         setEditing(!c.saved);
-        setMapping(
-          Object.entries(c.cityMapping)
-            .map(([a, b]) => `${a} = ${b}`)
-            .join("\n"),
-        );
+        setMapping(cityRows(c.cityMapping));
       })
       .catch(() => {
         if (active) setMessage("Configuration Olivraison indisponible. Rechargez la page.");
@@ -161,15 +159,22 @@ export function OlivraisonSettings() {
           onSubmit={(e) => {
             e.preventDefault();
             void action(async () => {
-              const cityMapping: Record<string, string> = {};
-              for (const line of mapping.split("\n").filter((l) => l.trim())) {
-                const parts = line.split("=").map((p) => p.trim());
-                if (parts.length !== 2 || !parts[0] || !parts[1])
+              const entries: [string, string][] = [];
+              const sources = new Set<string>();
+              mapping.forEach((row, index) => {
+                const source = row.source.trim(),
+                  target = row.target.trim();
+                if (!source && !target) return;
+                if (!source || !target)
                   throw new Error(
-                    "Une correspondance par ligne : ville du site = ville Olivraison",
+                    `Ligne ${index + 1} : renseignez les deux villes ou retirez cette ligne.`,
                   );
-                cityMapping[parts[0]] = parts[1];
-              }
+                if (sources.has(source))
+                  throw new Error(`La ville « ${source} » figure déjà dans une autre ligne.`);
+                sources.add(source);
+                entries.push([source, target]);
+              });
+              const cityMapping = Object.fromEntries(entries);
               const result = await saveOlivraisonConfig({
                 enabled: config.enabled,
                 autoPickup: config.autoPickup,
@@ -257,16 +262,89 @@ export function OlivraisonSettings() {
                 />
               </label>
             ))}
-            <label>
-              Correspondance des villes
-              <textarea
-                rows={4}
-                placeholder={"الرباط = Rabat\nالدار البيضاء = Casablanca"}
-                value={mapping}
-                onChange={(e) => setMapping(e.target.value)}
-              />
-            </label>
-            <p>Une ligne par correspondance. Utilisez le nom exact renvoyé par Olivraison.</p>
+          </fieldset>
+          <fieldset disabled={busy} className="carrier-cities">
+            <legend>Correspondance des villes (facultatif)</legend>
+            <p id={`${cityListId}-help`}>
+              Ajoutez une ligne seulement si une ville porte un nom différent chez Olivraison. Si
+              les noms correspondent, laissez cette liste vide.
+            </p>
+            <p>
+              Dans la première colonne, indiquez le nom utilisé dans la boutique. Dans la seconde,
+              indiquez le nom exact reconnu par Olivraison.
+            </p>
+            {mapping.length === 0 && (
+              <p className="carrier-cities-empty">Aucune correspondance ajoutée.</p>
+            )}
+            {mapping.map((row, index) => (
+              <div key={row.id} className="carrier-city-row">
+                <label>
+                  Ville sur la boutique
+                  <input
+                    aria-label={`Ville sur la boutique ${index + 1}`}
+                    aria-describedby={`${cityListId}-help`}
+                    maxLength={124}
+                    placeholder="Ex. : طنجة ou Tanger"
+                    value={row.source}
+                    onChange={(e) =>
+                      setMapping(
+                        mapping.map((r) =>
+                          r.id === row.id ? { ...r, source: e.target.value } : r,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                <label>
+                  Ville chez Olivraison
+                  <input
+                    aria-label={`Ville chez Olivraison ${index + 1}`}
+                    maxLength={124}
+                    list={cityListId}
+                    placeholder="Nom exact du transporteur"
+                    value={row.target}
+                    onChange={(e) =>
+                      setMapping(
+                        mapping.map((r) =>
+                          r.id === row.id ? { ...r, target: e.target.value } : r,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="admin-button"
+                  aria-label={`Retirer la ligne ${index + 1}`}
+                  onClick={() => setMapping(mapping.filter((r) => r.id !== row.id))}
+                >
+                  Retirer
+                </button>
+              </div>
+            ))}
+            <datalist id={cityListId}>
+              {cities.map((city) => (
+                <option key={city} value={city} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              className="admin-button"
+              disabled={mapping.length >= 300}
+              onClick={() =>
+                setMapping([
+                  ...mapping,
+                  { id: `new-${nextCityId.current++}`, source: "", target: "" },
+                ])
+              }
+            >
+              Ajouter une ville
+            </button>
+            <p>
+              {cities.length
+                ? `${cities.length} villes Olivraison disponibles en suggestion. Tapez les premières lettres dans le champ de droite.`
+                : "Après enregistrement du compte, utilisez « Tester la connexion et charger les villes » pour obtenir les suggestions."}
+            </p>
           </fieldset>
           {savedConfig?.saved && (
             <button
