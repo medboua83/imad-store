@@ -11,7 +11,7 @@ export default function ContactPage() {
                     للاستفسار عن المنتجات أو متابعة طلبكم، تواصلوا مع فريق IMAD Mode عبر واتساب.
                 </p>
                 <a
-                    href="https://wa.me/212660560522"
+                    href="https://wa.me/message/M44N6KT35MW4N1"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-[#1A1A2E] text-white px-8 py-4"

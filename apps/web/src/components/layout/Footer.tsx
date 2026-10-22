@@ -4,7 +4,7 @@ import { SocialIcon } from "../store/StoreIcons";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, MessageCircle } from "lucide-react";
 
 const socials = [
-    ["https://wa.me/212660560522", "WhatsApp"],
+    ["https://wa.me/message/M44N6KT35MW4N1", "WhatsApp"],
     ["https://www.instagram.com/imad.mode?igsi=em85MTVmanRpa29p", "Instagram"],
     ["https://www.facebook.com/share/1Lwh3Akcuo/", "Facebook"],
     ["https://www.tiktok.com/@imad_mode?_r=1&_t=ZS-99NC3oV9y44", "TikTok"],
