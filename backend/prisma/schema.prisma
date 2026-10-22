@@ -171,6 +171,9 @@ model Order {
   confirmedAt           DateTime?
   deletedAt             DateTime?
   idempotencyKey        String?       @unique
+  orderServiceRequested Boolean?
+  orderServicePolicyVersion String?
+  orderServiceRequestedAt DateTime?
   aiServiceConsent      Boolean?
   aiServiceConsentVersion String?
   aiServiceConsentAt    DateTime?
@@ -288,6 +291,7 @@ model DeskcommOutbox {
 model DeskcommIntegration {
   id                String   @id @map("_id")
   enabled           Boolean  @default(false)
+  orderAssistanceEnabled Boolean?
   webhookCiphertext String?
   signingCiphertext String?
   updatedAt         DateTime @updatedAt

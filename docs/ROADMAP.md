@@ -1,5 +1,12 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Assistance IA pilotée par le tableau de bord — candidat du 23 octobre 2026
+
+La case WhatsApp et son reçu de consentement sont retirés du checkout. Intégration CRM propose un interrupteur administrateur persistant, initialement désactivé. Le serveur conserve une instruction de service versionnée distincte du consentement client, dans la même transaction que la commande. Le sender vérifie aussi le réglage actuel pour bloquer une demande encore en attente après désactivation. Une réactivation ne transforme pas les commandes créées pendant l’arrêt. Le mode SITE supprime la demande de confirmation IA. Les anciennes captures ne sont pas réécrites ; les anciens clients avec véritable accord restent compatibles tant que le nouveau réglage n’a pas été enregistré.
+
+Le CRM doit reconnaître order_service_requested et la version store-order-service-v1-2026-10-19, avec sa propre règle de suivi activée. Ne pas publier la boutique seule avant cette mise à jour coordonnée. Aucun accord client fabriqué. Tests et publication consignés dans le rapport local.
+
+
 ## Nom de commande pour le CRM — candidat du 22 octobre 2026
 
 Le récapitulatif transmis inclut désormais explicitement « Client de la commande » avec le nom saisi au checkout. Le premier contact pourra ainsi privilégier ce nom au profil WhatsApp déjà enregistré. Aucun identifiant, consentement, commande historique ou action transporteur modifié. Neuf tests formulaire/consentement et compilation backend réussis ; nom français/arabe et corps JSON signé couverts par les assertions. CI et installation à vérifier dans la PR et la mémoire CRM ; aucun WhatsApp ni colis de test.
