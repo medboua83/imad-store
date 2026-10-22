@@ -1024,6 +1024,10 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.equal(data.ai_service_consent_version, version);
     assert.equal(data.submission_status, "completed");
     assert.equal(data.external_id, `imad-store-${id}`);
+    assert.equal(data.pedido_id, id);
+    assert.ok(data.message.includes(`#${id.slice(-8).toUpperCase()}\n`));
+    assert.ok(data.message.includes(`Adresse de livraison: ${body.customer.street}\n`));
+    assert.ok(data.message.includes(`Ville: ${body.customer.city}\nRégion: ${body.customer.region}`));
     assert.equal(data.telefone, body.customer.phone);
     assert.equal(data.ai_service_phone_explicit, undefined); // Established only by CRM from the original phone.
     await sendOrderToDeskcomm({ ...job.payload, aiServiceConsentVersion: undefined });
