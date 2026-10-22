@@ -110,8 +110,8 @@ const sections = [
     },
     {
         id: "commerce" as Tab,
-        label: "Livraison et Pixel",
-        description: "Configurez les frais, la livraison offerte et Meta Pixel.",
+        label: "Paramètres",
+        description: "Gestion des commandes, livraison et Meta Pixel.",
         icon: Settings2,
     },
     {

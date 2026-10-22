@@ -30,6 +30,16 @@ jobs:
                     sleep 1
                   done
             - run: npm run check
+            - name: Install isolated UI test browser
+              run: npx playwright install --with-deps chromium
+            - name: Test checkout and dashboard UI with local fixtures
+              run: npm run test:ui
+            - uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: isolated-ui-results
+                  path: test-results/
+                  retention-days: 7
             - run: npm run test:installer
             - run: npm test
             - name: Build and verify the combined hosting runtime

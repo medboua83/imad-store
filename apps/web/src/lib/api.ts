@@ -167,6 +167,7 @@ export interface ProductsResponse {
 
 // Guest-only checkout — no user account required
 export interface GuestCheckoutPayload {
+    confirmationMode?: "SITE";
     aiServiceConsent?: boolean;
     aiServiceConsentVersion?: string;
     paymentMethod: "COD";
@@ -244,6 +245,7 @@ export interface StoreSettings {
     metaPixelId?: string | null;
     metaPixelMadPerUsd?: number | null;
     codEnabled: boolean;
+    directSiteConfirmation?: boolean;
     whatsappAssistanceAvailable?: boolean;
 }
 
@@ -291,6 +293,8 @@ export const markAllNotificationsRead = async () => {
 };
 
 export interface AdminOrder {
+    confirmationMethod?: string | null;
+    confirmedAt?: string | null;
     id: string;
     customerName: string | null;
     customerPhone: string | null;

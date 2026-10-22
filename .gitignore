@@ -59,3 +59,7 @@ coverage/
 # Durable local product images and isolated test data
 backend/uploads/
 .test-runtime/
+
+# Isolated Playwright results
+/test-results/
+/playwright-report/

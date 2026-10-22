@@ -167,6 +167,8 @@ model ProductVariant {
 // ─── Order ──────────────────────────────────────────────────────────────────
 
 model Order {
+  confirmationMethod    String?
+  confirmedAt           DateTime?
   deletedAt             DateTime?
   idempotencyKey        String?       @unique
   aiServiceConsent      Boolean?
@@ -242,6 +244,7 @@ model StoreSettings {
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
   codEnabled      Boolean @default(true)
+  directSiteConfirmation Boolean @default(false)
   metaPixelEnabled Boolean @default(false)
   metaPixelId      String?
   metaPixelMadPerUsd Float?

@@ -1,7 +1,8 @@
 "use client";
+import { CheckoutReview } from "@/components/store/CheckoutReview";
 import { metaPurchase } from "@/lib/meta-pixel";
 import { shippingFee } from "@imad-store/shared";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { checkoutAssistance } from "@/lib/checkout-assistance";
 import { useCartStore } from "@/store/cart.store";
@@ -30,7 +31,19 @@ export default function CheckoutPage() {
     const [busy, setBusy] = useState(false);
     const [orderId, setOrderId] = useState("");
     const [assistanceRecorded, setAssistanceRecorded] = useState(false);
-    const [key, setKey] = useState("");
+    const key = useRef("");
+    const submissionLock = useRef(false);
+    const [review, setReview] = useState<string | null>(null);
+    const [confirmedOnSite, setConfirmedOnSite] = useState(false);
+    const direct = shipping.settings?.directSiteConfirmation === true;
+    function reviewSignature(cart = items, amount = shipping.total) {
+        return JSON.stringify({
+            customer: form,
+            amount,
+            items: cart.map((i) => [i.productId, i.variantId, i.price, i.quantity]),
+        });
+    }
+    const reviewReady = direct && review !== null && review === reviewSignature();
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
         refreshCart()
@@ -41,20 +54,27 @@ export default function CheckoutPage() {
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();
-        const assistance = checkoutAssistance(new FormData(e.currentTarget as HTMLFormElement));
+        if (submissionLock.current) return;
+        const assistance = direct
+            ? { aiServiceConsent: false }
+            : checkoutAssistance(new FormData(e.currentTarget as HTMLFormElement));
         const errors: Record<string, string> = {};
         if (form.fullName.trim().length < 2) errors.fullName = "أدخلوا الاسم الكامل";
         if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
             errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
         if (!form.city.trim()) errors.city = "أدخلوا المدينة";
         if (form.address.trim().length < 3) errors.address = "أدخلوا عنوان التوصيل";
-        if (assistance.aiServiceConsent && !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
+        if (
+            assistance.aiServiceConsent &&
+            !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, ""))
+        )
             errors.phone = "للمساعدة عبر واتساب، أدخلوا الرقم الدولي بأنفسكم: +212…";
         setFields(errors);
         if (Object.keys(errors).length) {
             document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
             return;
         }
+        submissionLock.current = true;
         setBusy(true);
         setError("");
         try {
@@ -70,6 +90,11 @@ export default function CheckoutPage() {
                 return;
             }
             if (!freshSettings) throw new Error("Shipping settings unavailable");
+            if ((freshSettings.directSiteConfirmation === true) !== direct) {
+                setReview(null);
+                setError("تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.");
+                return;
+            }
             const subtotal =
                 Math.round(cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100) /
                 100;
@@ -78,11 +103,19 @@ export default function CheckoutPage() {
                 setError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");
                 return;
             }
-            const activeKey = key || crypto.randomUUID();
-            setKey(activeKey);
+            if (direct && review !== reviewSignature(cart, confirmedTotal)) {
+                setReview(reviewSignature(cart, confirmedTotal));
+                requestAnimationFrame(() =>
+                    document.getElementById("checkout-final-review")?.focus(),
+                );
+                return;
+            }
+            const activeKey = key.current || crypto.randomUUID();
+            key.current = activeKey;
             const order = await createOrder(
                 {
                     paymentMethod: "COD",
+                    ...(direct ? { confirmationMode: "SITE" as const } : {}),
                     ...assistance,
                     expectedTotal: confirmedTotal,
                     customer: {
@@ -101,8 +134,10 @@ export default function CheckoutPage() {
                 activeKey,
             );
             metaPurchase(order.id, order.totalAmount);
+            if (!order.id) throw new Error("Order receipt unavailable");
             setOrderId(order.id);
-            setAssistanceRecorded(assistance.aiServiceConsent);
+            setConfirmedOnSite(order.confirmationMethod === "SITE");
+            setAssistanceRecorded(order.aiServiceConsent === true);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });
         } catch (failure) {
@@ -129,6 +164,7 @@ export default function CheckoutPage() {
                     "تعذر الاتصال. بياناتكم محفوظة هنا، ويمكنكم المحاولة مجدداً.",
             );
         } finally {
+            submissionLock.current = false;
             setBusy(false);
         }
     }
@@ -178,8 +214,10 @@ export default function CheckoutPage() {
             "aria-invalid": !!fields[field],
             "aria-describedby": describedBy,
             placeholder: placeholders[field],
-            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-                setForm((old) => ({ ...old, [field]: event.target.value })),
+            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                setReview(null);
+                setForm((old) => ({ ...old, [field]: event.target.value }));
+            },
         };
         return (
             <div
@@ -223,8 +261,14 @@ export default function CheckoutPage() {
                 <p>
                     رقم الطلب <strong dir="ltr">{orderId.slice(-8).toUpperCase()}</strong>
                 </p>
-                <p>سيتواصل معكم فريقنا لتأكيد التفاصيل.</p>
-                {assistanceRecorded && <p>تم حفظ موافقتكم على المساعدة الآلية عبر واتساب لتأكيد هذه الطلبية.</p>}
+                <p>
+                    {confirmedOnSite
+                        ? "تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."
+                        : "سيتواصل معكم فريقنا لتأكيد التفاصيل."}
+                </p>
+                {assistanceRecorded && (
+                    <p>تم حفظ موافقتكم على المساعدة الآلية عبر واتساب لتأكيد هذه الطلبية.</p>
+                )}
                 <Link href="/shop" className="btn-primary">
                     العودة إلى المتجر <ArrowLeft size={18} aria-hidden="true" />
                 </Link>
@@ -280,7 +324,9 @@ export default function CheckoutPage() {
                                 <span>01</span>لنتواصل بشأن طلبكم
                             </legend>
                             <p className="checkout-section-note">
-                                نستخدم هذه المعلومات لتأكيد الطلب وتوضيح تفاصيله.
+                                {direct
+                                    ? "نستخدم هذه المعلومات لمعالجة الطلب والتوصيل."
+                                    : "نستخدم هذه المعلومات لتأكيد الطلب وتوضيح تفاصيله."}
                             </p>
                             <div className="checkout-fields">
                                 {field("fullName")}
@@ -333,7 +379,7 @@ export default function CheckoutPage() {
                                 احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
                             </p>
                         )}
-                        {shipping.settings?.whatsappAssistanceAvailable && (
+                        {!direct && shipping.settings?.whatsappAssistanceAvailable && (
                             <label className="checkout-policy flex items-start gap-3">
                                 <input
                                     type="checkbox"
@@ -356,6 +402,18 @@ export default function CheckoutPage() {
                             <Link href="/returns">الاستبدال والإرجاع</Link> و
                             <Link href="/privacy">الخصوصية</Link>.
                         </p>
+                        {reviewReady && (
+                            <CheckoutReview
+                                customer={form}
+                                items={items}
+                                subtotal={total()}
+                                shipping={shipping}
+                                onEdit={() => {
+                                    setReview(null);
+                                    document.getElementById("checkout-fullName")?.focus();
+                                }}
+                            />
+                        )}
                         <div className="checkout-submit-bar">
                             <p>
                                 <span>المبلغ عند الاستلام</span>
@@ -367,7 +425,13 @@ export default function CheckoutPage() {
                                 </strong>
                             </p>
                             <button type="submit" className="btn-primary" disabled={blocked}>
-                                {busy ? "جارٍ التحقق والحفظ…" : "تأكيد الطلب"}
+                                {busy
+                                    ? "جارٍ التحقق والحفظ…"
+                                    : direct
+                                      ? reviewReady
+                                          ? "أؤكد طلبي"
+                                          : "مراجعة الطلب"
+                                      : "تأكيد الطلب"}
                                 <ArrowLeft size={18} aria-hidden="true" />
                             </button>
                         </div>

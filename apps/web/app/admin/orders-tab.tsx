@@ -298,6 +298,7 @@ export function OrdersTab({
                                 {statusLabels[o.status] || o.status}
                             </span>
                         </div>
+                        {o.confirmationMethod === "SITE" && <p className="admin-feedback">Confirmée sur le site</p>}
                         <div className="admin-order-customer">
                             <h3>{o.customerName || o.fullName || "Client invité"}</h3>
                             <p>{o.city || "Ville non renseignée"}</p>
@@ -427,6 +428,11 @@ function OrderDetails({
                 <time dateTime={o.createdAt}>Reçue le {orderDate(o.createdAt)}</time>
                 {refresh}
             </div>
+            {o.confirmationMethod === "SITE" && <section className="admin-feedback">
+                <h3>Confirmée sur le site</h3>
+                <p>Méthode : site · {o.confirmedAt ? orderDate(o.confirmedAt) : "Date non renseignée"}</p>
+                <p>Confirmation du client au checkout, sans vérification du numéro ni garantie de livraison.</p>
+            </section>}
             {o.status === "CANCELLED" ? (
                 <p className="order-cancelled">Commande annulée : le suivi s’arrête ici.</p>
             ) : (

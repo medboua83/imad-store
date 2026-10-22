@@ -1398,3 +1398,94 @@ test("Order trash is admin-only, reversible, atomic and preserves commerce recor
     assert.deepEqual(await prisma.productVariant.findMany(), stock);
     assert.deepEqual(await prisma.deskcommOutbox.findMany(), outbox);
 });
+
+test("Direct site confirmation is opt-in, persisted, server-enforced and never rewrites history", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    const history = await prisma.order.findMany({ orderBy: { id: "asc" } });
+    const oldJobs = await prisma.deskcommOutbox.findMany({ orderBy: { id: "asc" } });
+    const customer = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+    const settings = (value: boolean) => request(app).put("/api/settings").set(admin()).send({ directSiteConfirmation: value });
+    assert.equal((await request(app).get("/api/settings")).body.data.directSiteConfirmation, false);
+    assert.equal((await request(app).put("/api/settings").send({ directSiteConfirmation: true })).status, 401);
+    assert.equal((await request(app).put("/api/settings").set("Authorization", `Bearer ${customer}`).send({ directSiteConfirmation: true })).status, 403);
+    assert.equal((await request(app).put("/api/settings").set(admin()).send({ directSiteConfirmation: "true" })).status, 400);
+    const item = await prisma.product.create({ data: { ...payload(), variants: { create: { ...payload().variants[0], stock: 30 } } }, include: { variants: true } });
+    const body = { ...checkout(), aiServiceConsent: true, aiServiceConsentVersion: "order-whatsapp-v1-2026-10-19", expectedTotal: 130,
+        items: [{ productId: item.id, variantId: item.variants[0].id, quantity: 1 }] };
+    const post = (b: any, idempotencyKey = key()) => request(app).post("/api/orders").set("Idempotency-Key", idempotencyKey).send(b);
+    try {
+        const standard = await post(body);
+        assert.equal(standard.status, 201);
+        assert.equal(standard.body.data.status, "PENDING");
+        assert.equal(standard.body.data.confirmationMethod, null);
+        assert.equal(standard.body.data.confirmedAt, null);
+        assert.equal(standard.body.data.aiServiceConsent, true);
+        assert.equal((await settings(true)).status, 200);
+        const publicSettings = (await request(app).get("/api/settings")).body.data;
+        assert.equal(publicSettings.directSiteConfirmation, true);
+        assert.equal(publicSettings.whatsappAssistanceAvailable, false);
+        const beforeRejected = await prisma.order.count();
+        const stockBefore = (await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock;
+        assert.equal((await post(body)).status, 409); // A stale checkout cannot silently confirm.
+        const direct = { ...body, confirmationMode: "SITE", customer: { ...body.customer, phone: "0600000099" } };
+        assert.equal((await post({ ...direct, expectedTotal: 0.01 })).status, 409);
+        assert.equal((await post({ ...direct, status: "CONFIRMED" })).status, 400);
+        assert.equal(await prisma.order.count(), beforeRejected);
+        assert.equal((await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock, stockBefore);
+        const repeatKey = key();
+        const responses = await Promise.all(Array.from({ length: 4 }, () => post(direct, repeatKey)));
+        assert.ok(responses.every(r => [200, 201].includes(r.status)), JSON.stringify(responses.map(r => r.body)));
+        const ids = new Set(responses.map(r => r.body.data.id));
+        assert.equal(ids.size, 1);
+        const saved = responses[0].body.data;
+        assert.equal(saved.status, "CONFIRMED");
+        assert.equal(saved.paymentStatus, "PENDING");
+        assert.equal(saved.confirmationMethod, "SITE");
+        assert.ok(Number.isFinite(Date.parse(saved.confirmedAt)));
+        assert.equal(saved.aiServiceConsent, false); // Even a stale/malicious consent is not forwarded.
+        assert.equal(saved.aiServiceConsentAt, null);
+        assert.equal(await prisma.order.count(), beforeRejected + 1);
+        assert.equal((await prisma.productVariant.findUnique({ where: { id: item.variants[0].id } })).stock, stockBefore - 1);
+        assert.equal(await prisma.orderEvent.count({ where: { orderId: saved.id } }), 1);
+        const job = await prisma.deskcommOutbox.findUnique({ where: { orderId: saved.id } });
+        assert.ok(job, "Other CRM delivery is still queued");
+        assert.equal(job.payload.status, "CONFIRMED");
+        assert.equal(job.payload.confirmationMethod, "SITE");
+        assert.equal(job.payload.confirmedAt, saved.confirmedAt);
+        assert.equal(job.payload.confirmationRequired, false);
+        assert.equal(job.payload.aiServiceConsent, false);
+        assert.equal((await request(app).get("/api/orders?limit=100").set(admin())).body.data.find((o: any) => o.id === saved.id).confirmedAt, saved.confirmedAt);
+        const secret = "cb".repeat(32);
+        await request(app).put("/api/integrations/deskcomm").set(admin()).send({ enabled: true, signingSecret: secret }).expect(200);
+        const { sendOrderToDeskcomm } = await import("../backend/src/lib/deskcomm-crm");
+        failDelivery = false;
+        await sendOrderToDeskcomm({ ...job.payload, aiServiceConsent: true, aiServiceConsentVersion: body.aiServiceConsentVersion, phone: body.customer.phone });
+        const received = receipts.at(-1)!;
+        const delivered = JSON.parse(received.body);
+        assert.equal(delivered.confirmation_method, "SITE");
+        assert.equal(delivered.confirmation_required, false);
+        assert.equal(delivered.ai_service_consent, false);
+        assert.equal(delivered.aiConsent, false);
+        assert.equal(delivered.confirmed_at, saved.confirmedAt);
+        assert.equal(delivered.submission_status, "completed");
+        assert.equal(received.signature, createHmac("sha256", secret).update(received.body).digest("hex"));
+        assert.equal((await settings(false)).status, 200);
+        assert.equal((await request(app).get("/api/settings")).body.data.directSiteConfirmation, false);
+        const replay = await post(direct, repeatKey); // Frozen receipt survives a setting change.
+        assert.equal(replay.status, 200);
+        assert.equal(replay.body.data.confirmedAt, saved.confirmedAt);
+        assert.equal((await post(direct)).status, 409);
+        const normalAgain = await post(body);
+        assert.equal(normalAgain.status, 201);
+        assert.equal(normalAgain.body.data.status, "PENDING");
+        assert.equal(normalAgain.body.data.aiServiceConsent, true);
+        assert.equal(normalAgain.body.data.confirmationMethod, null);
+        await request(app).patch(`/api/orders/${saved.id}/status`).set(admin()).send({ status: "SHIPPED" }).expect(200);
+        assert.equal((await prisma.order.findUnique({ where: { id: saved.id } })).confirmedAt.toISOString(), saved.confirmedAt);
+        assert.deepEqual(await prisma.order.findMany({ where: { id: { in: history.map((o: any) => o.id) } }, orderBy: { id: "asc" } }), history);
+        assert.deepEqual(await prisma.deskcommOutbox.findMany({ where: { id: { in: oldJobs.map((o: any) => o.id) } }, orderBy: { id: "asc" } }), oldJobs);
+    } finally {
+        if (initial) { const { id, ...data } = initial; await prisma.storeSettings.update({ where: { id }, data }); }
+        else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});

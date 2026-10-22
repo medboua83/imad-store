@@ -9,6 +9,7 @@ export async function readSettings() {
         shippingCost: 30,
         freeShippingMin: 500,
         codEnabled: true,
+        directSiteConfirmation: false,
         metaPixelEnabled: false,
         metaPixelId: null,
     };
@@ -20,7 +21,9 @@ export async function readSettings() {
         success: true,
         data: {
             ...settings,
+            directSiteConfirmation: settings.directSiteConfirmation === true,
             whatsappAssistanceAvailable: Boolean(
+                !settings.directSiteConfirmation &&
                 integration?.enabled &&
                 integration.webhookCiphertext &&
                 integration.signingCiphertext,
@@ -38,6 +41,7 @@ const settingsSchema = z.object({
     shippingCost: z.number().min(0).max(1000000).optional(),
     freeShippingMin: z.number().min(0).max(1000000).optional(),
     codEnabled: z.boolean().optional(),
+    directSiteConfirmation: z.boolean().optional(),
     metaPixelEnabled: z.boolean().optional(),
     metaPixelMadPerUsd: z.number().finite().min(0.000001).max(1000000).nullable().optional(),
     metaPixelId: z
