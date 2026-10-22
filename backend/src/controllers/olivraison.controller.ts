@@ -49,7 +49,9 @@ export async function putOlivraisonConfig(req: Request, res: Response) {
   if (!!b.apiKey !== !!b.secretKey) throw new AppError("Renseignez les deux clés ensemble", 400);
   const current = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
   if (current?.credentials && b.apiKey) {
-    const count = await prisma.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
+    const count = await prisma.olivraisonShipment.count({
+      where: { state: { in: ["QUEUED", "ACTIVE", "RETRY", "ATTENTION"] } },
+    });
     if (count)
       throw new AppError(
         "Terminez les colis en cours avant de changer de compte transporteur",
@@ -132,17 +134,31 @@ export async function retryOlivraisonShipment(req: Request, res: Response) {
 
 export async function deleteOlivraisonConfig(req: Request, res: Response) {
   await prisma.$transaction(async (tx) => {
-    // Share the configuration write lock with enqueue before checking pending work.
+    // Share the configuration write lock with enqueue before retiring previous work.
     await tx.olivraisonIntegration.updateMany({
       where: { id: "olivraison" },
       data: { enabled: false },
     });
-    const pending = await tx.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
-    if (pending)
+    const now = new Date();
+    const running = await tx.olivraisonShipment.count({
+      where: { leaseToken: { not: null }, lockedUntil: { gt: now } },
+    });
+    if (running)
       throw new AppError(
-        "Terminez ou rapprochez les colis en cours avant de supprimer la configuration. Vous pouvez désactiver l’automatisation avec Modifier.",
+        "Un échange avec Olivraison est en cours. Réessayez la suppression dans quelques minutes.",
         409,
       );
+    // Freeze previous work so recreating the connection cannot resume old parcels.
+    await tx.olivraisonShipment.updateMany({
+      where: { state: { notIn: ["DONE", "DISCONNECTED"] } },
+      data: {
+        state: "DISCONNECTED",
+        lastError:
+          "Configuration retirée : suivi automatique arrêté. Vérifiez ce colis dans le compte Olivraison.",
+        leaseToken: null,
+        lockedUntil: new Date(0),
+      },
+    });
     await tx.olivraisonIntegration.deleteMany({ where: { id: "olivraison" } });
   });
   return getOlivraisonConfig(req, res);

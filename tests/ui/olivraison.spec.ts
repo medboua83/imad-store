@@ -45,7 +45,7 @@ for (const width of [390, 1280])
             id: "111111111111111111111111",
             trackingId: "OL-TEST",
             carrierStatus: "PICKUP",
-            state: "ACTIVE",
+            state: "DISCONNECTED",
             slipUrl: "https://partners.olivraison.com/slip.pdf",
             stickerUrl: "https://partners.olivraison.com/sticker.pdf",
           },
@@ -77,6 +77,8 @@ for (const width of [390, 1280])
     await page.getByRole("button", { name: "Tester la connexion et charger les villes" }).click();
     await expect(page.getByText("Connexion réussie. Aucun colis créé.")).toBeVisible();
     await expect(page.getByText("Suivi : OL-TEST")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Revérifier le colis" })).toHaveCount(0);
+    await expect(page.getByText(/Suivi retiré/)).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Bordereau de ramassage", exact: true }),
     ).toHaveAttribute("href", "https://partners.olivraison.com/slip.pdf");

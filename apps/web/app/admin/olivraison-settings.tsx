@@ -133,7 +133,7 @@ export function OlivraisonSettings() {
               onClick={() => {
                 if (
                   !window.confirm(
-                    "Supprimer la configuration Olivraison et ses clés API ? L’automatisation sera arrêtée. Les commandes et l’historique des colis seront conservés.",
+                    "Supprimer la configuration Olivraison et ses clés API ? L’automatisation sera arrêtée. Les commandes et l’historique des colis seront conservés, sans annuler les colis chez le transporteur. Les anciens colis ne seront pas relancés après reconnexion.",
                   )
                 )
                   return;
@@ -329,6 +329,7 @@ export function OlivraisonSettings() {
                   RETRY: "Nouvelle tentative prévue",
                   ATTENTION: "À vérifier",
                   DONE: "Terminé",
+                  DISCONNECTED: "Suivi retiré",
                 } as Record<string, string>
               )[s.state] || s.state}
             </p>
