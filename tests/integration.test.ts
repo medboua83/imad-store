@@ -1608,3 +1608,26 @@ test("Olivraison reconciles an uncertain pickup without issuing it twice and sto
         await prisma.storeSettings.updateMany({ data: { directSiteConfirmation: false } });
     }
 });
+
+
+test("carrier configuration removal requires admin, preserves history and is idempotent", async () => {
+    const url = "/api/integrations/olivraison";
+    await request(app).delete(url).expect(401);
+    const before = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
+    assert.ok(before);
+    const pending = await prisma.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
+    assert.ok(pending);
+    await request(app).delete(url).set(admin()).expect(409);
+    assert.deepEqual(await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }), before);
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    const history = await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } });
+    for (let i = 0; i < 2; i++) {
+        const result = await request(app).delete(url).set(admin()).expect(200);
+        assert.equal(result.body.data.saved, false);
+        assert.equal(result.body.data.configured, false);
+        assert.equal(result.body.data.enabled, false);
+        assert.equal(result.body.data.pickupAddress.company, "");
+    }
+    assert.equal(await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }), null);
+    assert.deepEqual(await prisma.olivraisonShipment.findMany({ orderBy: { id: "asc" } }), history);
+});

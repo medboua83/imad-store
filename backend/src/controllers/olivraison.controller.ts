@@ -31,6 +31,7 @@ export async function getOlivraisonConfig(_req: Request, res: Response) {
   const cfg = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
   res.json({
     data: {
+      saved: !!cfg,
       enabled: cfg?.enabled ?? false,
       autoPickup: cfg?.autoPickup ?? true,
       configured: !!cfg?.credentials,
@@ -127,4 +128,22 @@ export async function retryOlivraisonShipment(req: Request, res: Response) {
   if (!result.count)
     throw new AppError("Colis à vérifier manuellement dans Olivraison avant reprise", 409);
   res.json({ data: { scheduled: true } });
+}
+
+export async function deleteOlivraisonConfig(req: Request, res: Response) {
+  await prisma.$transaction(async (tx) => {
+    // Share the configuration write lock with enqueue before checking pending work.
+    await tx.olivraisonIntegration.updateMany({
+      where: { id: "olivraison" },
+      data: { enabled: false },
+    });
+    const pending = await tx.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
+    if (pending)
+      throw new AppError(
+        "Terminez ou rapprochez les colis en cours avant de supprimer la configuration. Vous pouvez désactiver l’automatisation avec Modifier.",
+        409,
+      );
+    await tx.olivraisonIntegration.deleteMany({ where: { id: "olivraison" } });
+  });
+  return getOlivraisonConfig(req, res);
 }

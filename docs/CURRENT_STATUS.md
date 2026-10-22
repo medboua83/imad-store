@@ -208,3 +208,9 @@ Voir WHATSAPP_CONSENT_SNAPSHOT_2026-10-20.md : capture exacte de la case avant a
 ## 2026-10-22 — Olivraison automation (pending review)
 
 A dependent branch adds opt-in automatic parcel creation, confirmation, pickup/PDFs and status polling after order confirmation. It depends on PR #48; no production deployment or real carrier call. See OLIVRAISON_AUTOMATION.md for activation, exception handling and tests. Default OFF; encrypted partner keys, no historical replay, shared rate gate and per-order lease/checkpoints.
+
+## Société de livraison unique — 22 octobre 2026
+
+Le formulaire Olivraison est masqué après sauvegarde et au rechargement lorsqu’une configuration existe, même désactivée ou sans clés. Le récapitulatif propose Modifier et Supprimer avec confirmation. Modifier recharge les valeurs enregistrées sans exposer les secrets ; Annuler abandonne les changements. DELETE administrateur efface le document et les clés, conserve les commandes/colis et refuse les colis non terminés. Une écriture transactionnelle partagée avec la mise en file évite la suppression concurrente à une nouvelle expédition. Aucun appel transporteur ni suppression de données de production pendant les tests.
+
+Compilation backend/frontend et lint réussis. Tests UI 390/1280 px et intégration ajoutés ; résultats finaux dans le rapport de cette intervention.
