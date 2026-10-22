@@ -439,3 +439,5 @@ export const saveOlivraisonConfig = async (body: Omit<OlivraisonConfig, "configu
 export const testOlivraison = async (): Promise<{ name: string; price: number }[]> => (await api.post("/integrations/olivraison/test")).data.data;
 export const getOlivraisonShipments = async (): Promise<OlivraisonShipment[]> => (await api.get("/integrations/olivraison/shipments")).data.data;
 export const retryOlivraison = async (id: string) => (await api.post(`/integrations/olivraison/shipments/${id}/retry`)).data.data;
+
+export const deleteOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.delete("/integrations/olivraison")).data.data;

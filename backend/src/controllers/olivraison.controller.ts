@@ -47,7 +47,7 @@ export async function putOlivraisonConfig(req: Request, res: Response) {
   const b = parsed.data;
   if (!!b.apiKey !== !!b.secretKey) throw new AppError("Renseignez les deux clés ensemble", 400);
   const current = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
-  if (current?.credentials && b.apiKey) {
+  if (b.apiKey) {
     const count = await prisma.olivraisonShipment.count({ where: { state: { not: "DONE" } } });
     if (count)
       throw new AppError(
@@ -82,6 +82,32 @@ export async function putOlivraisonConfig(req: Request, res: Response) {
   });
   return getOlivraisonConfig(req, res);
 }
+/** Clear only the singleton configuration; shipment history and remote parcels remain intact. */
+export async function deleteOlivraisonConfig(req: Request, res: Response) {
+  await prisma.$transaction(async (tx) => {
+    const processing = await tx.olivraisonShipment.count({
+      where: { lockedUntil: { gt: new Date() } },
+    });
+    if (processing)
+      throw new AppError(
+        "Un colis est en cours de traitement. Réessayez dans quelques minutes.",
+        409,
+      );
+    await tx.olivraisonIntegration.updateMany({
+      where: { id: "olivraison" },
+      data: {
+        enabled: false,
+        autoPickup: false,
+        credentials: null,
+        activatedAt: null,
+        pickupAddress: { company: "", streetAddress: "", city: "", phone: "" },
+        cityMapping: {},
+      },
+    });
+  });
+  return getOlivraisonConfig(req, res);
+}
+
 export async function testOlivraisonConnection(_req: Request, res: Response) {
   const cfg = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
   if (!cfg?.credentials) throw new AppError("Clés Olivraison absentes", 400);
