@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { olivraisonRoutes } from "./routes/olivraison.routes";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,6 +7,8 @@ import { receiveDeskcommConfirmation } from "./controllers/deskcomm-status.contr
 import { assertStoreInstallation } from "./lib/store-installation";
 import rateLimit from "express-rate-limit";
 import "express-async-errors";
+
+import { olivraisonRoutes } from "./routes/olivraison.routes";
 
 import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
 import { analyticsRoutes } from "./routes/analytics.routes";
