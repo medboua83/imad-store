@@ -100,6 +100,8 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     let order = await eligible();
     let trackingId = candidate.trackingId;
     if (!trackingId) {
+      if (order.status !== "CONFIRMED")
+        throw new CarrierError("Commande déjà expédiée ou livrée : vérifier le transporteur avant de créer un colis");
       const cities = await api("/cities");
       if (!Array.isArray(cities) || cities.some((c) => typeof c.name !== "string"))
         throw new CarrierError("Liste des villes Olivraison invalide", true);
@@ -109,7 +111,9 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
         (cfg.cityMapping || {}) as Record<string, string>,
       );
       const payload = packagePayload(order, city, cfg.pickupAddress);
-      await eligible();
+      const readyOrder = await eligible();
+      if (readyOrder.status !== "CONFIRMED")
+        throw new CarrierError("Commande déjà expédiée ou livrée : création de colis suspendue");
       // The carrier documents orderId as its idempotency identifier. It is stable on every retry.
       const created = await api("/package/new", "POST", payload);
       if (typeof created.trackingID !== "string" || !created.trackingID)
