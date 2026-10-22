@@ -12,6 +12,7 @@ import {
 
 export function OlivraisonSettings() {
   const [config, setConfig] = useState<OlivraisonConfig | null>(null);
+  const [savedConfig, setSavedConfig] = useState<OlivraisonConfig | null>(null);
   const [shipments, setShipments] = useState<OlivraisonShipment[]>([]);
   const [keys, setKeys] = useState({ apiKey: "", secretKey: "" });
   const [mapping, setMapping] = useState("");
@@ -30,6 +31,7 @@ export function OlivraisonSettings() {
         if (typeof c.enabled !== "boolean" || !c.pickupAddress || !c.cityMapping)
           throw new Error("Invalid carrier config");
         setConfig(c);
+        setSavedConfig(c);
         setMapping(
           Object.entries(c.cityMapping)
             .map(([a, b]) => `${a} = ${b}`)
@@ -81,6 +83,27 @@ export function OlivraisonSettings() {
         confirmation et suivi toutes les cinq minutes environ. Aucune ancienne commande n’est
         envoyée.
       </p>
+      {savedConfig && (
+        <div className="admin-feedback" role="status">
+          <strong>
+            {savedConfig.configured
+              ? "Société de transport déjà enregistrée : Olivraison"
+              : "Configuration transporteur à compléter"}
+          </strong>
+          {savedConfig.pickupAddress.company && (
+            <p>Entreprise de ramassage enregistrée : {savedConfig.pickupAddress.company}</p>
+          )}
+          <p>
+            {savedConfig.configured
+              ? "Vos clés API sont enregistrées et chiffrées. Les champs vides ne les effacent pas."
+              : "Enregistrez les deux clés API pour compléter le compte transporteur."}
+          </p>
+          <p>
+            Automatisation enregistrée : {savedConfig.enabled ? "activée" : "désactivée"}
+            {" · "}Ramassage automatique : {savedConfig.autoPickup ? "activé" : "désactivé"}
+          </p>
+        </div>
+      )}
       {message && (
         <p role="status" className="admin-feedback">
           {message}
@@ -109,6 +132,7 @@ export function OlivraisonSettings() {
                 ...(keys.apiKey || keys.secretKey ? keys : {}),
               });
               setConfig(result);
+              setSavedConfig(result);
               setKeys({ apiKey: "", secretKey: "" });
               setMessage("Configuration Olivraison enregistrée.");
             });
