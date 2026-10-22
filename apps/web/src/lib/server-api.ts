@@ -1,4 +1,6 @@
 import "server-only";
+import { headers } from "next/headers";
+import { resolvePublicOrigin } from "./share-metadata";
 import { cache } from "react";
 import type { Product, ProductsResponse, Category, StoreSettings } from "./api";
 import { defaultSiteContent, type SiteContent } from "@imad-store/shared";
@@ -47,3 +49,7 @@ export async function publicProducts(params: Record<string, string | number | un
     return serverGet<ProductsResponse>(`/products?${query}`);
 }
 export const siteOrigin = () => new URL(process.env.SITE_URL || "http://localhost:3000");
+
+export async function requestSiteOrigin() {
+    return resolvePublicOrigin(process.env.SITE_URL, (await headers()).get("host"));
+}
