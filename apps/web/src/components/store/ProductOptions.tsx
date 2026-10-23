@@ -25,10 +25,16 @@ export function ProductOptions({ product }: { product: Product }) {
     );
     const selectedQuantity = Math.min(quantity, available || 1);
     const anticipatedQuantity = inCart + (available ? selectedQuantity : 0);
-    const pricing = quantityPriceBreakdown(product.price, tiers, anticipatedQuantity);
+    const selectionQuantity = available ? selectedQuantity : 0;
+    const pricing = quantityPriceBreakdown(product.price, tiers, selectionQuantity);
+    const anticipatedTotal = quantityPriceBreakdown(
+        product.price,
+        tiers,
+        anticipatedQuantity,
+    ).total;
     const total = pricing.total;
-    const unitPrice = anticipatedQuantity ? total / anticipatedQuantity : product.price;
-    const savings = Math.round((product.price * anticipatedQuantity - total) * 100) / 100;
+    const unitPrice = selectionQuantity ? total / selectionQuantity : product.price;
+    const savings = Math.round((product.price * selectionQuantity - total) * 100) / 100;
     const choices = [...new Set([1, 2, 3, ...tiers.map((tier) => tier.minQuantity)])].sort(
         (a, b) => a - b,
     );
@@ -152,18 +158,14 @@ export function ProductOptions({ product }: { product: Product }) {
                 <div className="quantity-selection-summary" aria-live="polite" aria-atomic="true">
                     {available > 0 ? (
                         <>
-                            <p>
-                                {inCart > 0
-                                    ? "إجمالي هذا المنتج بعد الإضافة"
-                                    : "إجمالي القطع المختارة"}
-                            </p>
+                            <p>سعر الكمية المختارة</p>
                             <strong className="quantity-selection-total" dir="ltr">
                                 {total.toFixed(2)} <span>MAD</span>
                             </strong>
                             {savings > 0 && (
                                 <p className="quantity-selection-saving">
                                     <del dir="ltr">
-                                        {(product.price * anticipatedQuantity).toFixed(2)} MAD
+                                        {(product.price * selectionQuantity).toFixed(2)} MAD
                                     </del>
                                     <span>
                                         توفير <bdi>{savings.toFixed(2)} MAD</bdi>
@@ -171,9 +173,7 @@ export function ProductOptions({ product }: { product: Product }) {
                                 </p>
                             )}
                             <p>
-                                {inCart > 0
-                                    ? `يشمل ${inCart} في السلة + ${selectedQuantity} للإضافة = ${anticipatedQuantity} قطعة من هذا المنتج.`
-                                    : `${selectedQuantity} ${selectedQuantity === 1 ? "قطعة" : "قطع"} · حسب اللون والمقاس المختارين.`}
+                                {`${selectedQuantity} ${selectedQuantity === 1 ? "قطعة" : "قطع"} · حسب اللون والمقاس المختارين.`}
                             </p>
                             <small>قيمة المنتجات فقط · التوصيل يُحسب في السلة.</small>
                         </>
@@ -237,8 +237,7 @@ export function ProductOptions({ product }: { product: Product }) {
             </div>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
-                    {available ? total.toFixed(2) : "—"}{" "}
-                    <span>MAD · {inCart > 0 ? "إجمالي هذا المنتج" : "إجمالي الاختيار"}</span>
+                    {available ? total.toFixed(2) : "—"} <span>MAD · سعر الكمية المختارة</span>
                 </p>
                 <button
                     className="btn-primary w-full"
@@ -252,6 +251,33 @@ export function ProductOptions({ product }: { product: Product }) {
                     {available ? "إضافة إلى السلة" : stock ? "الكمية في السلة" : "غير متوفر حالياً"}
                 </button>
             </div>
+            {inCart > 0 && (
+                <aside
+                    className="quantity-cart-preview"
+                    aria-label="تقدير السلة بعد الإضافة"
+                    aria-live="polite"
+                >
+                    <p>
+                        في السلة الآن: <bdi>{inCart}</bdi> قطعة من هذا المنتج.
+                    </p>
+                    {available > 0 && (
+                        <>
+                            <p>
+                                بعد إضافة <bdi>{selectedQuantity}</bdi>:{" "}
+                                <bdi>{anticipatedQuantity}</bdi> قطع من هذا المنتج بإجمالي{" "}
+                                <strong>
+                                    <bdi>{anticipatedTotal.toFixed(2)} MAD</bdi>
+                                </strong>
+                                .
+                            </p>
+                            <small>
+                                هذا تقدير لإضافة جديدة؛ سلتكم الحالية لم تتغير. تُجمع عروض هذا
+                                المنتج بين مقاساته وألوانه.
+                            </small>
+                        </>
+                    )}
+                </aside>
+            )}
             <details className="quantity-price-details">
                 <summary>تفاصيل السعر والعروض</summary>
                 <p>
@@ -281,7 +307,7 @@ export function ProductOptions({ product }: { product: Product }) {
                                 )}
                             </ul>
                         )}
-                        {anticipatedQuantity > 1 && (
+                        {selectionQuantity > 1 && (
                             <p className="quantity-average" dir="ltr">
                                 {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001
                                     ? "≈ "

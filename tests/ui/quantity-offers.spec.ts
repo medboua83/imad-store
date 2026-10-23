@@ -37,9 +37,9 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
-        await expect(page.locator(".quantity-selection-total")).toContainText("630.00");
-        await expect(page.locator(".quantity-selection-summary")).toContainText(
-            "2 في السلة + 1 للإضافة = 3",
+        await expect(page.locator(".quantity-selection-total")).toContainText("230.00");
+        await expect(page.getByLabel("تقدير السلة بعد الإضافة", { exact: true })).toContainText(
+            "630.00",
         );
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("630.00");
@@ -93,12 +93,12 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "بني", exact: true }).click();
         await expect(three).toBeEnabled();
         await three.click();
-        await expect(page.locator(".quantity-selection-total")).toContainText("1030.00");
-        await expect(page.locator(".quantity-selection-saving")).toContainText("120.00");
-        await expect(page.locator(".quantity-selection-summary")).toContainText(
-            "2 في السلة + 3 للإضافة = 5",
+        await expect(page.locator(".quantity-selection-total")).toContainText("540.00");
+        await expect(page.locator(".quantity-selection-saving")).toContainText("150.00");
+        await expect(page.getByLabel("تقدير السلة بعد الإضافة", { exact: true })).toContainText(
+            "1030.00",
         );
-        await expect(page.locator(".purchase-price")).toContainText("1030.00");
+        await expect(page.locator(".purchase-price")).toContainText("540.00");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
@@ -121,7 +121,10 @@ for (const width of [390, 1440]) {
         await expect(page.getByRole("dialog")).toContainText("230.00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         await page.getByRole("button", { name: "بني", exact: true }).click();
-        await expect(page.locator(".purchase-price")).toContainText("400.00");
+        await expect(page.locator(".purchase-price")).toContainText("230.00");
+        await expect(page.getByLabel("تقدير السلة بعد الإضافة", { exact: true })).toContainText(
+            "400.00",
+        );
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         const dialog = page.getByRole("dialog");
         await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");

@@ -329,3 +329,10 @@ Lint et compilation frontend locaux réussis. Contrôle manuel isolé 1366 × 76
 Le contrôle CI initial réussit 33 tests UI, 91 tests fonctionnels et le serveur hébergé, puis bloque sur une alerte Zod publiée le 23 octobre (GHSA-mrhx-c7xc-m3w5). Correctif : Zod 4.6.7 commun au backend et à la racine, deux signatures record adaptées ; ip-address 10.7.4 corrige également son alerte. Régression ajoutée : les collections produit hors limites sont rejetées avant validation de chaque élément. Aucun assouplissement du contrôle de sécurité. Nouvelle CI complète requise avant publication.
 
 Validation du correctif de dépendance : compilation backend et 92 tests fonctionnels locaux réussis, audit du verrou sans vulnérabilité. Les valeurs par défaut de statut sont désormais appliquées uniquement à la création du produit : une modification partielle conserve son état de publication, comme auparavant.
+
+
+## Prix de sélection et panier — 23 octobre 2026
+
+Une pièce sélectionnée affichait 400 MAD après l’ajout d’une première pièce à 230 MAD : la fiche utilisait le total prévu du produit dans le panier. Le prix principal, le montant près du bouton et le détail des offres se rapportent désormais uniquement à la quantité sélectionnée. Quand le panier contient déjà ce produit, un encadré distinct présente le nombre actuel et le total estimé après un nouvel ajout. Le panier, ses promotions entre variantes et le calcul serveur restent inchangés.
+
+Lint et compilation frontend locaux réussis. Régression UI 390/1366 px : un premier ajout conserve une sélection à 230 et un panier à 230 ; prévision de deux à 400 ; deuxième ajout réel au panier à 400, prévision de trois à 630 et de cinq à 1030 après changement de variante. Aucun ordre créé. CI complète et publication à vérifier séparément.
