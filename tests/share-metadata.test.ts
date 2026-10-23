@@ -1,6 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { productShareMetadata, resolvePublicOrigin } from "../apps/web/src/lib/share-metadata";
+import { descriptionParagraphs } from "../apps/web/src/lib/product-presentation";
+test("Missing descriptions have consistent factual copy and long text keeps its words", () => {
+  const result = productShareMetadata({slug:"sabot", nameAr:"صابو", images:[]}, new URL("https://shop.example"));
+  assert.match(result.description!, /صابو.*اللون والمقاس/);
+  const text = `${"وصف المنتج ".repeat(30)}. ${"تفاصيل أخرى ".repeat(25)}.\nفقرة أخيرة.`;
+  const paragraphs = descriptionParagraphs(text);
+  assert.ok(paragraphs.length >= 3);
+  assert.equal(paragraphs.join(" ").replace(/\s+/g," ").trim(), text.replace(/\s+/g," ").trim());
+});
 test("public origin supports hosting without SITE_URL and independent stores", () => {
   assert.equal(resolvePublicOrigin(undefined, "quickydev.com").href, "https://quickydev.com/");
   assert.equal(resolvePublicOrigin(undefined, "store.example").href, "https://store.example/");

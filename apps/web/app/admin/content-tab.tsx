@@ -240,7 +240,7 @@ export default function ContentTab() {
                                 rows={4}
                                 className={input}
                                 value={content[key]}
-                                placeholder="À renseigner avec les informations exactes du magasin"
+                                placeholder={key === "deliveryText" ? "Villes desservies, délai de préparation et délai de transport, jours ouvrés, exceptions. Les frais affichés sont calculés depuis les réglages Commerce." : key === "returnsText" ? "Délai pour demander un retour, état du produit, exclusions, frais et responsabilité du retour, procédure et traitement du remboursement." : "À renseigner avec les informations exactes du magasin"}
                                 onChange={(e) => {
                                     change(key, e.target.value);
                                     change("policiesVerified", false);
@@ -248,6 +248,7 @@ export default function ContentTab() {
                             />
                         </label>
                     ))}
+                    <p className="admin-muted">Complétez les délais et les conditions réelles avant de les publier. Sans texte validé, le site indique les informations manquantes et propose de contacter le magasin. Les frais de livraison restent reliés aux réglages Commerce.</p>
                     <label className="flex gap-3">
                         <input
                             type="checkbox"

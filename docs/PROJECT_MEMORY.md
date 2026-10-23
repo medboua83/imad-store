@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Pointures et hydratation du panier — 23 octobre 2026
+
+Une variante doit représenter une seule taille. `isAmbiguousSize` est partagé par administration, API, panier et réservation : les variantes historiques ambiguës restent dans la base et dans l’administration pour rapprochement, mais sont retirées de la vente. Ne jamais répartir leur stock sans inventaire réel fourni par le marchand. La copie locale isolée de cette intervention se trouve dans `work/imad-audit-priorities`, basée sur Master d66e5e4 ; ne pas écraser les autres copies de travail.
+
+Zustand persist doit conserver `skipHydration: true` et être réhydraté dans Providers après montage. Les méthodes `itemCount()` et `total()` lisaient l’état déjà restauré pendant l’hydratation, causant React 418 dans CartDrawer. La recette doit toujours inclure un panier préexistant et un rechargement complet, en plus des sessions vides. Voir CURRENT_STATUS pour les limites commerciales encore en attente de données exactes.
+
 ## Formulaire compatible Olivraison — candidat du 23 octobre 2026
 
 Le checkout propose les 355 villes du catalogue officiel relu le 23 octobre à 03:01 UTC. Les libellés arabes courants gardent la valeur canonique transporteur (Tanger/طنجة → tangier). Nom complet 3–120 caractères, téléphone marocain normalisé côté serveur, adresse complète 5–124 caractères sans troncature. Le serveur refuse une nouvelle commande incompatible avant stock/outbox ; les empreintes brutes et relectures idempotentes historiques sont conservées. La ville et les coordonnées enregistrées alimentent le récapitulatif et le webhook ; total COD et frais restent calculés par le serveur, sans changement tarifaire.

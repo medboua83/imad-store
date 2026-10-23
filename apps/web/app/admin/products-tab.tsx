@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { isAmbiguousSize } from "@imad-store/shared";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { type Product, type Category } from "@/lib/api";
@@ -550,6 +551,9 @@ export function ProductsTab({
                             unités saisies. Pour retirer une variante existante de la vente, mettez
                             son stock à zéro.
                         </p>
+                        {variants.some((v) => isAmbiguousSize(v.size)) && <p role="status" className="admin-scope">
+                            Une liste de pointures a été enregistrée comme une seule taille. Ces variantes sont exclues de la vente, sans effacer leur stock ni leur historique. Créez les pointures séparément et vérifiez le stock réel de chacune avant de le renseigner. Aucun stock n’est réparti automatiquement.
+                        </p>}
                         {variants.map((v, index) => (
                             <fieldset
                                 key={v.key}
@@ -558,6 +562,7 @@ export function ProductsTab({
                                 <legend>
                                     Variante {index + 1} · {v.size || "Sans taille"}
                                 </legend>
+                                {isAmbiguousSize(v.size) && <p className="admin-muted">À corriger : plusieurs tailles dans la même variante — indisponible à la commande.</p>}
                                 <div className="product-variant-tools">
                                     <span className="admin-tag">
                                         {v.id ? "Existante" : "Nouvelle"}
@@ -616,7 +621,7 @@ export function ProductsTab({
                                         <input
                                             className={inputClass}
                                             maxLength={40}
-                                            placeholder="M, 38 ou Unique"
+                                            placeholder="Une taille : M ou 38 ou Unique"
                                             value={v.size}
                                             onChange={(e) => variant(v.key, "size", e.target.value)}
                                         />
@@ -843,6 +848,9 @@ export function ProductsTab({
                                     <span className="product-low-stock">
                                         Vérifier les stocks par variante
                                     </span>
+                                )}
+                                {p.variants.some((v) => isAmbiguousSize(v.size)) && (
+                                    <span className="product-low-stock">Pointures regroupées à corriger · exclues de la vente</span>
                                 )}
                             </div>
                             <span className={`admin-status status-${p.status.toLowerCase()}`}>

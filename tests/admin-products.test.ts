@@ -2,7 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { variantPayload, sizeVariants, validatePhoto, stockMatches, stockSummary, productSlug, type DraftVariant } from "../apps/web/app/admin/product-utils";
 import type { Product } from "../apps/web/src/lib/api";
+import { isAmbiguousSize } from "@imad-store/shared";
 const variant:DraftVariant={key:"draft-only",id:"123456789012345678901234",expectedStock:5,color:"#000000",colorNameFr:"Noir",colorNameAr:"أسود",colorNameEn:"Black",size:"M",stock:"4",sku:" SAC-M "};
+test("A single pointure cannot accidentally become a list; bulk creation starts each size at zero", () => {
+    for (const size of ["40 41 42 43 44", "40,41", "40/41", "٤٠ ٤١", "S M L", "40-44"])
+        assert.equal(isAmbiguousSize(size), true, size);
+    for (const size of ["40", "42.5", "42,5", "Unique", "2XL", "42 EU", "S/M fitted", ""])
+        assert.equal(isAmbiguousSize(size), false, size);
+    assert.throws(() => variantPayload([{...variant, id:undefined, size:"40 41"}]), /une seule taille/);
+    assert.equal(variantPayload([{...variant,size:"40 41"}])[0].stock, 4, "legacy stock is retained for correction");
+    const rows = sizeVariants(variant, "40 41 42 43 44", "sabot", []);
+    assert.deepEqual(rows.map(v=>v.size), ["40","41","42","43","44"]);
+    assert.equal(rows.every(v=>v.stock === "0"), true);
+});
 test("Stock payload retains the loaded reservation guard, rejects empty/fractional stock and duplicate SKU",()=>{
     const payload=variantPayload([variant]);
     assert.equal(payload[0].stock,4);assert.equal(payload[0].expectedStock,5);assert.equal(payload[0].sku,"SAC-M");assert.equal("key" in payload[0],false);

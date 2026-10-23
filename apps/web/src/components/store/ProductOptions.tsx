@@ -5,16 +5,18 @@ import Link from "next/link";
 const colorKey = (v: Product["variants"][number]) =>
     `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
+import { isAmbiguousSize } from "@imad-store/shared";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({ product }: { product: Product }) {
+    const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
     const [id, setId] = useState(
-        product.variants.find((v) => v.stock > 0)?.id || product.variants[0]?.id || "",
+        variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "",
     );
     const [quantity, setQuantity] = useState(1);
-    const variant = product.variants.find((v) => v.id === id);
+    const variant = variants.find((v) => v.id === id);
     const stock = variant?.stock || 0;
-    const colors = [...new Map(product.variants.map((v) => [colorKey(v), v])).values()];
-    const sizes = [...new Set(product.variants.map((v) => v.size || ""))];
+    const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
+    const sizes = [...new Set(variants.map((v) => v.size || ""))];
     const selectedColor = variant ? colorKey(variant) : "";
     function selectVariant(next: Product["variants"][number] | undefined) {
         if (!next) return;
@@ -33,7 +35,7 @@ export function ProductOptions({ product }: { product: Product }) {
                 <div className="color-options">
                     {colors.map((color) => {
                         const key = colorKey(color);
-                        const matches = product.variants.filter((v) => colorKey(v) === key);
+                        const matches = variants.filter((v) => colorKey(v) === key);
                         const available = matches.some((v) => v.stock > 0);
                         const label =
                             color.colorNameAr ||
@@ -76,7 +78,7 @@ export function ProductOptions({ product }: { product: Product }) {
                 </legend>
                 <div className="size-options">
                     {sizes.map((size) => {
-                        const match = product.variants.find(
+                        const match = variants.find(
                             (v) => colorKey(v) === selectedColor && (v.size || "") === size,
                         );
                         const label = size || "مقاس موحد";
@@ -96,7 +98,15 @@ export function ProductOptions({ product }: { product: Product }) {
                 </div>
                 <p className="variant-help">المقاسات غير المتوفرة لهذا اللون تظهر مشطوبة.</p>
             </fieldset>
-            {!product.variants.length && (
+            <details className="size-advice">
+                <summary>كيف تختارون المقاس المناسب؟</summary>
+                <p>اختاروا مقاساً واحداً ثم اللون المطلوب. يظهر توفر كل مقاس حسب اللون المختار.</p>
+                <p>{/shoes|clogs/.test(product.category.slug)
+                    ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
+                    : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}</p>
+                <Link href="/contact">مساعدة في اختيار المقاس</Link>
+            </details>
+            {!variants.length && (
                 <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>
             )}
             <div className="selected-variant-note" role="status">

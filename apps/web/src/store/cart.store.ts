@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isAmbiguousSize } from "@imad-store/shared";
 import { getProduct, ProductVariant, Product } from "../lib/api";
 
 export interface CartItem {
@@ -44,7 +45,7 @@ export const useCartStore = create<CartStore>()(
             closeCart: () => set({ isOpen: false }),
 
             addItem: (product, variant, quantity = 1) => {
-                if (!Number.isFinite(quantity) || quantity < 1 || variant.stock < 1) return;
+                if (!Number.isFinite(quantity) || quantity < 1 || variant.stock < 1 || isAmbiguousSize(variant.size)) return;
                 set((state) => {
                     const existing = state.items.find((i) => i.variantId === variant.id);
                     if (existing) {
@@ -134,13 +135,15 @@ export const useCartStore = create<CartStore>()(
                         if (!products.has(item.productSlug)) return item;
                         const product = products.get(item.productSlug),
                             variant = product?.variants.find((v) => v.id === item.variantId);
-                        const stock = variant?.stock ?? 0,
+                        const stock = variant && !isAmbiguousSize(variant.size) ? variant.stock : 0,
                             price = product?.price ?? item.price;
                         const quantity = Math.min(item.quantity, stock);
                         if (
                             price !== item.price ||
                             quantity !== item.quantity ||
                             stock === 0 ||
+                            (variant?.size ?? "") !== (item.size ?? "") ||
+                            (variant && variant.colorNameFr !== item.colorNameFr) ||
                             Boolean(product?.freeShipping) !== Boolean(item.freeShipping)
                         )
                             changed = true;
@@ -149,6 +152,10 @@ export const useCartStore = create<CartStore>()(
                             price,
                             stock,
                             quantity,
+                            size: variant?.size ?? item.size,
+                            colorNameFr: variant?.colorNameFr ?? item.colorNameFr,
+                            colorNameAr: variant?.colorNameAr ?? item.colorNameAr,
+                            colorNameEn: variant?.colorNameEn ?? item.colorNameEn,
                             freeShipping: Boolean(product?.freeShipping),
                             image: product ? product.images[0] ?? "" : item.image,
                             images: product ? [...product.images] : item.images,
@@ -161,6 +168,11 @@ export const useCartStore = create<CartStore>()(
             total: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
             itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
         }),
-        { name: "imad-store-cart", partialize: (state) => ({ items: state.items }) },
+        {
+            name: "imad-store-cart",
+            partialize: (state) => ({ items: state.items }),
+            // Rehydrate after React attaches to the identical empty server snapshot.
+            skipHydration: true,
+        },
     ),
 );

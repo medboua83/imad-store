@@ -291,6 +291,21 @@
     gap: 10px 24px;
     margin-bottom: 14px;
 }
+.product-facts { display: grid; gap: 10px; margin-block: 16px; }
+.product-facts > div { display: grid; grid-template-columns: minmax(72px, 25%) 1fr; gap: 12px; padding-block: 8px; border-bottom: 1px solid #e5e0d8; }
+.product-facts dt { font-weight: 600; }
+.product-facts dd { margin: 0; overflow-wrap: anywhere; }
+.size-advice { margin-block: 16px; padding: 14px; background: #f8f3e9; border-radius: 10px; line-height: 1.9; }
+.size-advice summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+.size-advice p { margin-block: 10px; font-size: 13px; }
+.size-advice a { text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
+.policy-page { line-height: 2; }
+.policy-page h2 { font-size: 20px; font-weight: 600; }
+.policy-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.policy-facts > div { background: #f8f3e9; border: 1px solid #dfd4bf; border-radius: 14px; padding: 18px; }
+.policy-facts h2 { font-size: 15px; }
+.policy-steps { list-style: decimal; padding-inline-start: 24px; }
+.policy-steps li { margin-block: 10px; }
 .product-information a {
     display: inline-flex;
     align-items: center;

@@ -3,6 +3,7 @@ import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
+import { isAmbiguousSize } from "@imad-store/shared";
 import { ORDER_SERVICE_POLICY_VERSION, ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -192,7 +193,7 @@ export async function createOrder(req: Request, res: Response) {
                         const variant = product.variants.find(
                             (v) => v.id === item.variantId || v.sku === item.variantId,
                         );
-                        if (!variant || variant.productId !== product.id)
+                        if (!variant || variant.productId !== product.id || isAmbiguousSize(variant.size))
                             throw new AppError("Requested variant is unavailable", 400);
                         const aggregate = grouped.get(variant.id);
                         grouped.set(variant.id, {

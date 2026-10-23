@@ -14,29 +14,38 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
           ]
         : "";
     return (
-        <section className="page-shell max-w-3xl space-y-6">
+        <section className="page-shell policy-page max-w-3xl space-y-6">
             <h1 className="text-3xl">{title}</h1>
+            {kind === "delivery" && <div className="policy-facts">
+                <div><h2>رسوم التوصيل</h2><p dir="ltr">{settings.shippingCost.toFixed(2)} MAD</p></div>
+                <div><h2>التوصيل المجاني</h2><p>من <bdi>{settings.freeShippingMin.toFixed(2)} MAD</bdi> أو مع منتج مؤهل</p></div>
+                <div><h2>الدفع</h2><p>{settings.codEnabled ? "عند الاستلام" : "تواصلوا معنا لمعرفة المتاح"}</p></div>
+            </div>}
             {published ? (
                 <p className="whitespace-pre-line leading-8">{published}</p>
             ) : kind === "delivery" ? (
                 <>
-                    <p>
-                        رسوم التوصيل الحالية: {settings.shippingCost.toFixed(2)} MAD. الشحن مجاني
-                        ابتداءً من {settings.freeShippingMin.toFixed(2)} MAD.
-                    </p>
+                    <h2>قبل تأكيد الطلب</h2>
                     <p>
                         تظهر الرسوم والإجمالي في ملخص الطلب قبل التأكيد.{" "}
                         {settings.codEnabled
                             ? "الدفع عند الاستلام متاح."
                             : "الطلب بالدفع عند الاستلام متوقف مؤقتاً."}
                     </p>
-                    <p>لمعرفة آجال التوصيل المتاحة لمدينتكم، تواصلوا مع فريق المتجر قبل الطلب.</p>
+                    <h2>موعد التوصيل</h2>
+                    <p>لم يُنشر أجل توصيل محدد بعد. تواصلوا مع فريق المتجر لتأكيد المدة المتاحة لمدينتكم قبل الطلب.</p>
                 </>
             ) : kind === "returns" ? (
-                <p>
-                    للحصول على شروط الاستبدال والإرجاع المطبقة على المنتج، تواصلوا مع المتجر قبل
-                    الشراء، واذكروا رقم الطلب عند الاستفسار عن طلب سابق.
-                </p>
+                <>
+                    <h2>شروط يجب معرفتها قبل الشراء</h2>
+                    <p>لم تُنشر بعد مدة طلب الاستبدال أو الإرجاع، وحالة المنتج المطلوبة، ورسوم إعادة الشحن وطريقة معالجة المبلغ. تواصلوا معنا لتوضيح هذه المعلومات قبل تأكيد الطلب.</p>
+                    <h2>التواصل بخصوص طلبكم</h2>
+                    <ol className="policy-steps">
+                        <li>اذكروا رقم الطلب والمنتج والمقاس أو اللون المعني.</li>
+                        <li>وضحوا سبب طلب الاستبدال أو الإرجاع، وأرفقوا صورة إذا كانت تساعد على توضيح المشكلة.</li>
+                        <li>اطلبوا من الفريق توضيح الخطوات والعنوان والرسوم المطبقة قبل إرسال المنتج.</li>
+                    </ol>
+                </>
             ) : (
                 <>
                     <p>
