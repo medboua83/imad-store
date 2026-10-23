@@ -1,5 +1,11 @@
 # Current Status — 2026-10-18
 
+## Présentation des photos originales — candidat du 23 octobre 2026
+
+Le marchand a demandé de conserver intégralement ses photos : aucune retouche générée, aucun remplacement ni téléversement ne doit être appliqué. `photo-presentation.css` harmonise seulement les cadres ivoire/dorés, l’affichage entier avec `object-fit: contain`, les espacements, les miniatures sélectionnées, l’agrandissement et les petites photos du panier. Aucun filtre CSS sur les couleurs ni zoom au survol susceptible de rogner le produit.
+
+Lint et compilation web réussis. Contrôles manuels de la copie isolée avec les originaux à 390 et 1440 pixels : quatre miniatures, sélection et agrandissement fonctionnels, images complètes, aucune image cassée ni débordement horizontal observés. La CI et la publication restent à vérifier avant clôture. Aucun changement de données produit, de stock, de commande ou d’intégration CRM.
+
 ## Suite de l’audit UX et conversion — candidat du 23 octobre 2026
 
 Les collections publiques présentent uniquement les catégories contenant des produits publiés avec image, avec leur nombre d’articles. Les catégories vides restent administrables. Catalogue mobile raccourci, cadrage des photos sans découpe, petit visuel superposé de l’accueil masqué sur mobile et grille centrée pour les petits catalogues. Aucune photo produit, mesure, donnée de stock ou condition commerciale inventée.
