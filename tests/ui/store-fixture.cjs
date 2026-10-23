@@ -68,6 +68,9 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-manual") data = {
     ...product, slug: "fixture-manual", quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400}],
   };
+  else if (pathname === "/api/products/fixture-override") data = {
+    ...product, slug: "fixture-override", quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400},{minQuantity:3,unitPrice:650/3,totalPrice:650}],
+  };
   else {
     res.writeHead(404);
     return res.end("{}");

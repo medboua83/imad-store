@@ -39,8 +39,9 @@ export function QuantityOfferEditor({
             <p>
                 Saisissez vous-même <strong>la quantité et le total de chaque offre</strong>. Aucun
                 montant n’est proposé automatiquement. Les tailles et couleurs du même produit se
-                cumulent. Une offre s’applique uniquement à sa quantité exacte ; les autres
-                quantités restent au prix normal.
+                cumulent. Chaque lot complet bénéficie de son prix saisi ; les pièces restantes
+                gardent le prix normal. Le plus petit lot se répète ; un prix spécial saisi pour la
+                quantité exacte est toujours prioritaire.
             </p>
             {offers.map((offer, index) => (
                 <div className="quantity-admin-row" key={index}>
@@ -144,8 +145,9 @@ export function QuantityOfferEditor({
                         })}
                     </div>
                     <p>
-                        Seules les offres enregistrées sont présentées ici. Hors livraison ; aucune
-                        remise n’est étendue aux autres quantités. Le prix barré n’ajoute pas une
+                        Seuls vos lots saisis sont présentés ici. Ils peuvent se répéter ; les
+                        pièces hors lot restent au prix normal. Un prix saisi pour la quantité
+                        exacte remplace ce calcul. Hors livraison. Le prix barré n’ajoute pas une
                         seconde remise.
                     </p>
                 </div>

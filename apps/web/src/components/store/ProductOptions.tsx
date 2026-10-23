@@ -5,12 +5,7 @@ import Link from "next/link";
 const colorKey = (v: Product["variants"][number]) =>
     `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
-import {
-    isAmbiguousSize,
-    quantityDiscounts,
-    quantityUnitPrice,
-    quantityTotalPrice,
-} from "@imad-store/shared";
+import { isAmbiguousSize, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
 import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({ product }: { product: Product }) {
@@ -30,8 +25,9 @@ export function ProductOptions({ product }: { product: Product }) {
     );
     const selectedQuantity = Math.min(quantity, available || 1);
     const anticipatedQuantity = inCart + (available ? selectedQuantity : 0);
-    const unitPrice = quantityUnitPrice(product.price, tiers, anticipatedQuantity);
-    const total = quantityTotalPrice(product.price, tiers, anticipatedQuantity);
+    const pricing = quantityPriceBreakdown(product.price, tiers, anticipatedQuantity);
+    const total = pricing.total;
+    const unitPrice = anticipatedQuantity ? total / anticipatedQuantity : product.price;
     const savings = Math.round((product.price * anticipatedQuantity - total) * 100) / 100;
     const choices = [...new Set([1, 2, 3, ...tiers.map((tier) => tier.minQuantity)])].sort(
         (a, b) => a - b,
@@ -146,7 +142,7 @@ export function ProductOptions({ product }: { product: Product }) {
                 <h2>اختاروا الكمية المناسبة</h2>
                 <p>
                     {tiers.length
-                        ? "العرض يخص العدد المحدد فقط. المقاسات والألوان من نفس المنتج تتجمع في السلة، وباقي الكميات بالسعر العادي."
+                        ? "العرض الأصغر يتكرر لكل مجموعة كاملة، والقطع المتبقية بالسعر العادي. إذا وُجد سعر خاص للعدد المختار فهو المعتمد. المقاسات والألوان من نفس المنتج تتجمع في السلة."
                         : "اختاروا عدد القطع، وشاهدوا المبلغ قبل الإضافة إلى السلة."}
                 </p>
                 <div className="quantity-choice-grid" role="group" aria-label="اختيار عدد القطع">
@@ -185,6 +181,34 @@ export function ProductOptions({ product }: { product: Product }) {
                             <strong className="quantity-selection-total" dir="ltr">
                                 {total.toFixed(2)} <span>MAD</span>
                             </strong>
+                            {pricing.packs.length > 0 && (
+                                <ul
+                                    className="quantity-pack-lines"
+                                    aria-label="تفصيل السعر حسب العروض"
+                                >
+                                    {pricing.packs.map((pack) => (
+                                        <li key={pack.quantity}>
+                                            <span>
+                                                {pack.count} × عرض {pack.quantity} قطع
+                                            </span>
+                                            <bdi>
+                                                {(pack.count * pack.totalPrice).toFixed(2)} MAD
+                                            </bdi>
+                                        </li>
+                                    ))}
+                                    {pricing.looseQuantity > 0 && (
+                                        <li>
+                                            <span>
+                                                {pricing.looseQuantity} × قطعة بالسعر العادي
+                                            </span>
+                                            <bdi>
+                                                {(pricing.looseQuantity * product.price).toFixed(2)}{" "}
+                                                MAD
+                                            </bdi>
+                                        </li>
+                                    )}
+                                </ul>
+                            )}
                             {savings > 0 && (
                                 <p className="quantity-selection-saving">
                                     <del dir="ltr">

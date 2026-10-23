@@ -1,12 +1,12 @@
 export interface QuantityDiscount {
-    /** Historical field name: this is the exact eligible quantity, never a threshold. */
+    /** Historical field name: number of pieces in one repeatable pack. */
     minQuantity: number;
     unitPrice: number;
     totalPrice?: number;
 }
 const cents = (value: number) => Math.round(value * 100);
 
-/** Validate independently entered totals. Never derive an offer for another quantity. */
+/** Validate manually entered pack totals; loose pieces keep the normal price. */
 export function quantityDiscountError(price: number, value: unknown): string | null {
     if (value == null) return null;
     if (!Array.isArray(value) || value.length > 5) return "Ajoutez au maximum cinq paliers.";
@@ -61,17 +61,75 @@ export function quantityDiscounts(price: number, value: unknown): QuantityDiscou
         .sort((a, b) => a.minQuantity - b.minQuantity);
 }
 export function quantityUnitPrice(price: number, value: unknown, quantity: number): number {
-    const tier = quantityDiscounts(price, value).find((t) => quantity === t.minQuantity);
-    return tier?.unitPrice ?? cents(price) / 100;
+    return quantity > 0
+        ? quantityTotalPrice(price, value, quantity) / quantity
+        : cents(price) / 100;
 }
 
 export function quantityTotalPrice(price: number, value: unknown, quantity: number): number {
-    const tier = quantityDiscounts(price, value).find((t) => quantity === t.minQuantity);
-    const amount =
-        tier?.totalPrice != null
-            ? cents(tier.totalPrice)
-            : cents(tier?.unitPrice ?? price) * quantity;
-    return Math.round(amount) / 100;
+    return quantityPriceBreakdown(price, value, quantity).total;
+}
+
+export type QuantityAllocation = { quantity: number; unitPrice: number };
+
+/** Exact merchant prices win; otherwise repeat the smallest pack and price loose units normally. */
+export function quantityPriceBreakdown(price: number, value: unknown, quantity: number) {
+    const offers = quantityDiscounts(price, value);
+    const choices = [
+        { quantity: 1, amount: cents(price) },
+        ...offers.map((tier) => ({
+            quantity: tier.minQuantity,
+            amount:
+                tier.totalPrice != null
+                    ? cents(tier.totalPrice)
+                    : cents(tier.unitPrice) * tier.minQuantity,
+        })),
+    ];
+    const counts = choices.map(() => 0);
+    if (Number.isSafeInteger(quantity) && quantity > 0) {
+        const exact = offers.findIndex((offer) => offer.minQuantity === quantity);
+        if (exact >= 0) counts[exact + 1] = 1;
+        else if (offers.length) {
+            const size = offers[0].minQuantity;
+            counts[1] = Math.floor(quantity / size);
+            counts[0] = quantity % size;
+        } else counts[0] = quantity;
+    }
+    const packs = offers.flatMap((tier, i) =>
+        counts[i + 1]
+            ? [
+                  {
+                      quantity: tier.minQuantity,
+                      totalPrice: choices[i + 1].amount / 100,
+                      count: counts[i + 1],
+                  },
+              ]
+            : [],
+    );
+    const allocations: QuantityAllocation[] = [];
+    for (let i = 1; i < choices.length; i++) {
+        if (!counts[i]) continue;
+        const { quantity: size, amount } = choices[i];
+        const high = amount % size,
+            low = size - high;
+        if (high)
+            allocations.push({
+                quantity: high * counts[i],
+                unitPrice: Math.ceil(amount / size) / 100,
+            });
+        if (low)
+            allocations.push({
+                quantity: low * counts[i],
+                unitPrice: Math.floor(amount / size) / 100,
+            });
+    }
+    if (counts[0]) allocations.push({ quantity: counts[0], unitPrice: cents(price) / 100 });
+    return {
+        total: choices.reduce((sum, choice, i) => sum + choice.amount * counts[i], 0) / 100,
+        packs,
+        looseQuantity: counts[0],
+        allocations,
+    };
 }
 
 export interface QuantityPricedItem {
@@ -85,25 +143,27 @@ export function priceCart<T extends QuantityPricedItem>(items: T[]) {
     const quantities = new Map<string, number>();
     for (const item of items)
         quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
-    const allocations = new Map<string, { low: number; high: number; remainingHigh: number }>();
+    const allocations = new Map<string, { parts: QuantityAllocation[]; index: number }>();
     const lines = items.map((item) => {
         const quantity = quantities.get(item.productId) ?? 0;
         if (!allocations.has(item.productId)) {
-            const total = cents(quantityTotalPrice(item.price, item.quantityDiscounts, quantity));
             allocations.set(item.productId, {
-                low: quantity ? Math.floor(total / quantity) : cents(item.price),
-                high: quantity ? Math.ceil(total / quantity) : cents(item.price),
-                remainingHigh: quantity ? total % quantity : 0,
+                parts: quantityPriceBreakdown(item.price, item.quantityDiscounts, quantity)
+                    .allocations,
+                index: 0,
             });
         }
         const allocation = allocations.get(item.productId)!;
-        const highQuantity = Math.min(item.quantity, allocation.remainingHigh);
-        allocation.remainingHigh -= highQuantity;
-        const lowQuantity = item.quantity - highQuantity;
-        const parts = [
-            ...(highQuantity ? [{ quantity: highQuantity, unitPrice: allocation.high / 100 }] : []),
-            ...(lowQuantity ? [{ quantity: lowQuantity, unitPrice: allocation.low / 100 }] : []),
-        ];
+        const parts: QuantityAllocation[] = [];
+        let remaining = item.quantity;
+        while (remaining > 0) {
+            const part = allocation.parts[allocation.index];
+            const count = Math.min(remaining, part.quantity);
+            parts.push({ quantity: count, unitPrice: part.unitPrice });
+            remaining -= count;
+            part.quantity -= count;
+            if (!part.quantity) allocation.index++;
+        }
         const total =
             parts.reduce((sum, part) => sum + cents(part.unitPrice) * part.quantity, 0) / 100;
         return {

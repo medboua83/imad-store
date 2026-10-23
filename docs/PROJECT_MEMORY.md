@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Repeated base pack with exact overrides — 23 October 2026 owner clarification
+
+Priority: (1) an explicit merchant price for the exact total product quantity wins, even if base-pack decomposition is cheaper; (2) otherwise repeat the smallest configured pack, plus loose pieces at the original price; (3) without offers use ordinary pricing. At base 230 and a pair for 400, totals are 230/400/630/800/1030. Other configured quantities are exact overrides, not a reason to combine or extend other offers. Both admin fields remain blank for new rows; display only entered offers, never manufacture promotion schedules. The old minQuantity JSON name remains the number of pieces in a pack, with no schema migration.
+
+quantityPriceBreakdown exposes packs, looseQuantity and whole-cent allocations. priceCart distributes actual pack-priced units then original-price loose units across variant rows, preserving each row’s quantity and the exact total. Odd loose units must not be averaged into discounted server snapshots. Only fractional-cent pack prices split internally into adjacent cent values. UI may show a clearly labelled average but includes the actual price breakdown. Preserve existing order/outbox snapshots, cancellation totals, stock CAS and idempotence. This priority replaces earlier exact-only or proportional-threshold interpretations.
+
 ## Manual exact quantity offers — 23 October 2026 correction
 
 The merchant enters each quantity and its total independently. New offer rows start with both fields blank. Admin summary lists only entered offers; never manufacture 1–5 promotion totals or suggest another lot price. The historical JSON minQuantity now means EXACT quantity: find equality, never >=. Legacy unit-only records still provide the price for that exact count only. No matching offer = base price × count, without pack decomposition, remainder pricing, extrapolation or repeat-bundle discounts. Independent offer rates may increase relative to another offer, but never exceed the ordinary product price. A 2/400 offer at base 230 does not set 3/600: the latter is 690 until explicitly entered.
