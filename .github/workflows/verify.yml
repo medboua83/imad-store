@@ -7,7 +7,7 @@ permissions:
     contents: read
 jobs:
     verify:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         timeout-minutes: 20
         steps:
             - uses: actions/checkout@v4
@@ -30,9 +30,11 @@ jobs:
                     sleep 1
                   done
             - run: npm run check
-            - name: Install isolated UI test browser
-              run: npx playwright install --with-deps chromium
+            - name: Verify preinstalled UI test browser
+              run: google-chrome --version
             - name: Test checkout and dashboard UI with local fixtures
+              env:
+                  PLAYWRIGHT_CHANNEL: chrome
               run: npm run test:ui
             - uses: actions/upload-artifact@v4
               if: always()

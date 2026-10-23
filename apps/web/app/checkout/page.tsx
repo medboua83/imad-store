@@ -3,6 +3,7 @@ import { CheckoutReview } from "@/components/store/CheckoutReview";
 import { metaPurchase } from "@/lib/meta-pixel";
 import {
     shippingFee,
+    priceCart,
     searchShippingCities,
     shippingCityLabel,
     canonicalShippingCity,
@@ -96,9 +97,7 @@ export default function CheckoutPage() {
                 setError("تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.");
                 return;
             }
-            const subtotal =
-                Math.round(cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100) /
-                100;
+            const subtotal = priceCart(cart).subtotal;
             const confirmedTotal = subtotal + shippingFee(subtotal, cart, freshSettings);
             if (shipping.total === null || Math.abs(confirmedTotal - shipping.total) > 0.005) {
                 setError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");

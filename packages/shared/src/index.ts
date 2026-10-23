@@ -73,6 +73,7 @@ export interface Product {
     descriptionEn: string;
     price: number; // in MAD
     compareAtPrice?: number;
+    quantityDiscounts?: import("./quantity-pricing").QuantityDiscount[];
     freeShipping?: boolean;
     images: string[]; // Supabase Storage URLs
     status: ProductStatus;
@@ -162,3 +163,4 @@ export function shippingFee(
 export const ORDER_SERVICE_POLICY_VERSION = "store-order-service-v1-2026-10-19";
 
 export * from "./shipping-address";
+export * from "./quantity-pricing";

@@ -3,7 +3,12 @@ export default defineConfig({
     testDir: "tests/ui",
     timeout: 30_000,
     workers: 1,
-    use: { baseURL: "http://127.0.0.1:3131", trace: "retain-on-failure" },
+    use: {
+        baseURL: "http://127.0.0.1:3131",
+        trace: "retain-on-failure",
+        // Hosted runners include Chrome. Local runs keep bundled Chromium by default.
+        channel: process.env.PLAYWRIGHT_CHANNEL === "chrome" ? "chrome" : undefined,
+    },
     webServer: [{
         command: "node tests/ui/store-fixture.cjs",
         url: "http://127.0.0.1:4000/api/settings",

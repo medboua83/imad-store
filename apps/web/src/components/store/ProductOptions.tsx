@@ -5,15 +5,29 @@ import Link from "next/link";
 const colorKey = (v: Product["variants"][number]) =>
     `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, quantityDiscounts, quantityUnitPrice } from "@imad-store/shared";
 import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({ product }: { product: Product }) {
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
-    const [id, setId] = useState(
-        variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "",
-    );
+    const [id, setId] = useState(variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "");
     const [quantity, setQuantity] = useState(1);
+    const cart = useCartStore((state) => state.items);
+    const inCart = cart
+        .filter((item) => item.productId === product.id)
+        .reduce((sum, item) => sum + item.quantity, 0);
+    const tiers = quantityDiscounts(product.price, product.quantityDiscounts);
+    const anticipatedQuantity =
+        inCart +
+        Math.min(
+            quantity,
+            Math.max(
+                0,
+                (variants.find((v) => v.id === id)?.stock ?? 0) -
+                    (cart.find((item) => item.variantId === id)?.quantity ?? 0),
+            ),
+        );
+    const unitPrice = quantityUnitPrice(product.price, tiers, anticipatedQuantity);
     const variant = variants.find((v) => v.id === id);
     const stock = variant?.stock || 0;
     const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
@@ -26,6 +40,47 @@ export function ProductOptions({ product }: { product: Product }) {
     }
     return (
         <div className="product-options refined-options" id="product-options">
+            {tiers.length > 0 && (
+                <section className="quantity-offers" aria-label="عروض الكمية">
+                    <h2>كلما زادت الكمية، قلّ السعر</h2>
+                    <p>
+                        اختاروا مقاسات وألواناً مختلفة من نفس المنتج. يُطبّق العرض تلقائياً في
+                        السلة.
+                    </p>
+                    <div>
+                        {[{ minQuantity: 1, unitPrice: product.price }, ...tiers].map((tier) => (
+                            <div
+                                key={tier.minQuantity}
+                                className={
+                                    unitPrice === tier.unitPrice
+                                        ? "quantity-offer active"
+                                        : "quantity-offer"
+                                }
+                            >
+                                <strong>
+                                    {tier.minQuantity === 1
+                                        ? "قطعة واحدة"
+                                        : `من ${tier.minQuantity} قطع`}
+                                </strong>
+                                <span dir="ltr">{tier.unitPrice.toFixed(2)} MAD / القطعة</span>
+                                {tier.unitPrice < product.price && (
+                                    <small>
+                                        توفير{" "}
+                                        {Math.round((1 - tier.unitPrice / product.price) * 100)}٪
+                                        لكل قطعة
+                                    </small>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    {inCart > 0 && (
+                        <p role="status">
+                            في السلة {inCart} قطعة من هذا المنتج. السعر أدناه يشمل الكمية المختارة
+                            للإضافة.
+                        </p>
+                    )}
+                </section>
+            )}
             <fieldset className="variant-fieldset">
                 <legend>
                     اللون{" "}
@@ -102,14 +157,14 @@ export function ProductOptions({ product }: { product: Product }) {
             <details className="size-advice">
                 <summary>كيف تختارون المقاس المناسب؟</summary>
                 <p>اختاروا مقاساً واحداً ثم اللون المطلوب. يظهر توفر كل مقاس حسب اللون المختار.</p>
-                <p>{/shoes|clogs/.test(product.category.slug)
-                    ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
-                    : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}</p>
+                <p>
+                    {/shoes|clogs/.test(product.category.slug)
+                        ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
+                        : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}
+                </p>
                 <Link href="/contact">مساعدة في اختيار المقاس</Link>
             </details>
-            {!variants.length && (
-                <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>
-            )}
+            {!variants.length && <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>}
             <div className="selected-variant-note" role="status">
                 <span
                     className={`stock-indicator ${stock ? "" : "stock-empty"}`}
@@ -168,7 +223,7 @@ export function ProductOptions({ product }: { product: Product }) {
             </Link>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
-                    {product.price.toFixed(2)} <span>MAD / القطعة</span>
+                    {unitPrice.toFixed(2)} <span>MAD / القطعة</span>
                 </p>
                 <button
                     className="btn-primary w-full"

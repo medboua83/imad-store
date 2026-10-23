@@ -1,6 +1,6 @@
 import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
-import { shippingFee } from "@imad-store/shared";
+import { shippingFee, priceCart } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
 import { isAmbiguousSize } from "@imad-store/shared";
@@ -183,7 +183,6 @@ export async function createOrder(req: Request, res: Response) {
                         quantity: number;
                         unitPrice: number;
                     }[] = [];
-                    let itemsTotal = 0;
                     for (const item of body.items) {
                         const product = products.find(
                             (p) => p.id === item.productId || p.slug === item.productId,
@@ -209,8 +208,14 @@ export async function createOrder(req: Request, res: Response) {
                             quantity: item.quantity,
                             unitPrice,
                         });
-                        itemsTotal += unitPrice * item.quantity;
                     }
+                    // Resolve aliases first so splitting variants/rows cannot bypass the threshold.
+                    const pricing = priceCart(orderItems.map((item) => {
+                        const product = products.find((p) => p.id === item.productId)!;
+                        return { ...item, price: product.price, quantityDiscounts: product.quantityDiscounts };
+                    }));
+                    pricing.lines.forEach((line, index) => { orderItems[index].unitPrice = line.unitPrice; });
+                    const itemsTotal = pricing.subtotal;
                     // Conditional inventory reservations ensure no overselling. Any failure aborts all writes.
                     for (const [variantId, requested] of grouped) {
                         const reserved = await tx.productVariant.updateMany({
@@ -228,7 +233,6 @@ export async function createOrder(req: Request, res: Response) {
                             "Le paiement à la livraison est temporairement indisponible",
                             409,
                         );
-                    itemsTotal = Math.round(itemsTotal * 100) / 100;
                     const appliedShipping = shippingFee(
                         itemsTotal,
                         products.map((p) => ({ freeShipping: p.freeShipping, quantity: 1 })),

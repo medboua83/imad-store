@@ -1,0 +1,97 @@
+.quantity-offers,
+.quantity-admin {
+    min-width: 0;
+    border: 1px solid #d8c39c;
+    background: #fbf8f1;
+    border-radius: 16px;
+    padding: 18px;
+    margin-block: 20px;
+}
+.quantity-offers h2 {
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+    color: #5d4527;
+}
+.quantity-offers p,
+.quantity-admin p {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    margin: 8px 0;
+    color: #655a49;
+}
+.quantity-offers > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+.quantity-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px;
+    border: 1px solid #e5d9c1;
+    border-radius: 12px;
+    background: #fffdf8;
+    font-size: 0.85rem;
+}
+.quantity-offer.active {
+    border-color: #937138;
+    box-shadow: inset 0 0 0 1px #937138;
+    background: #f5ecd9;
+}
+.quantity-offer small,
+.quantity-saving,
+.quantity-card-hint {
+    color: #705019;
+}
+.quantity-saving {
+    display: block;
+    font-size: 0.82rem;
+    margin-top: 5px;
+}
+.bag-unit-price del {
+    display: block;
+    font-size: 0.85em;
+    color: #7b7366;
+    margin-bottom: 3px;
+}
+.quantity-card-hint {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    margin: 8px 0;
+}
+.quantity-admin legend {
+    font-weight: 600;
+    padding-inline: 8px;
+}
+.quantity-admin-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    margin-block: 15px;
+    padding-block: 12px;
+    border-bottom: 1px solid #e5d9c1;
+}
+.quantity-admin-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+.quantity-admin-row p {
+    grid-column: 1/-1;
+}
+@media (max-width: 600px) {
+    .quantity-admin-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .quantity-admin-row button {
+        grid-column: 1/-1;
+    }
+    .quantity-offers,
+    .quantity-admin {
+        padding: 12px;
+    }
+}

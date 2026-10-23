@@ -151,6 +151,7 @@ export interface Product {
     descriptionEn: string;
     price: number;
     compareAtPrice?: number;
+    quantityDiscounts?: import("@imad-store/shared").QuantityDiscount[];
     freeShipping?: boolean;
     images: string[];
     status: string;
