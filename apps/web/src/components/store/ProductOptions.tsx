@@ -5,7 +5,12 @@ import Link from "next/link";
 const colorKey = (v: Product["variants"][number]) =>
     `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize, quantityDiscounts, quantityUnitPrice } from "@imad-store/shared";
+import {
+    isAmbiguousSize,
+    quantityDiscounts,
+    quantityUnitPrice,
+    quantityTotalPrice,
+} from "@imad-store/shared";
 import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({ product }: { product: Product }) {
@@ -17,19 +22,20 @@ export function ProductOptions({ product }: { product: Product }) {
         .filter((item) => item.productId === product.id)
         .reduce((sum, item) => sum + item.quantity, 0);
     const tiers = quantityDiscounts(product.price, product.quantityDiscounts);
-    const anticipatedQuantity =
-        inCart +
-        Math.min(
-            quantity,
-            Math.max(
-                0,
-                (variants.find((v) => v.id === id)?.stock ?? 0) -
-                    (cart.find((item) => item.variantId === id)?.quantity ?? 0),
-            ),
-        );
-    const unitPrice = quantityUnitPrice(product.price, tiers, anticipatedQuantity);
     const variant = variants.find((v) => v.id === id);
     const stock = variant?.stock || 0;
+    const available = Math.max(
+        0,
+        stock - (cart.find((item) => item.variantId === id)?.quantity ?? 0),
+    );
+    const selectedQuantity = Math.min(quantity, available || 1);
+    const anticipatedQuantity = inCart + (available ? selectedQuantity : 0);
+    const unitPrice = quantityUnitPrice(product.price, tiers, anticipatedQuantity);
+    const total = quantityTotalPrice(product.price, tiers, anticipatedQuantity);
+    const savings = Math.round((product.price * anticipatedQuantity - total) * 100) / 100;
+    const choices = [...new Set([1, 2, 3, ...tiers.map((tier) => tier.minQuantity)])].sort(
+        (a, b) => a - b,
+    );
     const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
     const sizes = orderedSizes(variants);
     const selectedColor = variant ? colorKey(variant) : "";
@@ -40,55 +46,6 @@ export function ProductOptions({ product }: { product: Product }) {
     }
     return (
         <div className="product-options refined-options" id="product-options">
-            {tiers.length > 0 && (
-                <section className="quantity-offers" aria-label="عروض الكمية">
-                    <h2>اختاروا الكمية المناسبة</h2>
-                    <p>
-                        اختاروا مقاسات وألواناً مختلفة من نفس المنتج. يُطبّق العرض تلقائياً في
-                        السلة.
-                    </p>
-                    <div>
-                        {[
-                            { minQuantity: 1, unitPrice: product.price, totalPrice: product.price },
-                            ...tiers,
-                        ].map((tier) => (
-                            <div
-                                key={tier.minQuantity}
-                                className={
-                                    unitPrice === tier.unitPrice
-                                        ? "quantity-offer active"
-                                        : "quantity-offer"
-                                }
-                            >
-                                <strong>
-                                    {tier.minQuantity === 1
-                                        ? "قطعة واحدة"
-                                        : `من ${tier.minQuantity} قطع`}
-                                </strong>
-                                <span dir="ltr">
-                                    {(tier.totalPrice ?? tier.unitPrice * tier.minQuantity).toFixed(
-                                        2,
-                                    )}{" "}
-                                    MAD / {tier.minQuantity} قطع
-                                </span>
-                                {tier.unitPrice < product.price && (
-                                    <small>
-                                        توفير{" "}
-                                        {Math.round((1 - tier.unitPrice / product.price) * 100)}٪
-                                        لكل قطعة
-                                    </small>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    {inCart > 0 && (
-                        <p role="status">
-                            في السلة {inCart} قطعة من هذا المنتج. السعر أدناه يشمل الكمية المختارة
-                            للإضافة.
-                        </p>
-                    )}
-                </section>
-            )}
             <fieldset className="variant-fieldset">
                 <legend>
                     اللون{" "}
@@ -185,18 +142,100 @@ export function ProductOptions({ product }: { product: Product }) {
                         : ""}
                 </span>
             </div>
+            <section className="quantity-offers" aria-label="عروض الكمية">
+                <h2>اختاروا الكمية المناسبة</h2>
+                <p>
+                    {tiers.length
+                        ? "المقاسات والألوان من نفس المنتج تتجمع للاستفادة من العرض تلقائياً في السلة."
+                        : "اختاروا عدد القطع، وشاهدوا المبلغ قبل الإضافة إلى السلة."}
+                </p>
+                <div className="quantity-choice-grid" role="group" aria-label="اختيار عدد القطع">
+                    {choices.map((count) => (
+                        <button
+                            type="button"
+                            key={count}
+                            className="quantity-choice"
+                            aria-pressed={selectedQuantity === count && available > 0}
+                            aria-label={
+                                count === 1
+                                    ? "اختيار قطعة واحدة"
+                                    : count === 2
+                                      ? "اختيار قطعتين"
+                                      : `اختيار ${count} قطع`
+                            }
+                            disabled={count > available}
+                            onClick={() => setQuantity(count)}
+                        >
+                            <strong>{count}</strong>
+                            <span>
+                                {count === 1 ? "قطعة واحدة" : count === 2 ? "قطعتان" : "قطع"}
+                            </span>
+                            <Check size={15} aria-hidden="true" className="quantity-choice-check" />
+                        </button>
+                    ))}
+                </div>
+                <div className="quantity-selection-summary" aria-live="polite" aria-atomic="true">
+                    {available > 0 ? (
+                        <>
+                            <p>
+                                {inCart > 0
+                                    ? "إجمالي هذا المنتج بعد الإضافة"
+                                    : "إجمالي القطع المختارة"}
+                            </p>
+                            <strong className="quantity-selection-total" dir="ltr">
+                                {total.toFixed(2)} <span>MAD</span>
+                            </strong>
+                            {savings > 0 && (
+                                <p className="quantity-selection-saving">
+                                    <del dir="ltr">
+                                        {(product.price * anticipatedQuantity).toFixed(2)} MAD
+                                    </del>
+                                    <span>
+                                        توفير <bdi>{savings.toFixed(2)} MAD</bdi>
+                                    </span>
+                                </p>
+                            )}
+                            <p>
+                                {inCart > 0
+                                    ? `يشمل ${inCart} في السلة + ${selectedQuantity} للإضافة = ${anticipatedQuantity} قطعة من هذا المنتج.`
+                                    : `${selectedQuantity} ${selectedQuantity === 1 ? "قطعة" : "قطع"} · حسب اللون والمقاس المختارين.`}
+                            </p>
+                            {anticipatedQuantity > 1 && (
+                                <p className="quantity-average" dir="ltr">
+                                    {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) >
+                                    0.000001
+                                        ? "≈ "
+                                        : ""}
+                                    {unitPrice.toFixed(2)} MAD / متوسط القطعة
+                                </p>
+                            )}
+                            <small>قيمة المنتجات فقط · التوصيل يُحسب في السلة.</small>
+                        </>
+                    ) : (
+                        <p>
+                            {stock
+                                ? "الكمية المتوفرة لهذا الخيار موجودة في السلة. يمكن اختيار مقاس أو لون آخر."
+                                : "اختاروا مقاساً ولوناً متوفرين."}
+                        </p>
+                    )}
+                </div>
+            </section>
             <div className="quantity-heading">
                 <label htmlFor="product-quantity">الكمية</label>
                 <span className="availability-note">
-                    {stock ? `${stock} قطعة متوفرة` : "غير متوفر حالياً"}
+                    {available
+                        ? `${available} قطعة متاحة للإضافة`
+                        : stock
+                          ? "الكمية المتوفرة في السلة"
+                          : "غير متوفر حالياً"}
                 </span>
             </div>
             <div className="quantity-stepper">
                 <button
                     type="button"
                     aria-label="تقليل الكمية"
-                    disabled={quantity <= 1 || !stock}
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={selectedQuantity <= 1 || !available}
+                    onClick={() => setQuantity(Math.max(1, selectedQuantity - 1))}
                 >
                     <Minus size={17} aria-hidden="true" />
                 </button>
@@ -206,21 +245,24 @@ export function ProductOptions({ product }: { product: Product }) {
                     inputMode="numeric"
                     type="number"
                     min={1}
-                    max={stock || 1}
+                    max={available || 1}
                     step={1}
-                    value={quantity}
+                    disabled={!available}
+                    value={selectedQuantity}
                     onChange={(e) => {
                         const n = Number(e.target.value);
                         setQuantity(
-                            Number.isFinite(n) ? Math.max(1, Math.min(stock, Math.floor(n))) : 1,
+                            Number.isFinite(n)
+                                ? Math.max(1, Math.min(available || 1, Math.floor(n)))
+                                : 1,
                         );
                     }}
                 />
                 <button
                     type="button"
                     aria-label="زيادة الكمية"
-                    disabled={quantity >= stock || !stock}
-                    onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                    disabled={selectedQuantity >= available || !available}
+                    onClick={() => setQuantity(Math.min(available, selectedQuantity + 1))}
                 >
                     <Plus size={17} aria-hidden="true" />
                 </button>
@@ -231,18 +273,19 @@ export function ProductOptions({ product }: { product: Product }) {
             </Link>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
-                    {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001 ? "≈ " : ""}
-                    {unitPrice.toFixed(2)} <span>MAD / القطعة</span>
+                    {available ? total.toFixed(2) : "—"}{" "}
+                    <span>MAD · {inCart > 0 ? "إجمالي هذا المنتج" : "إجمالي الاختيار"}</span>
                 </p>
                 <button
                     className="btn-primary w-full"
-                    disabled={!variant || stock < 1}
+                    disabled={!variant || !available}
                     onClick={() => {
-                        if (variant) useCartStore.getState().addItem(product, variant, quantity);
+                        if (variant && available)
+                            useCartStore.getState().addItem(product, variant, selectedQuantity);
                     }}
                 >
                     <ShoppingBag size={19} aria-hidden="true" />
-                    {stock ? "إضافة إلى السلة" : "غير متوفر حالياً"}
+                    {available ? "إضافة إلى السلة" : stock ? "الكمية في السلة" : "غير متوفر حالياً"}
                 </button>
             </div>
         </div>

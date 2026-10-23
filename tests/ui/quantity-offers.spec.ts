@@ -1,5 +1,53 @@
 import { test, expect } from "@playwright/test";
 for (const width of [390, 1440]) {
+    test(`Quick quantity choices respect stock and explain existing basket totals at ${width}px`, async ({
+        page,
+    }, info) => {
+        await page.setViewportSize({ width, height: 950 });
+        const errors: string[] = [];
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto("/products/fixture-sabot");
+        await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
+        await expect(page.locator(".quantity-selection-total")).toContainText("460.00");
+        await expect(page.locator(".quantity-selection-saving")).toHaveCount(0);
+        await page.goto("/products/fixture-offer");
+        const one = page.getByRole("button", { name: "اختيار قطعة واحدة", exact: true });
+        const two = page.getByRole("button", { name: "اختيار قطعتين", exact: true });
+        const three = page.getByRole("button", { name: "اختيار 3 قطع", exact: true });
+        await expect(one).toHaveAttribute("aria-pressed", "true");
+        await expect(three).toBeDisabled();
+        await two.focus();
+        await two.press("Enter");
+        await expect(two).toHaveAttribute("aria-pressed", "true");
+        await expect(one).toHaveAttribute("aria-pressed", "false");
+        await expect(page.getByLabel("الكمية", { exact: true })).toHaveValue("2");
+        await expect(page.locator(".quantity-selection-total")).toContainText("400.00");
+        await expect(page.locator(".quantity-selection-saving")).toContainText("60.00");
+        await expect(page.locator(".purchase-price")).toContainText("400.00");
+        await page.screenshot({ path: info.outputPath(`quantity-buttons-${width}.png`) });
+        await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
+        await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
+        await expect(one).toBeDisabled();
+        await expect(two).toBeDisabled();
+        await expect(
+            page.getByRole("button", { name: "الكمية في السلة", exact: true }),
+        ).toBeDisabled();
+        await page.getByRole("button", { name: "بني", exact: true }).click();
+        await expect(three).toBeEnabled();
+        await three.click();
+        await expect(page.locator(".quantity-selection-total")).toContainText("900.00");
+        await expect(page.locator(".quantity-selection-summary")).toContainText(
+            "2 في السلة + 3 للإضافة = 5",
+        );
+        await expect(page.locator(".purchase-price")).toContainText("900.00");
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+            true,
+        );
+        await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("900.00");
+        expect(errors).toEqual([]);
+    });
     test(`Quantity offers combine colours and revert after removal at ${width}px`, async ({
         page,
     }, info) => {
@@ -7,13 +55,15 @@ for (const width of [390, 1440]) {
         const errors: string[] = [];
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto("/products/fixture-offer");
-        await expect(page.getByRole("region", { name: "عروض الكمية" })).toContainText("400.00");
+        await expect(
+            page.getByRole("button", { name: "اختيار قطعتين", exact: true }),
+        ).toBeVisible();
         await expect(page.locator(".purchase-price")).toContainText("230.00");
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog")).toContainText("230.00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         await page.getByRole("button", { name: "بني", exact: true }).click();
-        await expect(page.locator(".purchase-price")).toContainText("200.00");
+        await expect(page.locator(".purchase-price")).toContainText("400.00");
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         const dialog = page.getByRole("dialog");
         await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
@@ -159,7 +209,10 @@ for (const width of [390, 1440])
         await page.setViewportSize({ width, height: 950 });
         await page.goto("/products/fixture-pack");
         await page.getByRole("button", { name: "بني", exact: true }).click();
-        await page.getByLabel("الكمية", { exact: true }).fill("3");
+        await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
+        await expect(page.getByLabel("الكمية", { exact: true })).toHaveValue("3");
+        await expect(page.locator(".quantity-selection-total")).toContainText("500.00");
+        await expect(page.locator(".purchase-price")).toContainText("500.00");
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         const dialog = page.getByRole("dialog");
         await expect(dialog.locator(".bag-grand-total")).toContainText("500.00");

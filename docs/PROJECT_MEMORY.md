@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Product quantity buttons — 23 October 2026 candidate
+
+Quick choices 1/2/3 plus larger configured thresholds select the actual number to add for the chosen variant. Disable choices above remaining stock after subtracting that variant’s existing cart quantity; clamp the displayed/addable quantity together. Never silently advertise an addition that will be truncated by the cart. The main total uses quantityTotalPrice at the combined product quantity, across variants. When some units already exist, explicitly label the total after addition and show existing + new = combined. The purchase bar mirrors that exact product total, excludes other products/shipping, and never substitutes an approximate unit price for the authoritative total. Ordinary products also support the shortcuts, without fabricated discounts. Preserve photographs, merchant prices, allocation arithmetic, server reservation and order idempotence.
+
 ## Product builder and pack totals — 23 October 2026 candidate
 
 Quantity tier JSON remains backward compatible: unitPrice stays required for legacy clients, optional totalPrice preserves the merchant's exact reference-quantity total. Validate consistency, positive whole-cent totals and nonincreasing average rates. New total-based tiers may equal the ordinary price (1=200,2=400). Old unit-only discounted schedules remain supported. priceCart rounds each product's aggregate total once and allocates whole cents across its units; server snapshots those allocations as order lines, never an extra order/outbox. Cancellation must restore the summed quantity once. Preserve stock CAS and idempotent historical snapshots. Display an approximate average unit price when cents cannot divide evenly, with the exact line/order total authoritative.
