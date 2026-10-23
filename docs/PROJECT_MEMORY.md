@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Manual exact quantity offers — 23 October 2026 correction
+
+The merchant enters each quantity and its total independently. New offer rows start with both fields blank. Admin summary lists only entered offers; never manufacture 1–5 promotion totals or suggest another lot price. The historical JSON minQuantity now means EXACT quantity: find equality, never >=. Legacy unit-only records still provide the price for that exact count only. No matching offer = base price × count, without pack decomposition, remainder pricing, extrapolation or repeat-bundle discounts. Independent offer rates may increase relative to another offer, but never exceed the ordinary product price. A 2/400 offer at base 230 does not set 3/600: the latter is 690 until explicitly entered.
+
+Apply this same shared rule to product preview, variant aggregation, cart, checkout and server snapshots. Preserve all saved order/outbox snapshots and idempotent replays; no data migration, commercial record rewrite or product write is needed. Earlier candidate sections describing minimum thresholds/nonincreasing schedules/proportional extension are superseded by this rule.
+
 ## Product quantity buttons — 23 October 2026 candidate
 
 Quick choices 1/2/3 plus larger configured thresholds select the actual number to add for the chosen variant. Disable choices above remaining stock after subtracting that variant’s existing cart quantity; clamp the displayed/addable quantity together. Never silently advertise an addition that will be truncated by the cart. The main total uses quantityTotalPrice at the combined product quantity, across variants. When some units already exist, explicitly label the total after addition and show existing + new = combined. The purchase bar mirrors that exact product total, excludes other products/shipping, and never substitutes an approximate unit price for the authoritative total. Ordinary products also support the shortcuts, without fabricated discounts. Preserve photographs, merchant prices, allocation arithmetic, server reservation and order idempotence.
