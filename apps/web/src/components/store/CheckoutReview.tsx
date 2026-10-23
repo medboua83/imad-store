@@ -32,7 +32,7 @@ export function CheckoutReview({
                 {customer.address}، {shippingCityLabel(customer.city)}
             </address>
             <ul>
-                {priceCart(items).lines.map(({ item, unitPrice, total }) => (
+                {priceCart(items).lines.map(({ item, unitPrice, total, allocations }) => (
                     <li key={item.variantId}>
                         <div className="checkout-mini-photo">
                             <ProductPhoto
@@ -58,7 +58,19 @@ export function CheckoutReview({
                                         : ""}
                                     {unitPrice.toFixed(2)} MAD
                                 </span>{" "}
-                                للقطعة
+                                {new Set(allocations.map((part) => part.unitPrice)).size > 1
+                                    ? "متوسط القطعة"
+                                    : "للقطعة"}
+                                {allocations.length > 1 && (
+                                    <span className="bag-pack-prices" dir="ltr">
+                                        {allocations
+                                            .map(
+                                                (part) =>
+                                                    `${part.quantity} × ${part.unitPrice.toFixed(2)} MAD`,
+                                            )
+                                            .join(" + ")}
+                                    </span>
+                                )}
                             </p>
                         </div>
                         <strong dir="ltr">{total.toFixed(2)} MAD</strong>

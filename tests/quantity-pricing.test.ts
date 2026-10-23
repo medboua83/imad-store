@@ -7,17 +7,18 @@ import {
     quantityUnitPrice,
     shippingFee,
     quantityTotalPrice,
+    quantityPriceBreakdown,
 } from "../packages/shared/src";
 const tiers = [
     { minQuantity: 2, unitPrice: 200 },
     { minQuantity: 3, unitPrice: 180 },
 ];
-test("Only manually configured exact quantities are discounted, including legacy unit-price offers", () => {
+test("Exact overrides are honoured while other quantities repeat the smallest configured pack", () => {
     for (const [quantity, price] of [
         [1, 230],
         [2, 200],
         [3, 180],
-        [4, 230],
+        [4, 200],
     ])
         assert.equal(quantityUnitPrice(230, tiers, quantity), price);
     assert.equal(quantityUnitPrice(230, undefined, 3), 230);
@@ -45,9 +46,9 @@ test("Pack totals preserve exact cents across variants and snapshot allocations"
         [1, 200],
         [2, 380],
         [3, 500],
-        [4, 800],
-        [5, 1000],
-        [6, 1200],
+        [4, 760],
+        [5, 960],
+        [6, 1140],
     ])
         assert.equal(quantityTotalPrice(200, offers, quantity), total);
     for (let quantity = 1; quantity <= 100; quantity++) {
@@ -114,7 +115,7 @@ test("Variant quantities combine only within the same product, and removing a un
                 quantity: 3,
             },
         ]).subtotal,
-        59.97,
+        54.65,
     );
 });
 test("Independent offers may have different unit rates but cannot exceed the ordinary total", () => {
@@ -125,7 +126,49 @@ test("Independent offers may have different unit rates but cannot exceed the ord
     assert.equal(quantityDiscountError(230, independent), null);
     assert.equal(quantityTotalPrice(230, independent, 2), 380);
     assert.equal(quantityTotalPrice(230, independent, 3), 630);
-    assert.equal(quantityTotalPrice(230, independent, 4), 920);
+    assert.equal(quantityTotalPrice(230, independent, 4), 760);
+});
+test("Pairs repeat with full-price odd pieces, unless that exact quantity has a special total", () => {
+    const pair = [{ minQuantity: 2, unitPrice: 200, totalPrice: 400 }];
+    for (let quantity = 1; quantity <= 101; quantity++) {
+        const expected = Math.floor(quantity / 2) * 400 + (quantity % 2) * 230;
+        assert.equal(quantityTotalPrice(230, pair, quantity), expected);
+        assert.equal(
+            quantityTotalPrice(230, [{ minQuantity: 2, unitPrice: 200 }], quantity),
+            expected,
+        );
+        const result = quantityPriceBreakdown(230, pair, quantity);
+        assert.equal(result.looseQuantity, quantity % 2);
+        assert.equal(
+            result.allocations.reduce((n, part) => n + part.quantity, 0),
+            quantity,
+        );
+        if (quantity % 2) assert.equal(result.allocations.at(-1)?.unitPrice, 230);
+    }
+    assert.equal(quantityTotalPrice(230, pair, 1_000_001), 200_000_230);
+    const overrides = [
+        ...pair,
+        { minQuantity: 3, totalPrice: 650, unitPrice: 650 / 3 },
+        { minQuantity: 4, totalPrice: 700, unitPrice: 175 },
+    ];
+    assert.equal(
+        quantityTotalPrice(230, overrides, 3),
+        650,
+        "exact merchant price wins even over a cheaper pair + remainder",
+    );
+    assert.equal(quantityTotalPrice(230, overrides, 4), 700);
+    assert.equal(
+        quantityTotalPrice(230, overrides, 5),
+        1030,
+        "without an exact override, repeat the smallest pack",
+    );
+    const line = priceCart([{ productId: "a", price: 230, quantityDiscounts: pair, quantity: 3 }])
+        .lines[0];
+    assert.equal(line.total, 630);
+    assert.deepEqual(line.allocations, [
+        { quantity: 2, unitPrice: 200 },
+        { quantity: 1, unitPrice: 230 },
+    ]);
 });
 test("Invalid schedules are rejected, including duplicates, excessive prices and fractions of a cent", () => {
     for (const bad of [

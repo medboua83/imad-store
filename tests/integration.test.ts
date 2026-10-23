@@ -1464,7 +1464,7 @@ test("Quantity offers persist, aggregate variants and aliases, reject stale tota
     }
 });
 
-test("Manual offers never extend to an unconfigured quantity, and old order snapshots stay immutable", async () => {
+test("Repeated packs preserve the loose-piece price, exact overrides and immutable order snapshots", async () => {
     const input = payload();
     input.variants[0].stock = 10;
     const created = await request(app).post("/api/products").set(admin()).send({
@@ -1473,17 +1473,18 @@ test("Manual offers never extend to an unconfigured quantity, and old order snap
     });
     assert.equal(created.status, 201);
     const sale = created.body.data, variant = sale.variants[0];
-    const body = { ...checkout(), crmConsent: false, expectedTotal: 690,
+    const body = { ...checkout(), crmConsent: false, expectedTotal: 630,
         items: [{ productId: sale.id, variantId: variant.id, quantity: 3 }] };
     const post = (body: object, id = key()) => request(app).post("/api/orders").set("Idempotency-Key", id).send(body);
     assert.equal((await post({ ...body, expectedTotal: 600 })).status, 409, "an extrapolated total is refused");
+    assert.equal((await post({ ...body, expectedTotal: 690 })).status, 409, "the repeated pair must be included");
     assert.equal((await prisma.productVariant.findUnique({ where: { id: variant.id } })).stock, 10);
     const id = key(), normal = await post(body, id);
     assert.equal(normal.status, 201);
-    assert.equal(normal.body.data.totalAmount, 690);
-    assert.equal(normal.body.data.items.every((item: any) => item.unitPrice === 230), true);
+    assert.equal(normal.body.data.totalAmount, 630);
+    assert.deepEqual(normal.body.data.items.map((item: any) => [item.quantity,item.unitPrice]), [[2,200],[1,230]]);
     const outbox = await prisma.deskcommOutbox.findUnique({ where: { orderId: normal.body.data.id } });
-    if (outbox) assert.equal(outbox.payload.totalAmount, 690);
+    if (outbox) assert.equal(outbox.payload.totalAmount, 630);
     assert.equal((await request(app).put(`/api/products/${sale.id}`).set(admin()).send({
         quantityDiscounts: [{ minQuantity: 2, unitPrice: 200, totalPrice: 400 }, { minQuantity: 3, unitPrice: 650 / 3, totalPrice: 650 }],
     })).status, 200, "each exact quantity can have an independently entered price");
@@ -1492,8 +1493,11 @@ test("Manual offers never extend to an unconfigured quantity, and old order snap
     assert.equal(manual.body.data.totalAmount, 650);
     const replay = await post(body, id);
     assert.equal(replay.body.data.id, normal.body.data.id);
-    assert.equal(replay.body.data.totalAmount, 690);
+    assert.equal(replay.body.data.totalAmount, 630);
     assert.equal(await prisma.order.count({ where: { idempotencyKey: id } }), 1);
+    for (const order of [normal, manual])
+        for (let i=0;i<2;i++) assert.equal((await request(app).patch(`/api/orders/${order.body.data.id}/status`).set(admin()).send({status:"CANCELLED"})).status,200);
+    assert.equal((await prisma.productVariant.findUnique({where:{id:variant.id}})).stock,10);
 });
 
 test("Exact pack totals keep whole-cent order/CRM snapshots, one order and correct cancellation stock", async()=>{

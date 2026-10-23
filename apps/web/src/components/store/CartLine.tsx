@@ -9,6 +9,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
     const priced = priceCart(items).lines.find((line) => line.item.variantId === item.variantId);
     const unitPrice = priced?.unitPrice ?? item.price;
     const approximate = Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001;
+    const mixedPrices = new Set(priced?.allocations.map((part) => part.unitPrice)).size > 1;
     const name = item.nameAr || item.nameFr;
     return (
         <article className="bag-line">
@@ -37,7 +38,16 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                         {approximate ? "≈ " : ""}
                         {unitPrice.toFixed(2)} MAD
                     </span>{" "}
-                    / {approximate ? "متوسط القطعة" : "القطعة"}
+                    / {approximate || mixedPrices ? "متوسط القطعة" : "القطعة"}
+                    {mixedPrices && (
+                        <span className="bag-pack-prices" dir="ltr">
+                            {priced?.allocations
+                                .map(
+                                    (part) => `${part.quantity} × ${part.unitPrice.toFixed(2)} MAD`,
+                                )
+                                .join(" + ")}
+                        </span>
+                    )}
                     {unitPrice < item.price && (
                         <span className="quantity-saving">عرض الكمية مطبّق</span>
                     )}

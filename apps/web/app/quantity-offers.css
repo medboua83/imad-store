@@ -90,6 +90,27 @@
 .quantity-selection-total span {
     font-size: 0.5em;
 }
+.quantity-pack-lines {
+    list-style: none;
+    padding: 10px 0;
+    margin: 8px 0;
+    border-block: 1px solid #e5d9c1;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: #655a49;
+}
+.quantity-pack-lines li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.bag-pack-prices {
+    display: block;
+    font-size: 0.8em;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
 .quantity-offers .quantity-selection-saving {
     display: flex;
     gap: 12px;

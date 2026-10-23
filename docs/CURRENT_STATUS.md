@@ -1,5 +1,11 @@
 # Current Status — 2026-10-18
 
+## Lots répétés et prix spéciaux prioritaires — précision du 23 octobre 2026
+
+La quantité et le total restent saisis manuellement. Un prix spécial pour la quantité exacte est prioritaire. Sinon, le plus petit lot configuré se répète et les pièces restantes gardent le prix normal : à 230 la pièce et 400 les deux, 3 = 630, 4 = 800, 5 = 1030. Une offre explicite pour 3 remplace 630 pour trois pièces, sans être étendue automatiquement à d’autres quantités. Sans offre, prix normal. Aucune grille de promotions ni nouveau prix prérempli dans l’administration.
+
+Le détail des lots et du reste est affiché sur la fiche. La pièce restante garde son prix normal dans les allocations enregistrées de commande/CRM ; seuls les lots indivisibles au centime partagent leur écart d’arrondi interne. Panier, checkout et serveur utilisent ce même calcul, cumulé entre variantes du même produit. Commandes historiques et reprises idempotentes conservées. Cette règle remplace les interprétations de candidats antérieures. Validation finale et déploiement à vérifier dans la PR.
+
 ## Promotions saisies par quantité exacte — correction du 23 octobre 2026
 
 Chaque offre est désormais un couple quantité exacte / total saisi par le marchand. Aucun préremplissage de quantité ou prix, aucune grille 1–5 générée, aucune prolongation de remise aux nombres non configurés : avec seulement 2 = 400 sur un produit à 230, 3 coûte 690 au prix normal. Le récapitulatif administratif ne présente que les offres saisies. Les prix de quantités distinctes sont indépendants, sous le prix normal correspondant. Le champ historique minQuantity conserve son nom JSON pour compatibilité, mais représente un nombre exact. Les anciens prix unitaires restent lisibles pour leur quantité enregistrée. Les historiques de commandes ne sont jamais recalculés.
