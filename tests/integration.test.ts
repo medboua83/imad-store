@@ -1055,7 +1055,11 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     const config = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
     assert.ok(config.signingCiphertext);
     assert.doesNotMatch(config.signingCiphertext, new RegExp(secret));
-    const createdProduct = await request(app).post("/api/products").set(admin()).send(payload());
+    const productDraft = payload();
+    const createdProduct = await request(app).post("/api/products").set(admin()).send({
+        ...productDraft,
+        variants: productDraft.variants.map((variant) => ({ ...variant, size: "38" })),
+    });
     assert.equal(createdProduct.status, 201);
     const p = createdProduct.body.data;
     const body = {
@@ -1147,6 +1151,9 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.equal(recap.reference, id.slice(-8).toUpperCase());
     assert.equal(recap.itemCount, job.payload.items.length);
     const firstItem = JSON.parse(data.order_item_1);
+    assert.equal(recap.language, "ar"); // Public Arabic checkout does not send x-locale.
+    assert.equal(firstItem.colorFr, p.variants[0].colorNameFr);
+    assert.equal(firstItem.size, "38");
     assert.equal(firstItem.quantity, job.payload.items[0].quantity);
     assert.equal(firstItem.unitPrice, job.payload.items[0].unitPrice);
     assert.equal(firstItem.colorFr, job.payload.items[0].colorFr);
