@@ -84,6 +84,13 @@ for (const width of [390, 1366]) {
         await page.getByLabel("Complément choisi — Produits complémentaires", { exact: true }).check();
         await page.getByLabel("Complément choisi — Alternatives / montée en gamme", { exact: true }).check();
         await page.locator("#product-recommendations").scrollIntoViewIfNeeded();
+        const order = await page.evaluate(() => {
+            const recommendations = document.querySelector("#product-recommendations")!.getBoundingClientRect();
+            const stock = document.querySelector("#product-variants")!.getBoundingClientRect();
+            const footer = document.querySelector(".product-editor-footer")!.getBoundingClientRect();
+            return { afterStock: recommendations.top >= stock.bottom, beforeSave: recommendations.top < footer.top };
+        });
+        expect(order).toEqual({ afterStock: true, beforeSave: true });
         await page.screenshot({ path: info.outputPath(`admin-recommendations-${width}.png`) });
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
         await expect(page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true })).toBeVisible();
