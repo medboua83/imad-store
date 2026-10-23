@@ -1,5 +1,14 @@
 # Current Status — 2026-10-18
 
+## Recommandations manuelles par produit — 23 octobre 2026
+
+Upsell/cross-sell facultatif, initialement désactivé pour tous les produits. Administration → Produits → Modifier → 5 · Recommandations : activer, rechercher et sélectionner jusqu’à quatre alternatives et quatre compléments, ordonner puis enregistrer. Alternatives sous les informations d’achat ; compléments sur la fiche et dans le panier (deux maximum, trois produits sources maximum). Chaque lien ouvre la fiche pour choisir couleur/taille ; aucun ajout ni remplacement automatique, aucune remise supplémentaire.
+
+Le serveur accepte uniquement les identifiants du catalogue de cette installation, interdit auto-références, doublons dans une liste et listes trop longues. Les configurations ne sont pas exposées dans les réponses publiques. Brouillons, archives, articles fictifs, sans photo et stocks non vendables masqués ; compléments déjà dans le panier retirés et listes dédoublonnées. Désactiver conserve la sélection. Une panne de recommandations laisse l’achat disponible. Champ Mongo JSON optionnel, génération Prisma uniquement : aucun db push ni changement de photo, prix, stock ou règles de commande/CRM/transporteur.
+
+Validation locale : 97 tests d’intégration, lint et compilation backend/web réussis. Tests UI mobile/ordinateur et hébergement combiné ajoutés ; CI et publication à confirmer avant clôture. Aucun rapprochement commercial activé automatiquement sur quickydev.com.
+
+
 ## Confirmation détaillée vers le CRM — candidat du 23 octobre 2026
 
 Les nouvelles sorties conservent la langue du checkout et les variantes effectivement liées aux lignes de commande dans la transaction : couleur FR/AR, taille, quantité et prix historique. Champs scalaires order_recap et order_item_N bornés à 2 000 caractères, maximum 30 lignes pour rester sous les 60 champs de capture. Numéro client, téléphone, adresse, code postal, remarques, frais et total sont transmis sans nouvelle requête catalogue. Les anciennes sorties restent inchangées en base ; aucun rejeu. Les confirmations SITE, politique de service, signature et clés idempotentes sont conservées.

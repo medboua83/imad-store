@@ -1,0 +1,200 @@
+.product-recommendations {
+    margin-top: 28px;
+    border-top: 1px solid #d8c39c;
+    padding-top: 20px;
+}
+.product-recommendations h2 {
+    font-size: 23px;
+    color: #594018;
+    margin-bottom: 6px;
+}
+.product-recommendations > p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #75654f;
+    margin-bottom: 16px;
+}
+.recommendation-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+.recommendation-card {
+    min-width: 0;
+    border: 1px solid #d8c39c;
+    background: #fffdf8;
+    border-radius: 14px;
+    overflow: hidden;
+}
+.recommendation-photo {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    background: #f8f3e9;
+}
+.recommendation-photo img {
+    object-fit: contain;
+    padding: 8px;
+}
+.recommendation-info {
+    padding: 12px;
+}
+.recommendation-info h3 {
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.recommendation-info .recommendation-price {
+    margin-block: 6px;
+    font:
+        600 18px/1.5 "DM Sans",
+        sans-serif;
+    color: #594018;
+}
+.recommendation-price span {
+    font-size: 12px;
+}
+.recommendation-info .recommendation-shipping {
+    font-size: 12px;
+    color: #594018;
+}
+.recommendation-choose {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 6px;
+    border: 1px solid #ad8b4c;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #78551f;
+}
+.recommendation-choose:hover {
+    background: #f3ebdc;
+}
+.recommendations-compact {
+    margin: 16px 0 4px;
+    padding-top: 16px;
+}
+.recommendations-compact h2 {
+    font-size: 18px;
+}
+.recommendations-compact .recommendation-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.recommendations-compact .recommendation-card {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    padding: 8px;
+    gap: 10px;
+}
+.recommendations-compact .recommendation-photo {
+    align-self: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.recommendations-compact .recommendation-info {
+    padding: 0;
+}
+.recommendations-compact .recommendation-info h3 {
+    font-size: 14px;
+}
+.recommendations-compact .recommendation-info .recommendation-price {
+    margin-block: 2px;
+    font-size: 16px;
+}
+.recommendations-compact .recommendation-choose {
+    margin-top: 4px;
+}
+.product-recommendation-editor {
+    scroll-margin-top: 24px;
+}
+.product-recommendation-editor > label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-block: 14px;
+}
+.product-recommendation-editor .recommendation-enable {
+    flex-direction: row;
+    align-items: center;
+    min-height: 44px;
+}
+.recommendation-enable input,
+.recommendation-picker input {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    accent-color: #78551f;
+}
+.recommendation-editor-groups {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.recommendation-editor-groups fieldset {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #d8c39c;
+    border-radius: 10px;
+}
+.recommendation-picker {
+    max-height: 320px;
+    overflow-y: auto;
+}
+.recommendation-picker label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 64px;
+    padding: 8px;
+    border-top: 1px solid #e3d7c1;
+    font-size: 14px;
+    cursor: pointer;
+}
+.recommendation-picker label > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.recommendation-picker small {
+    display: block;
+    font-size: 12px;
+    margin-top: 4px;
+}
+.recommendation-picker img {
+    object-fit: contain;
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+.recommendation-selected {
+    padding-inline-start: 22px;
+    margin-block: 10px;
+}
+.recommendation-selected li {
+    padding-block: 6px;
+    overflow-wrap: anywhere;
+}
+.recommendation-selected li > span {
+    display: block;
+}
+.recommendation-selected button {
+    min-height: 44px;
+    margin-inline-end: 12px;
+}
+@media (max-width: 767px) {
+    .recommendation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .product-recommendations h2 {
+        font-size: 21px;
+    }
+    .recommendations-compact h2 {
+        font-size: 18px;
+    }
+    .recommendation-editor-groups {
+        grid-template-columns: 1fr;
+    }
+}

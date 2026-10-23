@@ -130,6 +130,71 @@ test("Oversized product collections stop at their bounds before validating each 
     assert.equal(response.body.details.length, 2);
     assert.deepEqual(response.body.details.map((issue: any) => issue.path), [["images"], ["variants"]]);
 });
+test("Recommendations are opt-in, scoped to this catalogue and expose only sellable published targets", async () => {
+    const ordersBefore = await prisma.order.count(), outboxBefore = await prisma.deskcommOutbox.count();
+    const make = async (price = 100) => {
+        const response = await request(app).post("/api/products").set(admin()).send({ ...payload(), price });
+        assert.equal(response.status, 201);
+        return response.body.data;
+    };
+    const source = await make(), upgrade = await make(300), complement = await make(50);
+    const stockout = await make(), draft = await make(), archived = await make(), noImage = await make(), ambiguous = await make();
+    await prisma.productVariant.updateMany({ where: { productId: stockout.id }, data: { stock: 0 } });
+    await prisma.product.update({ where: { id: draft.id }, data: { status: "DRAFT" } });
+    await prisma.product.update({ where: { id: archived.id }, data: { status: "ARCHIVED" } });
+    await prisma.product.update({ where: { id: noImage.id }, data: { images: [] } });
+    await prisma.productVariant.updateMany({ where: { productId: ambiguous.id }, data: { size: "40 41 42" } });
+    const url = `/api/products/${source.slug}/recommendations`;
+    assert.deepEqual((await request(app).get(url)).body.data, { upsell: [], crossSell: [] });
+    const config = { enabled: false, upsellProductIds: [upgrade.id, stockout.id, draft.id, archived.id], crossSellProductIds: [complement.id, noImage.id, ambiguous.id, upgrade.id] };
+    assert.equal((await request(app).put(`/api/products/${source.id}`).set(admin()).send({ recommendationSettings: config })).status, 200);
+    assert.deepEqual((await request(app).get(url)).body.data, { upsell: [], crossSell: [] });
+    const enabled = { ...config, enabled: true };
+    assert.equal((await request(app).put(`/api/products/${source.id}`).set(admin()).send({ recommendationSettings: enabled })).status, 200);
+    const result = await request(app).get(url);
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.data.upsell.map((p: any) => p.id), [upgrade.id]);
+    assert.deepEqual(result.body.data.crossSell.map((p: any) => p.id), [complement.id, upgrade.id]);
+    assert.equal(result.body.data.upsell[0].price, 300);
+    assert.equal(result.body.data.crossSell[0].price, 50);
+    assert.equal(JSON.stringify(result.body).includes("recommendationSettings"), false);
+    assert.equal(JSON.stringify(result.body).includes(draft.id), false);
+    assert.equal((await request(app).get(`/api/products/${source.slug}`)).body.data.recommendationSettings, undefined);
+    const read = await import("../backend/src/lib/public-store");
+    assert.deepEqual((await read.readPublicStore(`/products/${source.slug}/recommendations`)).body, result.body, "combined hosting has the same scoped result");
+    const saved = await prisma.product.findUnique({ where: { id: source.id }, include: { variants: true } });
+    assert.equal(saved.status, "ACTIVE"); assert.equal(saved.price, 100); assert.equal(saved.variants[0].stock, 5);
+    assert.deepEqual(saved.recommendationSettings, enabled);
+    const selected = await request(app).get(`/api/products/admin/catalog?ids=${upgrade.id},${complement.id}`).set(admin());
+    assert.equal(selected.status, 200); assert.equal(selected.body.data.length, 2);
+    assert.equal((await request(app).get(`/api/products?ids=${draft.id}`)).status, 403);
+    await prisma.product.update({ where: { id: upgrade.id }, data: { status: "ARCHIVED" } });
+    assert.deepEqual((await request(app).get(url)).body.data.upsell, [], "archiving immediately removes a recommendation");
+    assert.equal((await request(app).get(`/api/products/${draft.slug}/recommendations`)).status, 404);
+    assert.equal(await prisma.order.count(), ordersBefore); assert.equal(await prisma.deskcommOutbox.count(), outboxBefore);
+    const createdIds = [source, upgrade, complement, stockout, draft, archived, noImage, ambiguous].map(p => p.id);
+    await prisma.productVariant.deleteMany({ where: { productId: { in: createdIds } } });
+    await prisma.product.deleteMany({ where: { id: { in: createdIds } } });
+});
+test("Recommendation writes reject self, foreign, duplicate and unbounded references without partial changes", async () => {
+    const created = await request(app).post("/api/products").set(admin()).send(payload());
+    const source = created.body.data;
+    const write = (recommendationSettings: unknown) => request(app).put(`/api/products/${source.id}`).set(admin()).send({ recommendationSettings });
+    const base = { enabled: true, upsellProductIds: [], crossSellProductIds: [] };
+    for (const value of [
+        { ...base, upsellProductIds: [source.id] },
+        { ...base, crossSellProductIds: ["ffffffffffffffffffffffff"] },
+        { ...base, upsellProductIds: [source.id, source.id] },
+        { ...base, upsellProductIds: Array(5).fill(source.id) },
+        { ...base, crossSellProductIds: ["invalid"] },
+        { ...base, arbitraryUrl: "https://example.invalid/track" },
+    ]) assert.equal((await write(value)).status, 400);
+    assert.equal((await request(app).put(`/api/products/${source.id}`).send({ recommendationSettings: base })).status, 401);
+    const row = await prisma.product.findUnique({ where: { id: source.id } });
+    assert.equal(row.recommendationSettings, null);
+    await prisma.productVariant.deleteMany({ where: { productId: source.id } });
+    await prisma.product.delete({ where: { id: source.id } });
+});
 test("Grouped legacy sizes stay in admin history but cannot be sold or reserved", async () => {
     const input = payload();
     input.nameFr = input.slug;

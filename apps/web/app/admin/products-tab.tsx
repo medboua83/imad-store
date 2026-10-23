@@ -6,6 +6,7 @@ import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
+import { ProductRecommendationEditor } from "./product-recommendations";
 import {
     type DraftVariant,
     productSlug,
@@ -29,6 +30,7 @@ const blank = {
     quantityDiscounts: [] as DraftQuantityOffer[],
     promotionEnabled: false,
     freeShipping: false,
+    recommendationSettings: { enabled: false, upsellProductIds: [] as string[], crossSellProductIds: [] as string[] },
     categoryId: "",
     status: "DRAFT",
 };
@@ -133,6 +135,7 @@ export function ProductsTab({
                   })),
                   promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
                   freeShipping: Boolean(p.freeShipping),
+                  recommendationSettings: p.recommendationSettings ?? { enabled: false, upsellProductIds: [], crossSellProductIds: [] },
                   categoryId: p.category.id,
                   status: p.status,
               }
@@ -351,6 +354,7 @@ export function ProductsTab({
                         <a href="#product-photos">2 · Photos</a>
                         <a href="#product-pricing">3 · Prix et offres</a>
                         <a href="#product-variants">4 · Stock</a>
+                        <a href="#product-recommendations">5 · Recommandations</a>
                     </nav>
                     <aside className="product-editor-summary" aria-label="Résumé du produit">
                         <span className="admin-eyebrow">APERÇU DE LA FICHE</span>
@@ -833,6 +837,8 @@ export function ProductsTab({
                             Ajouter une variante
                         </button>
                     </fieldset>
+                    <ProductRecommendationEditor key={`recommendations-${session}`} currentId={id} value={form.recommendationSettings} products={products} disabled={disabled}
+                        onChange={recommendationSettings => setForm(old => ({ ...old, recommendationSettings }))} />
                     <div className="product-editor-footer">
                         {error && <p className="admin-alert">{error}</p>}
                         <p>

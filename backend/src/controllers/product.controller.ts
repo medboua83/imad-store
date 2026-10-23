@@ -4,6 +4,7 @@ import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { objectIdSchema, paginationSchema, isPublishableImage } from "../lib/validation";
+import { recommendationSettingsSchema, recommendationSettings, validateRecommendationTargets, recommendable } from "../lib/product-recommendations";
 
 const variantSchema = z.object({
     id: objectIdSchema.optional(),
@@ -36,6 +37,7 @@ const productSchema = z.object({
         totalPrice: z.number().positive().max(100000000).optional(),
     }).strict()).max(5).optional(),
     freeShipping: z.boolean().optional(),
+    recommendationSettings: recommendationSettingsSchema.optional(),
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
         .max(12),
@@ -70,7 +72,8 @@ function assertPublishable(product: any) {
 }
 const include = { category: true, variants: true };
 function publicProduct(product: any) {
-    return { ...product, variants: product.variants.filter((v: any) => !isAmbiguousSize(v.size)) };
+    const { recommendationSettings: _settings, ...visible } = product;
+    return { ...visible, variants: product.variants.filter((v: any) => !isAmbiguousSize(v.size)) };
 }
 function assertSizes(variants: any[], previous: any[] = []) {
     for (const variant of variants) {
@@ -84,6 +87,7 @@ async function list(queryInput: unknown, admin: boolean) {
             category: slugSchema.optional(),
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
+            ids: z.string().max(199).transform(v => v.split(",")).pipe(z.array(objectIdSchema).min(1).max(8)).optional(),
             minPrice: z.coerce.number().min(0).max(1000000).optional(),
             maxPrice: z.coerce.number().min(0).max(1000000).optional(),
             availability: z.enum(["all", "in-stock"]).default("all"),
@@ -92,6 +96,7 @@ async function list(queryInput: unknown, admin: boolean) {
         .parse(queryInput);
     if (!admin && query.status && query.status !== "ACTIVE")
         throw new AppError("Accès refusé", 403);
+    if (!admin && query.ids) throw new AppError("Accès refusé", 403);
     const where: any = admin
         ? {}
         : {
@@ -120,6 +125,7 @@ async function list(queryInput: unknown, admin: boolean) {
                 ? [{ nameFr: "asc" }, { id: "asc" }]
                 : [{ createdAt: "desc" }, { id: "desc" }];
     if (admin && query.status) where.status = query.status;
+    if (admin && query.ids) where.id = { in: query.ids };
     if (query.category) where.category = { slug: query.category };
     if (query.search)
         where.OR = ["nameFr", "nameAr", "nameEn"].map((field) => ({
@@ -151,7 +157,7 @@ export async function getAdminProducts(req: Request, res: Response) {
     res.json(await list(req.query, true));
 }
 export const readPublicProducts = (query: unknown) => list(query, false);
-export async function readPublicProduct(slugInput: unknown) {
+async function findPublicProduct(slugInput: unknown) {
     const slug = slugSchema.parse(slugInput);
     const product = await prisma.product.findUnique({ where: { slug }, include });
     if (
@@ -161,7 +167,26 @@ export async function readPublicProduct(slugInput: unknown) {
         !product.images.length
     )
         throw new AppError("Produit introuvable", 404);
-    return { success: true, data: publicProduct(product) };
+    return product;
+}
+export async function readPublicProduct(slugInput: unknown) {
+    return { success: true, data: publicProduct(await findPublicProduct(slugInput)) };
+}
+export async function readPublicRecommendations(slugInput: unknown) {
+    const source = await findPublicProduct(slugInput);
+    const settings = recommendationSettings(source.recommendationSettings);
+    const empty = { success: true, data: { upsell: [], crossSell: [] } };
+    if (!settings.enabled) return empty;
+    const ids = [...new Set([...settings.upsellProductIds, ...settings.crossSellProductIds])].filter(id => id !== source.id);
+    if (!ids.length) return empty;
+    const targets = await prisma.product.findMany({ where: { id: { in: ids }, status: "ACTIVE" }, include });
+    const eligible = new Map(targets.filter(recommendable).map(p => [p.id, publicProduct(p)]));
+    const ordered = (selected: string[]) => selected.flatMap(id => eligible.has(id) ? [eligible.get(id)] : []);
+    return { success: true, data: { upsell: ordered(settings.upsellProductIds), crossSell: ordered(settings.crossSellProductIds) } };
+}
+export async function getProductRecommendations(req: Request, res: Response) {
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    res.json(await readPublicRecommendations(req.params.slug));
 }
 export async function getProduct(req: Request, res: Response) {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
@@ -172,6 +197,7 @@ export async function createProduct(req: Request, res: Response) {
     const body = productSchema.extend({ status: productSchema.shape.status.default("DRAFT") }).parse(req.body);
     assertSizes(body.variants);
     assertPublishable(body);
+    await validateRecommendationTargets(prisma, body.recommendationSettings);
     if (!(await prisma.category.findUnique({ where: { id: body.categoryId } })))
         throw new AppError("Catégorie introuvable", 400);
     const { variants, ...data } = body;
@@ -187,6 +213,7 @@ export async function updateProduct(req: Request, res: Response) {
     const product = await prisma.$transaction(async (tx) => {
         const current = await tx.product.findUnique({ where: { id: req.params.id }, include });
         if (!current) throw new AppError("Produit introuvable", 404);
+        await validateRecommendationTargets(tx, input.recommendationSettings, current.id);
         const { variants, ...data } = input;
         if (variants) assertSizes(variants, current.variants);
         if (data.categoryId && !(await tx.category.findUnique({ where: { id: data.categoryId } })))

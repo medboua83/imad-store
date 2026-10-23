@@ -4,6 +4,7 @@ import {
     getProducts,
     getAdminProducts,
     getProduct,
+    getProductRecommendations,
     createProduct,
     updateProduct,
     deleteProduct,
@@ -16,6 +17,7 @@ productRoutes.param("id", validateObjectId);
 // Public
 productRoutes.get("/", getProducts);
 productRoutes.get("/admin/catalog", authenticate, requireAdmin, getAdminProducts);
+productRoutes.get("/:slug/recommendations", getProductRecommendations);
 productRoutes.get("/:slug", getProduct);
 
 // Admin only
