@@ -16,7 +16,9 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
     }
 
     return (
-        <div className="store-shell">
+        <div
+            className={`store-shell${pathname?.startsWith("/products/") ? " compact-product-shell" : ""}`}
+        >
             <StoreAnalytics />
             <a className="skip-link" href="#main-content">
                 الانتقال إلى المحتوى

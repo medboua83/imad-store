@@ -318,3 +318,14 @@ Le propriétaire autorise le retrait des clés et l’arrêt du suivi automatiqu
 ## Saisie guidée des villes transporteur — 22 octobre 2026
 
 Le champ texte ville=ville est remplacé par des lignes Ville sur la boutique / Ville chez Olivraison, avec ajout/retrait et suggestions natives après chargement de la liste Olivraison. Correspondances facultatives, valeurs existantes préservées, contrôle des lignes incomplètes et sources en double ; le format cityMapping et la résolution serveur restent inchangés. Aucun compte transporteur ni appel réel pendant la recette.
+
+
+## Fiche produit compacte — 23 octobre 2026
+
+Présentation uniquement : en-tête réduit sur les fiches, galerie bornée par la hauteur de fenêtre avec photos originales contenues, couleurs et tailles regroupées, quantités plus compactes et total conservé. Le bouton est placé juste après les options sur ordinateur et reste fixe en bas sur mobile. Les explications du calcul et le guide des tailles restent dépliables au clavier. Aucun changement des images, prix, offres, stocks ou règles de livraison.
+
+Lint et compilation frontend locaux réussis. Contrôle manuel isolé 1366 × 768 et 390 × 844 : choix et bouton accessibles, total trois pièces 630 MAD pour une paire à 400 et une pièce à 230. Tests UI ajoutés à 320/390/1366 px pour visibilité du bouton, absence de chevauchement sur ordinateur, variantes, détails du calcul et panier. Résultat CI et publication vérifiés séparément dans le rapport de cette intervention.
+
+Le contrôle CI initial réussit 33 tests UI, 91 tests fonctionnels et le serveur hébergé, puis bloque sur une alerte Zod publiée le 23 octobre (GHSA-mrhx-c7xc-m3w5). Correctif : Zod 4.6.7 commun au backend et à la racine, deux signatures record adaptées ; ip-address 10.7.4 corrige également son alerte. Régression ajoutée : les collections produit hors limites sont rejetées avant validation de chaque élément. Aucun assouplissement du contrôle de sécurité. Nouvelle CI complète requise avant publication.
+
+Validation du correctif de dépendance : compilation backend et 92 tests fonctionnels locaux réussis, audit du verrou sans vulnérabilité. Les valeurs par défaut de statut sont désormais appliquées uniquement à la création du produit : une modification partielle conserve son état de publication, comme auparavant.

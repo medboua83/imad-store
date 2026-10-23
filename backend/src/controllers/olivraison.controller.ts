@@ -21,7 +21,7 @@ const configSchema = z
     autoPickup: z.boolean(),
     pickupAddress: pickupSchema,
     cityMapping: z
-      .record(z.string().trim().min(1).max(124))
+      .record(z.string(), z.string().trim().min(1).max(124))
       .refine((v) => Object.keys(v).length <= 300),
     apiKey: z.string().trim().min(1).max(1000).optional(),
     secretKey: z.string().trim().min(1).max(1000).optional(),
