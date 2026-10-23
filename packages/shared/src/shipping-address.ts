@@ -397,6 +397,8 @@ function cityKey(value: string): string {
 export function resolveCityFromCatalog(value: string, names: readonly string[]): string | null {
   const key = cityKey(value);
   if (!key) return null;
+  const exact = names.filter(name => cityKey(name) === key);
+  if (exact.length) return exact.length === 1 ? exact[0]! : null;
   const alias = Object.entries(aliases).find(([name]) => cityKey(name) === key)?.[1];
   const target = cityKey(alias ?? value);
   const matches = names.filter((name) => cityKey(name) === target);

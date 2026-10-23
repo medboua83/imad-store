@@ -1,5 +1,13 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Formulaire compatible Olivraison — candidat du 23 octobre 2026
+
+Le checkout propose les 355 villes du catalogue officiel relu le 23 octobre à 03:01 UTC. Les libellés arabes courants gardent la valeur canonique transporteur (Tanger/طنجة → tangier). Nom complet 3–120 caractères, téléphone marocain normalisé côté serveur, adresse complète 5–124 caractères sans troncature. Le serveur refuse une nouvelle commande incompatible avant stock/outbox ; les empreintes brutes et relectures idempotentes historiques sont conservées. La ville et les coordonnées enregistrées alimentent le récapitulatif et le webhook ; total COD et frais restent calculés par le serveur, sans changement tarifaire.
+
+La politique d’assistance administrative de la PR 58 est préservée : aucune réintroduction de case de consentement au checkout ni modification du réglage marchand. Aucun transporteur indépendant activé. Le catalogue embarqué n’est pas une synchronisation périodique : le CRM vérifiera la ville sur /cities en direct avant toute nouvelle réservation. Une ville retirée doit être corrigée, jamais remplacée par approximation. Pour mettre à jour les choix, relire /cities côté serveur avec les clés existantes puis régénérer et tester packages/shared/src/shipping-address.ts sans exposer les clés.
+
+Vérifiés localement avant intégration : 14 tests unitaires ciblés réussis, compilation shared/backend et lint web réussis. La suite MongoDB/UI complète et le déploiement restent à observer. Aucun ordre réel, WhatsApp, colis ou ramassage envoyé pour cette recette ; validation humaine avant expédition conservée.
+
 ## Assistance IA pilotée par le tableau de bord — candidat du 23 octobre 2026
 
 La case WhatsApp et son reçu de consentement sont retirés du checkout. Intégration CRM propose un interrupteur administrateur persistant, initialement désactivé. Le serveur conserve une instruction de service versionnée distincte du consentement client, dans la même transaction que la commande. Le sender vérifie aussi le réglage actuel pour bloquer une demande encore en attente après désactivation. Une réactivation ne transforme pas les commandes créées pendant l’arrêt. Le mode SITE supprime la demande de confirmation IA. Les anciennes captures ne sont pas réécrites ; les anciens clients avec véritable accord restent compatibles tant que le nouveau réglage n’a pas été enregistré.
