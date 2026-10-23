@@ -182,7 +182,7 @@ test("network retry retains the same idempotency key and request", async ({ page
     await fillCheckout(page);
     await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
     await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator(".checkout-alert[role=alert]")).toContainText("تعذر الاتصال");
     await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(
         page.getByText("تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."),

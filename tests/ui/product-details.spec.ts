@@ -25,6 +25,8 @@ for (const width of [390, 1440])
     expect(JSON.parse(structured!).description).toContain("اللون والمقاس");
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("بني · 44");
+    await expect(page.getByRole("dialog")).toContainText("الأسعار والتوفر محدثان");
+    await expect(page.getByRole("dialog")).toContainText("230.00");
     await page.reload();
     await expect(
       page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }),

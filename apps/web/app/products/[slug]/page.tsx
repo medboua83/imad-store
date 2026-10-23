@@ -57,7 +57,7 @@ export default async function ProductPage({ params }: Props) {
         / {name}
       </nav>
       <div className="product-layout">
-        <ProductGallery images={product.images} name={name} />
+        <ProductGallery key={product.id} images={product.images} name={name} />
         <div className="product-detail refined-detail">
           <div className="product-identity">
             <Link
@@ -86,7 +86,7 @@ export default async function ProductPage({ params }: Props) {
               <span>{settings.codEnabled ? "الدفع عند الاستلام · بدون إنشاء حساب" : "راجعوا طرق الدفع المتاحة مع المتجر"}</span>
             </div>
           </div>
-          <ProductOptions product={product} />
+          <ProductOptions key={product.id} product={product} />
           <div className="product-information">
             <details open>
               <summary>تفاصيل القطعة</summary>
