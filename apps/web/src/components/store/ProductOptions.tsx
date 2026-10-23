@@ -6,6 +6,7 @@ const colorKey = (v: Product["variants"][number]) =>
     `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
 import { isAmbiguousSize } from "@imad-store/shared";
+import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({ product }: { product: Product }) {
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
@@ -16,7 +17,7 @@ export function ProductOptions({ product }: { product: Product }) {
     const variant = variants.find((v) => v.id === id);
     const stock = variant?.stock || 0;
     const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
-    const sizes = [...new Set(variants.map((v) => v.size || ""))];
+    const sizes = orderedSizes(variants);
     const selectedColor = variant ? colorKey(variant) : "";
     function selectVariant(next: Product["variants"][number] | undefined) {
         if (!next) return;

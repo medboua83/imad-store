@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { productShareMetadata, resolvePublicOrigin } from "../apps/web/src/lib/share-metadata";
-import { descriptionParagraphs } from "../apps/web/src/lib/product-presentation";
+import { descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
+test("Size presentation follows numeric and clothing order, without duplicates", () => {
+  assert.deepEqual(orderedSizes(["43","40","42","41","44","40"].map(size=>({size}))), ["40","41","42","43","44"]);
+  assert.deepEqual(orderedSizes(["XL","M","XS","L","S"].map(size=>({size}))), ["XS","S","M","L","XL"]);
+});
 test("Missing descriptions have consistent factual copy and long text keeps its words", () => {
   const result = productShareMetadata({slug:"sabot", nameAr:"صابو", images:[]}, new URL("https://shop.example"));
   assert.match(result.description!, /صابو.*اللون والمقاس/);

@@ -4,7 +4,7 @@ import { ProductGallery } from "@/components/store/ProductGallery";
 import { PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
-import { productDescription, descriptionParagraphs, sellableVariants } from "@/lib/product-presentation";
+import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
 import { ProductOptions } from "@/components/store/ProductOptions";
 import { productShareMetadata } from "@/lib/share-metadata";
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export default async function ProductPage({ params }: Props) {
   const settings = await publicSettings();
   const description = productDescription(product);
   const colors = [...new Set(variants.map(v => v.colorNameAr || v.colorNameFr || v.colorNameEn).filter(Boolean))];
-  const sizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
+  const sizes = orderedSizes(variants).filter(Boolean);
   const structured = {
     "@context": "https://schema.org",
     "@type": "Product",

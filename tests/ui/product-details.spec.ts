@@ -34,6 +34,7 @@ for (const width of [390, 1440])
     await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("بني · 44");
     await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
+    await page.evaluate(() => window.scrollTo(0, 0));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
