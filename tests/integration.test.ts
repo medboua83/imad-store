@@ -1111,6 +1111,21 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     );
 });
 
+test("Published category counts exclude drafts and automatically follow newly published products", async () => {
+    const categoryData={slug:`isolated-category-${key()}`,nameFr:"Collection test",nameAr:"تجربة",nameEn:"Test"};
+    const c=await prisma.category.create({data:categoryData});
+    const p=await prisma.product.create({data:{...payload(),categoryId:c.id,status:"DRAFT",variants:{create:payload().variants}}});
+    const read=async()=> (await request(app).get("/api/categories")).body.data.find((entry:any)=>entry.id===c.id);
+    assert.equal((await read()).publishedCount,0);
+    assert.equal((await read())._count.products,1);
+    await prisma.product.update({where:{id:p.id},data:{status:"ACTIVE"}});
+    assert.equal((await read()).publishedCount,1);
+    await prisma.product.update({where:{id:p.id},data:{images:[]}});
+    assert.equal((await read()).publishedCount,0);
+    await prisma.product.update({where:{id:p.id},data:{images:["/images/test.webp"],status:"ARCHIVED"}});
+    assert.equal((await read()).publishedCount,0);
+});
+
 test("Visitor statistics validate events, deduplicate concurrent views and exclude test/admin/bot traffic", async () => {
     const db = mongo.db(name),
         events = db.collection("store_analytics");
@@ -1182,6 +1197,17 @@ test("Visitor statistics validate events, deduplicate concurrent views and exclu
     assert.equal(summary.body.data.pageViews, 2);
     assert.equal(summary.body.data.productViews, 1);
     assert.equal(summary.body.data.orderRate, 0);
+    await Promise.all(Array.from({length:5},()=>request(app).post(endpoint).send({session,page:`/products/${item.slug}`,action:"cart"}).expect(202)));
+    await request(app).post(endpoint).send({session,page:"/checkout"}).expect(202);
+    assert.equal((await request(app).post(endpoint).send({session,page:"/products/missing",action:"cart"})).body.recorded,false);
+    for(const headers of [admin(),{DNT:"1"},{"Sec-GPC":"1"}])
+        assert.equal((await request(app).post(endpoint).set(headers).send({session:randomUUID(),page:`/products/${item.slug}`,action:"cart"})).body.recorded,false);
+    const funnel=(await request(app).get("/api/analytics/summary").set(admin())).body.data.funnel;
+    assert.equal(funnel.cartVisits,1);
+    assert.equal(funnel.checkoutVisits,1);
+    assert.equal(await events.countDocuments({kind:"cart"}),1);
+    const cart=await events.findOne({kind:"cart"});
+    assert.deepEqual(Object.keys(cart!).sort(),["_id","scope","session","kind","test","at","expiresAt"].sort());
     assert.equal(summary.body.data.products[0].id, item.id);
     assert.equal(
         (await request(app).post(endpoint).send({ session, page: "/products/unpublished-missing" }))
@@ -1255,17 +1281,35 @@ test("Only real committed orders convert visits; retries and multiple orders can
     assert.equal(result.attributedOrders, 2);
     assert.equal(result.convertedVisits, 1);
     assert.equal(result.orderRate, 50);
+    const {recordOrderStage}=await import("../backend/src/lib/store-analytics");
+    const order=await prisma.order.findUnique({where:{idempotencyKey:key}});
+    await Promise.all(Array.from({length:3},()=>recordOrderStage(order.id,"CONFIRMED")));
+    await recordOrderStage(order.id,"PENDING");
+    assert.equal((await request(app).get("/api/analytics/summary").set(admin())).body.data.funnel.confirmedOrders,1);
+    await recordOrderStage(order.id,"DELIVERED");
+    await recordOrderStage(order.id,"SHIPPED");
+    assert.equal((await request(app).get("/api/analytics/summary").set(admin())).body.data.funnel.deliveredOrders,1);
+    await recordOrderStage(order.id,"CANCELLED");
+    await recordOrderStage("123456789012345678901234","CONFIRMED");
+    const stages=(await request(app).get("/api/analytics/summary").set(admin())).body.data;
+    assert.equal(stages.attributedOrders,2);
+    assert.equal(stages.funnel.confirmedOrders,0);
+    assert.equal(stages.funnel.cancelledOrders,1);
     // A broken analytics write must never turn a committed order into a checkout failure.
     const { prisma: client } = await import("../backend/src/lib/prisma");
     const original = client.$runCommandRaw.bind(client);
     client.$runCommandRaw = (() => Promise.reject(new Error("isolated analytics failure"))) as any;
     try {
-        await request(app)
+        const created = await request(app)
             .post("/api/orders")
             .set("Idempotency-Key", randomUUID())
             .set("X-Analytics-Session", session)
             .send(body)
             .expect(201);
+        const {transitionOrderStatus}=await import("../backend/src/lib/order-lifecycle");
+        const result=await transitionOrderStatus(created.body.data.id,"CONFIRMED");
+        assert.equal(result.order.status,"CONFIRMED");
+        assert.equal((await prisma.order.findUnique({where:{id:created.body.data.id}})).status,"CONFIRMED");
     } finally {
         client.$runCommandRaw = original;
     }

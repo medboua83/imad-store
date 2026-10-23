@@ -1,4 +1,8 @@
 /* Catalogue: compact navigation, explicit GET filters, no extra client scripts. */
+.catalog-card-image { background: #f3eee5; }
+.store-shell .catalog-card-image img { object-fit: contain; padding: 6px; }
+.city-search-label { font-size: 12px; margin-top: 8px; }
+
 .refined-shop .shop-breadcrumb {
     display: flex;
     gap: 10px;
@@ -451,6 +455,13 @@
 /* Keep a one-item catalogue balanced instead of leaving half the phone blank. */
 .refined-shop .catalog-grid:has(> .catalog-card:only-child) {
     grid-template-columns: minmax(0, 320px);
+    justify-content: center;
+}
+@media (min-width: 768px) {
+    .refined-shop .catalog-grid:has(> .catalog-card:nth-child(2):last-child) {
+        grid-template-columns: repeat(2, minmax(0, 360px));
+        justify-content: center;
+    }
 }
 @media (max-width: 767px) {
     .refined-shop .catalog-grid:has(> .catalog-card:only-child) {
@@ -459,3 +470,21 @@
         margin-inline: auto;
     }
 }
+
+@media(max-width:767px) {
+  .store-shell .refined-shop { padding-top: 12px; }
+  .refined-shop .shop-breadcrumb { margin-bottom: 6px; }
+  .store-shell .refined-shop .shop-intro { padding: 12px 16px; margin-bottom: 10px; }
+  .store-shell .refined-shop .shop-intro h1 { font-size: 28px; margin: 0; }
+  .refined-shop .shop-intro .eyebrow, .refined-shop .shop-intro > div > p:not(.eyebrow) { display:none; }
+  .refined-shop .shop-category-rail { padding-bottom: 8px; }
+  .refined-shop .catalog-filter-panel { margin-bottom: 8px; }
+  .refined-shop .catalog-results-heading { margin: 12px 0; }
+  .hero-detail-card { display: none !important; }
+}
+.shopping-questions { margin-top:40px; padding:24px; border:1px solid #dfd4bf; border-radius:16px; background:#faf7f0; }
+.shopping-questions h2 { font-size:26px; margin-bottom:16px; }
+.shopping-questions details { border-top:1px solid #dfd4bf; padding-block:12px; line-height:1.9; }
+.shopping-questions summary { cursor:pointer; min-height:44px; padding-block:8px; font-weight:600; }
+.shopping-questions p { margin-top:10px; }
+.shopping-questions a { text-decoration:underline; text-underline-offset:4px; }

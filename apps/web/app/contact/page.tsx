@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShoppingQuestions } from "@/components/store/ShoppingQuestions";
 
 export const metadata = { title: "تواصلوا معنا", alternates: { canonical: "/contact" } };
 
@@ -22,6 +23,7 @@ export default function ContactPage() {
                 <Link href="/shop" className="block underline">
                     العودة إلى المتجر
                 </Link>
+                <ShoppingQuestions />
             </div>
         </section>
     );

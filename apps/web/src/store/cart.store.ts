@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { isAmbiguousSize } from "@imad-store/shared";
 import { getProduct, ProductVariant, Product } from "../lib/api";
+import { trackCart } from "../lib/store-analytics";
 
 export interface CartItem {
     variantId: string;
@@ -89,6 +90,7 @@ export const useCartStore = create<CartStore>()(
                     };
                     return { items: [...state.items, newItem], isOpen: true };
                 });
+                trackCart(product.slug);
             },
 
             removeItem: (variantId) =>

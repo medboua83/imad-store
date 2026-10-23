@@ -8,6 +8,7 @@ for (const width of [390, 1280])
             signedSending: true,
             orderAssistanceEnabled: false,
             updatedAt: null,
+            activity: { lastSentAt:"2026-10-23T10:00:00Z", lastReturnAt:null, pending:2, failed:1 },
         };
         let writes = 0;
         await page.addInitScript(() => localStorage.setItem("adminToken", "isolated-fixture"));
@@ -31,6 +32,9 @@ for (const width of [390, 1280])
             await page.getByRole("button", { name: "Intégration CRM", exact: true }).click();
         }
         await open();
+        await expect(page.getByRole("complementary", {name:"Résumé du suivi CRM"})).toContainText("2 en attente · 1 en échec");
+        await expect(page.getByLabel("URL du webhook", {exact:false})).not.toBeVisible();
+        expect(writes).toBe(0);
         const toggle = page.getByRole("switch", { name: "Activer l’assistance IA par WhatsApp" });
         await expect(toggle).not.toBeChecked();
         await toggle.check();

@@ -2,7 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
-import { recordPage, readAnalytics } from "../lib/store-analytics";
+import { recordPage, recordCart, readAnalytics } from "../lib/store-analytics";
 
 export const analyticsRoutes = Router();
 const eventSchema = z
@@ -13,6 +13,7 @@ const eventSchema = z
             .max(180)
             .regex(/^\/(?:shop|checkout|contact|delivery|returns|privacy|products\/[a-z0-9-]+)?$/),
         test: z.boolean().default(false),
+        action: z.enum(["page", "cart"]).default("page"),
     })
     .strict();
 analyticsRoutes.post(
@@ -35,7 +36,9 @@ analyticsRoutes.post(
             /bot|crawler|spider|lighthouse|headless/i.test(req.header("User-Agent") ?? "")
         )
             return res.status(202).json({ success: true, recorded: false });
-        const recorded = await recordPage(body.session, body.page, body.test);
+        const recorded = await (body.action === "cart"
+            ? recordCart(body.session, body.page, body.test)
+            : recordPage(body.session, body.page, body.test));
         return res.status(202).json({ success: true, recorded });
     },
 );

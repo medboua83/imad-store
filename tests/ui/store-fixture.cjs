@@ -7,6 +7,7 @@ const category = {
   nameAr: "صابو رجالي",
   nameFr: "Sabots",
   nameEn: "Clogs",
+  publishedCount: 1,
 };
 const variant = (id, color, size, stock) => ({
   id,
@@ -52,7 +53,7 @@ createServer((req, res) => {
   if (pathname === "/api/settings")
     data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false };
   else if (pathname === "/api/content") data = defaultSiteContent;
-  else if (pathname === "/api/categories") data = [category];
+  else if (pathname === "/api/categories") data = [category, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
   else if (pathname === "/api/products")
     return res.end(
       JSON.stringify({ success: true, data: [product], total: 1, totalPages: 1, page: 1 }),

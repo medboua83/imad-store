@@ -125,6 +125,55 @@ export default function AnalyticsTab() {
                             </p>
                         </article>
                     </div>
+                    {data.funnel && (
+                        <section className="admin-panel" aria-label="Parcours de conversion">
+                            <h2>Où les visiteurs s’arrêtent-ils ?</h2>
+                            <ol className="analytics-funnel">
+                                {[
+                                    ["Visites", data.visits],
+                                    ["Avec ajout au panier", data.funnel.cartVisits],
+                                    ["Page de commande ouverte", data.funnel.checkoutVisits],
+                                    ["Avec commande créée", data.convertedVisits],
+                                ].map(([label, value]) => (
+                                    <li key={label}>
+                                        <span>{label}</span>
+                                        <strong>{count(Number(value))}</strong>
+                                    </li>
+                                ))}
+                            </ol>
+                            <p className="analytics-muted">
+                                Chaque étape compte une visite une seule fois. Un panier enregistré
+                                peut reprendre directement à la commande : ces compteurs ne
+                                décrivent pas forcément un parcours linéaire.
+                            </p>
+                            <h3>État actuel des commandes attribuées à ces visites</h3>
+                            <dl className="analytics-order-states">
+                                <div>
+                                    <dt>Confirmées, non annulées</dt>
+                                    <dd>{count(data.funnel.confirmedOrders)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Expédiées, livrées comprises</dt>
+                                    <dd>{count(data.funnel.shippedOrders)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Livrées</dt>
+                                    <dd>{count(data.funnel.deliveredOrders)}</dd>
+                                </div>
+                                <div>
+                                    <dt>Annulées</dt>
+                                    <dd>{count(data.funnel.cancelledOrders)}</dd>
+                                </div>
+                            </dl>
+                            <p className="analytics-muted">
+                                Les confirmées incluent les expédiées et livrées. Ce sont les états
+                                enregistrés sur la boutique, pas une preuve de paiement. Le suivi
+                                détaillé démarre à cette mise à jour ;{" "}
+                                {count(data.funnel.unknownOrders)} ancienne(s) commande(s) sans
+                                statut mesuré ne sont pas reconstituées.
+                            </p>
+                        </section>
+                    )}
                     {!data.visits && (
                         <section className="admin-panel analytics-empty">
                             <Eye size={30} aria-hidden="true" />

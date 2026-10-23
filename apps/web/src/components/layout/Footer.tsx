@@ -1,4 +1,8 @@
+"use client";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { getCategories } from "@/lib/api";
+import { publishedCategories } from "@/lib/catalog-navigation";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SocialIcon } from "../store/StoreIcons";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, MessageCircle } from "lucide-react";
@@ -11,6 +15,7 @@ const socials = [
 ];
 
 export function Footer() {
+    const {data = []} = useQuery({queryKey:["public-categories"],queryFn:getCategories,staleTime:60_000});
     return (
         <footer className="site-footer refined-footer">
             <div className="footer-service-strip section-container" aria-label="تجربة التسوق">
@@ -55,14 +60,10 @@ export function Footer() {
                 </div>
                 <nav aria-label="اكتشفوا المتجر">
                     <h2>اكتشفوا IMAD</h2>
-                    {[
-                        ["/shop", "كل المنتجات"],
-                        ["/shop?category=abayas", "العبايات"],
-                        ["/shop?category=shawls", "الشيلان"],
-                        ["/shop?category=womens-shoes", "الأحذية النسائية"],
-                    ].map(([href, label]) => (
-                        <Link key={href} href={href}>
-                            {label}
+                    <Link href="/shop">كل المنتجات</Link>
+                    {publishedCategories(data).map(c => (
+                        <Link key={c.id} href={`/shop?category=${c.slug}`}>
+                            {c.nameAr || c.nameFr} ({c.publishedCount})
                         </Link>
                     ))}
                 </nav>
@@ -73,6 +74,7 @@ export function Footer() {
                         ["/returns", "الاستبدال والإرجاع"],
                         ["/privacy", "الخصوصية"],
                         ["/contact", "تواصلوا معنا"],
+                        ["/contact#questions", "أسئلة قبل الطلب"],
                     ].map(([href, label]) => (
                         <Link key={href} href={href}>
                             {label}

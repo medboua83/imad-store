@@ -46,3 +46,19 @@ export function analyticsOrderHeaders() {
         ? { "X-Analytics-Session": visit.id, ...(visit.test ? { "X-Analytics-Test": "1" } : {}) }
         : {};
 }
+export function trackCart(slug: string) {
+    const visit = analyticsVisit(true);
+    if (!visit || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return;
+    void fetch("/api/analytics/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "omit",
+        keepalive: true,
+        body: JSON.stringify({
+            session: visit.id,
+            page: `/products/${slug}`,
+            test: visit.test,
+            action: "cart",
+        }),
+    }).catch(() => undefined);
+}

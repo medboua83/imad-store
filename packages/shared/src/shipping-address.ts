@@ -435,6 +435,14 @@ export function shippingCityLabel(value: string): string {
 export function canonicalShippingCity(value: string): string | null {
   return resolveCityFromCatalog(value, SHIPPING_CITIES);
 }
+/** Search labels and aliases; returned values always remain canonical carrier IDs. */
+export function searchShippingCities(query: string): string[] {
+  const key = cityKey(query.trim());
+  if (!key) return [...SHIPPING_CITIES];
+  return SHIPPING_CITIES.filter(city => cityKey(city).includes(key)
+    || cityKey(shippingCityLabel(city)).includes(key)
+    || Object.entries(aliases).some(([alias, target]) => target === city && cityKey(alias).includes(key)));
+}
 export function normalizeShippingPhone(value: string): string | null {
   const compact = value.replace(/[\s().-]/g, "");
   const phone = compact.replace(/^0([5-7]\d{8})$/, "+212$1");

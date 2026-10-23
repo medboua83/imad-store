@@ -5,6 +5,7 @@ import type { SiteContent } from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
+import { publishedCategories } from "@/lib/catalog-navigation";
 export function HomeView({
     content,
     products,
@@ -128,7 +129,7 @@ export function HomeView({
                     </p>
                 </div>
                 <nav aria-label="فئات المتجر" className="collection-grid">
-                    {categories.map((c) => {
+                    {publishedCategories(categories).map((c) => {
                         const visual = categoryVisual(c, products);
                         return (
                             <Link
@@ -153,6 +154,7 @@ export function HomeView({
                                 </span>
                                 <span className="collection-name">
                                     {c.nameAr || c.nameFr}
+                                    <small>{c.publishedCount} منتج</small>
                                     {c.nameAr && c.nameAr !== c.nameFr && (
                                         <small dir="ltr">{c.nameFr}</small>
                                     )}

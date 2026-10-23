@@ -12,11 +12,28 @@ const categorySchema = z.object({
 });
 
 export async function readCategories() {
-    const categories = await prisma.category.findMany({
-        include: { _count: { select: { products: true } } },
-        orderBy: { nameFr: "asc" },
-    });
-    return { success: true, data: categories };
+    const [categories, counts] = await Promise.all([
+        prisma.category.findMany({
+            include: { _count: { select: { products: true } } },
+            orderBy: { nameFr: "asc" },
+        }),
+        prisma.product.groupBy({
+            by: ["categoryId"],
+            where: {
+                status: "ACTIVE",
+                images: { isEmpty: false },
+                NOT: [{ slug: { startsWith: "test-19a-" } }, { slug: "demo-bag-sample" }],
+            },
+            _count: { _all: true },
+        }),
+    ]);
+    return {
+        success: true,
+        data: categories.map((c) => ({
+            ...c,
+            publishedCount: counts.find((n) => n.categoryId === c.id)?._count._all ?? 0,
+        })),
+    };
 }
 export async function getCategories(_req: Request, res: Response) {
     res.json(await readCategories());
