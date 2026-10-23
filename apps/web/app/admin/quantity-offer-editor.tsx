@@ -1,9 +1,5 @@
 "use client";
-import {
-    quantityDiscountError,
-    quantityTotalPrice,
-    type QuantityDiscount,
-} from "@imad-store/shared";
+import { quantityDiscountError, type QuantityDiscount } from "@imad-store/shared";
 import { money } from "./admin-utils";
 export type DraftQuantityOffer = { minQuantity: string; totalPrice: string };
 export function packOffers(price: number, drafts: DraftQuantityOffer[]): QuantityDiscount[] {
@@ -41,14 +37,15 @@ export function QuantityOfferEditor({
         <fieldset className="quantity-admin" disabled={disabled}>
             <legend>Promotions par quantité</legend>
             <p>
-                Saisissez le <strong>total pour la quantité indiquée</strong>. Les tailles et
-                couleurs du même produit se cumulent. Sans offre, le total est simplement le prix
-                d’une pièce multiplié par la quantité.
+                Saisissez vous-même <strong>la quantité et le total de chaque offre</strong>. Aucun
+                montant n’est proposé automatiquement. Les tailles et couleurs du même produit se
+                cumulent. Une offre s’applique uniquement à sa quantité exacte ; les autres
+                quantités restent au prix normal.
             </p>
             {offers.map((offer, index) => (
                 <div className="quantity-admin-row" key={index}>
                     <label>
-                        Quantité minimum
+                        Quantité de l’offre
                         <input
                             className="admin-field"
                             type="number"
@@ -56,6 +53,7 @@ export function QuantityOfferEditor({
                             min={2}
                             max={100}
                             step={1}
+                            placeholder="Ex. 2"
                             value={offer.minQuantity}
                             onChange={(e) =>
                                 onChange(
@@ -75,6 +73,7 @@ export function QuantityOfferEditor({
                             min={Math.max(0.01, Number(offer.minQuantity) / 100)}
                             max={ready ? Number(offer.minQuantity) * price : 100000000}
                             step="0.01"
+                            placeholder="À saisir"
                             value={offer.totalPrice}
                             onChange={(e) =>
                                 onChange(
@@ -105,18 +104,8 @@ export function QuantityOfferEditor({
             <button
                 className="admin-button"
                 type="button"
-                disabled={!ready || offers.length >= 5 || offers.some((offer) => Number(offer.minQuantity) >= 100)}
-                onClick={() => {
-                    const quantity =
-                        Math.max(1, ...offers.map((o) => Number(o.minQuantity) || 1)) + 1;
-                    onChange([
-                        ...offers,
-                        {
-                            minQuantity: String(quantity),
-                            totalPrice: (Math.floor(((!error && tiers.at(-1)?.unitPrice) || price) * quantity * 100 + 0.000001) / 100).toFixed(2),
-                        },
-                    ]);
-                }}
+                disabled={!ready || offers.length >= 5}
+                onClick={() => onChange([...offers, { minQuantity: "", totalPrice: "" }])}
             >
                 Ajouter une offre
             </button>
@@ -126,16 +115,20 @@ export function QuantityOfferEditor({
                     {error}
                 </p>
             )}
-            {ready && (
+            {ready && offers.length === 0 && (
+                <p>Aucune promotion par quantité. Le prix normal de la pièce s’applique.</p>
+            )}
+            {ready && offers.length > 0 && !error && (
                 <div
                     className="quantity-preview"
-                    aria-label="Aperçu des prix par quantité"
+                    aria-label="Offres saisies manuellement"
                     aria-live="polite"
                 >
-                    <h4>Ce que le client paiera</h4>
+                    <h4>Offres saisies manuellement</h4>
                     <div className="quantity-preview-grid">
-                        {[1, 2, 3, 4, 5].map((quantity) => {
-                            const total = quantityTotalPrice(price, error ? [] : tiers, quantity),
+                        {tiers.map((tier) => {
+                            const quantity = tier.minQuantity,
+                                total = tier.totalPrice ?? tier.unitPrice * quantity,
                                 saving = Math.round((price * quantity - total) * 100) / 100;
                             return (
                                 <div key={quantity}>
@@ -144,18 +137,16 @@ export function QuantityOfferEditor({
                                     </span>
                                     <strong>{money(total)}</strong>
                                     <small>
-                                        {saving > 0
-                                            ? `${money(saving)} économisés`
-                                            : "Tarif standard"}
+                                        {saving > 0 ? `${money(saving)} économisés` : "Total saisi"}
                                     </small>
                                 </div>
                             );
                         })}
                     </div>
                     <p>
-                        Hors livraison. À partir du palier atteint, le même prix moyen s’applique
-                        aux quantités suivantes. Le total est arrondi au centime ; le prix barré
-                        n’ajoute pas une seconde remise.
+                        Seules les offres enregistrées sont présentées ici. Hors livraison ; aucune
+                        remise n’est étendue aux autres quantités. Le prix barré n’ajoute pas une
+                        seconde remise.
                     </p>
                 </div>
             )}

@@ -1,5 +1,11 @@
 # Current Status — 2026-10-18
 
+## Promotions saisies par quantité exacte — correction du 23 octobre 2026
+
+Chaque offre est désormais un couple quantité exacte / total saisi par le marchand. Aucun préremplissage de quantité ou prix, aucune grille 1–5 générée, aucune prolongation de remise aux nombres non configurés : avec seulement 2 = 400 sur un produit à 230, 3 coûte 690 au prix normal. Le récapitulatif administratif ne présente que les offres saisies. Les prix de quantités distinctes sont indépendants, sous le prix normal correspondant. Le champ historique minQuantity conserve son nom JSON pour compatibilité, mais représente un nombre exact. Les anciens prix unitaires restent lisibles pour leur quantité enregistrée. Les historiques de commandes ne sont jamais recalculés.
+
+Le calcul partagé applique la même règle à la fiche, au panier, au checkout, à la réservation serveur et aux nouvelles captures CRM. Tailles et couleurs continuent à se cumuler par produit ; aucune composition automatique de lots ni report d’offre. Les paragraphes de candidats plus anciens décrivant des seuils et leur prolongation sont remplacés par cette règle. Tests et publication à observer dans la PR avant clôture.
+
 ## Choix rapide des quantités — candidat du 23 octobre 2026
 
 La fiche propose les boutons 1, 2 et 3 pièces après les couleurs/tailles, ainsi que les paliers marchands supérieurs éventuels. Une sélection unique commande aussi le champ numérique ; quantités indisponibles et ajout désactivés lorsque le stock de la variante est déjà dans le panier. Le récapitulatif et la barre mobile affichent le total exact, avec économie éventuelle et prix moyen secondaire. Si le produit est déjà dans le panier, le libellé et le décompte expliquent que le montant inclut les pièces existantes et celles à ajouter. Les autres produits et la livraison restent exclus de cet aperçu. Aucune donnée commerciale modifiée ; calcul partagé et validation serveur conservés. Recette mobile/ordinateur et publication à vérifier dans la PR.

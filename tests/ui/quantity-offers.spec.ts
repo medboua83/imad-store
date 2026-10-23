@@ -1,5 +1,39 @@
 import { test, expect } from "@playwright/test";
 for (const width of [390, 1440]) {
+    test(`Only the entered quantity receives the manual offer at ${width}px`, async ({
+        page,
+    }, info) => {
+        await page.setViewportSize({ width, height: 950 });
+        await page.goto("/products/fixture-manual");
+        await page.getByRole("button", { name: "بني", exact: true }).click();
+        await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
+        await expect(page.locator(".quantity-selection-total")).toContainText("690.00");
+        await expect(page.locator(".quantity-selection-saving")).toHaveCount(0);
+        await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
+        await expect(page.locator(".quantity-selection-total")).toContainText("400.00");
+        await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
+        await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
+        await expect(page.locator(".quantity-selection-total")).toContainText("690.00");
+        await expect(page.locator(".quantity-selection-summary")).toContainText(
+            "2 في السلة + 1 للإضافة = 3",
+        );
+        await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("690.00");
+        await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
+        await page.goto("/checkout");
+        const summary = page.getByRole("complementary", { name: "ملخص الطلب", exact: true });
+        await expect(summary.locator(".bag-grand-total")).toContainText("690.00");
+        await page.reload();
+        await expect(summary.locator(".bag-grand-total")).toContainText("690.00");
+        await page.screenshot({
+            path: info.outputPath(`manual-offer-${width}.png`),
+            fullPage: true,
+        });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+            true,
+        );
+    });
     test(`Quick quantity choices respect stock and explain existing basket totals at ${width}px`, async ({
         page,
     }, info) => {
@@ -36,16 +70,17 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "بني", exact: true }).click();
         await expect(three).toBeEnabled();
         await three.click();
-        await expect(page.locator(".quantity-selection-total")).toContainText("900.00");
+        await expect(page.locator(".quantity-selection-total")).toContainText("1150.00");
+        await expect(page.locator(".quantity-selection-saving")).toHaveCount(0);
         await expect(page.locator(".quantity-selection-summary")).toContainText(
             "2 في السلة + 3 للإضافة = 5",
         );
-        await expect(page.locator(".purchase-price")).toContainText("900.00");
+        await expect(page.locator(".purchase-price")).toContainText("1150.00");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
-        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("900.00");
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("1150.00");
         expect(errors).toEqual([]);
     });
     test(`Quantity offers combine colours and revert after removal at ${width}px`, async ({
@@ -149,8 +184,15 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "Produits", exact: true }).click();
         await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
         await page.getByRole("button", { name: "Ajouter une offre", exact: true }).click();
-        await page.getByLabel("Quantité minimum", { exact: true }).fill("2");
+        await expect(page.getByLabel("Quantité de l’offre", { exact: true })).toHaveValue("");
+        await expect(page.getByLabel("Total du lot (MAD)", { exact: true })).toHaveValue("");
+        await page.getByLabel("Quantité de l’offre", { exact: true }).fill("2");
+        await expect(page.getByLabel("Total du lot (MAD)", { exact: true })).toHaveValue("");
         await page.getByLabel("Total du lot (MAD)", { exact: true }).fill("400");
+        const enteredOffers = page.getByLabel("Offres saisies manuellement", { exact: true });
+        await expect(enteredOffers.locator(".quantity-preview-grid > div")).toHaveCount(1);
+        await expect(enteredOffers).toContainText("400,00");
+        await expect(enteredOffers).not.toContainText("600,00");
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
         await expect(
             page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true }),
@@ -180,9 +222,15 @@ for (const width of [390, 1440]) {
         );
         await page.getByLabel("Catégorie du produit", { exact: true }).selectOption(category.id);
         await page.getByLabel("Prix de vente (MAD)", { exact: true }).fill("200");
-        const preview = page.getByLabel("Aperçu des prix par quantité", { exact: true });
-        await expect(preview).toContainText("400,00");
-        await expect(preview).toContainText("600,00");
+        await expect(page.getByLabel("Offres saisies manuellement", { exact: true })).toHaveCount(
+            0,
+        );
+        await expect(
+            page.getByText(
+                "Aucune promotion par quantité. Le prix normal de la pièce s’applique.",
+                { exact: true },
+            ),
+        ).toBeVisible();
         await page.screenshot({
             path: `test-results/product-builder-${width}.png`,
             fullPage: true,

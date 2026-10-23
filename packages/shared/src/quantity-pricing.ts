@@ -1,16 +1,16 @@
 export interface QuantityDiscount {
+    /** Historical field name: this is the exact eligible quantity, never a threshold. */
     minQuantity: number;
     unitPrice: number;
     totalPrice?: number;
 }
 const cents = (value: number) => Math.round(value * 100);
 
-/** Validate nonincreasing pack rates; legacy unit-only offers remain strict discounts. */
+/** Validate independently entered totals. Never derive an offer for another quantity. */
 export function quantityDiscountError(price: number, value: unknown): string | null {
     if (value == null) return null;
     if (!Array.isArray(value) || value.length > 5) return "Ajoutez au maximum cinq paliers.";
-    let quantity = 1,
-        previous = cents(price);
+    let quantity = 1;
     for (const tier of [...value].sort((a, b) => a?.minQuantity - b?.minQuantity)) {
         if (
             !tier ||
@@ -18,8 +18,8 @@ export function quantityDiscountError(price: number, value: unknown): string | n
             tier.minQuantity < 2 ||
             tier.minQuantity > 100
         )
-            return "Chaque quantité minimum doit être un entier entre 2 et 100.";
-        if (tier.minQuantity <= quantity) return "Chaque quantité minimum doit être différente.";
+            return "Chaque quantité doit être un entier entre 2 et 100.";
+        if (tier.minQuantity <= quantity) return "Chaque quantité doit être différente.";
         if (
             typeof tier.unitPrice !== "number" ||
             !Number.isFinite(tier.unitPrice) ||
@@ -42,10 +42,9 @@ export function quantityDiscountError(price: number, value: unknown): string | n
             tier.totalPrice != null
                 ? cents(tier.totalPrice) / tier.minQuantity
                 : cents(tier.unitPrice);
-        if (rate > previous + 0.000001 || (tier.totalPrice == null && rate >= previous))
-            return "Le prix moyen par article doit diminuer ou rester identique à chaque palier, sans dépasser le prix actuel.";
+        if (rate > cents(price) + 0.000001 || (tier.totalPrice == null && rate >= cents(price)))
+            return "Le prix d’une offre ne doit pas dépasser le prix normal de cette quantité.";
         quantity = tier.minQuantity;
-        previous = rate;
     }
     return null;
 }
@@ -62,19 +61,15 @@ export function quantityDiscounts(price: number, value: unknown): QuantityDiscou
         .sort((a, b) => a.minQuantity - b.minQuantity);
 }
 export function quantityUnitPrice(price: number, value: unknown, quantity: number): number {
-    const tier = quantityDiscounts(price, value)
-        .filter((t) => quantity >= t.minQuantity)
-        .at(-1);
+    const tier = quantityDiscounts(price, value).find((t) => quantity === t.minQuantity);
     return tier?.unitPrice ?? cents(price) / 100;
 }
 
 export function quantityTotalPrice(price: number, value: unknown, quantity: number): number {
-    const tier = quantityDiscounts(price, value)
-        .filter((t) => quantity >= t.minQuantity)
-        .at(-1);
+    const tier = quantityDiscounts(price, value).find((t) => quantity === t.minQuantity);
     const amount =
         tier?.totalPrice != null
-            ? (cents(tier.totalPrice) * quantity) / tier.minQuantity
+            ? cents(tier.totalPrice)
             : cents(tier?.unitPrice ?? price) * quantity;
     return Math.round(amount) / 100;
 }

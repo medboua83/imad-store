@@ -12,12 +12,12 @@ const tiers = [
     { minQuantity: 2, unitPrice: 200 },
     { minQuantity: 3, unitPrice: 180 },
 ];
-test("Quantity pricing uses the highest reached tier without stacking and falls back for legacy products", () => {
+test("Only manually configured exact quantities are discounted, including legacy unit-price offers", () => {
     for (const [quantity, price] of [
         [1, 230],
         [2, 200],
         [3, 180],
-        [4, 180],
+        [4, 230],
     ])
         assert.equal(quantityUnitPrice(230, tiers, quantity), price);
     assert.equal(quantityUnitPrice(230, undefined, 3), 230);
@@ -45,9 +45,9 @@ test("Pack totals preserve exact cents across variants and snapshot allocations"
         [1, 200],
         [2, 380],
         [3, 500],
-        [4, 666.67],
-        [5, 833.33],
-        [6, 1000],
+        [4, 800],
+        [5, 1000],
+        [6, 1200],
     ])
         assert.equal(quantityTotalPrice(200, offers, quantity), total);
     for (let quantity = 1; quantity <= 100; quantity++) {
@@ -114,10 +114,20 @@ test("Variant quantities combine only within the same product, and removing a un
                 quantity: 3,
             },
         ]).subtotal,
-        51.99,
+        59.97,
     );
 });
-test("Invalid schedules are rejected, including duplicates, rising prices and fractions of a cent", () => {
+test("Independent offers may have different unit rates but cannot exceed the ordinary total", () => {
+    const independent = [
+        { minQuantity: 2, unitPrice: 190, totalPrice: 380 },
+        { minQuantity: 3, unitPrice: 210, totalPrice: 630 },
+    ];
+    assert.equal(quantityDiscountError(230, independent), null);
+    assert.equal(quantityTotalPrice(230, independent, 2), 380);
+    assert.equal(quantityTotalPrice(230, independent, 3), 630);
+    assert.equal(quantityTotalPrice(230, independent, 4), 920);
+});
+test("Invalid schedules are rejected, including duplicates, excessive prices and fractions of a cent", () => {
     for (const bad of [
         [{ minQuantity: 1, unitPrice: 200 }],
         [{ minQuantity: 2.5, unitPrice: 200 }],
@@ -128,10 +138,6 @@ test("Invalid schedules are rejected, including duplicates, rising prices and fr
         [
             { minQuantity: 2, unitPrice: 200 },
             { minQuantity: 2, unitPrice: 190 },
-        ],
-        [
-            { minQuantity: 2, unitPrice: 200 },
-            { minQuantity: 3, unitPrice: 210 },
         ],
         Array.from({ length: 6 }, (_, i) => ({ minQuantity: i + 2, unitPrice: 200 - i })),
     ])

@@ -69,7 +69,7 @@ export function ProductCard({
                     .slice(0, 1)
                     .map((tier) => (
                         <p className="quantity-card-hint" key={tier.minQuantity}>
-                            عرض الكمية: من {tier.minQuantity} قطع،{" "}
+                            عرض {tier.minQuantity} قطع،{" "}
                             <bdi>
                                 {(tier.totalPrice ?? tier.unitPrice * tier.minQuantity).toFixed(2)}{" "}
                                 MAD
