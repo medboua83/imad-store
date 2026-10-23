@@ -542,7 +542,7 @@ export function ProductsTab({
                                     </label>
                                     <button
                                         type="button"
-                                        className="admin-btn"
+                                        className="admin-button"
                                         aria-label={`Supprimer le palier ${index + 1}`}
                                         onClick={() =>
                                             setForm((v) => ({
@@ -570,7 +570,7 @@ export function ProductsTab({
                             ))}
                             <button
                                 type="button"
-                                className="admin-btn"
+                                className="admin-button"
                                 disabled={form.quantityDiscounts.length >= 5}
                                 onClick={() =>
                                     setForm((v) => ({
