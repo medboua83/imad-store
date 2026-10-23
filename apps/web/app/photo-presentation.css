@@ -1,4 +1,8 @@
 /* Frames only: original image sources, colours and pixels stay unchanged. */
+.store-shell .refined-gallery {
+    min-width: 0;
+    max-width: 100%;
+}
 .store-shell .refined-gallery .gallery-stage {
     aspect-ratio: 1;
     border: 1px solid #d8c39c;
@@ -13,11 +17,13 @@
     object-position: center;
 }
 .store-shell .refined-gallery .gallery-caption {
+    flex-wrap: wrap;
     gap: 12px;
     padding-block: 6px;
     margin-top: 6px;
 }
 .store-shell .refined-gallery .gallery-thumbnails {
+    max-width: 100%;
     gap: 12px;
     padding: 6px 6px 12px;
     scroll-padding-inline: 6px;
