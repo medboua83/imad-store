@@ -1,5 +1,13 @@
 # Imad Store — Persistent Project Memory
 
+## Navigation et tunnel internes — 23 octobre 2026
+
+`publishedCount` compte les produits ACTIVE avec image, hors slugs de recette exclus du catalogue public. Les interfaces marchandes gardent toutes les catégories ; la navigation publique filtre ce compte. La recherche de ville ne doit produire que les valeurs canoniques de SHIPPING_CITIES et ne doit jamais remplacer la ville sélectionnée à la frappe.
+
+Les événements analytics panier et commande sont dédupliqués par portée d’installation ; ne pas réutiliser leurs identifiants pour le Pixel. Le suivi des états est une photographie actuelle, sans reconstitution des anciennes commandes, sans preuve de paiement, et ne concerne que les commandes attribuées à une visite. Toute écriture statistique après une transition métier est facultative : préserver impérativement le succès de la transaction métier si cette écriture échoue. Les compteurs confirmation/expédition incluent les étapes suivantes et excluent les annulations ; leurs libellés l’expliquent.
+
+Les horodatages du résumé CRM proviennent de l’outbox SENT et des reçus de retour acceptés, sans dévoiler leurs contenus. Garder la distinction entre service programmé, envoi accepté, confirmation client, expédition et paiement. L’IA reste pilotée dans l’administration. Aucun ancien envoi rejoué par cette amélioration.
+
 ## Pointures et hydratation du panier — 23 octobre 2026
 
 Une variante doit représenter une seule taille. `isAmbiguousSize` est partagé par administration, API, panier et réservation : les variantes historiques ambiguës restent dans la base et dans l’administration pour rapprochement, mais sont retirées de la vente. Ne jamais répartir leur stock sans inventaire réel fourni par le marchand. La copie locale isolée de cette intervention se trouve dans `work/imad-audit-priorities`, basée sur Master d66e5e4 ; ne pas écraser les autres copies de travail.

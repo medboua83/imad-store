@@ -4,6 +4,7 @@ import {
     analyticsAllowed,
     analyticsVisit,
     analyticsOrderHeaders,
+    trackCart,
 } from "../apps/web/src/lib/store-analytics";
 test("Tracking is ephemeral, respects exclusions, and checkout never invents a visit", () => {
     const original = new Map<string, PropertyDescriptor | undefined>();
@@ -15,12 +16,14 @@ test("Tracking is ephemeral, respects exclusions, and checkout never invents a v
     });
     const browser = { hostname: "shop.example", search: "" },
         navigator = { doNotTrack: "0", globalPrivacyControl: false };
+    const events: any[]=[];
     for (const [key, value] of Object.entries({
         window: {},
         location: browser,
         navigator,
         localStorage: storage(local),
         sessionStorage: storage(session),
+        fetch: async (_url:string, options:any) => { events.push(JSON.parse(options.body)); return {}; },
     })) {
         original.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
         Object.defineProperty(globalThis, key, { value, writable: true, configurable: true });
@@ -28,6 +31,11 @@ test("Tracking is ephemeral, respects exclusions, and checkout never invents a v
     try {
         assert.deepEqual(analyticsOrderHeaders(), {});
         const first = analyticsVisit(true)!;
+        trackCart("real-product");
+        assert.equal(events.length,1);
+        assert.deepEqual(events[0],{session:first.id,page:"/products/real-product",test:false,action:"cart"});
+        trackCart("invalid?private=data");
+        assert.equal(events.length,1);
         assert.equal(analyticsVisit(true)!.id, first.id);
         assert.equal(analyticsOrderHeaders()["X-Analytics-Session"], first.id);
         const stored = JSON.parse(session.get("imad:analytics:visit:v1"));
@@ -37,12 +45,16 @@ test("Tracking is ephemeral, respects exclusions, and checkout never invents a v
         assert.notEqual(analyticsVisit(true)!.id, first.id);
         local.set("adminToken", "local-test");
         assert.equal(analyticsAllowed(), false);
+        trackCart("real-product");
+        assert.equal(events.length,1);
         local.clear();
         local.set("imad:analytics:exclude", "1");
         assert.equal(analyticsAllowed(), false);
         local.clear();
         navigator.doNotTrack = "1";
         assert.equal(analyticsAllowed(), false);
+        trackCart("real-product");
+        assert.equal(events.length,1);
         navigator.doNotTrack = "0";
         navigator.globalPrivacyControl = true;
         assert.equal(analyticsAllowed(), false);

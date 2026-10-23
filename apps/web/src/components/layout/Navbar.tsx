@@ -19,24 +19,22 @@ import {
 import { useRef, useEffect, useState } from "react";
 import { useCartStore } from "@/store/cart.store";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getCategories } from "@/lib/api";
+import { publishedCategories } from "@/lib/catalog-navigation";
 const dockLinks = [
     ["/", "الرئيسية", House],
     ["/shop", "المتجر", LayoutGrid],
     ["/contact", "تواصلوا معنا", MessageCircle],
 ] as const;
-const categories = [
-    ["abayas", "العبايات"],
-    ["womens-shoes", "أحذية نسائية"],
-    ["shawls", "الشيلان"],
-    ["mens-clogs", "صابو رجالي"],
-    ["bags", "الحقائب"],
-];
 const links = [
     ["/", "الرئيسية"],
     ["/shop", "المتجر"],
     ["/contact", "تواصلوا معنا"],
 ];
 export function Navbar() {
+    const {data = []} = useQuery({queryKey:["public-categories"],queryFn:getCategories,staleTime:60_000});
+    const categories = publishedCategories(data);
     const menu = useRef<HTMLDialogElement>(null);
     const path = usePathname();
     const menuTrigger = useRef<HTMLButtonElement>(null);
@@ -211,22 +209,22 @@ export function Navbar() {
                         </Link>
                         <nav className="menu-categories" aria-label="فئات المنتجات">
                             <h3>تسوقوا حسب الفئة</h3>
-                            {categories.map(([slug, label]) => (
+                            {categories.map((category) => (
                                 <Link
-                                    href={`/shop?category=${slug}`}
-                                    key={slug}
+                                    href={`/shop?category=${category.slug}`}
+                                    key={category.slug}
                                     onClick={closeMenu}
                                 >
                                     <span className="menu-category-icon" aria-hidden="true">
-                                        <Image
-                                            src={categoryThumbnail(slug)}
+                                        {categoryThumbnail(category.slug) && <Image
+                                            src={categoryThumbnail(category.slug)}
                                             alt=""
                                             width={42}
                                             height={42}
                                             className="menu-category-photo"
-                                        />
+                                        />}
                                     </span>
-                                    <span>{label}</span>
+                                    <span>{category.nameAr || category.nameFr} <small>({category.publishedCount})</small></span>
                                     <ArrowUpLeft size={16} aria-hidden="true" />
                                 </Link>
                             ))}

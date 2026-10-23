@@ -3,11 +3,21 @@ import assert from "node:assert/strict";
 import { shippingFee } from "../packages/shared/src/index";
 import {
   SHIPPING_CITIES,
+  searchShippingCities,
   canonicalShippingCity,
   normalizeShippingPhone,
 } from "../packages/shared/src/shipping-address";
 import { checkoutDeliverySchema } from "../backend/src/lib/checkout-shipping";
 import { packagePayload } from "../backend/src/lib/olivraison-api";
+test("City search accepts partial Arabic and aliases but returns only canonical carrier cities", () => {
+  for (const query of ["طنج", "Tanger", "Tang", " tangier "])
+    assert.ok(searchShippingCities(query).includes("tangier"), query);
+  assert.ok(searchShippingCities("الرباط").includes("rabat"));
+  assert.deepEqual(searchShippingCities("ville inexistante"), []);
+  assert.deepEqual(searchShippingCities(""), SHIPPING_CITIES);
+  for (const city of searchShippingCities("a"))
+    assert.equal(canonicalShippingCity(city), city);
+});
 test("checkout cities use the official carrier catalogue, explicit aliases and no guessed district", () => {
   assert.equal(SHIPPING_CITIES.length, new Set(SHIPPING_CITIES).size);
   for (const city of ["Tanger", "طنجة", "Tangier", " tangier "])

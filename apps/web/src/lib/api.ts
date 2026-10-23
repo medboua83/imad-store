@@ -120,6 +120,7 @@ export async function saveContent(
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Category {
+    publishedCount?: number;
     id: string;
     slug: string;
     nameFr: string;
@@ -404,6 +405,7 @@ export async function uploadProductImage(file: File): Promise<string> {
 }
 
 export type StoreAnalyticsSummary = {
+    funnel?: {cartVisits:number;checkoutVisits:number;confirmedOrders:number;shippedOrders:number;deliveredOrders:number;cancelledOrders:number;unknownOrders:number};
     days: number;
     start: string;
     end: string;

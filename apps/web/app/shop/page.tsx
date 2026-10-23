@@ -5,6 +5,7 @@ import { publicProducts, publicCategories } from "@/lib/server-api";
 import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
 import { categoryThumbnail } from "@/components/store/category-visuals";
+import { publishedCategories } from "@/lib/catalog-navigation";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
     title: "المتجر",
@@ -91,7 +92,7 @@ export default async function ShopPage({
                     <LayoutGrid size={18} aria-hidden="true" />
                     كل القطع
                 </Link>
-                {categories.map((c) => (
+                {publishedCategories(categories).map((c) => (
                     <Link
                         key={c.id}
                         href={queryLink({ category: c.slug })}
@@ -101,6 +102,7 @@ export default async function ShopPage({
                             <Image src={categoryThumbnail(c.slug)} width={30} height={30} alt="" />
                         )}
                         {c.nameAr || c.nameFr}
+                        <small>({c.publishedCount})</small>
                     </Link>
                 ))}
             </nav>
@@ -144,7 +146,7 @@ export default async function ShopPage({
                             defaultValue={value("category")}
                         >
                             <option value="">جميع الفئات</option>
-                            {categories.map((c) => (
+                            {publishedCategories(categories).map((c) => (
                                 <option key={c.id} value={c.slug}>
                                     {c.nameAr || c.nameFr}
                                 </option>

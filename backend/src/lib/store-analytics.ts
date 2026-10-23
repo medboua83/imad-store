@@ -104,6 +104,11 @@ export async function recordOrderConversion(
         maxTimeMS: 1500,
     })) as unknown as { cursor: { firstBatch: unknown[] } };
     if (!found.cursor.firstBatch.length) return;
+    const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { status: true },
+    });
+    if (!order) return;
     // The order id is irreversible here; conversion retries cannot count another order.
     await insertOnce(hash(`${scope}:order:${orderId}`), {
         scope,
@@ -111,7 +116,53 @@ export async function recordOrderConversion(
         kind: "order",
         test,
         at: createdAt.getTime(),
+        stage: order.status,
+        stageRank: { PENDING: 0, CONFIRMED: 1, SHIPPED: 2, DELIVERED: 3, CANCELLED: 4 }[
+            order.status
+        ],
     });
+}
+export async function recordCart(session: string, page: string, test: boolean) {
+    if (!page.startsWith("/products/")) return false;
+    const product = await prisma.product.findFirst({
+        where: { slug: page.slice(10), status: "ACTIVE" },
+        select: { id: true },
+    });
+    if (!product) return false;
+    const scope = analyticsScope();
+    await insertOnce(hash(`${scope}:cart:${session}:${test}`), {
+        scope,
+        session: sessionHash(scope, session),
+        kind: "cart",
+        test,
+        at: Date.now(),
+    });
+    return true;
+}
+/** Update only attributed orders; never reconstruct history or create another event. */
+export async function recordOrderStage(
+    orderId: string,
+    stage: "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED",
+) {
+    const scope = analyticsScope(),
+        rank = { PENDING: 0, CONFIRMED: 1, SHIPPED: 2, DELIVERED: 3, CANCELLED: 4 }[stage];
+    const result = (await prisma.$runCommandRaw({
+        update: collection,
+        maxTimeMS: 1500,
+        updates: [
+            {
+                q: {
+                    _id: hash(`${scope}:order:${orderId}`),
+                    scope,
+                    $or: [{ stageRank: { $lte: rank } }, { stageRank: { $exists: false } }],
+                },
+                u: { $set: { stage, stageRank: rank } },
+                upsert: false,
+            },
+        ],
+    })) as unknown as { writeErrors?: unknown[]; writeConcernError?: unknown };
+    if (result.writeErrors?.length || result.writeConcernError)
+        throw new Error("Analytics status write failed");
 }
 export async function readAnalytics(days: number) {
     const scope = analyticsScope(),
@@ -129,6 +180,21 @@ export async function readAnalytics(days: number) {
                                 _id: "$session",
                                 viewed: { $max: { $cond: [{ $eq: ["$kind", "page"] }, 1, 0] } },
                                 ordered: { $max: { $cond: [{ $eq: ["$kind", "order"] }, 1, 0] } },
+                                cart: { $max: { $cond: [{ $eq: ["$kind", "cart"] }, 1, 0] } },
+                                checkout: {
+                                    $max: {
+                                        $cond: [
+                                            {
+                                                $and: [
+                                                    { $eq: ["$kind", "page"] },
+                                                    { $eq: ["$page", "/checkout"] },
+                                                ],
+                                            },
+                                            1,
+                                            0,
+                                        ],
+                                    },
+                                },
                             },
                         },
                         { $match: { viewed: 1 } },
@@ -137,11 +203,17 @@ export async function readAnalytics(days: number) {
                                 _id: null,
                                 visits: { $sum: 1 },
                                 convertedVisits: { $sum: "$ordered" },
+                                cartVisits: { $sum: "$cart" },
+                                checkoutVisits: { $sum: "$checkout" },
                             },
                         },
                     ],
                     pages: [{ $match: { kind: "page" } }, { $count: "count" }],
                     orders: [{ $match: { kind: "order" } }, { $count: "count" }],
+                    stages: [
+                        { $match: { kind: "order" } },
+                        { $group: { _id: "$stage", count: { $sum: 1 } } },
+                    ],
                     products: [
                         { $match: { kind: "page", productId: { $exists: true } } },
                         {
@@ -166,7 +238,13 @@ export async function readAnalytics(days: number) {
     })) as unknown as {
         cursor: {
             firstBatch: Array<{
-                sessions: Array<{ visits: number; convertedVisits: number }>;
+                sessions: Array<{
+                    visits: number;
+                    convertedVisits: number;
+                    cartVisits: number;
+                    checkoutVisits: number;
+                }>;
+                stages: Array<{ _id: string | null; count: number }>;
                 pages: Array<{ count: number }>;
                 orders: Array<{ count: number }>;
                 productViews: Array<{ count: number }>;
@@ -198,6 +276,19 @@ export async function readAnalytics(days: number) {
         pageViews: data?.pages[0]?.count ?? 0,
         productViews: data?.productViews[0]?.count ?? 0,
         attributedOrders: data?.orders[0]?.count ?? 0,
+        funnel: {
+            cartVisits: data?.sessions[0]?.cartVisits ?? 0,
+            checkoutVisits: data?.sessions[0]?.checkoutVisits ?? 0,
+            confirmedOrders: (data?.stages ?? [])
+                .filter((s) => ["CONFIRMED", "SHIPPED", "DELIVERED"].includes(s._id || ""))
+                .reduce((sum, s) => sum + s.count, 0),
+            shippedOrders: (data?.stages ?? [])
+                .filter((s) => ["SHIPPED", "DELIVERED"].includes(s._id || ""))
+                .reduce((sum, s) => sum + s.count, 0),
+            deliveredOrders: data?.stages.find((s) => s._id === "DELIVERED")?.count ?? 0,
+            cancelledOrders: data?.stages.find((s) => s._id === "CANCELLED")?.count ?? 0,
+            unknownOrders: data?.stages.find((s) => !s._id)?.count ?? 0,
+        },
         products: (data?.products ?? []).map((p) => ({ id: p._id, name: p.name, views: p.views })),
     };
 }

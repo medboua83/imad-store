@@ -109,6 +109,19 @@ export async function getDeskcommOrderStatus(req: Request, res: Response) {
 }
 export async function getDeskcommConfig(_req: Request, res: Response) {
     const c = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+    const [sent, returned, pending, failed] = await Promise.all([
+        prisma.deskcommOutbox.findFirst({
+            where: { status: "SENT" },
+            orderBy: { updatedAt: "desc" },
+            select: { updatedAt: true },
+        }),
+        prisma.deskcommStatusReceipt.findFirst({
+            orderBy: { createdAt: "desc" },
+            select: { createdAt: true },
+        }),
+        prisma.deskcommOutbox.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
+        prisma.deskcommOutbox.count({ where: { status: "FAILED" } }),
+    ]);
     res.setHeader("Cache-Control", "no-store");
     res.json({
         success: true,
@@ -121,6 +134,12 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),
             connection: await publicConnection(),
+            activity: {
+                lastSentAt: sent?.updatedAt ?? null,
+                lastReturnAt: returned?.createdAt ?? null,
+                pending,
+                failed,
+            },
         },
     });
 }

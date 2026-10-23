@@ -2,6 +2,7 @@ import { enqueueOlivraison } from "./olivraison-enqueue";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "./prisma";
 import { AppError } from "../middleware/error.middleware";
+import { recordOrderStage } from "./store-analytics";
 
 export const orderInclude = {
     items: {
@@ -30,7 +31,7 @@ export async function transitionOrderStatus(
         throw new AppError("Unsupported CRM transition", 403);
     for (let attempt = 0; attempt < 5; attempt++) {
         try {
-            return await prisma.$transaction(async (tx) => {
+            const result = await prisma.$transaction(async (tx) => {
                 const order = await tx.order.findUnique({ where: { id }, include: orderInclude });
                 if (!order) throw new AppError("Commande introuvable", 404);
                 async function recordReceipt(changed: boolean) {
@@ -118,7 +119,8 @@ export async function transitionOrderStatus(
                         orderId: id,
                     },
                 });
-                if (nextStatus === "CONFIRMED") await enqueueOlivraison(tx, { ...order, status: nextStatus });
+                if (nextStatus === "CONFIRMED")
+                    await enqueueOlivraison(tx, { ...order, status: nextStatus });
                 await recordReceipt(true);
                 return {
                     order: await tx.order.findUniqueOrThrow({
@@ -128,6 +130,12 @@ export async function transitionOrderStatus(
                     changed: true,
                 };
             });
+            try {
+                await recordOrderStage(id, result.order.status);
+            } catch {
+                console.warn("Analytics status unavailable; order transition preserved");
+            }
+            return result;
         } catch (error) {
             if (
                 ["P2034", ...(crmReceipt ? ["P2002"] : [])].includes(

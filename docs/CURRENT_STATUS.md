@@ -1,5 +1,15 @@
 # Current Status — 2026-10-18
 
+## Suite de l’audit UX et conversion — candidat du 23 octobre 2026
+
+Les collections publiques présentent uniquement les catégories contenant des produits publiés avec image, avec leur nombre d’articles. Les catégories vides restent administrables. Catalogue mobile raccourci, cadrage des photos sans découpe, petit visuel superposé de l’accueil masqué sur mobile et grille centrée pour les petits catalogues. Aucune photo produit, mesure, donnée de stock ou condition commerciale inventée.
+
+Le checkout permet une recherche arabe/français dans les villes existantes tout en gardant le select natif et les identifiants canoniques du transporteur. Le résumé CRM affiche les derniers envois/retours réellement enregistrés, les attentes et échecs ; les clés restent dans Avancé et l’interrupteur IA reste accessible. Enregistrer n’envoie rien.
+
+Statistiques internes : un ajout au panier par visite, ouverture du checkout et état actuel des commandes attribuées. Séparation par installation, exclusion tests/admin/DNT/GPC, identifiants hachés et rétention existante conservés. Les transitions enrichissent uniquement les événements déjà attribués, après transaction métier ; une erreur statistique ne doit jamais invalider une commande confirmée. Aucun nouvel événement Meta ni reprise historique. Une FAQ factuelle est disponible sur Contact.
+
+Recette locale : 80 tests de fonctionnement réussis, compilations backend/web et lint réussis ; aperçu manuel à 390 et 1440 pixels. Catalogue mobile mesuré à 464 px du haut contre 650 px avant, sans débordement. Les essais automatisés UI doivent réussir en CI avant fusion : le navigateur autonome ne démarre pas dans l’environnement local. Les nouvelles photos réelles, conditions commerciales exactes et mesures de performance sur un téléphone/réseau limité restent à compléter. Publication à vérifier après fusion, sans commande réelle ni action transporteur.
+
 ## Audit prioritaire — candidat du 23 octobre 2026
 
 Le panier est réhydraté après le premier rendu React. La cause de l’erreur 418 a été reproduite en développement : le compteur du CartDrawer affichait 0 côté serveur et 1 côté navigateur avec une ancienne session. Le correctif conserve le panier après rechargement sans masquer les avertissements React.
