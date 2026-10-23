@@ -1,5 +1,11 @@
 # Current Status — 2026-10-18
 
+## Cadres dorés des catégories — candidat du 23 octobre 2026
+
+Les petites photos des catégories gardent leurs fichiers et leurs dimensions : anneau doré sur l’accueil, cadre ivoire/doré dans le menu et les filtres du catalogue, bordure champagne sur la catégorie active. Le sélecteur d’image et la règle limitant la navigation aux catégories publiées ne changent pas. Aucun téléversement ni changement de données.
+
+Lint et compilation web réussis. Aperçu isolé vérifié à 320, 390 et 1440 pixels : pas de débordement ni d’image cassée, photo d’accueil 76/96 px, icône de menu 42 px et miniature du catalogue 30 px. CI et déploiement à vérifier dans la PR avant clôture ; comparaison des cinq fichiers publics prévue après publication.
+
 ## Présentation des photos originales — candidat du 23 octobre 2026
 
 Le marchand a demandé de conserver intégralement ses photos : aucune retouche générée, aucun remplacement ni téléversement ne doit être appliqué. `photo-presentation.css` harmonise seulement les cadres ivoire/dorés, l’affichage entier avec `object-fit: contain`, les espacements, les miniatures sélectionnées, l’agrandissement et les petites photos du panier. Aucun filtre CSS sur les couleurs ni zoom au survol susceptible de rogner le produit.
