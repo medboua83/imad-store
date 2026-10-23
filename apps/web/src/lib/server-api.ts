@@ -2,7 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { resolvePublicOrigin } from "./share-metadata";
 import { cache } from "react";
-import type { Product, ProductsResponse, Category, StoreSettings } from "./api";
+import type { Product, ProductsResponse, Category, StoreSettings, RecommendationProducts } from "./api";
 import { defaultSiteContent, type SiteContent } from "@imad-store/shared";
 const upstream = () => (process.env.API_UPSTREAM_URL || "http://127.0.0.1:4000").replace(/\/$/, "");
 async function publicRequest(path: string): Promise<Response> {
@@ -35,6 +35,15 @@ export const publicCategories = cache(
 export const publicSettings = cache(
     async () => (await serverGet<{ data: StoreSettings }>("/settings")).data,
 );
+export const publicRecommendations = cache(async (slug: string): Promise<RecommendationProducts> => {
+    try {
+        const data = (await serverGet<{data: RecommendationProducts}>(`/products/${encodeURIComponent(slug)}/recommendations`)).data;
+        return { upsell: Array.isArray(data?.upsell) ? data.upsell : [], crossSell: Array.isArray(data?.crossSell) ? data.crossSell : [] };
+    } catch {
+        // Optional merchandising must never block product selection or checkout.
+        return { upsell: [], crossSell: [] };
+    }
+});
 export const publicProduct = cache(async (slug: string): Promise<Product | null> => {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
     const response = await publicRequest(`/products/${encodeURIComponent(slug)}`);

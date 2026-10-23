@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductGallery } from "@/components/store/ProductGallery";
+import { Suspense } from "react";
+import { ProductSuggestions } from "@/components/store/ProductSuggestions";
 import { PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
@@ -112,6 +114,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
       </div>
+      <Suspense fallback={null}><ProductSuggestions slug={slug} /></Suspense>
     </section>
   );
 }

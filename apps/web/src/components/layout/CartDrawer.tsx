@@ -15,6 +15,7 @@ import { useCartStore } from "@/store/cart.store";
 import { useShipping } from "@/hooks/useShipping";
 import { CartLine } from "../store/CartLine";
 import { CartTotals } from "../store/CartTotals";
+import { CartRecommendations } from "../store/CartRecommendations";
 export function CartDrawer() {
     const dialog = useRef<HTMLDialogElement>(null);
     const { items, isOpen, closeCart, total, refreshCart, itemCount } = useCartStore();
@@ -146,6 +147,7 @@ export function CartDrawer() {
                                 <CartLine key={item.variantId} item={item} />
                             ))}
                         </div>
+                        {isOpen && <CartRecommendations active onNavigate={close} />}
                     </>
                 )}
             </div>

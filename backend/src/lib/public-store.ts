@@ -1,6 +1,6 @@
 import { assertStoreInstallation } from "./store-installation";
 import { ZodError } from "zod";
-import { readPublicProducts, readPublicProduct } from "../controllers/product.controller";
+import { readPublicProducts, readPublicProduct, readPublicRecommendations } from "../controllers/product.controller";
 import { readCategories } from "../controllers/category.controller";
 import { readSettings } from "../controllers/settings.controller";
 import { readPublicContent } from "./public-content";
@@ -15,6 +15,7 @@ export async function readPublicStore(path: string) {
         await assertStoreInstallation();
         let body: unknown;
         if (url.pathname === "/products") body = await readPublicProducts(Object.fromEntries(url.searchParams));
+        else if (/^\/products\/[a-z0-9-]+\/recommendations$/.test(url.pathname)) body = await readPublicRecommendations(url.pathname.split("/")[2]);
         else if (/^\/products\/[a-z0-9-]+$/.test(url.pathname)) body = await readPublicProduct(url.pathname.slice(10));
         else if (url.pathname === "/categories") body = await readCategories();
         else if (url.pathname === "/settings") body = await readSettings();

@@ -40,9 +40,15 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     await mongo.connect();
     await prisma.user.create({ data: { email: "hosted@example.invalid", passwordHash: await bcrypt.hash("isolated-hosted-test", 10), firstName: "Test", lastName: "Isolated", role: "ADMIN" } });
     const category = await prisma.category.create({ data: { slug: "hosted-test", nameFr: "Test", nameAr: "اختبار", nameEn: "Test" } });
+    const complement = await prisma.product.create({ data: {
+      slug: "hosted-complement-test", nameFr: "HOSTED COMPLEMENT", nameAr: "HOSTED COMPLEMENT", nameEn: "HOSTED COMPLEMENT",
+      descriptionFr: "Test", descriptionAr: "Test", descriptionEn: "Test", price: 50, status: "ACTIVE", images: ["/images/cat-abayas.png"], categoryId: category.id,
+      variants: { create: [{ color: "#000000", colorNameFr: "Noir", colorNameAr: "أسود", colorNameEn: "Black", stock: 3, sku: "HOSTED-COMPLEMENT" }] },
+    } });
     await prisma.product.create({ data: {
       slug: "hosted-product-test", nameFr: "HOSTED CATALOGUE TEST", nameAr: "HOSTED CATALOGUE TEST", nameEn: "HOSTED CATALOGUE TEST",
       descriptionFr: "Test", descriptionAr: "Test", descriptionEn: "Test", price: 100, status: "ACTIVE", images: ["/images/cat-abayas.png"], categoryId: category.id,
+      recommendationSettings: { enabled: true, upsellProductIds: [], crossSellProductIds: [complement.id] },
       variants: { create: [{ color: "#000000", colorNameFr: "Noir", colorNameAr: "أسود", colorNameEn: "Black", stock: 3, sku: "HOSTED-TEST" }] },
     } });
     // Test even when a deployment accidentally enables the historical worker flag:
@@ -69,7 +75,14 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     assert.deepEqual((await read("/products")).body, products);
     assert.equal((await read("/products/not-published")).status, 404);
     const detail = await get("/products/hosted-product-test");
-    assert.equal(detail.status, 200); assert.match(await detail.text(), /HOSTED CATALOGUE TEST/);
+    assert.equal(detail.status, 200);
+    const detailHtml = await detail.text();
+    assert.match(detailHtml, /HOSTED CATALOGUE TEST/);
+    assert.match(detailHtml, /HOSTED COMPLEMENT/);
+    const recommendations = await (await get("/api/products/hosted-product-test/recommendations")).json();
+    assert.deepEqual(recommendations.data.upsell, []);
+    assert.deepEqual(recommendations.data.crossSell.map(p => p.id), [complement.id]);
+    assert.deepEqual((await read("/products/hosted-product-test/recommendations")).body, recommendations);
     const shop = await get("/shop");
     assert.equal(shop.status, 200); assert.match(await shop.text(), /HOSTED CATALOGUE TEST/);
     assert.equal((await get("/")).status, 200);

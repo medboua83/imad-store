@@ -153,11 +153,22 @@ export interface Product {
     compareAtPrice?: number;
     quantityDiscounts?: import("@imad-store/shared").QuantityDiscount[];
     freeShipping?: boolean;
+    recommendationSettings?: RecommendationSettings;
     images: string[];
     status: string;
     category: Category;
     variants: ProductVariant[];
 }
+export interface RecommendationSettings {
+    enabled: boolean;
+    upsellProductIds: string[];
+    crossSellProductIds: string[];
+}
+export interface RecommendationProducts { upsell: Product[]; crossSell: Product[] }
+export const getProductRecommendations = async (slug: string, signal?: AbortSignal): Promise<RecommendationProducts> => {
+    const data = (await api.get(`/products/${encodeURIComponent(slug)}/recommendations`, { signal })).data.data;
+    return Array.isArray(data?.upsell) && Array.isArray(data?.crossSell) ? data : { upsell: [], crossSell: [] };
+};
 
 export interface ProductsResponse {
     success: boolean;
