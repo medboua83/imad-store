@@ -474,6 +474,7 @@ export function ProductsTab({
                                 <select
                                     className={inputClass}
                                     required
+                                    aria-label="Catégorie du produit"
                                     value={form.categoryId}
                                     onChange={(e) => set("categoryId", e.target.value)}
                                 >

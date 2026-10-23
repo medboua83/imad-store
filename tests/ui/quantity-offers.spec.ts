@@ -128,7 +128,7 @@ for (const width of [390, 1440]) {
         await expect(page.getByLabel("Adresse du produit", { exact: true })).toHaveValue(
             "nouveau-sac",
         );
-        await page.getByLabel("Catégorie", { exact: true }).selectOption(category.id);
+        await page.getByLabel("Catégorie du produit", { exact: true }).selectOption(category.id);
         await page.getByLabel("Prix de vente (MAD)", { exact: true }).fill("200");
         const preview = page.getByLabel("Aperçu des prix par quantité", { exact: true });
         await expect(preview).toContainText("400,00");
