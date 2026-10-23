@@ -347,7 +347,8 @@ export async function createOrder(req: Request, res: Response) {
                                           }
                                         : {}),
                                     paymentMethod: created.paymentMethod,
-                                    language: req.headers["x-locale"] === "ar" ? "ar" : "fr",
+                                    // The public checkout is Arabic and currently sends no locale header.
+                                    language: req.headers["x-locale"] === "fr" || req.headers["x-locale"] === "en" ? "fr" : "ar",
                                     items: created.items.map((i) => ({
                                         name:
                                             i.product?.nameFr ||

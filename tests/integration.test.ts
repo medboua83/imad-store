@@ -1082,6 +1082,9 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.equal(recap.reference, id.slice(-8).toUpperCase());
     assert.equal(recap.itemCount, job.payload.items.length);
     const firstItem = JSON.parse(data.order_item_1);
+    assert.equal(recap.language, "ar"); // Public Arabic checkout does not send x-locale.
+    assert.equal(firstItem.colorFr, p.variants[0].colorNameFr);
+    assert.equal(firstItem.size, p.variants[0].size);
     assert.equal(firstItem.quantity, job.payload.items[0].quantity);
     assert.equal(firstItem.unitPrice, job.payload.items[0].unitPrice);
     assert.equal(firstItem.colorFr, job.payload.items[0].colorFr);
