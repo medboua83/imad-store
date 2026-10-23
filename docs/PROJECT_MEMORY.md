@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Conserver les photographies originales — 23 octobre 2026
+
+Le marchand a annulé la retouche générative des photos puis demandé uniquement une amélioration de leur présentation. Ne jamais substituer les essais générés aux originaux. Le cadre doré doit rester une présentation CSS : sources, ordre, pixels et couleurs des fichiers préservés. Garder `object-fit: contain` dans la galerie, les miniatures, l’agrandissement et les photos du panier, sans filtre d’image ni effet de survol qui découpe la photo.
+
 ## Navigation et tunnel internes — 23 octobre 2026
 
 `publishedCount` compte les produits ACTIVE avec image, hors slugs de recette exclus du catalogue public. Les interfaces marchandes gardent toutes les catégories ; la navigation publique filtre ce compte. La recherche de ville ne doit produire que les valeurs canoniques de SHIPPING_CITIES et ne doit jamais remplacer la ville sélectionnée à la frappe.
