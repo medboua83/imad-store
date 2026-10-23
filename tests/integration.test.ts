@@ -1654,3 +1654,72 @@ test("carrier removal retires unfinished parcels, erases secrets and cannot repl
     await request(app).put(url).set(admin()).send({ ...config, apiKey: "isolated-next" }).expect(200);
     await request(app).delete(url).set(admin()).expect(200);
 });
+
+
+test("Dashboard controls signed transactional assistance without creating customer consent or replaying history", async () => {
+    const previous = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
+    const historical = await prisma.deskcommOutbox.findMany();
+    const endpoint = "/api/integrations/deskcomm";
+    const update = (flag: boolean) => request(app).put(endpoint).set(admin()).send({ enabled: true, orderAssistanceEnabled: flag });
+    try {
+        assert.equal((await request(app).put(endpoint).send({ enabled: true, orderAssistanceEnabled: true })).status, 401);
+        const customer = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+        assert.equal((await request(app).put(endpoint).set("Authorization", `Bearer ${customer}`).send({ enabled: true, orderAssistanceEnabled: true })).status, 403);
+        assert.equal((await request(app).put(endpoint).set(admin()).send({ enabled: true, orderAssistanceEnabled: "true" })).status, 400);
+        await request(app).put(endpoint).set(admin()).send({ enabled: true, signingSecret: "cb".repeat(32), orderAssistanceEnabled: true }).expect(200);
+        assert.equal((await request(app).get(endpoint).set(admin())).body.data.orderAssistanceEnabled, true);
+        const p = await prisma.product.create({ data: { ...payload(), variants: { create: { ...payload().variants[0], stock: 20 } } }, include: { variants: true } });
+        const body = { ...checkout(), aiServiceConsent: false, items: [{ productId: p.id, variantId: p.variants[0].id, quantity: 1 }] };
+        const k = key();
+        const send = (value: any, idem = key()) => request(app).post("/api/orders").set("Idempotency-Key", idem).send(value);
+        assert.equal((await send({ ...body, orderServiceRequested: true })).status, 400);
+        const results = await Promise.all([send(body, k), send(body, k)]);
+        assert.deepEqual(results.map(r => r.status).sort(), [200, 201]);
+        const order = results[0].body.data;
+        assert.equal(order.id, results[1].body.data.id);
+        assert.equal(order.orderServiceRequested, true);
+        assert.equal(order.orderServicePolicyVersion, "store-order-service-v1-2026-10-19");
+        assert.ok(order.orderServiceRequestedAt);
+        assert.equal(order.aiServiceConsent, false);
+        assert.equal(order.aiServiceConsentVersion, null);
+        assert.equal(order.aiServiceConsentAt, null);
+        const job = await prisma.deskcommOutbox.findUnique({ where: { orderId: order.id } });
+        assert.equal(job.payload.orderServiceRequested, true);
+        const { sendOrderToDeskcomm } = await import("../backend/src/lib/deskcomm-crm");
+        failDelivery = false;
+        await sendOrderToDeskcomm(job.payload);
+        let received = JSON.parse(receipts.at(-1)!.body);
+        assert.equal(received.order_service_requested, true);
+        assert.equal(received.ai_service_consent, null);
+        assert.equal(received.aiConsent, false);
+        assert.equal(received.order_service_policy_version, order.orderServicePolicyVersion);
+        await update(false).expect(200);
+        await sendOrderToDeskcomm(job.payload); // A queued instruction is stopped at delivery too.
+        received = JSON.parse(receipts.at(-1)!.body);
+        assert.equal(received.order_service_requested, false);
+        assert.equal(received.ai_service_consent, null);
+        const forged = await send({ ...body, aiServiceConsent: true, aiServiceConsentVersion: "order-whatsapp-v1-2026-10-19" });
+        assert.equal(forged.status, 201);
+        assert.equal(forged.body.data.orderServiceRequested, false);
+        assert.equal(forged.body.data.aiServiceConsent, false);
+        const replay = await send(body, k);
+        assert.equal(replay.status, 200);
+        assert.equal(replay.body.data.id, order.id);
+        assert.equal(replay.body.data.orderServiceRequested, true); // Frozen receipt.
+        assert.equal(await prisma.deskcommOutbox.count({ where: { orderId: order.id } }), 1);
+        await update(true).expect(200);
+        const offJob = await prisma.deskcommOutbox.findUnique({ where: { orderId: forged.body.data.id } });
+        await sendOrderToDeskcomm(offJob.payload);
+        assert.equal(JSON.parse(receipts.at(-1)!.body).order_service_requested, false);
+        await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings", directSiteConfirmation: true }, update: { directSiteConfirmation: true } });
+        const direct = await send({ ...body, confirmationMode: "SITE" });
+        assert.equal(direct.status, 201);
+        assert.equal(direct.body.data.orderServiceRequested, false);
+        await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: false } });
+        for (const old of historical) assert.deepEqual((await prisma.deskcommOutbox.findUnique({ where: { id: old.id } })).payload, old.payload);
+    } finally {
+        if (previous) { const { id, updatedAt, ...data } = previous; await prisma.deskcommIntegration.update({ where: { id }, data }); }
+        else await prisma.deskcommIntegration.deleteMany({ where: { id: "deskcomm" } });
+        await prisma.storeSettings.updateMany({ where: { id: "settings" }, data: { directSiteConfirmation: false } });
+    }
+});

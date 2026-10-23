@@ -138,15 +138,15 @@ for (const viewport of [
         });
     });
 }
-test("disabled option keeps the original checkout and WhatsApp choice", async ({ page }) => {
+test("standard checkout has no customer AI option", async ({ page }) => {
     const { requests } = await fixture(page, false);
     await fillCheckout(page, "+212600000099");
-    await page.getByRole("checkbox").check();
+    await expect(page.locator('input[name="aiServiceConsent"]')).toHaveCount(0);
     await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.confirmationMode).toBeUndefined();
-    expect(requests[0].body.aiServiceConsent).toBe(true);
+    expect(requests[0].body.aiServiceConsent).toBe(false);
 });
 test("network retry retains the same idempotency key and request", async ({ page }) => {
     const { requests } = await fixture(page, true, true);

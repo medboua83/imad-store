@@ -8,6 +8,7 @@ import { prisma } from "../lib/prisma";
 const schema = z
     .object({
         enabled: z.boolean(),
+        orderAssistanceEnabled: z.boolean().optional(),
         webhookUrl: z.string().trim().max(2048).optional(),
         clearWebhook: z.boolean().optional(),
         signingSecret: z
@@ -115,6 +116,7 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
             enabled: c?.enabled ?? false,
             configured: Boolean(c?.webhookCiphertext),
             signedSending: Boolean(c?.signingCiphertext),
+            orderAssistanceEnabled: c?.orderAssistanceEnabled === true,
             updatedAt: c?.updatedAt ?? null,
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),
@@ -177,10 +179,18 @@ export async function putDeskcommConfig(req: Request, res: Response) {
         create: {
             id: "deskcomm",
             enabled: b.enabled,
+            orderAssistanceEnabled: b.orderAssistanceEnabled ?? null,
             webhookCiphertext: cipher,
             signingCiphertext,
         },
-        update: { enabled: b.enabled, webhookCiphertext: cipher, signingCiphertext },
+        update: {
+            enabled: b.enabled,
+            ...(b.orderAssistanceEnabled !== undefined
+                ? { orderAssistanceEnabled: b.orderAssistanceEnabled }
+                : {}),
+            webhookCiphertext: cipher,
+            signingCiphertext,
+        },
     });
     res.setHeader("Cache-Control", "no-store");
     res.json({
@@ -189,6 +199,7 @@ export async function putDeskcommConfig(req: Request, res: Response) {
             enabled: c.enabled,
             configured: Boolean(c.webhookCiphertext),
             signedSending: Boolean(c.signingCiphertext),
+            orderAssistanceEnabled: c.orderAssistanceEnabled === true,
             updatedAt: c.updatedAt,
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),

@@ -1,11 +1,13 @@
 import { createHmac } from "node:crypto";
-import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
+import { ORDER_SERVICE_POLICY_VERSION, ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { prisma } from "./prisma";
 import { decryptDeskcommValue } from "./deskcomm-config";
 /** Server-only DeskcommCRM adapter. Additional fields require CRM-side mapping. */
 export interface DeskcommOrder {
   id: string;
   captureVersion?: 1;
+  orderServiceRequested?: boolean;
+  orderServicePolicyVersion?: string;
   confirmationMethod?: "SITE";
   confirmedAt?: string;
   confirmationRequired?: false;
@@ -102,7 +104,11 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
           ? `store-${process.env.STORE_INSTANCE_ID}-${order.id}`
           : `imad-store-${order.id}`,
       );
+    const managedService =
+      modernCapture && order.orderServicePolicyVersion === ORDER_SERVICE_POLICY_VERSION;
     const consent =
+      !managedService &&
+      cfg?.orderAssistanceEnabled !== false &&
       order.confirmationMethod !== "SITE" &&
       order.aiServiceConsent === true &&
       order.aiServiceConsentVersion === ORDER_WHATSAPP_NOTICE_VERSION &&
@@ -115,7 +121,18 @@ export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
       submission_status: "completed",
       ...(order.confirmationMethod === "SITE" ? { confirmation_required: false } : {}),
       aiConsent: consent,
-      ai_service_consent: consent,
+      ai_service_consent: managedService && order.confirmationMethod !== "SITE" ? null : consent,
+      ...(managedService
+        ? {
+            order_service_requested:
+              order.confirmationMethod !== "SITE" &&
+              order.orderServiceRequested === true &&
+              cfg?.enabled === true &&
+              cfg.orderAssistanceEnabled === true &&
+              Boolean(cfg.signingCiphertext),
+            order_service_policy_version: ORDER_SERVICE_POLICY_VERSION,
+          }
+        : {}),
       ...(consent ? { ai_service_consent_version: order.aiServiceConsentVersion } : {}),
     };
     const jsonBody = Boolean(cfg?.signingCiphertext && modernCapture);

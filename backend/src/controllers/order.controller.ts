@@ -2,7 +2,7 @@ import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
 import { Request, Response } from "express";
-import { ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
+import { ORDER_SERVICE_POLICY_VERSION, ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -140,7 +140,27 @@ export async function createOrder(req: Request, res: Response) {
                             "Le mode de confirmation a changé. Actualisez et vérifiez votre commande.",
                             409,
                         );
-                    const acceptedAssistance = !direct && body.aiServiceConsent;
+                    const crmIntegration = await tx.deskcommIntegration.findUnique({
+                        where: { id: "deskcomm" },
+                        select: {
+                            enabled: true,
+                            webhookCiphertext: true,
+                            signingCiphertext: true,
+                            orderAssistanceEnabled: true,
+                        },
+                    });
+                    // Dashboard instruction and customer consent have distinct provenance.
+                    const managedAssistance =
+                        typeof crmIntegration?.orderAssistanceEnabled === "boolean";
+                    const acceptedAssistance =
+                        !direct && !managedAssistance && body.aiServiceConsent;
+                    const orderServiceRequested = Boolean(
+                        !direct &&
+                        crmIntegration?.orderAssistanceEnabled === true &&
+                        crmIntegration.enabled &&
+                        crmIntegration.webhookCiphertext &&
+                        crmIntegration.signingCiphertext,
+                    );
                     const ids = body.items.map((i) => i.productId);
                     const objectIds = ids.filter((id) => /^[a-fA-F0-9]{24}$/.test(id));
                     const slugs = ids.filter((id) => !/^[a-fA-F0-9]{24}$/.test(id));
@@ -227,6 +247,11 @@ export async function createOrder(req: Request, res: Response) {
                             idempotencyKey: key,
                             requestFingerprint,
                             inventoryReserved: true,
+                            orderServiceRequested: managedAssistance ? orderServiceRequested : null,
+                            orderServicePolicyVersion: managedAssistance
+                                ? ORDER_SERVICE_POLICY_VERSION
+                                : null,
+                            orderServiceRequestedAt: orderServiceRequested ? new Date() : null,
                             aiServiceConsent: acceptedAssistance,
                             aiServiceConsentVersion: acceptedAssistance
                                 ? body.aiServiceConsentVersion
@@ -275,10 +300,6 @@ export async function createOrder(req: Request, res: Response) {
                         );
                     // Delivery is controlled by the saved administrator integration setting.
                     // Keep the event atomic with the order/stock and never backfill older orders.
-                    const crmIntegration = await tx.deskcommIntegration.findUnique({
-                        where: { id: "deskcomm" },
-                        select: { enabled: true, webhookCiphertext: true },
-                    });
                     if (crmIntegration?.enabled && crmIntegration.webhookCiphertext) {
                         await tx.deskcommOutbox.create({
                             data: {
@@ -286,6 +307,13 @@ export async function createOrder(req: Request, res: Response) {
                                 payload: {
                                     id: created.id,
                                     captureVersion: 1,
+                                    ...(managedAssistance
+                                        ? {
+                                              orderServiceRequested,
+                                              orderServicePolicyVersion:
+                                                  ORDER_SERVICE_POLICY_VERSION,
+                                          }
+                                        : {}),
                                     aiServiceConsent: created.aiServiceConsent === true,
                                     aiServiceConsentVersion:
                                         created.aiServiceConsentVersion ?? undefined,

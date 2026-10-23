@@ -8,6 +8,7 @@ type Config = {
     enabled: boolean;
     configured: boolean;
     signedSending?: boolean;
+    orderAssistanceEnabled?: boolean;
     updatedAt: string | null;
     confirmationSync?: boolean;
     connection?: CompanyConnection | null;
@@ -26,6 +27,7 @@ export default function DeskcommTab() {
         [clearWebhook, setClear] = useState(false),
         [loading, setLoading] = useState(false),
         [message, setMessage] = useState("");
+    const [orderAssistanceEnabled, setOrderAssistanceEnabled] = useState(false);
     const [signingSecret, setSigningSecret] = useState("");
     const [clearSigningSecret, setClearSigningSecret] = useState(false);
     const [reference, setReference] = useState("");
@@ -66,6 +68,7 @@ export default function DeskcommTab() {
             .then((r) => {
                 setConfig(r.data.data);
                 setEnabled(r.data.data.enabled);
+                setOrderAssistanceEnabled(r.data.data.orderAssistanceEnabled === true);
             })
             .catch(() => setMessage("Impossible de charger la configuration"));
     }, []);
@@ -76,12 +79,14 @@ export default function DeskcommTab() {
         try {
             const body: {
                 enabled: boolean;
+                orderAssistanceEnabled: boolean;
                 webhookUrl?: string;
                 clearWebhook?: boolean;
                 signingSecret?: string;
                 clearSigningSecret?: boolean;
             } = {
                 enabled,
+                orderAssistanceEnabled,
                 clearWebhook,
                 clearSigningSecret,
             };
@@ -260,7 +265,7 @@ export default function DeskcommTab() {
                             : "Sans signature entrante CRM"}
                         . Cette clé est distincte de la clé de retour des confirmations. Le premier
                         contact IA exige aussi un agent, un canal et une règle actifs dans le CRM,
-                        ainsi que la demande du client.
+                        avec le réglage d’assistance activé dans cette administration.
                     </p>
                     <label className="block text-sm">
                         Clé de la source CRM (vide = conserver)
@@ -295,6 +300,30 @@ export default function DeskcommTab() {
                     />
                     Transmettre automatiquement les nouvelles commandes au CRM
                 </label>
+                <fieldset className="space-y-3 rounded-xl border p-4" disabled={!config || loading}>
+                    <legend>Assistance IA des commandes</legend>
+                    <label className="flex items-center gap-3 text-sm">
+                        <input
+                            type="checkbox"
+                            role="switch"
+                            checked={orderAssistanceEnabled}
+                            onChange={(e) => setOrderAssistanceEnabled(e.target.checked)}
+                            aria-describedby="order-assistance-help"
+                        />
+                        Activer l’assistance IA par WhatsApp
+                    </label>
+                    <p id="order-assistance-help" className="text-xs admin-muted">
+                        Ce choix est géré ici, sans case dans le formulaire client. Il concerne les
+                        nouvelles commandes à confirmer. La connexion signée et la règle de suivi de
+                        commande doivent aussi être actives dans le CRM. La confirmation directe sur
+                        le site reste prioritaire. Aucun ancien envoi n’est relancé.
+                    </p>
+                    <p className="text-xs admin-muted">
+                        Les oppositions des clients et les prises en charge par l’équipe restent
+                        respectées. Désactiver bloque les demandes encore en attente d’envoi ; les
+                        conversations déjà ouvertes se gèrent dans le CRM.
+                    </p>
+                </fieldset>
                 <label className="flex items-center gap-3 text-sm admin-danger">
                     <input
                         type="checkbox"
@@ -311,6 +340,7 @@ export default function DeskcommTab() {
                 <button
                     type="submit"
                     disabled={
+                        !config ||
                         loading ||
                         (clearWebhook && Boolean(url)) ||
                         (clearSigningSecret && Boolean(signingSecret))

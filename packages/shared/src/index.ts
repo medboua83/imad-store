@@ -145,3 +145,6 @@ export function shippingFee(
         return 0;
     return Math.round(settings.shippingCost * 100) / 100;
 }
+
+/** Merchant instruction for transactional order service; never customer consent. */
+export const ORDER_SERVICE_POLICY_VERSION = "store-order-service-v1-2026-10-19";

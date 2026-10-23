@@ -4,7 +4,6 @@ import { metaPurchase } from "@/lib/meta-pixel";
 import { shippingFee } from "@imad-store/shared";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { checkoutAssistance } from "@/lib/checkout-assistance";
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
@@ -25,12 +24,10 @@ export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
     const shipping = useShipping(total(), items);
     const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
-    const [whatsappAssistance, setWhatsappAssistance] = useState(false);
     const [fields, setFields] = useState<Record<string, string>>({});
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [orderId, setOrderId] = useState("");
-    const [assistanceRecorded, setAssistanceRecorded] = useState(false);
     const key = useRef("");
     const submissionLock = useRef(false);
     const [review, setReview] = useState<string | null>(null);
@@ -55,20 +52,12 @@ export default function CheckoutPage() {
     async function submit(e: React.FormEvent) {
         e.preventDefault();
         if (submissionLock.current) return;
-        const assistance = direct
-            ? { aiServiceConsent: false }
-            : checkoutAssistance(new FormData(e.currentTarget as HTMLFormElement));
         const errors: Record<string, string> = {};
         if (form.fullName.trim().length < 2) errors.fullName = "أدخلوا الاسم الكامل";
         if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
             errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
         if (!form.city.trim()) errors.city = "أدخلوا المدينة";
         if (form.address.trim().length < 3) errors.address = "أدخلوا عنوان التوصيل";
-        if (
-            assistance.aiServiceConsent &&
-            !/^\+212[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, ""))
-        )
-            errors.phone = "للمساعدة عبر واتساب، أدخلوا الرقم الدولي بأنفسكم: +212…";
         setFields(errors);
         if (Object.keys(errors).length) {
             document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
@@ -116,7 +105,7 @@ export default function CheckoutPage() {
                 {
                     paymentMethod: "COD",
                     ...(direct ? { confirmationMode: "SITE" as const } : {}),
-                    ...assistance,
+                    aiServiceConsent: false,
                     expectedTotal: confirmedTotal,
                     customer: {
                         fullName: form.fullName.trim(),
@@ -137,7 +126,6 @@ export default function CheckoutPage() {
             if (!order.id) throw new Error("Order receipt unavailable");
             setOrderId(order.id);
             setConfirmedOnSite(order.confirmationMethod === "SITE");
-            setAssistanceRecorded(order.aiServiceConsent === true);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });
         } catch (failure) {
@@ -266,9 +254,6 @@ export default function CheckoutPage() {
                         ? "تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."
                         : "سيتواصل معكم فريقنا لتأكيد التفاصيل."}
                 </p>
-                {assistanceRecorded && (
-                    <p>تم حفظ موافقتكم على المساعدة الآلية عبر واتساب لتأكيد هذه الطلبية.</p>
-                )}
                 <Link href="/shop" className="btn-primary">
                     العودة إلى المتجر <ArrowLeft size={18} aria-hidden="true" />
                 </Link>
@@ -378,24 +363,6 @@ export default function CheckoutPage() {
                             <p role="alert" className="checkout-alert">
                                 احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
                             </p>
-                        )}
-                        {!direct && shipping.settings?.whatsappAssistanceAvailable && (
-                            <label className="checkout-policy flex items-start gap-3">
-                                <input
-                                    type="checkbox"
-                                    name="aiServiceConsent"
-                                    value="true"
-                                    disabled={busy}
-                                    checked={whatsappAssistance}
-                                    onChange={(e) => setWhatsappAssistance(e.target.checked)}
-                                    aria-describedby="whatsapp-assistance-details"
-                                />
-                                <span id="whatsapp-assistance-details">
-                                    أرغب في أن تتواصل معي المساعدة الآلية للمتجر عبر واتساب لتأكيد
-                                    هذه الطلبية وتوضيح تفاصيلها. يمكنني طلب التحدث إلى الفريق أو
-                                    إيقاف المساعدة. هذا الاختيار اختياري ولا يخص الرسائل الإعلانية.
-                                </span>
-                            </label>
                         )}
                         <p className="checkout-policy">
                             قبل التأكيد، اطلعوا على <Link href="/delivery">التوصيل</Link> و

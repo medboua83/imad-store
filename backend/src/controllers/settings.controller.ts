@@ -15,7 +15,12 @@ export async function readSettings() {
     };
     const integration = await prisma.deskcommIntegration.findUnique({
         where: { id: "deskcomm" },
-        select: { enabled: true, webhookCiphertext: true, signingCiphertext: true },
+        select: {
+            enabled: true,
+            webhookCiphertext: true,
+            signingCiphertext: true,
+            orderAssistanceEnabled: true,
+        },
     });
     return {
         success: true,
@@ -24,6 +29,7 @@ export async function readSettings() {
             directSiteConfirmation: settings.directSiteConfirmation === true,
             whatsappAssistanceAvailable: Boolean(
                 !settings.directSiteConfirmation &&
+                integration?.orderAssistanceEnabled !== false &&
                 integration?.enabled &&
                 integration.webhookCiphertext &&
                 integration.signingCiphertext,
