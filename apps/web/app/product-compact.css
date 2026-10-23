@@ -175,6 +175,23 @@
 .product-page .product-purchase-bar .btn-primary {
     min-height: 48px;
 }
+.product-page .quantity-cart-preview {
+    border-inline-start: 3px solid #b38a43;
+    background: #f8f3e9;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #655a49;
+}
+.product-page .quantity-cart-preview p {
+    margin: 2px 0;
+    font-size: 12px;
+    line-height: 1.7;
+}
+.product-page .quantity-cart-preview small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.6;
+}
 .product-page :is(.quantity-price-details, .size-advice) {
     border: 0;
     border-bottom: 1px solid #e3d7c1;
