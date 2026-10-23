@@ -42,109 +42,88 @@ export function ProductOptions({ product }: { product: Product }) {
     }
     return (
         <div className="product-options refined-options" id="product-options">
-            <fieldset className="variant-fieldset">
-                <legend>
-                    اللون{" "}
-                    <span>
-                        {variant?.colorNameAr || variant?.colorNameFr || variant?.colorNameEn}
-                    </span>
-                </legend>
-                <div className="color-options">
-                    {colors.map((color) => {
-                        const key = colorKey(color);
-                        const matches = variants.filter((v) => colorKey(v) === key);
-                        const available = matches.some((v) => v.stock > 0);
-                        const label =
-                            color.colorNameAr ||
-                            color.colorNameFr ||
-                            color.colorNameEn ||
-                            "لون غير مسمى";
-                        const hex = /^#[0-9a-f]{6}$/i.test(color.color) ? color.color : undefined;
-                        return (
-                            <button
-                                type="button"
-                                key={key}
-                                aria-pressed={selectedColor === key}
-                                disabled={!available}
-                                aria-label={`${label}${available ? "" : " — غير متوفر"}`}
-                                onClick={() =>
-                                    selectVariant(
-                                        matches.find(
-                                            (v) => v.size === variant?.size && v.stock > 0,
-                                        ) || matches.find((v) => v.stock > 0),
-                                    )
-                                }
-                            >
-                                {hex && (
-                                    <span
-                                        className="color-swatch"
-                                        style={{ backgroundColor: hex }}
-                                        aria-hidden="true"
-                                    />
-                                )}
-                                <span>{label}</span>
-                                {selectedColor === key && <Check size={14} aria-hidden="true" />}
-                            </button>
-                        );
-                    })}
-                </div>
-            </fieldset>
-            <fieldset className="variant-fieldset">
-                <legend>
-                    المقاس <span>{variant?.size || "مقاس موحد"}</span>
-                </legend>
-                <div className="size-options">
-                    {sizes.map((size) => {
-                        const match = variants.find(
-                            (v) => colorKey(v) === selectedColor && (v.size || "") === size,
-                        );
-                        const label = size || "مقاس موحد";
-                        return (
-                            <button
-                                type="button"
-                                key={size}
-                                aria-pressed={!!variant && (variant.size || "") === size}
-                                disabled={!match?.stock}
-                                aria-label={`${label}${match?.stock ? "" : " — غير متوفر لهذا اللون"}`}
-                                onClick={() => selectVariant(match)}
-                            >
-                                {label}
-                            </button>
-                        );
-                    })}
-                </div>
-                <p className="variant-help">المقاسات غير المتوفرة لهذا اللون تظهر مشطوبة.</p>
-            </fieldset>
-            <details className="size-advice">
-                <summary>كيف تختارون المقاس المناسب؟</summary>
-                <p>اختاروا مقاساً واحداً ثم اللون المطلوب. يظهر توفر كل مقاس حسب اللون المختار.</p>
-                <p>
-                    {/shoes|clogs/.test(product.category.slug)
-                        ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
-                        : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}
-                </p>
-                <Link href="/contact">مساعدة في اختيار المقاس</Link>
-            </details>
-            {!variants.length && <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>}
-            <div className="selected-variant-note" role="status">
-                <span
-                    className={`stock-indicator ${stock ? "" : "stock-empty"}`}
-                    aria-hidden="true"
-                />
-                <span>
-                    {stock ? "متوفر الآن" : "غير متوفر حالياً"}
-                    {variant
-                        ? ` · ${variant.colorNameAr || variant.colorNameFr || variant.colorNameEn}${variant.size ? ` / ${variant.size}` : ""}`
-                        : ""}
-                </span>
+            <div className="product-variant-grid">
+                <fieldset className="variant-fieldset">
+                    <legend>
+                        اللون{" "}
+                        <span>
+                            {variant?.colorNameAr || variant?.colorNameFr || variant?.colorNameEn}
+                        </span>
+                    </legend>
+                    <div className="color-options">
+                        {colors.map((color) => {
+                            const key = colorKey(color);
+                            const matches = variants.filter((v) => colorKey(v) === key);
+                            const available = matches.some((v) => v.stock > 0);
+                            const label =
+                                color.colorNameAr ||
+                                color.colorNameFr ||
+                                color.colorNameEn ||
+                                "لون غير مسمى";
+                            const hex = /^#[0-9a-f]{6}$/i.test(color.color)
+                                ? color.color
+                                : undefined;
+                            return (
+                                <button
+                                    type="button"
+                                    key={key}
+                                    aria-pressed={selectedColor === key}
+                                    disabled={!available}
+                                    aria-label={`${label}${available ? "" : " — غير متوفر"}`}
+                                    onClick={() =>
+                                        selectVariant(
+                                            matches.find(
+                                                (v) => v.size === variant?.size && v.stock > 0,
+                                            ) || matches.find((v) => v.stock > 0),
+                                        )
+                                    }
+                                >
+                                    {hex && (
+                                        <span
+                                            className="color-swatch"
+                                            style={{ backgroundColor: hex }}
+                                            aria-hidden="true"
+                                        />
+                                    )}
+                                    <span>{label}</span>
+                                    {selectedColor === key && (
+                                        <Check size={14} aria-hidden="true" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </fieldset>
+                <fieldset className="variant-fieldset">
+                    <legend>
+                        المقاس <span>{variant?.size || "مقاس موحد"}</span>
+                    </legend>
+                    <div className="size-options">
+                        {sizes.map((size) => {
+                            const match = variants.find(
+                                (v) => colorKey(v) === selectedColor && (v.size || "") === size,
+                            );
+                            const label = size || "مقاس موحد";
+                            return (
+                                <button
+                                    type="button"
+                                    key={size}
+                                    aria-pressed={!!variant && (variant.size || "") === size}
+                                    disabled={!match?.stock}
+                                    aria-label={`${label}${match?.stock ? "" : " — غير متوفر لهذا اللون"}`}
+                                    onClick={() => selectVariant(match)}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p className="variant-help">المقاسات غير المتوفرة لهذا اللون تظهر مشطوبة.</p>
+                </fieldset>
             </div>
+            {!variants.length && <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>}
             <section className="quantity-offers" aria-label="عروض الكمية">
                 <h2>اختاروا الكمية المناسبة</h2>
-                <p>
-                    {tiers.length
-                        ? "العرض الأصغر يتكرر لكل مجموعة كاملة، والقطع المتبقية بالسعر العادي. إذا وُجد سعر خاص للعدد المختار فهو المعتمد. المقاسات والألوان من نفس المنتج تتجمع في السلة."
-                        : "اختاروا عدد القطع، وشاهدوا المبلغ قبل الإضافة إلى السلة."}
-                </p>
                 <div className="quantity-choice-grid" role="group" aria-label="اختيار عدد القطع">
                     {choices.map((count) => (
                         <button
@@ -181,34 +160,6 @@ export function ProductOptions({ product }: { product: Product }) {
                             <strong className="quantity-selection-total" dir="ltr">
                                 {total.toFixed(2)} <span>MAD</span>
                             </strong>
-                            {pricing.packs.length > 0 && (
-                                <ul
-                                    className="quantity-pack-lines"
-                                    aria-label="تفصيل السعر حسب العروض"
-                                >
-                                    {pricing.packs.map((pack) => (
-                                        <li key={pack.quantity}>
-                                            <span>
-                                                {pack.count} × عرض {pack.quantity} قطع
-                                            </span>
-                                            <bdi>
-                                                {(pack.count * pack.totalPrice).toFixed(2)} MAD
-                                            </bdi>
-                                        </li>
-                                    ))}
-                                    {pricing.looseQuantity > 0 && (
-                                        <li>
-                                            <span>
-                                                {pricing.looseQuantity} × قطعة بالسعر العادي
-                                            </span>
-                                            <bdi>
-                                                {(pricing.looseQuantity * product.price).toFixed(2)}{" "}
-                                                MAD
-                                            </bdi>
-                                        </li>
-                                    )}
-                                </ul>
-                            )}
                             {savings > 0 && (
                                 <p className="quantity-selection-saving">
                                     <del dir="ltr">
@@ -224,15 +175,6 @@ export function ProductOptions({ product }: { product: Product }) {
                                     ? `يشمل ${inCart} في السلة + ${selectedQuantity} للإضافة = ${anticipatedQuantity} قطعة من هذا المنتج.`
                                     : `${selectedQuantity} ${selectedQuantity === 1 ? "قطعة" : "قطع"} · حسب اللون والمقاس المختارين.`}
                             </p>
-                            {anticipatedQuantity > 1 && (
-                                <p className="quantity-average" dir="ltr">
-                                    {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) >
-                                    0.000001
-                                        ? "≈ "
-                                        : ""}
-                                    {unitPrice.toFixed(2)} MAD / متوسط القطعة
-                                </p>
-                            )}
                             <small>قيمة المنتجات فقط · التوصيل يُحسب في السلة.</small>
                         </>
                     ) : (
@@ -244,57 +186,55 @@ export function ProductOptions({ product }: { product: Product }) {
                     )}
                 </div>
             </section>
-            <div className="quantity-heading">
-                <label htmlFor="product-quantity">الكمية</label>
-                <span className="availability-note">
-                    {available
-                        ? `${available} قطعة متاحة للإضافة`
-                        : stock
-                          ? "الكمية المتوفرة في السلة"
-                          : "غير متوفر حالياً"}
-                </span>
+            <div className="product-quantity-row">
+                <div className="quantity-heading">
+                    <label htmlFor="product-quantity">الكمية</label>
+                    <span className="availability-note">
+                        {available
+                            ? `${available} قطعة متاحة للإضافة`
+                            : stock
+                              ? "الكمية المتوفرة في السلة"
+                              : "غير متوفر حالياً"}
+                    </span>
+                </div>
+                <div className="quantity-stepper">
+                    <button
+                        type="button"
+                        aria-label="تقليل الكمية"
+                        disabled={selectedQuantity <= 1 || !available}
+                        onClick={() => setQuantity(Math.max(1, selectedQuantity - 1))}
+                    >
+                        <Minus size={17} aria-hidden="true" />
+                    </button>
+                    <input
+                        id="product-quantity"
+                        className="store-input"
+                        inputMode="numeric"
+                        type="number"
+                        min={1}
+                        max={available || 1}
+                        step={1}
+                        disabled={!available}
+                        value={selectedQuantity}
+                        onChange={(e) => {
+                            const n = Number(e.target.value);
+                            setQuantity(
+                                Number.isFinite(n)
+                                    ? Math.max(1, Math.min(available || 1, Math.floor(n)))
+                                    : 1,
+                            );
+                        }}
+                    />
+                    <button
+                        type="button"
+                        aria-label="زيادة الكمية"
+                        disabled={selectedQuantity >= available || !available}
+                        onClick={() => setQuantity(Math.min(available, selectedQuantity + 1))}
+                    >
+                        <Plus size={17} aria-hidden="true" />
+                    </button>
+                </div>
             </div>
-            <div className="quantity-stepper">
-                <button
-                    type="button"
-                    aria-label="تقليل الكمية"
-                    disabled={selectedQuantity <= 1 || !available}
-                    onClick={() => setQuantity(Math.max(1, selectedQuantity - 1))}
-                >
-                    <Minus size={17} aria-hidden="true" />
-                </button>
-                <input
-                    id="product-quantity"
-                    className="store-input"
-                    inputMode="numeric"
-                    type="number"
-                    min={1}
-                    max={available || 1}
-                    step={1}
-                    disabled={!available}
-                    value={selectedQuantity}
-                    onChange={(e) => {
-                        const n = Number(e.target.value);
-                        setQuantity(
-                            Number.isFinite(n)
-                                ? Math.max(1, Math.min(available || 1, Math.floor(n)))
-                                : 1,
-                        );
-                    }}
-                />
-                <button
-                    type="button"
-                    aria-label="زيادة الكمية"
-                    disabled={selectedQuantity >= available || !available}
-                    onClick={() => setQuantity(Math.min(available, selectedQuantity + 1))}
-                >
-                    <Plus size={17} aria-hidden="true" />
-                </button>
-            </div>
-            <Link href="/contact" className="variant-contact">
-                <MessageCircle size={16} aria-hidden="true" />
-                سؤال عن المقاس أو اللون؟ تواصلوا معنا
-            </Link>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
                     {available ? total.toFixed(2) : "—"}{" "}
@@ -312,6 +252,72 @@ export function ProductOptions({ product }: { product: Product }) {
                     {available ? "إضافة إلى السلة" : stock ? "الكمية في السلة" : "غير متوفر حالياً"}
                 </button>
             </div>
+            <details className="quantity-price-details">
+                <summary>تفاصيل السعر والعروض</summary>
+                <p>
+                    {tiers.length
+                        ? "العرض الأصغر يتكرر لكل مجموعة كاملة، والقطع المتبقية بالسعر العادي. إذا وُجد سعر خاص للعدد المختار فهو المعتمد. المقاسات والألوان من نفس المنتج تتجمع في السلة."
+                        : "اختاروا عدد القطع، وشاهدوا المبلغ قبل الإضافة إلى السلة."}
+                </p>
+                {available > 0 && (
+                    <>
+                        {pricing.packs.length > 0 && (
+                            <ul className="quantity-pack-lines" aria-label="تفصيل السعر حسب العروض">
+                                {pricing.packs.map((pack) => (
+                                    <li key={pack.quantity}>
+                                        <span>
+                                            {pack.count} × عرض {pack.quantity} قطع
+                                        </span>
+                                        <bdi>{(pack.count * pack.totalPrice).toFixed(2)} MAD</bdi>
+                                    </li>
+                                ))}
+                                {pricing.looseQuantity > 0 && (
+                                    <li>
+                                        <span>{pricing.looseQuantity} × قطعة بالسعر العادي</span>
+                                        <bdi>
+                                            {(pricing.looseQuantity * product.price).toFixed(2)} MAD
+                                        </bdi>
+                                    </li>
+                                )}
+                            </ul>
+                        )}
+                        {anticipatedQuantity > 1 && (
+                            <p className="quantity-average" dir="ltr">
+                                {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001
+                                    ? "≈ "
+                                    : ""}
+                                {unitPrice.toFixed(2)} MAD / متوسط القطعة
+                            </p>
+                        )}
+                    </>
+                )}
+            </details>
+            <details className="size-advice">
+                <summary>كيف تختارون المقاس المناسب؟</summary>
+                <p>اختاروا مقاساً واحداً ثم اللون المطلوب. يظهر توفر كل مقاس حسب اللون المختار.</p>
+                <p>
+                    {/shoes|clogs/.test(product.category.slug)
+                        ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
+                        : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}
+                </p>
+                <Link href="/contact">مساعدة في اختيار المقاس</Link>
+            </details>
+            <div className="selected-variant-note" role="status">
+                <span
+                    className={`stock-indicator ${stock ? "" : "stock-empty"}`}
+                    aria-hidden="true"
+                />
+                <span>
+                    {stock ? "متوفر الآن" : "غير متوفر حالياً"}
+                    {variant
+                        ? ` · ${variant.colorNameAr || variant.colorNameFr || variant.colorNameEn}${variant.size ? ` / ${variant.size}` : ""}`
+                        : ""}
+                </span>
+            </div>
+            <Link href="/contact" className="variant-contact">
+                <MessageCircle size={16} aria-hidden="true" />
+                سؤال عن المقاس أو اللون؟ تواصلوا معنا
+            </Link>
         </div>
     );
 }

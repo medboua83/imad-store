@@ -6,6 +6,7 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "بني", exact: true }).click();
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
         await expect(page.locator(".quantity-selection-total")).toContainText("650.00");
+        await page.getByText("تفاصيل السعر والعروض", { exact: true }).click();
         await expect(page.getByLabel("تفصيل السعر حسب العروض", { exact: true })).toContainText(
             "1 × عرض 3 قطع",
         );
