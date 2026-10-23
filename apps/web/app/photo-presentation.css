@@ -1,4 +1,26 @@
 /* Frames only: original image sources, colours and pixels stay unchanged. */
+.store-shell .collection-photo {
+    border: 3px solid #fffdf8;
+    background: #fffdf8;
+    box-shadow: 0 0 0 1px #d8c39c;
+}
+.store-shell .store-menu .menu-category-icon,
+.store-shell .shop-category-rail img {
+    box-sizing: border-box;
+    border: 1px solid #d8c39c;
+    padding: 2px;
+    background: #fffdf8;
+}
+.store-shell .store-menu .menu-category-photo {
+    width: 100%;
+    height: 100%;
+}
+.store-shell .shop-category-rail a[aria-current] img {
+    border-color: var(--gold-light);
+}
+.store-shell .collection-tile:focus-visible .collection-photo {
+    box-shadow: 0 0 0 2px var(--gold-dark);
+}
 .store-shell .refined-gallery {
     min-width: 0;
     max-width: 100%;
