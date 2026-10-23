@@ -39,7 +39,7 @@ const productSchema = z.object({
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
         .max(12),
-    status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).default("DRAFT"),
+    status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]),
     categoryId: objectIdSchema,
     variants: z.array(variantSchema).max(100),
 });
@@ -168,7 +168,8 @@ export async function getProduct(req: Request, res: Response) {
     res.json(await readPublicProduct(req.params.slug));
 }
 export async function createProduct(req: Request, res: Response) {
-    const body = productSchema.parse(req.body);
+    // Defaults apply only to creation; partial edits must preserve publication status.
+    const body = productSchema.extend({ status: productSchema.shape.status.default("DRAFT") }).parse(req.body);
     assertSizes(body.variants);
     assertPublishable(body);
     if (!(await prisma.category.findUnique({ where: { id: body.categoryId } })))

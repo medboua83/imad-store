@@ -120,6 +120,16 @@ test("Invalid public queries return 400 without database diagnostics", async () 
     assert.equal((await request(app).get("/api/products?status=DRAFT")).status, 403);
     assert.equal((await request(app).get("/api/products/admin/catalog")).status, 401);
 });
+test("Oversized product collections stop at their bounds before validating each element", async () => {
+    const response = await request(app).post("/api/products").set(admin()).send({
+        ...payload(),
+        images: Array(13).fill("invalid-image"),
+        variants: Array(101).fill({}),
+    });
+    assert.equal(response.status, 400);
+    assert.equal(response.body.details.length, 2);
+    assert.deepEqual(response.body.details.map((issue: any) => issue.path), [["images"], ["variants"]]);
+});
 test("Grouped legacy sizes stay in admin history but cannot be sold or reserved", async () => {
     const input = payload();
     input.nameFr = input.slug;

@@ -64,7 +64,7 @@ const envelope = z.object({
             id: z.string().uuid(),
             pipeline_id: z.string().uuid(),
             stage_id: z.string().uuid(),
-            custom_fields: z.record(z.unknown()),
+            custom_fields: z.record(z.string(), z.unknown()),
         }),
     }),
 });
