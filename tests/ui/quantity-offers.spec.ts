@@ -24,14 +24,15 @@ for (const width of [390, 1440]) {
         });
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         await page.goto("/checkout");
-        await expect(page.locator(".bag-grand-total")).toContainText("400.00");
-        await expect(page.locator(".bag-unit-price del")).toHaveCount(2);
+        const summary = page.getByRole("complementary", { name: "ملخص الطلب", exact: true });
+        await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
+        await expect(summary.locator(".bag-unit-price del")).toHaveCount(2);
         await page.reload();
-        await expect(page.locator(".bag-grand-total")).toContainText("400.00");
+        await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
         await page.getByText("عرض وتعديل المنتجات", { exact: true }).click();
-        await page.getByRole("button", { name: "حذف صابو تجريبي", exact: true }).last().click();
-        await expect(page.locator(".bag-grand-total")).toContainText("230.00");
-        await expect(page.locator(".bag-totals .quantity-saving")).toHaveCount(0);
+        await summary.getByRole("button", { name: "حذف صابو تجريبي", exact: true }).last().click();
+        await expect(summary.locator(".bag-grand-total")).toContainText("230.00");
+        await expect(summary.locator(".bag-totals .quantity-saving")).toHaveCount(0);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
@@ -93,7 +94,7 @@ for (const width of [390, 1440]) {
         if (width < 768)
             await page.getByRole("button", { name: "Navigation", exact: true }).click();
         await page.getByRole("button", { name: "Produits", exact: true }).click();
-        await page.getByRole("button", { name: "Modifier", exact: true }).click();
+        await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
         await page.getByRole("button", { name: "Ajouter un palier", exact: true }).click();
         await page.getByLabel("Dès (articles)", { exact: true }).fill("2");
         await page.getByLabel("Prix par article (MAD)", { exact: true }).fill("200");
@@ -103,7 +104,7 @@ for (const width of [390, 1440]) {
         ).toBeVisible();
         expect(product.quantityDiscounts).toEqual([{ minQuantity: 2, unitPrice: 200 }]);
         expect(writes).toBe(1);
-        await page.getByRole("button", { name: "Modifier", exact: true }).click();
+        await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
         await expect(page.getByLabel("Prix par article (MAD)", { exact: true })).toHaveValue("200");
         await page.getByLabel("Prix par article (MAD)", { exact: true }).fill("250");
         // Native validation blocks a price above the normal price without sending a request.
