@@ -1,5 +1,13 @@
 # Current Status — 2026-10-18
 
+## Promotions par quantité — candidat du 23 octobre 2026
+
+Chaque fiche produit peut définir jusqu’à cinq paliers de quantité minimum et prix unitaire en MAD. Les variantes du même produit se cumulent ; les autres produits ne déclenchent pas sa remise. Le meilleur palier atteint s’applique à toutes les unités du produit, sans cumul avec le prix initial barré. Suppression des paliers = retour au prix courant. Aucune offre ni prix de production n’est activé par la livraison du code.
+
+Calcul partagé panier/checkout et recalcul serveur à partir du catalogue dans la transaction de réservation. Seuil de livraison évalué après remise ; livraison offerte par produit conservée. Prix unitaire réduit figé dans la commande et sa capture CRM ; répétition idempotente conserve ce prix malgré une modification ultérieure du catalogue. Les anciens produits sans champ fonctionnent au prix normal. Champ JSON optionnel, génération Prisma uniquement, sans db push, migration ni réécriture du catalogue.
+
+85 tests de fonctionnement locaux réussis ; compilation backend/web et lint réussis. Aperçu fictif contrôlé à 390/1440 px : deux couleurs à 200 MAD au lieu de 230, économie de 60 MAD, retour à 230 au retrait d’une unité. Quatre scénarios UI supplémentaires (client et administration sur deux largeurs) à vérifier en CI avant intégration. Aucun ordre, message ou colis réel créé.
+
 ## Cadres dorés des catégories — candidat du 23 octobre 2026
 
 Les petites photos des catégories gardent leurs fichiers et leurs dimensions : anneau doré sur l’accueil, cadre ivoire/doré dans le menu et les filtres du catalogue, bordure champagne sur la catégorie active. Le sélecteur d’image et la règle limitant la navigation aux catégories publiées ne changent pas. Aucun téléversement ni changement de données.

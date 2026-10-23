@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { type Product, type Category } from "@/lib/api";
@@ -24,6 +24,7 @@ const blank = {
     descriptionEn: "",
     price: "",
     compareAtPrice: "",
+    quantityDiscounts: [] as { minQuantity: string; unitPrice: string }[],
     promotionEnabled: false,
     freeShipping: false,
     categoryId: "",
@@ -123,6 +124,10 @@ export function ProductsTab({
                   descriptionEn: p.descriptionEn,
                   price: String(p.price),
                   compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "",
+                  quantityDiscounts: (p.quantityDiscounts ?? []).map((tier) => ({
+                      minQuantity: String(tier.minQuantity),
+                      unitPrice: String(tier.unitPrice),
+                  })),
                   promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
                   freeShipping: Boolean(p.freeShipping),
                   categoryId: p.category.id,
@@ -205,6 +210,14 @@ export function ProductsTab({
         let data: Record<string, unknown>;
         try {
             const payload = variantPayload(variants);
+            const tiers = form.quantityDiscounts
+                .map((tier) => ({
+                    minQuantity: Number(tier.minQuantity),
+                    unitPrice: Number(tier.unitPrice),
+                }))
+                .sort((a, b) => a.minQuantity - b.minQuantity);
+            const tierError = quantityDiscountError(Number(form.price), tiers);
+            if (tierError) throw new Error(tierError);
             if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug))
                 throw new Error(
                     "L’adresse utilise uniquement des lettres minuscules sans accents, des chiffres et des tirets.",
@@ -223,6 +236,7 @@ export function ProductsTab({
             data = {
                 ...form,
                 price: Number(form.price),
+                quantityDiscounts: tiers,
                 compareAtPrice:
                     form.promotionEnabled && form.compareAtPrice
                         ? Number(form.compareAtPrice)
@@ -465,6 +479,125 @@ export function ProductsTab({
                                 </select>
                             </label>
                         </div>
+                        <fieldset className="quantity-admin" disabled={disabled}>
+                            <legend>Promotions par quantité</legend>
+                            <p>
+                                Prix par article dès la quantité indiquée. Les tailles et couleurs
+                                du même produit se cumulent. Le meilleur palier atteint s’applique à
+                                toutes ses unités, sans remise supplémentaire sur le prix barré.
+                            </p>
+                            {form.quantityDiscounts.map((tier, index) => (
+                                <div className="quantity-admin-row" key={index}>
+                                    <label>
+                                        Dès (articles)
+                                        <input
+                                            className={inputClass}
+                                            type="number"
+                                            min={2}
+                                            max={100}
+                                            step={1}
+                                            required
+                                            value={tier.minQuantity}
+                                            onChange={(e) =>
+                                                setForm((v) => ({
+                                                    ...v,
+                                                    quantityDiscounts: v.quantityDiscounts.map(
+                                                        (t, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...t,
+                                                                      minQuantity: e.target.value,
+                                                                  }
+                                                                : t,
+                                                    ),
+                                                }))
+                                            }
+                                        />
+                                    </label>
+                                    <label>
+                                        Prix par article (MAD)
+                                        <input
+                                            className={inputClass}
+                                            type="number"
+                                            min="0.01"
+                                            max={form.price || 1000000}
+                                            step="0.01"
+                                            required
+                                            value={tier.unitPrice}
+                                            onChange={(e) =>
+                                                setForm((v) => ({
+                                                    ...v,
+                                                    quantityDiscounts: v.quantityDiscounts.map(
+                                                        (t, i) =>
+                                                            i === index
+                                                                ? {
+                                                                      ...t,
+                                                                      unitPrice: e.target.value,
+                                                                  }
+                                                                : t,
+                                                    ),
+                                                }))
+                                            }
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        className="admin-btn"
+                                        aria-label={`Supprimer le palier ${index + 1}`}
+                                        onClick={() =>
+                                            setForm((v) => ({
+                                                ...v,
+                                                quantityDiscounts: v.quantityDiscounts.filter(
+                                                    (_, i) => i !== index,
+                                                ),
+                                            }))
+                                        }
+                                    >
+                                        Supprimer
+                                    </button>
+                                    {Number(tier.minQuantity) >= 2 &&
+                                        Number(tier.unitPrice) > 0 && (
+                                            <p>
+                                                Exemple : {tier.minQuantity} articles ={" "}
+                                                {money(
+                                                    Number(tier.minQuantity) *
+                                                        Number(tier.unitPrice),
+                                                )}
+                                                , hors livraison.
+                                            </p>
+                                        )}
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                className="admin-btn"
+                                disabled={form.quantityDiscounts.length >= 5}
+                                onClick={() =>
+                                    setForm((v) => ({
+                                        ...v,
+                                        quantityDiscounts: [
+                                            ...v.quantityDiscounts,
+                                            {
+                                                minQuantity: String(
+                                                    Math.max(
+                                                        1,
+                                                        ...v.quantityDiscounts.map(
+                                                            (t) => Number(t.minQuantity) || 1,
+                                                        ),
+                                                    ) + 1,
+                                                ),
+                                                unitPrice: "",
+                                            },
+                                        ],
+                                    }))
+                                }
+                            >
+                                Ajouter un palier
+                            </button>
+                            {!form.quantityDiscounts.length && (
+                                <p>Aucune remise par quantité. Les prix actuels sont conservés.</p>
+                            )}
+                        </fieldset>
                         <details className="product-descriptions">
                             <summary>Descriptions · français, arabe et anglais</summary>
                             {(["Fr", "Ar", "En"] as const).map((lang) => (
@@ -551,9 +684,15 @@ export function ProductsTab({
                             unités saisies. Pour retirer une variante existante de la vente, mettez
                             son stock à zéro.
                         </p>
-                        {variants.some((v) => isAmbiguousSize(v.size)) && <p role="status" className="admin-scope">
-                            Une liste de pointures a été enregistrée comme une seule taille. Ces variantes sont exclues de la vente, sans effacer leur stock ni leur historique. Créez les pointures séparément et vérifiez le stock réel de chacune avant de le renseigner. Aucun stock n’est réparti automatiquement.
-                        </p>}
+                        {variants.some((v) => isAmbiguousSize(v.size)) && (
+                            <p role="status" className="admin-scope">
+                                Une liste de pointures a été enregistrée comme une seule taille. Ces
+                                variantes sont exclues de la vente, sans effacer leur stock ni leur
+                                historique. Créez les pointures séparément et vérifiez le stock réel
+                                de chacune avant de le renseigner. Aucun stock n’est réparti
+                                automatiquement.
+                            </p>
+                        )}
                         {variants.map((v, index) => (
                             <fieldset
                                 key={v.key}
@@ -562,7 +701,12 @@ export function ProductsTab({
                                 <legend>
                                     Variante {index + 1} · {v.size || "Sans taille"}
                                 </legend>
-                                {isAmbiguousSize(v.size) && <p className="admin-muted">À corriger : plusieurs tailles dans la même variante — indisponible à la commande.</p>}
+                                {isAmbiguousSize(v.size) && (
+                                    <p className="admin-muted">
+                                        À corriger : plusieurs tailles dans la même variante —
+                                        indisponible à la commande.
+                                    </p>
+                                )}
                                 <div className="product-variant-tools">
                                     <span className="admin-tag">
                                         {v.id ? "Existante" : "Nouvelle"}
@@ -850,7 +994,9 @@ export function ProductsTab({
                                     </span>
                                 )}
                                 {p.variants.some((v) => isAmbiguousSize(v.size)) && (
-                                    <span className="product-low-stock">Pointures regroupées à corriger · exclues de la vente</span>
+                                    <span className="product-low-stock">
+                                        Pointures regroupées à corriger · exclues de la vente
+                                    </span>
                                 )}
                             </div>
                             <span className={`admin-status status-${p.status.toLowerCase()}`}>

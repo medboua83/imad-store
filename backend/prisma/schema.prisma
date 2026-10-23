@@ -132,6 +132,7 @@ model Product {
   descriptionEn  String
   price          Float
   compareAtPrice Float?
+  quantityDiscounts Json?
   freeShipping   Boolean @default(false)
   images         String[]         // Native array — no JSON hack needed!
   status         ProductStatus    @default(DRAFT)

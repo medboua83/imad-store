@@ -1415,6 +1415,55 @@ test("Commerce settings and promotions validate inputs; server decides delivery 
     }
 });
 
+test("Quantity offers persist, aggregate variants and aliases, reject stale totals and preserve an idempotent price snapshot", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    try {
+        await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings", shippingCost: 30, freeShippingMin: 190 }, update: { shippingCost: 30, freeShippingMin: 190, directSiteConfirmation: false } });
+        const data = payload();
+        data.variants.push({ ...data.variants[0], sku: `ALT-${key()}`, color: "#ffffff", colorNameFr: "Blanc", size: "44" } as any);
+        const tiers = [{ minQuantity: 2, unitPrice: 80 }, { minQuantity: 3, unitPrice: 70 }];
+        assert.equal((await request(app).post("/api/products").send({...data,quantityDiscounts:tiers})).status, 401);
+        const create = await request(app).post("/api/products").set(admin()).send({...data,quantityDiscounts:tiers});
+        assert.equal(create.status, 201);
+        const sale = create.body.data;
+        assert.deepEqual((await request(app).get(`/api/products/${sale.slug}`)).body.data.quantityDiscounts, tiers);
+        const update = (values: object) => request(app).put(`/api/products/${sale.id}`).set(admin()).send(values);
+        for (const bad of [[{minQuantity:2,unitPrice:100}], [{minQuantity:2,unitPrice:80.001}], [{minQuantity:2,unitPrice:80},{minQuantity:2,unitPrice:70}]])
+            assert.equal((await update({quantityDiscounts:bad})).status, 400);
+        assert.equal((await update({price:75})).status, 400, "changing the base price must revalidate existing tiers");
+        assert.equal((await prisma.product.findUnique({where:{id:sale.id}})).price, 100);
+        const body = { ...checkout(), crmConsent:false, expectedTotal:190, items:[
+            {productId:sale.id, variantId:sale.variants[0].id, quantity:1, price:0.01},
+            {productId:sale.slug, variantId:sale.variants[1].sku, quantity:1, price:0.01},
+        ] };
+        const post = (body: object, id = key()) => request(app).post("/api/orders").set("Idempotency-Key", id).send(body);
+        const stockBefore = await prisma.productVariant.findMany({where:{productId:sale.id},orderBy:{id:"asc"}});
+        assert.equal((await post({...body,expectedTotal:200})).status, 409);
+        assert.deepEqual(await prisma.productVariant.findMany({where:{productId:sale.id},orderBy:{id:"asc"}}), stockBefore, "wrong total rolls back all inventory reservations");
+        const id = key(), order = await post(body,id);
+        assert.equal(order.status, 201); assert.equal(order.body.data.totalAmount,190); assert.equal(order.body.data.shippingCost,30);
+        assert.deepEqual(order.body.data.items.map((i:any)=>i.unitPrice),[80,80]);
+        const outbox = await prisma.deskcommOutbox.findUnique({where:{orderId:order.body.data.id}});
+        if(outbox){assert.equal(outbox.payload.totalAmount,190);assert.deepEqual(outbox.payload.items.map((i:any)=>i.unitPrice),[80,80]);}
+        assert.equal((await update({quantityDiscounts:[{minQuantity:2,unitPrice:60}]})).status,200);
+        const replay = await post(body,id);
+        assert.equal(replay.body.data.id,order.body.data.id); assert.equal(replay.body.data.totalAmount,190);
+        assert.equal(await prisma.order.count({where:{idempotencyKey:id}}),1);
+        assert.equal((await post(body)).status,409,"old displayed offer requires customer review before charging the new total");
+        assert.equal((await update({quantityDiscounts:tiers})).status,200);
+        const third = await post({...body,expectedTotal:210,items:[...body.items,{...body.items[0],quantity:1}]});
+        assert.equal(third.status,201); assert.equal(third.body.data.shippingCost,0);
+        assert.equal(third.body.data.items.every((i:any)=>i.unitPrice===70),true,"split duplicate rows use the same product quantity");
+        assert.equal((await update({quantityDiscounts:[]})).status,200);
+        const normal = await post({...body,expectedTotal:130,items:[body.items[0]]});
+        assert.equal(normal.status,201); assert.equal(normal.body.data.items[0].unitPrice,100);
+        assert.equal(order.body.data.items[0].unitPrice,80,"removing offers never rewrites old orders");
+    } finally {
+        if(initial){const {id,...data}=initial;await prisma.storeSettings.update({where:{id},data});}
+        else await prisma.storeSettings.deleteMany({where:{id:"settings"}});
+    }
+});
+
 test("Order trash is admin-only, reversible, atomic and preserves commerce records", async () => {
     const create = (extra: object = {}) =>
         prisma.order.create({

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, priceCart, type QuantityDiscount } from "@imad-store/shared";
 import { getProduct, ProductVariant, Product } from "../lib/api";
 import { trackCart } from "../lib/store-analytics";
 
@@ -18,6 +18,7 @@ export interface CartItem {
     colorNameEn: string;
     size?: string;
     price: number;
+    quantityDiscounts?: QuantityDiscount[];
     freeShipping?: boolean;
     quantity: number;
     stock: number;
@@ -57,6 +58,7 @@ export const useCartStore = create<CartStore>()(
                                           ...i,
                                           stock: variant.stock,
                                           price: product.price,
+                                          quantityDiscounts: product.quantityDiscounts ?? [],
                                           freeShipping: Boolean(product.freeShipping),
                                           image: product.images[0] ?? "",
                                           images: [...product.images],
@@ -84,6 +86,7 @@ export const useCartStore = create<CartStore>()(
                         colorNameEn: variant.colorNameEn,
                         size: variant.size,
                         price: product.price,
+                        quantityDiscounts: product.quantityDiscounts ?? [],
                         freeShipping: Boolean(product.freeShipping),
                         quantity: Math.min(variant.stock, Math.floor(quantity)),
                         stock: variant.stock,
@@ -142,6 +145,7 @@ export const useCartStore = create<CartStore>()(
                         const quantity = Math.min(item.quantity, stock);
                         if (
                             price !== item.price ||
+                            JSON.stringify(product?.quantityDiscounts ?? []) !== JSON.stringify(item.quantityDiscounts ?? []) ||
                             quantity !== item.quantity ||
                             stock === 0 ||
                             (variant?.size ?? "") !== (item.size ?? "") ||
@@ -152,6 +156,7 @@ export const useCartStore = create<CartStore>()(
                         return {
                             ...item,
                             price,
+                            quantityDiscounts: product?.quantityDiscounts ?? [],
                             stock,
                             quantity,
                             size: variant?.size ?? item.size,
@@ -167,7 +172,7 @@ export const useCartStore = create<CartStore>()(
                 return changed;
             },
             clearCart: () => set({ items: [], isOpen: false }),
-            total: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
+            total: () => priceCart(get().items).subtotal,
             itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
         }),
         {

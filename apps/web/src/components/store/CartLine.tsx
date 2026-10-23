@@ -3,18 +3,22 @@ import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCartStore, type CartItem } from "@/store/cart.store";
+import { priceCart } from "@imad-store/shared";
 export function CartLine({ item, disabled = false }: { item: CartItem; disabled?: boolean }) {
-    const { updateQty, removeItem } = useCartStore();
+    const { items, updateQty, removeItem } = useCartStore();
+    const unitPrice =
+        priceCart(items).lines.find((line) => line.item.variantId === item.variantId)?.unitPrice ??
+        item.price;
     const name = item.nameAr || item.nameFr;
     return (
         <article className="bag-line">
             <div className="bag-line-photo">
-                    <ProductPhoto
-                        images={item.images ?? [item.image]}
-                        name={name}
-                        sizes="88px"
-                        className="object-contain"
-                    />
+                <ProductPhoto
+                    images={item.images ?? [item.image]}
+                    name={name}
+                    sizes="88px"
+                    className="object-contain"
+                />
             </div>
             <div className="bag-line-detail">
                 <Link
@@ -28,7 +32,11 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     {[item.colorNameAr || item.colorNameFr, item.size].filter(Boolean).join(" · ")}
                 </p>
                 <p className="bag-unit-price">
-                    <span dir="ltr">{item.price.toFixed(2)} MAD</span> / القطعة
+                    {unitPrice < item.price && <del dir="ltr">{item.price.toFixed(2)} MAD </del>}
+                    <span dir="ltr">{unitPrice.toFixed(2)} MAD</span> / القطعة
+                    {unitPrice < item.price && (
+                        <span className="quantity-saving">عرض الكمية مطبّق</span>
+                    )}
                 </p>
                 {!item.stock && (
                     <p className="bag-stock-error">غير متوفر حالياً. احذفوا هذه القطعة للمتابعة.</p>
@@ -67,7 +75,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     </button>
                 </div>
                 <p className="bag-line-total" dir="ltr">
-                    {(item.price * item.quantity).toFixed(2)} <span>MAD</span>
+                    {(unitPrice * item.quantity).toFixed(2)} <span>MAD</span>
                 </p>
             </div>
         </article>

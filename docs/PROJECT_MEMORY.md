@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Quantity offers — 23 October 2026 candidate
+
+Optional per-product quantityDiscounts JSON: up to five decreasing unit-price tiers, minimum quantities 2–100. Sum all variants/aliases of the same product; never mix unrelated products. The highest reached tier applies to all its units and replaces the current unit price without subtracting compareAtPrice. Shared integer-cent calculation drives basket and checkout; server catalogue remains authoritative and snapshots discounted unitPrice in order/outbox. Delivery threshold uses discounted subtotal. Missing legacy field means no quantity offer. Admin can add/remove tiers, with no production offer enabled by default. Generate Prisma only; no db push or historical rewrite. Local 85 tests and builds/lint passed; CI includes mobile/desktop buyer and admin coverage. See the PR for final CI/deployment state.
+
 ## Conserver les photographies originales — 23 octobre 2026
 
 Le marchand a annulé la retouche générative des photos puis demandé uniquement une amélioration de leur présentation. Ne jamais substituer les essais générés aux originaux. Le cadre doré doit rester une présentation CSS : sources, ordre, pixels et couleurs des fichiers préservés. Garder `object-fit: contain` dans la galerie, les miniatures, l’agrandissement et les photos du panier, sans filtre d’image ni effet de survol qui découpe la photo.

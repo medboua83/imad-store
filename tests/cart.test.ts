@@ -11,6 +11,59 @@ Object.defineProperty(globalThis, "localStorage", {
         removeItem: (key: string) => storage.delete(key),
     },
 });
+Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { localStorage, location: { pathname: "/admin" } },
+});
+
+test("Cart quantity promotions combine colours, survive hydration and refresh when the offer changes", async () => {
+    const { useCartStore } = await import("../apps/web/src/store/cart.store");
+    const { default: api } = await import("../apps/web/src/lib/api");
+    const store = () => useCartStore.getState();
+    store().clearCart();
+    const promoted = {
+        ...product,
+        quantityDiscounts: [{ minQuantity: 2, unitPrice: 85 }],
+        variants: [
+            product.variants[0],
+            { ...product.variants[0], id: "another-colour", sku: "OTHER" },
+        ],
+    };
+    store().addItem(promoted, promoted.variants[0]);
+    assert.equal(store().total(), 100);
+    store().addItem(promoted, promoted.variants[1]);
+    assert.equal(store().total(), 170);
+    await useCartStore.persist.rehydrate();
+    assert.equal(store().total(), 170);
+    store().removeItem(promoted.variants[1].id);
+    assert.equal(store().total(), 100);
+    store().addItem(promoted, promoted.variants[1]);
+    const changed = { ...promoted, quantityDiscounts: [{ minQuantity: 2, unitPrice: 80 }] };
+    api.defaults.adapter = async (config) => ({
+        data: { data: changed },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+    });
+    assert.equal(await store().refreshCart(), true);
+    assert.equal(store().total(), 160);
+    assert.equal(await store().refreshCart(), false);
+    api.defaults.adapter = async (config) => ({
+        data: { data: product },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+    });
+    assert.equal(await store().refreshCart(), true);
+    assert.equal(
+        store().total(),
+        100,
+        "removed variant is unavailable and no longer contributes to thresholds",
+    );
+    store().clearCart();
+});
 const product: Product = {
     id: "123456789012345678901234",
     slug: "cart-check",
@@ -68,9 +121,12 @@ test("Cart caps repeated additions and edits, refreshes stale prices/stock and p
     assert.equal(store().items[0].stock, 1);
     assert.equal(await store().refreshCart(), false);
     // Old persisted carts only stored a single cover; recover the full current gallery.
-    useCartStore.setState({ items: store().items.map(({ images: _images, ...item }) => ({
-        ...item, image: "/uploads/removed-cover.webp",
-    })) });
+    useCartStore.setState({
+        items: store().items.map(({ images: _images, ...item }) => ({
+            ...item,
+            image: "/uploads/removed-cover.webp",
+        })),
+    });
     changed.images = ["/uploads/current-cover.webp", "/uploads/available-alternative.webp"];
     assert.equal(await store().refreshCart(), false, "photo updates do not change order totals");
     assert.deepEqual(store().items[0].images, changed.images);

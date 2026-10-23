@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
+import { quantityDiscounts } from "@imad-store/shared";
 export function ProductCard({
     product: p,
     headingLevel = 2,
@@ -42,7 +43,9 @@ export function ProductCard({
                         </Link>
                     </Heading>
                     <p className="card-price" dir="ltr">
-                        {p.freeShipping && <span className="product-shipping-badge">توصيل مجاني</span>}
+                        {p.freeShipping && (
+                            <span className="product-shipping-badge">توصيل مجاني</span>
+                        )}
                         {p.compareAtPrice && p.compareAtPrice > p.price ? (
                             <del>{p.compareAtPrice.toFixed(2)} MAD</del>
                         ) : null}
@@ -62,6 +65,14 @@ export function ProductCard({
                     ))}
                     {colors.length > 2 && <span>+{colors.length - 2}</span>}
                 </div>
+                {quantityDiscounts(p.price, p.quantityDiscounts)
+                    .slice(0, 1)
+                    .map((tier) => (
+                        <p className="quantity-card-hint" key={tier.minQuantity}>
+                            عرض الكمية: من {tier.minQuantity} قطع،{" "}
+                            <bdi>{tier.unitPrice.toFixed(2)} MAD</bdi> للقطعة
+                        </p>
+                    ))}
                 {sizes.length > 0 && (
                     <p className="product-size-preview">
                         المقاسات:{" "}

@@ -1,4 +1,7 @@
+"use client";
 import type { useShipping } from "@/hooks/useShipping";
+import { useCartStore } from "@/store/cart.store";
+import { priceCart } from "@imad-store/shared";
 export function CartTotals({
     subtotal,
     shipping,
@@ -7,8 +10,15 @@ export function CartTotals({
     shipping: ReturnType<typeof useShipping>;
 }) {
     const unavailable = shipping.error || shipping.total === null;
+    const savings = priceCart(useCartStore((state) => state.items)).savings;
     return (
         <dl className="bag-totals" aria-label="تفاصيل المبلغ">
+            {savings > 0 && (
+                <div className="quantity-saving">
+                    <dt>توفير عرض الكمية</dt>
+                    <dd dir="ltr">−{savings.toFixed(2)} MAD</dd>
+                </div>
+            )}
             <div>
                 <dt>قيمة المنتجات</dt>
                 <dd dir="ltr">{subtotal.toFixed(2)} MAD</dd>

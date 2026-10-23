@@ -3,7 +3,7 @@ import type { useShipping } from "@/hooks/useShipping";
 import type { CartItem } from "@/store/cart.store";
 import { CartTotals } from "./CartTotals";
 import { ProductPhoto } from "./ProductPhoto";
-import { shippingCityLabel } from "@imad-store/shared";
+import { shippingCityLabel, priceCart } from "@imad-store/shared";
 
 export function CheckoutReview({
     customer,
@@ -32,7 +32,7 @@ export function CheckoutReview({
                 {customer.address}، {shippingCityLabel(customer.city)}
             </address>
             <ul>
-                {items.map((item) => (
+                {priceCart(items).lines.map(({ item, unitPrice, total }) => (
                     <li key={item.variantId}>
                         <div className="checkout-mini-photo">
                             <ProductPhoto
@@ -50,10 +50,10 @@ export function CheckoutReview({
                                     .join(" · ")}
                             </p>
                             <p>
-                                {item.quantity} × <span dir="ltr">{item.price.toFixed(2)} MAD</span>
+                                {item.quantity} × <span dir="ltr">{unitPrice.toFixed(2)} MAD</span>
                             </p>
                         </div>
-                        <strong dir="ltr">{(item.price * item.quantity).toFixed(2)} MAD</strong>
+                        <strong dir="ltr">{total.toFixed(2)} MAD</strong>
                     </li>
                 ))}
             </ul>

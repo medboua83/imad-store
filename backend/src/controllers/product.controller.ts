@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { objectIdSchema, paginationSchema, isPublishableImage } from "../lib/validation";
@@ -30,6 +30,10 @@ const productSchema = z.object({
     descriptionEn: z.string().max(20000),
     price: z.number().positive().max(1000000),
     compareAtPrice: z.number().positive().max(1000000).nullable().optional(),
+    quantityDiscounts: z.array(z.object({
+        minQuantity: z.number().int().min(2).max(100),
+        unitPrice: z.number().positive().max(1000000),
+    }).strict()).max(5).optional(),
     freeShipping: z.boolean().optional(),
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
@@ -42,6 +46,8 @@ export function isFixture(slug: string) {
     return slug.startsWith("test-19a-") || slug === "demo-bag-sample";
 }
 function assertPublishable(product: any) {
+    const discountError = quantityDiscountError(product.price, product.quantityDiscounts);
+    if (discountError) throw new AppError(discountError, 400);
     if (product.compareAtPrice != null && product.compareAtPrice <= product.price) throw new AppError("Le prix initial doit dépasser le prix promotionnel.", 400);
     if (product.status !== "ACTIVE") return;
     if (
