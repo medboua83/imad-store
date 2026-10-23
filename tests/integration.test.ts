@@ -1300,12 +1300,16 @@ test("Only real committed orders convert visits; retries and multiple orders can
     const original = client.$runCommandRaw.bind(client);
     client.$runCommandRaw = (() => Promise.reject(new Error("isolated analytics failure"))) as any;
     try {
-        await request(app)
+        const created = await request(app)
             .post("/api/orders")
             .set("Idempotency-Key", randomUUID())
             .set("X-Analytics-Session", session)
             .send(body)
             .expect(201);
+        const {transitionOrderStatus}=await import("../backend/src/lib/order-lifecycle");
+        const result=await transitionOrderStatus(created.body.data.id,"CONFIRMED");
+        assert.equal(result.order.status,"CONFIRMED");
+        assert.equal((await prisma.order.findUnique({where:{id:created.body.data.id}})).status,"CONFIRMED");
     } finally {
         client.$runCommandRaw = original;
     }
