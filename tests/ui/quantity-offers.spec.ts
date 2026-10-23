@@ -110,7 +110,7 @@ for (const width of [390, 1440]) {
         ]);
         expect(writes).toBe(1);
         await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
-        await expect(page.getByLabel("Total du lot (MAD)", { exact: true })).toHaveValue("400");
+        await expect(page.getByLabel("Total du lot (MAD)", { exact: true })).toHaveValue("400.00");
         await page.getByLabel("Total du lot (MAD)", { exact: true }).fill("500");
         // Native validation blocks a price above the normal price without sending a request.
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
