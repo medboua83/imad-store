@@ -1,7 +1,7 @@
 "use client";
 import { CheckoutReview } from "@/components/store/CheckoutReview";
 import { metaPurchase } from "@/lib/meta-pixel";
-import { shippingFee } from "@imad-store/shared";
+import { shippingFee, SHIPPING_CITIES, shippingCityLabel, canonicalShippingCity, normalizeShippingPhone } from "@imad-store/shared";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart.store";
@@ -53,11 +53,12 @@ export default function CheckoutPage() {
         e.preventDefault();
         if (submissionLock.current) return;
         const errors: Record<string, string> = {};
-        if (form.fullName.trim().length < 2) errors.fullName = "أدخلوا الاسم الكامل";
-        if (!/^(?:\+212|0)[5-7]\d{8}$/.test(form.phone.replace(/[\s()-]/g, "")))
+        if (form.fullName.trim().length < 3) errors.fullName = "أدخلوا الاسم الكامل";
+        if (!normalizeShippingPhone(form.phone))
             errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
-        if (!form.city.trim()) errors.city = "أدخلوا المدينة";
-        if (form.address.trim().length < 3) errors.address = "أدخلوا عنوان التوصيل";
+        if (!canonicalShippingCity(form.city)) errors.city = "اختاروا مدينة التوصيل من القائمة";
+        if (form.address.trim().length < 5 || form.address.trim().length > 124)
+            errors.address = "أدخلوا العنوان الكامل بين 5 و124 حرفاً";
         setFields(errors);
         if (Object.keys(errors).length) {
             document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
@@ -110,8 +111,8 @@ export default function CheckoutPage() {
                     customer: {
                         fullName: form.fullName.trim(),
                         phone: form.phone.replace(/[\s()-]/g, ""),
-                        city: form.city.trim(),
-                        region: form.city.trim(),
+                        city: canonicalShippingCity(form.city)!,
+                        region: canonicalShippingCity(form.city)!,
                         street: form.address.trim(),
                     },
                     items: cart.map((i) => ({
@@ -197,12 +198,12 @@ export default function CheckoutPage() {
             autoComplete: autocomplete[field],
             required: true,
             disabled: busy,
-            maxLength: field === "address" ? 500 : 120,
+            maxLength: field === "address" ? 124 : 120,
             value: form[field],
             "aria-invalid": !!fields[field],
             "aria-describedby": describedBy,
             placeholder: placeholders[field],
-            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
                 setReview(null);
                 setForm((old) => ({ ...old, [field]: event.target.value }));
             },
@@ -215,11 +216,22 @@ export default function CheckoutPage() {
                 <label htmlFor={`checkout-${field}`}>
                     {labels[field]} <span aria-hidden="true">*</span>
                 </label>
-                {field === "address" ? (
-                    <textarea {...common} rows={3} />
+                {field === "city" ? (
+                    <select
+                        id={common.id} name={common.name} className={common.className}
+                        autoComplete={common.autoComplete} required disabled={common.disabled}
+                        value={common.value} onChange={common.onChange}
+                        aria-invalid={common["aria-invalid"]} aria-describedby={common["aria-describedby"]}
+                    >
+                        <option value="">اختاروا مدينة التوصيل</option>
+                        {SHIPPING_CITIES.map(city => <option key={city} value={city}>{shippingCityLabel(city)}</option>)}
+                    </select>
+                ) : field === "address" ? (
+                    <textarea {...common} rows={3} minLength={5} />
                 ) : (
                     <input
                         {...common}
+                        minLength={field === "fullName" ? 3 : undefined}
                         type={field === "phone" ? "tel" : "text"}
                         inputMode={field === "phone" ? "tel" : undefined}
                         dir={field === "phone" ? "ltr" : undefined}
@@ -230,6 +242,7 @@ export default function CheckoutPage() {
                         رقم مغربي يبدأ بـ 05 أو 06 أو 07، أو برمز +212.
                     </p>
                 )}
+                {field === "address" && <p className="checkout-hint">الحي، الشارع ورقم المنزل أو الشقة — 124 حرفاً كحد أقصى.</p>}
                 {fields[field] && (
                     <p id={`${field}-error`} className="checkout-field-error">
                         {fields[field]}

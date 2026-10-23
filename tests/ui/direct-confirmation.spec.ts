@@ -87,7 +87,7 @@ async function fillCheckout(page: Page, phone = "0600000099") {
     await page.goto("/checkout");
     await page.getByLabel("الاسم الكامل").fill("Client fictif");
     await page.getByLabel("رقم الهاتف", { exact: false }).fill(phone);
-    await page.getByLabel("المدينة", { exact: false }).fill("Rabat");
+    await page.getByLabel("المدينة", { exact: false }).selectOption("rabat");
     await page.getByLabel("عنوان التوصيل", { exact: false }).fill("Adresse fictive 1");
 }
 for (const viewport of [
@@ -108,10 +108,10 @@ for (const viewport of [
         await expect(review).toContainText("130.00");
         expect(requests).toHaveLength(0);
         await page.getByRole("button", { name: "تعديل المعلومات", exact: true }).click();
-        await page.getByLabel("المدينة", { exact: false }).fill("Tanger");
+        await page.getByLabel("المدينة", { exact: false }).selectOption("tangier");
         await expect(review).toHaveCount(0);
         await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
-        await expect(review).toContainText("Tanger");
+        await expect(review).toContainText("طنجة");
         expect(requests).toHaveLength(0);
         expect(
             await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -134,7 +134,7 @@ for (const viewport of [
             confirmationMode: "SITE",
             aiServiceConsent: false,
             expectedTotal: 130,
-            customer: { city: "Tanger" },
+            customer: { city: "tangier", street: "Adresse fictive 1", phone: "0600000099" },
         });
     });
 }
@@ -146,6 +146,22 @@ test("standard checkout has no customer AI option", async ({ page }) => {
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.confirmationMode).toBeUndefined();
+    expect(requests[0].body.aiServiceConsent).toBe(false);
+});
+test("delivery fields use official cities and preserve local delivery phone", async ({ page }, info) => {
+    const { requests } = await fixture(page, false);
+    await fillCheckout(page, "0600000099");
+    const city = page.getByRole("combobox", { name: /المدينة/ });
+    await expect(city.locator("option")).toHaveCount(356);
+    await city.selectOption("tangier");
+    await expect(city).toHaveValue("tangier");
+    await expect(page.getByLabel("عنوان التوصيل", { exact: false })).toHaveAttribute("maxlength", "124");
+    await expect(page.getByLabel("الاسم الكامل")).toHaveAttribute("minlength", "3");
+    await page.screenshot({ path: info.outputPath("carrier-compatible-checkout.png"), fullPage: true });
+    await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+    await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
+    expect(requests).toHaveLength(1);
+    expect(requests[0].body.customer).toMatchObject({ city: "tangier", phone: "0600000099", street: "Adresse fictive 1" });
     expect(requests[0].body.aiServiceConsent).toBe(false);
 });
 test("network retry retains the same idempotency key and request", async ({ page }) => {
