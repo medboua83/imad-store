@@ -1,4 +1,16 @@
 // ─── Locales ────────────────────────────────────────────────────────────────
+/** A variant represents one size, never a list of numeric pointures. */
+export function isAmbiguousSize(size?: string | null): boolean {
+    const value = (size || "").trim().replace(/[٠-٩۰-۹]/g, (digit) =>
+        String("٠١٢٣٤٥٦٧٨٩".includes(digit)
+            ? "٠١٢٣٤٥٦٧٨٩".indexOf(digit)
+            : "۰۱۲۳۴۵۶۷۸۹".indexOf(digit)),
+    );
+    if (/^\d{1,3}(?:[.,]\d)?$/.test(value)) return false;
+    return /^\d{1,3}(?:[.,]\d)?(?:\s*[,;/|–—-]\s*|\s+)\d{1,3}(?:[.,]\d)?(?:[\d\s.,;/|–—-]*)$/.test(value)
+        || /^(?:XXS|XS|S|M|L|XL|XXL|XXXL)(?:[\s,;/|]+(?:XXS|XS|S|M|L|XL|XXL|XXXL))+$/i.test(value);
+}
+
 export type Locale = "fr" | "ar" | "en";
 
 // ─── User ───────────────────────────────────────────────────────────────────

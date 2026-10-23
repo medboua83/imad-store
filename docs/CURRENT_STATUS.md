@@ -1,5 +1,15 @@
 # Current Status — 2026-10-18
 
+## Audit prioritaire — candidat du 23 octobre 2026
+
+Le panier est réhydraté après le premier rendu React. La cause de l’erreur 418 a été reproduite en développement : le compteur du CartDrawer affichait 0 côté serveur et 1 côté navigateur avec une ancienne session. Le correctif conserve le panier après rechargement sans masquer les avertissements React.
+
+Les listes de pointures saisies comme une seule taille sont exclues des réponses publiques, des sélections et des nouvelles réservations serveur. L’administration conserve les variantes, leur stock et leur historique, avec un avertissement. Le générateur accepte les pointures séparées par des espaces et crée chaque nouveau stock à zéro. Aucun stock existant n’est réparti automatiquement. Les fiches affichent couleurs, tailles, aide au choix, description en paragraphes et frais issus des réglages Commerce ; description de secours cohérente dans la page, Open Graph, Twitter et JSON-LD.
+
+Livraison et retours : présentation structurée et procédure de contact, frais actuels lus depuis les réglages. Les délais, frais et modalités de retour non fournis par le marchand restent explicitement non renseignés ; aucune politique commerciale inventée. Les textes validés restent prioritaires. Compléter et vérifier ces informations dans « Accueil et informations du magasin » avant leur publication.
+
+Validation locale : 77 tests réussis sur une base MongoDB éphémère isolée, compilation web et backend, lint web. Recette de rendu et de panier dans Chrome ; nouveaux scénarios UI sur 390 et 1440 px à exécuter en CI avant fusion. Aucun ordre réel, message WhatsApp ni opération transporteur déclenché. Publication à observer après fusion ; ne pas déduire un déploiement réussi de ce document.
+
 ## Formulaire compatible Olivraison — candidat du 23 octobre 2026
 
 Le checkout propose les 355 villes du catalogue officiel relu le 23 octobre à 03:01 UTC. Les libellés arabes courants gardent la valeur canonique transporteur (Tanger/طنجة → tangier). Nom complet 3–120 caractères, téléphone marocain normalisé côté serveur, adresse complète 5–124 caractères sans troncature. Le serveur refuse une nouvelle commande incompatible avant stock/outbox ; les empreintes brutes et relectures idempotentes historiques sont conservées. La ville et les coordonnées enregistrées alimentent le récapitulatif et le webhook ; total COD et frais restent calculés par le serveur, sans changement tarifaire.

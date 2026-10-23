@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { productDescription } from "./product-presentation";
 
 /** Use the installation URL, or the public request host when hosting omits SITE_URL. */
 export function resolvePublicOrigin(configured: string | undefined, host: string | null): URL {
@@ -32,12 +33,7 @@ export function productShareMetadata(
   origin: URL,
 ): Metadata {
   const title = text(product.nameAr, product.nameFr, product.nameEn);
-  const description = text(
-    product.descriptionAr,
-    product.descriptionFr,
-    product.descriptionEn,
-    title,
-  ).slice(0, 200);
+  const description = text(productDescription(product)).slice(0, 200);
   const url = new URL(`/products/${encodeURIComponent(product.slug)}`, origin).href;
   const images = product.images
     .flatMap((value) => {

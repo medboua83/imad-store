@@ -2,6 +2,7 @@ import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
+import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
 export function ProductCard({
     product: p,
     headingLevel = 2,
@@ -11,10 +12,11 @@ export function ProductCard({
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
-    const available = p.variants.some((v) => v.stock > 0);
-    const offered = available ? p.variants.filter((v) => v.stock > 0) : p.variants;
+    const variants = sellableVariants(p.variants);
+    const available = variants.some((v) => v.stock > 0);
+    const offered = available ? variants.filter((v) => v.stock > 0) : variants;
     const colors = [...new Map(offered.map((v) => [v.color, v])).values()];
-    const sizes = [...new Set(offered.map((v) => v.size).filter(Boolean))];
+    const sizes = orderedSizes(offered).filter(Boolean);
     return (
         <article className="catalog-card">
             <Link

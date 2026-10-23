@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import { isAmbiguousSize } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { objectIdSchema, paginationSchema, isPublishableImage } from "../lib/validation";
@@ -52,7 +53,7 @@ function assertPublishable(product: any) {
         !product.nameFr?.trim() ||
         !product.nameAr?.trim() ||
         !product.nameEn?.trim() ||
-        !product.variants.some((v: any) => v.stock > 0)
+        !product.variants.some((v: any) => v.stock > 0 && !isAmbiguousSize(v.size))
     ) {
         throw new AppError(
             "Pour publier : renseignez les noms, une vraie photo et au moins une variante en stock. Les fiches de démonstration doivent être remplacées.",
@@ -61,6 +62,15 @@ function assertPublishable(product: any) {
     }
 }
 const include = { category: true, variants: true };
+function publicProduct(product: any) {
+    return { ...product, variants: product.variants.filter((v: any) => !isAmbiguousSize(v.size)) };
+}
+function assertSizes(variants: any[], previous: any[] = []) {
+    for (const variant of variants) {
+        if (isAmbiguousSize(variant.size) && !previous.some((old) => old.id === variant.id && old.size === variant.size))
+            throw new AppError("Une seule taille par variante. Créez une variante et un stock distincts pour chaque pointure.", 400);
+    }
+}
 async function list(queryInput: unknown, admin: boolean) {
     const query = paginationSchema
         .extend({
@@ -120,7 +130,7 @@ async function list(queryInput: unknown, admin: boolean) {
     ]);
     return {
         success: true,
-        data: products,
+        data: admin ? products : products.map(publicProduct),
         total,
         page: query.page,
         totalPages: Math.ceil(total / query.limit),
@@ -144,7 +154,7 @@ export async function readPublicProduct(slugInput: unknown) {
         !product.images.length
     )
         throw new AppError("Produit introuvable", 404);
-    return { success: true, data: product };
+    return { success: true, data: publicProduct(product) };
 }
 export async function getProduct(req: Request, res: Response) {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
@@ -152,6 +162,7 @@ export async function getProduct(req: Request, res: Response) {
 }
 export async function createProduct(req: Request, res: Response) {
     const body = productSchema.parse(req.body);
+    assertSizes(body.variants);
     assertPublishable(body);
     if (!(await prisma.category.findUnique({ where: { id: body.categoryId } })))
         throw new AppError("Catégorie introuvable", 400);
@@ -169,6 +180,7 @@ export async function updateProduct(req: Request, res: Response) {
         const current = await tx.product.findUnique({ where: { id: req.params.id }, include });
         if (!current) throw new AppError("Produit introuvable", 404);
         const { variants, ...data } = input;
+        if (variants) assertSizes(variants, current.variants);
         if (data.categoryId && !(await tx.category.findUnique({ where: { id: data.categoryId } })))
             throw new AppError("Catégorie introuvable", 400);
         const ids = variants?.flatMap((v) => (v.id ? [v.id] : [])) || [];

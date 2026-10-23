@@ -90,6 +90,19 @@ async function fillCheckout(page: Page, phone = "0600000099") {
     await page.getByLabel("المدينة", { exact: false }).selectOption("rabat");
     await page.getByLabel("عنوان التوصيل", { exact: false }).fill("Adresse fictive 1");
 }
+test("A saved cart hydrates without React text mismatches and survives reload", async ({page}) => {
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => { if(message.type() === "error" && /hydration|#418|server rendered/i.test(message.text())) errors.push(message.text()); });
+    await fixture(page);
+    await page.goto("/checkout");
+    await expect(page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true})).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true})).toBeVisible();
+    await page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true}).click();
+    await expect(page.getByRole("dialog")).toContainText("130.00");
+    expect(errors).toEqual([]);
+});
 for (const viewport of [
     { width: 390, height: 844 },
     { width: 1440, height: 1000 },
@@ -169,7 +182,7 @@ test("network retry retains the same idempotency key and request", async ({ page
     await fillCheckout(page);
     await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
     await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator(".checkout-alert[role=alert]")).toContainText("تعذر الاتصال");
     await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(
         page.getByText("تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."),

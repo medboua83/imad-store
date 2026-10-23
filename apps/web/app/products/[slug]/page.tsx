@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { ProductGallery } from "@/components/store/ProductGallery";
 import { PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
-import { publicProduct, requestSiteOrigin } from "@/lib/server-api";
+import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
+import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
 import { ProductOptions } from "@/components/store/ProductOptions";
 import { productShareMetadata } from "@/lib/share-metadata";
 export const dynamic = "force-dynamic";
@@ -20,14 +21,19 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
   const origin = await requestSiteOrigin();
   const name = product.nameAr || product.nameFr;
-  const inStock = product.variants.some((v) => v.stock > 0);
+  const variants = sellableVariants(product.variants);
+  const inStock = variants.some((v) => v.stock > 0);
+  const settings = await publicSettings();
+  const description = productDescription(product);
+  const colors = [...new Set(variants.map(v => v.colorNameAr || v.colorNameFr || v.colorNameEn).filter(Boolean))];
+  const sizes = orderedSizes(variants).filter(Boolean);
   const structured = {
     "@context": "https://schema.org",
     "@type": "Product",
     name,
-    description: product.descriptionAr || product.descriptionFr,
+    description,
     image: product.images.map((image) => new URL(image, origin).toString()),
-    sku: product.variants[0]?.sku,
+    sku: variants[0]?.sku,
     offers: {
       "@type": "Offer",
       price: product.price,
@@ -51,7 +57,7 @@ export default async function ProductPage({ params }: Props) {
         / {name}
       </nav>
       <div className="product-layout">
-        <ProductGallery images={product.images} name={name} />
+        <ProductGallery key={product.id} images={product.images} name={name} />
         <div className="product-detail refined-detail">
           <div className="product-identity">
             <Link
@@ -77,23 +83,24 @@ export default async function ProductPage({ params }: Props) {
             </div>
             <div className="product-service-note">
               <PackageCheck size={17} aria-hidden="true" />
-              <span>الدفع عند الاستلام · بدون إنشاء حساب</span>
+              <span>{settings.codEnabled ? "الدفع عند الاستلام · بدون إنشاء حساب" : "راجعوا طرق الدفع المتاحة مع المتجر"}</span>
             </div>
           </div>
-          <ProductOptions product={product} />
+          <ProductOptions key={product.id} product={product} />
           <div className="product-information">
             <details open>
               <summary>تفاصيل القطعة</summary>
-              <p className="product-description">
-                {product.descriptionAr ||
-                  product.descriptionFr ||
-                  product.descriptionEn ||
-                  "تواصلوا معنا لمزيد من التفاصيل حول هذه القطعة."}
-              </p>
+              <dl className="product-facts">
+                <div><dt>الفئة</dt><dd>{product.category.nameAr || product.category.nameFr}</dd></div>
+                {!!colors.length && <div><dt>الألوان</dt><dd>{colors.join(" · ")}</dd></div>}
+                {!!sizes.length && <div><dt>المقاسات</dt><dd><bdi>{sizes.join(" · ")}</bdi></dd></div>}
+              </dl>
+              {descriptionParagraphs(description).map((paragraph, index) => <p key={index} className="product-description" dir="auto">{paragraph}</p>)}
             </details>
             <details>
               <summary>التوصيل والاستبدال</summary>
-              <p>راجعوا رسوم التوصيل وشروط المتجر قبل تأكيد طلبكم.</p>
+              <p>{product.freeShipping ? "التوصيل مجاني عند إضافة هذا المنتج إلى السلة." : `رسوم التوصيل ${settings.shippingCost.toFixed(2)} MAD، وتصبح مجانية من ${settings.freeShippingMin.toFixed(2)} MAD أو عند إضافة منتج مؤهل.`}</p>
+              <p>تُحسب الرسوم النهائية في ملخص الطلب. راجعوا آجال التوصيل وشروط الاستبدال والإرجاع قبل تأكيد طلبكم.</p>
               <nav aria-label="معلومات التوصيل والاستبدال">
                 <Link href="/delivery">
                   <Truck size={17} aria-hidden="true" />

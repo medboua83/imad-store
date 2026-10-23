@@ -120,6 +120,29 @@ test("Invalid public queries return 400 without database diagnostics", async () 
     assert.equal((await request(app).get("/api/products?status=DRAFT")).status, 403);
     assert.equal((await request(app).get("/api/products/admin/catalog")).status, 401);
 });
+test("Grouped legacy sizes stay in admin history but cannot be sold or reserved", async () => {
+    const input = payload();
+    input.nameFr = input.slug;
+    const invalid = {...input.variants[0], size:"40 41 42 43 44"};
+    assert.equal((await request(app).post("/api/products").set(admin()).send({...input,variants:[invalid]})).status,400);
+    const p = await prisma.product.create({data:{...input,variants:{create:[{...invalid,stock:9},{...input.variants[0],sku:`VALID-${key()}`,size:"40",stock:2}]}},include:{variants:true}});
+    const legacy = p.variants.find((v:any)=>v.size === invalid.size);
+    const publicView = await request(app).get(`/api/products/${p.slug}`);
+    assert.equal(publicView.body.data.variants.length,1);
+    const list = await request(app).get(`/api/products?search=${p.slug}`);
+    assert.equal(list.body.data[0].variants.length,1);
+    const adminView = await request(app).get(`/api/products/admin/catalog?search=${p.slug}`).set(admin());
+    assert.equal(adminView.body.data[0].variants.length,2);
+    const count = await prisma.order.count();
+    const response = await request(app).post("/api/orders").set("Idempotency-Key",key()).send({paymentMethod:"COD",customer:{fullName:"TEST ISOLATED",phone:"+212600000099",street:"Adresse fictive test",city:"Rabat",region:"Rabat"},items:[{productId:p.id,variantId:legacy.id,quantity:1}]});
+    assert.equal(response.status,400);
+    assert.equal(await prisma.order.count(),count);
+    assert.equal((await prisma.productVariant.findUnique({where:{id:legacy.id}})).stock,9);
+    assert.equal((await request(app).put(`/api/products/${p.id}`).set(admin()).send({nameFr:"Nom corrigé"})).status,200);
+    assert.equal((await request(app).put(`/api/products/${p.id}`).set(admin()).send({variants:[{...input.variants[0],size:"41 42",sku:`NEW-${key()}`}]})).status,400);
+    await prisma.productVariant.deleteMany({where:{productId:p.id}});
+    await prisma.product.delete({where:{id:p.id}});
+});
 test("Telegram requires a secret and a verified own contact", async () => {
     const body = {
         message: {

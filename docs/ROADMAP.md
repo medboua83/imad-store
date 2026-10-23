@@ -1,5 +1,13 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Audit prioritaire — 23 octobre 2026
+
+- Candidat : pointures ambiguës hors vente sans perte d’historique, générateur de tailles et avertissements administratifs.
+- Candidat : correction React 418 sur panier enregistré, fiches structurées et descriptions de secours cohérentes avec les métadonnées.
+- Candidat : pages livraison/retour plus lisibles, informations connues reliées aux réglages et procédure de contact.
+- À renseigner par le marchand : inventaire réel par pointure, délais de livraison, délai/conditions/frais de retour et mesures de chaque modèle. Ne pas inventer ces engagements ni convertir le stock de la variante erronée automatiquement.
+- Avant publication : suite UI et CI complète, puis contrôles publics après déploiement.
+
 ## Formulaire compatible Olivraison — candidat du 23 octobre 2026
 
 Le checkout propose les 355 villes du catalogue officiel relu le 23 octobre à 03:01 UTC. Les libellés arabes courants gardent la valeur canonique transporteur (Tanger/طنجة → tangier). Nom complet 3–120 caractères, téléphone marocain normalisé côté serveur, adresse complète 5–124 caractères sans troncature. Le serveur refuse une nouvelle commande incompatible avant stock/outbox ; les empreintes brutes et relectures idempotentes historiques sont conservées. La ville et les coordonnées enregistrées alimentent le récapitulatif et le webhook ; total COD et frais restent calculés par le serveur, sans changement tarifaire.

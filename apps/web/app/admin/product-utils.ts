@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/api";
+import { isAmbiguousSize } from "@imad-store/shared";
 export type DraftVariant = {
     key: string;
     id?: string;
@@ -32,6 +33,8 @@ export function variantPayload(variants: DraftVariant[]) {
         if (seen.has(sku.toUpperCase()))
             throw new Error(`La référence ${sku} est utilisée plusieurs fois.`);
         seen.add(sku.toUpperCase());
+        if (!v.id && isAmbiguousSize(v.size))
+            throw new Error(`Variante ${index + 1} : une seule taille par variante. Utilisez « Créer les tailles » pour une liste.`);
         if (!/^\d+$/.test(v.stock) || Number(v.stock) > 1000000)
             throw new Error(`Variante ${index + 1} : stock entier obligatoire, de 0 à 1 000 000.`);
         return {
@@ -54,10 +57,11 @@ export function sizeVariants(
 ) {
     const sizeMap = new Map<string, string>();
     for (const size of text
-        .split(/[,;\n]+/)
+        .split(/[,;\n]+|(?<=\d)\s+(?=\d)/)
         .map((s) => s.trim())
         .filter(Boolean)) {
         if (size.length > 40) throw new Error("Une taille ne peut pas dépasser 40 caractères.");
+        if (isAmbiguousSize(size)) throw new Error("Séparez les tailles par une virgule : une seule taille par variante.");
         if (!sizeMap.has(size.toLowerCase())) sizeMap.set(size.toLowerCase(), size);
     }
     const sizes = [...sizeMap.values()];
