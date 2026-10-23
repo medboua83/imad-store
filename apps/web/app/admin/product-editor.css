@@ -55,6 +55,10 @@
     grid-column: 1;
     grid-row: 6;
 }
+.admin-app .product-editor > .product-recommendation-editor {
+    grid-column: 1;
+    grid-row: 7;
+}
 .admin-app .product-editor-summary {
     grid-column: 2;
     grid-row: 3 / span 4;
@@ -173,7 +177,7 @@
     color: #746447;
 }
 .admin-app .product-editor-footer {
-    grid-row: 7;
+    grid-row: 8;
     position: sticky;
     bottom: 0;
     z-index: 5;
@@ -206,8 +210,11 @@
     .admin-app .product-editor > .product-variants {
         grid-row: 7;
     }
-    .admin-app .product-editor-footer {
+    .admin-app .product-editor > .product-recommendation-editor {
         grid-row: 8;
+    }
+    .admin-app .product-editor-footer {
+        grid-row: 9;
     }
     .product-editor-summary > img {
         float: right;
