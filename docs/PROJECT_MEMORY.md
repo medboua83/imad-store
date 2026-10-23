@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Confirmation détaillée vers le CRM — candidat du 23 octobre 2026
+
+Les nouvelles sorties conservent la langue du checkout et les variantes effectivement liées aux lignes de commande dans la transaction : couleur FR/AR, taille, quantité et prix historique. Champs scalaires order_recap et order_item_N bornés à 2 000 caractères, maximum 30 lignes pour rester sous les 60 champs de capture. Numéro client, téléphone, adresse, code postal, remarques, frais et total sont transmis sans nouvelle requête catalogue. Les anciennes sorties restent inchangées en base ; aucun rejeu. Les confirmations SITE, politique de service, signature et clés idempotentes sont conservées.
+
+Vérifiés : 12 tests locaux formulaire/assistance, génération Prisma sans connexion à une base, compilation du paquet partagé et TypeScript backend réussis. Simulation croisée avec le sérialiseur réel, les limites de capture CRM et le rendu FR/AR : chaque variante et montant présents, une seule question, accord reconnu par la garde de colis. CI MongoDB et installation du site restent à observer ; aucune commande, aucun WhatsApp ni colis envoyé par la recette. Validation humaine avant expédition conservée.
+
 ## Repeated base pack with exact overrides — 23 October 2026 owner clarification
 
 Priority: (1) an explicit merchant price for the exact total product quantity wins, even if base-pack decomposition is cheaper; (2) otherwise repeat the smallest configured pack, plus loose pieces at the original price; (3) without offers use ordinary pricing. At base 230 and a pair for 400, totals are 230/400/630/800/1030. Other configured quantities are exact overrides, not a reason to combine or extend other offers. Both admin fields remain blank for new rows; display only entered offers, never manufacture promotion schedules. The old minQuantity JSON name remains the number of pieces in a pack, with no schema migration.

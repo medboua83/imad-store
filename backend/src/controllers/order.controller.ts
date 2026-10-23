@@ -334,6 +334,8 @@ export async function createOrder(req: Request, res: Response) {
                                     street: created.street ?? "",
                                     city: created.city ?? "",
                                     region: created.region ?? "",
+                                    postalCode: created.postalCode ?? undefined,
+                                    notes: created.notes ?? undefined,
                                     totalAmount: created.totalAmount,
                                     shippingCost: created.shippingCost,
                                     status: created.status,
@@ -345,6 +347,7 @@ export async function createOrder(req: Request, res: Response) {
                                           }
                                         : {}),
                                     paymentMethod: created.paymentMethod,
+                                    language: req.headers["x-locale"] === "ar" ? "ar" : "fr",
                                     items: created.items.map((i) => ({
                                         name:
                                             i.product?.nameFr ||
@@ -353,6 +356,9 @@ export async function createOrder(req: Request, res: Response) {
                                             "Produit",
                                         quantity: i.quantity,
                                         unitPrice: i.unitPrice,
+                                        size: i.variant?.size ?? undefined,
+                                        colorFr: i.variant?.colorNameFr ?? undefined,
+                                        colorAr: i.variant?.colorNameAr ?? undefined,
                                     })),
                                 },
                             },

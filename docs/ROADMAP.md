@@ -1,5 +1,11 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Confirmation détaillée vers le CRM — candidat du 23 octobre 2026
+
+Les nouvelles sorties conservent la langue du checkout et les variantes effectivement liées aux lignes de commande dans la transaction : couleur FR/AR, taille, quantité et prix historique. Champs scalaires order_recap et order_item_N bornés à 2 000 caractères, maximum 30 lignes pour rester sous les 60 champs de capture. Numéro client, téléphone, adresse, code postal, remarques, frais et total sont transmis sans nouvelle requête catalogue. Les anciennes sorties restent inchangées en base ; aucun rejeu. Les confirmations SITE, politique de service, signature et clés idempotentes sont conservées.
+
+Vérifiés : 12 tests locaux formulaire/assistance, génération Prisma sans connexion à une base, compilation du paquet partagé et TypeScript backend réussis. Simulation croisée avec le sérialiseur réel, les limites de capture CRM et le rendu FR/AR : chaque variante et montant présents, une seule question, accord reconnu par la garde de colis. CI MongoDB et installation du site restent à observer ; aucune commande, aucun WhatsApp ni colis envoyé par la recette. Validation humaine avant expédition conservée.
+
 ## Audit prioritaire — 23 octobre 2026
 
 - Candidat : pointures ambiguës hors vente sans perte d’historique, générateur de tailles et avertissements administratifs.

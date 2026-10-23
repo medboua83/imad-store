@@ -25,6 +25,32 @@ test("an international Moroccan phone is preserved on retries", () =>
     encodeDeskcommForm({ ...order, phone: "+212600000000" }).get("telefone"),
     "+212600000000",
   ));
+
+test("CRM receives every chosen variant and historical price as separate bounded fields", () => {
+  const form = encodeDeskcommForm({ ...order, language: "ar", totalAmount: 590, shippingCost: 30,
+    items: [
+      { name: "Robe", quantity: 2, unitPrice: 230, size: "M", colorFr: "Noir", colorAr: "كحل" },
+      { name: "Sabo", quantity: 1, unitPrice: 100, size: "38", colorFr: "Beige", colorAr: "بيج" },
+    ],
+  });
+  const recap = JSON.parse(form.get("order_recap")!);
+  assert.equal(recap.reference, order.id.slice(-8).toUpperCase());
+  assert.equal(recap.language, "ar");
+  assert.equal(recap.itemCount, 2);
+  assert.equal(recap.total, 590);
+  assert.equal(recap.shipping, 30);
+  assert.equal(recap.phone, "+212600000000");
+  assert.deepEqual(JSON.parse(form.get("order_item_1")!), { name: "Robe", quantity: 2, unitPrice: 230, size: "M", colorFr: "Noir", colorAr: "كحل" });
+  assert.equal(JSON.parse(form.get("order_item_2")!).size, "38");
+  for (const [key, value] of form) if (key.startsWith("order_")) assert.ok(value.length <= 2000);
+});
+test("old outbox jobs never invent variants or rewrite their persisted price", () => {
+  const form = encodeDeskcommForm({ ...order, items: [{ name: "Robe", quantity: 1, unitPrice: 123.45 }] });
+  assert.deepEqual(JSON.parse(form.get("order_item_1")!), { name: "Robe", quantity: 1, unitPrice: 123.45 });
+});
+test("oversized carts fail visibly instead of silently omitting order lines", () => {
+  assert.throws(() => encodeDeskcommForm({ ...order, items: Array.from({ length: 31 }, () => ({ name: "Robe", quantity: 1, unitPrice: 230 })) }), /exceeds 30 lines/);
+});
 test("other explicit international country codes are not silently rewritten", () =>
   assert.equal(
     encodeDeskcommForm({ ...order, phone: "+12025550123" }).get("telefone"),
