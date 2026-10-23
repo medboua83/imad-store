@@ -1078,6 +1078,14 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.ok(data.message.includes(`Adresse de livraison: ${body.customer.street}\n`));
     assert.ok(data.message.includes(`Ville: rabat\nRégion: ${body.customer.region}`));
     assert.equal(data.telefone, body.customer.phone);
+    const recap = JSON.parse(data.order_recap);
+    assert.equal(recap.reference, id.slice(-8).toUpperCase());
+    assert.equal(recap.itemCount, job.payload.items.length);
+    const firstItem = JSON.parse(data.order_item_1);
+    assert.equal(firstItem.quantity, job.payload.items[0].quantity);
+    assert.equal(firstItem.unitPrice, job.payload.items[0].unitPrice);
+    assert.equal(firstItem.colorFr, job.payload.items[0].colorFr);
+    assert.equal(firstItem.size, job.payload.items[0].size);
     assert.equal(data.ai_service_phone_explicit, undefined); // Established only by CRM from the original phone.
     await sendOrderToDeskcomm({ ...job.payload, aiServiceConsentVersion: undefined });
     assert.equal(JSON.parse(receipts.at(-1)!.body).ai_service_consent, false);

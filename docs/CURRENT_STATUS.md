@@ -1,5 +1,11 @@
 # Current Status — 2026-10-18
 
+## Confirmation détaillée vers le CRM — candidat du 23 octobre 2026
+
+Les nouvelles sorties conservent la langue du checkout et les variantes effectivement liées aux lignes de commande dans la transaction : couleur FR/AR, taille, quantité et prix historique. Champs scalaires order_recap et order_item_N bornés à 2 000 caractères, maximum 30 lignes pour rester sous les 60 champs de capture. Numéro client, téléphone, adresse, code postal, remarques, frais et total sont transmis sans nouvelle requête catalogue. Les anciennes sorties restent inchangées en base ; aucun rejeu. Les confirmations SITE, politique de service, signature et clés idempotentes sont conservées.
+
+Vérifiés : 12 tests locaux formulaire/assistance, génération Prisma sans connexion à une base, compilation du paquet partagé et TypeScript backend réussis. Simulation croisée avec le sérialiseur réel, les limites de capture CRM et le rendu FR/AR : chaque variante et montant présents, une seule question, accord reconnu par la garde de colis. CI MongoDB et installation du site restent à observer ; aucune commande, aucun WhatsApp ni colis envoyé par la recette. Validation humaine avant expédition conservée.
+
 ## Lots répétés et prix spéciaux prioritaires — précision du 23 octobre 2026
 
 La quantité et le total restent saisis manuellement. Un prix spécial pour la quantité exacte est prioritaire. Sinon, le plus petit lot configuré se répète et les pièces restantes gardent le prix normal : à 230 la pièce et 400 les deux, 3 = 630, 4 = 800, 5 = 1030. Une offre explicite pour 3 remplace 630 pour trois pièces, sans être étendue automatiquement à d’autres quantités. Sans offre, prix normal. Aucune grille de promotions ni nouveau prix prérempli dans l’administration.

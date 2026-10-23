@@ -19,11 +19,14 @@ export interface DeskcommOrder {
   street: string;
   city: string;
   region: string;
+  postalCode?: string;
+  notes?: string;
   totalAmount: number;
   shippingCost: number;
   status: string;
   paymentMethod: string;
-  items: Array<{ name: string; quantity: number; unitPrice: number }>;
+  language?: "fr" | "ar";
+  items: Array<{ name: string; quantity: number; unitPrice: number; size?: string; colorFr?: string; colorAr?: string }>;
 }
 
 /** The published HTML form establishes nome, telefone, email only. */
@@ -59,6 +62,25 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
   if (process.env.STORE_INSTANCE_ID) form.set("boutique_id", process.env.STORE_INSTANCE_ID);
   if (process.env.CRM_COMPANY_ID) form.set("entreprise_id", process.env.CRM_COMPANY_ID);
   form.set("message", details);
+  // Separate bounded scalars preserve every checkout line through the CRM capture limits.
+  // Historical outbox jobs are not enriched from today's catalogue or replayed.
+  if (order.items.length) {
+    if (order.items.length > 30) throw new Error("CRM order recap exceeds 30 lines");
+    const scalar = (value: unknown) => {
+      const result = JSON.stringify(value);
+      if (result.length > 2000) throw new Error("CRM order recap field exceeds capture limit");
+      return result;
+    };
+    form.set("order_recap", scalar({
+      version: 1, reference: order.id.slice(-8).toUpperCase(),
+      shop: process.env.STORE_DISPLAY_NAME || "Imad Mode", language: order.language || "fr",
+      name: order.name, phone: form.get("telefone"), street: order.street,
+      city: order.city, region: order.region, total: order.totalAmount,
+      postalCode: order.postalCode, notes: order.notes,
+      shipping: order.shippingCost, payment: order.paymentMethod, itemCount: order.items.length,
+    }));
+    order.items.forEach((item, i) => form.set(`order_item_${i + 1}`, scalar(item)));
+  }
   if (order.confirmationMethod === "SITE") {
     form.set("confirmation_method", "SITE");
     if (order.confirmedAt) form.set("confirmed_at", order.confirmedAt);
