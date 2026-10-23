@@ -1464,6 +1464,36 @@ test("Quantity offers persist, aggregate variants and aliases, reject stale tota
     }
 });
 
+test("Exact pack totals keep whole-cent order/CRM snapshots, one order and correct cancellation stock", async()=>{
+    const tiers=[{minQuantity:3,totalPrice:500,unitPrice:500/3}];
+    const created=await request(app).post("/api/products").set(admin()).send({...payload(),price:200,freeShipping:true,quantityDiscounts:tiers});
+    assert.equal(created.status,201);
+    const sale=created.body.data, variant=sale.variants[0];
+    const update=(quantityDiscounts:unknown)=>request(app).put(`/api/products/${sale.id}`).set(admin()).send({quantityDiscounts});
+    for(const bad of [
+        [{minQuantity:3,totalPrice:500,unitPrice:166}],
+        [{minQuantity:3,totalPrice:500.001,unitPrice:500.001/3}],
+        [{minQuantity:2,totalPrice:500,unitPrice:250}],
+    ]) assert.equal((await update(bad)).status,400);
+    const body={...checkout(),crmConsent:false,expectedTotal:500,items:[{productId:sale.id,variantId:variant.id,quantity:3,price:0.01}]};
+    const id=key();
+    const result=await request(app).post("/api/orders").set("Idempotency-Key",id).send(body);
+    assert.equal(result.status,201,JSON.stringify(result.body));
+    const order=result.body.data;
+    assert.equal(order.totalAmount,500);assert.equal(order.shippingCost,0);
+    assert.equal(order.items.reduce((n:number,i:any)=>n+Math.round(i.unitPrice*100)*i.quantity,0),50000);
+    assert.equal(order.items.reduce((n:number,i:any)=>n+i.quantity,0),3);
+    assert.deepEqual(order.items.map((i:any)=>[i.quantity,i.unitPrice]),[[2,166.67],[1,166.66]]);
+    const outbox=await prisma.deskcommOutbox.findUnique({where:{orderId:order.id}});
+    if(outbox){assert.equal(outbox.payload.totalAmount,500);assert.equal(outbox.payload.items.reduce((n:number,i:any)=>n+Math.round(i.unitPrice*100)*i.quantity,0),50000);}
+    assert.equal((await update([{minQuantity:2,totalPrice:400,unitPrice:200}])).status,200,"standard totals are valid");
+    const replay=await request(app).post("/api/orders").set("Idempotency-Key",id).send(body);
+    assert.equal(replay.body.data.id,order.id);assert.equal(replay.body.data.totalAmount,500);
+    assert.equal(await prisma.order.count({where:{idempotencyKey:id}}),1);
+    for(let i=0;i<2;i++)assert.equal((await request(app).patch(`/api/orders/${order.id}/status`).set(admin()).send({status:"CANCELLED"})).status,200);
+    assert.equal((await prisma.productVariant.findUnique({where:{id:variant.id}})).stock,variant.stock);
+});
+
 test("Order trash is admin-only, reversible, atomic and preserves commerce records", async () => {
     const create = (extra: object = {}) =>
         prisma.order.create({

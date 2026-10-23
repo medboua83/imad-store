@@ -1,5 +1,13 @@
 # Current Status — 2026-10-18
 
+## Création produit et totaux par quantité — candidat du 23 octobre 2026
+
+Le formulaire affiche quatre sections avec navigation directe, résumé de la fiche et repères pour les éléments nécessaires à la publication. Adresse suggérée automatiquement pour les nouveaux produits jusqu’à sa personnalisation ; noms anglais facultatifs avec reprise explicite du français, SKU stable généré seulement pour une nouvelle variante sans référence. Identifiants et contrôles de stock historiques préservés, aucune photo remplacée.
+
+Le marchand saisit maintenant un total du lot : 2 pièces = 400 MAD ou 3 pièces = 500 MAD. Un aperçu 1–5 pièces suit le prix de base et les offres. Les tarifs standards sans remise sont acceptés ; le prix moyen ne peut pas augmenter avec les paliers. Les tailles/couleurs d’un même produit continuent à se cumuler. Le palier atteint s’applique proportionnellement aux quantités suivantes, avec un total arrondi au centime.
+
+Compatibilité des anciens paliers unitaires conservée dans le champ JSON existant. Les totaux indivisibles en prix unitaires au centime sont répartis entre unités (3 pour 500 : 2 × 166,67 + 1 × 166,66), sans différence de total commande/CRM/COD. Prix moyen indiqué approximatif côté client si nécessaire ; total exact conservé. Idempotence, réservations, annulations et file CRM existantes inchangées. 88 tests de fonctionnement locaux réussis, build et lint réussis ; CI et publication à observer dans la PR. Aucun tarif réel, stock, message ou colis modifié pendant la recette.
+
 ## Promotions par quantité — candidat du 23 octobre 2026
 
 Chaque fiche produit peut définir jusqu’à cinq paliers de quantité minimum et prix unitaire en MAD. Les variantes du même produit se cumulent ; les autres produits ne déclenchent pas sa remise. Le meilleur palier atteint s’applique à toutes les unités du produit, sans cumul avec le prix initial barré. Suppression des paliers = retour au prix courant. Aucune offre ni prix de production n’est activé par la livraison du code.

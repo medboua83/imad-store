@@ -42,13 +42,16 @@ export function ProductOptions({ product }: { product: Product }) {
         <div className="product-options refined-options" id="product-options">
             {tiers.length > 0 && (
                 <section className="quantity-offers" aria-label="عروض الكمية">
-                    <h2>كلما زادت الكمية، قلّ السعر</h2>
+                    <h2>اختاروا الكمية المناسبة</h2>
                     <p>
                         اختاروا مقاسات وألواناً مختلفة من نفس المنتج. يُطبّق العرض تلقائياً في
                         السلة.
                     </p>
                     <div>
-                        {[{ minQuantity: 1, unitPrice: product.price }, ...tiers].map((tier) => (
+                        {[
+                            { minQuantity: 1, unitPrice: product.price, totalPrice: product.price },
+                            ...tiers,
+                        ].map((tier) => (
                             <div
                                 key={tier.minQuantity}
                                 className={
@@ -62,7 +65,12 @@ export function ProductOptions({ product }: { product: Product }) {
                                         ? "قطعة واحدة"
                                         : `من ${tier.minQuantity} قطع`}
                                 </strong>
-                                <span dir="ltr">{tier.unitPrice.toFixed(2)} MAD / القطعة</span>
+                                <span dir="ltr">
+                                    {(tier.totalPrice ?? tier.unitPrice * tier.minQuantity).toFixed(
+                                        2,
+                                    )}{" "}
+                                    MAD / {tier.minQuantity} قطع
+                                </span>
                                 {tier.unitPrice < product.price && (
                                     <small>
                                         توفير{" "}
@@ -223,6 +231,7 @@ export function ProductOptions({ product }: { product: Product }) {
             </Link>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
+                    {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001 ? "≈ " : ""}
                     {unitPrice.toFixed(2)} <span>MAD / القطعة</span>
                 </p>
                 <button

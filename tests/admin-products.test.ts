@@ -3,6 +3,21 @@ import assert from "node:assert/strict";
 import { variantPayload, sizeVariants, validatePhoto, stockMatches, stockSummary, productSlug, type DraftVariant } from "../apps/web/app/admin/product-utils";
 import type { Product } from "../apps/web/src/lib/api";
 import { isAmbiguousSize } from "@imad-store/shared";
+import { prepareNewVariantSkus } from "../apps/web/app/admin/product-utils";
+import { packOffers } from "../apps/web/app/admin/quantity-offer-editor";
+
+test("Product builder generates only missing new SKUs and converts the exact entered lot total",()=>{
+    const fresh={...variant,id:undefined,sku:"",key:"new-12345678",colorNameEn:""};
+    const rows=prepareNewVariantSkus([variant,fresh],"sac-cuir");
+    assert.equal(rows[0].sku,variant.sku);assert.equal(rows[0].expectedStock,variant.expectedStock);
+    assert.equal(rows[1].sku,"SAC-CUIR-NEW12345678");assert.equal(rows[1].colorNameEn,fresh.colorNameFr);
+    assert.equal(prepareNewVariantSkus([fresh],"sac-cuir")[0].sku,rows[1].sku);
+    assert.equal(fresh.sku,"");
+    assert.deepEqual(packOffers(200,[{minQuantity:"2",totalPrice:"400"}]),[{minQuantity:2,unitPrice:200,totalPrice:400}]);
+    assert.equal(packOffers(200,[{minQuantity:"3",totalPrice:"500"}])[0].totalPrice,500);
+    assert.throws(()=>packOffers(200,[{minQuantity:"2",totalPrice:"500"}]),/dépasser/);
+    assert.throws(()=>packOffers(200,[{minQuantity:"",totalPrice:""}]),/entier/);
+});
 const variant:DraftVariant={key:"draft-only",id:"123456789012345678901234",expectedStock:5,color:"#000000",colorNameFr:"Noir",colorNameAr:"أسود",colorNameEn:"Black",size:"M",stock:"4",sku:" SAC-M "};
 test("A single pointure cannot accidentally become a list; bulk creation starts each size at zero", () => {
     for (const size of ["40 41 42 43 44", "40,41", "40/41", "٤٠ ٤١", "S M L", "40-44"])

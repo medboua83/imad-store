@@ -49,6 +49,14 @@ export function variantPayload(variants: DraftVariant[]) {
         };
     });
 }
+/** Only new, blank references are generated; existing identities/stock guards stay intact. */
+export function prepareNewVariantSkus(variants: DraftVariant[], slug: string): DraftVariant[] {
+    return variants.map((variant) => ({
+        ...variant,
+        sku: variant.id || variant.sku.trim() ? variant.sku : `${(slug || "produit").slice(0, 65)}-${variant.key.replace(/[^a-z0-9]/gi, "").slice(0, 20)}`.toUpperCase(),
+        colorNameEn: variant.colorNameEn.trim() || variant.colorNameFr.trim(),
+    }));
+}
 export function sizeVariants(
     source: DraftVariant,
     text: string,

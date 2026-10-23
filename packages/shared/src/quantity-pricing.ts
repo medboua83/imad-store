@@ -1,10 +1,11 @@
 export interface QuantityDiscount {
     minQuantity: number;
     unitPrice: number;
+    totalPrice?: number;
 }
 const cents = (value: number) => Math.round(value * 100);
 
-/** Validate the whole schedule: a larger quantity must always have a lower unit price. */
+/** Validate nonincreasing pack rates; legacy unit-only offers remain strict discounts. */
 export function quantityDiscountError(price: number, value: unknown): string | null {
     if (value == null) return null;
     if (!Array.isArray(value) || value.length > 5) return "Ajoutez au maximum cinq paliers.";
@@ -23,13 +24,28 @@ export function quantityDiscountError(price: number, value: unknown): string | n
             typeof tier.unitPrice !== "number" ||
             !Number.isFinite(tier.unitPrice) ||
             cents(tier.unitPrice) < 1 ||
-            Math.abs(tier.unitPrice * 100 - cents(tier.unitPrice)) > 0.000001
+            (tier.totalPrice == null &&
+                Math.abs(tier.unitPrice * 100 - cents(tier.unitPrice)) > 0.000001)
         )
             return "Chaque prix doit être positif, avec deux décimales au maximum.";
-        if (cents(tier.unitPrice) >= previous)
-            return "Le prix par article doit diminuer à chaque palier et rester inférieur au prix actuel.";
+        if (
+            tier.totalPrice != null &&
+            (typeof tier.totalPrice !== "number" ||
+                !Number.isFinite(tier.totalPrice) ||
+                cents(tier.totalPrice) < tier.minQuantity ||
+                tier.totalPrice > 100000000 ||
+                Math.abs(tier.totalPrice * 100 - cents(tier.totalPrice)) > 0.000001 ||
+                Math.abs(tier.unitPrice * tier.minQuantity - tier.totalPrice) > 0.000001)
+        )
+            return "Le total du lot doit être positif, à deux décimales, et correspondre à la quantité.";
+        const rate =
+            tier.totalPrice != null
+                ? cents(tier.totalPrice) / tier.minQuantity
+                : cents(tier.unitPrice);
+        if (rate > previous + 0.000001 || (tier.totalPrice == null && rate >= previous))
+            return "Le prix moyen par article doit diminuer ou rester identique à chaque palier, sans dépasser le prix actuel.";
         quantity = tier.minQuantity;
-        previous = cents(tier.unitPrice);
+        previous = rate;
     }
     return null;
 }
@@ -38,14 +54,29 @@ export function quantityDiscountError(price: number, value: unknown): string | n
 export function quantityDiscounts(price: number, value: unknown): QuantityDiscount[] {
     if (!Array.isArray(value) || quantityDiscountError(price, value)) return [];
     return value
-        .map(({ minQuantity, unitPrice }) => ({ minQuantity, unitPrice }))
+        .map(({ minQuantity, unitPrice, totalPrice }) => ({
+            minQuantity,
+            unitPrice,
+            ...(totalPrice != null ? { totalPrice } : {}),
+        }))
         .sort((a, b) => a.minQuantity - b.minQuantity);
 }
 export function quantityUnitPrice(price: number, value: unknown, quantity: number): number {
     const tier = quantityDiscounts(price, value)
         .filter((t) => quantity >= t.minQuantity)
         .at(-1);
-    return cents(tier?.unitPrice ?? price) / 100;
+    return tier?.unitPrice ?? cents(price) / 100;
+}
+
+export function quantityTotalPrice(price: number, value: unknown, quantity: number): number {
+    const tier = quantityDiscounts(price, value)
+        .filter((t) => quantity >= t.minQuantity)
+        .at(-1);
+    const amount =
+        tier?.totalPrice != null
+            ? (cents(tier.totalPrice) * quantity) / tier.minQuantity
+            : cents(tier?.unitPrice ?? price) * quantity;
+    return Math.round(amount) / 100;
 }
 
 export interface QuantityPricedItem {
@@ -59,13 +90,33 @@ export function priceCart<T extends QuantityPricedItem>(items: T[]) {
     const quantities = new Map<string, number>();
     for (const item of items)
         quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
+    const allocations = new Map<string, { low: number; high: number; remainingHigh: number }>();
     const lines = items.map((item) => {
-        const unitPrice = quantityUnitPrice(
-            item.price,
-            item.quantityDiscounts,
-            quantities.get(item.productId) ?? 0,
-        );
-        return { item, unitPrice, total: (cents(unitPrice) * item.quantity) / 100 };
+        const quantity = quantities.get(item.productId) ?? 0;
+        if (!allocations.has(item.productId)) {
+            const total = cents(quantityTotalPrice(item.price, item.quantityDiscounts, quantity));
+            allocations.set(item.productId, {
+                low: quantity ? Math.floor(total / quantity) : cents(item.price),
+                high: quantity ? Math.ceil(total / quantity) : cents(item.price),
+                remainingHigh: quantity ? total % quantity : 0,
+            });
+        }
+        const allocation = allocations.get(item.productId)!;
+        const highQuantity = Math.min(item.quantity, allocation.remainingHigh);
+        allocation.remainingHigh -= highQuantity;
+        const lowQuantity = item.quantity - highQuantity;
+        const parts = [
+            ...(highQuantity ? [{ quantity: highQuantity, unitPrice: allocation.high / 100 }] : []),
+            ...(lowQuantity ? [{ quantity: lowQuantity, unitPrice: allocation.low / 100 }] : []),
+        ];
+        const total =
+            parts.reduce((sum, part) => sum + cents(part.unitPrice) * part.quantity, 0) / 100;
+        return {
+            item,
+            unitPrice: item.quantity ? total / item.quantity : item.price,
+            total,
+            allocations: parts,
+        };
     });
     const subtotal = lines.reduce((sum, line) => sum + cents(line.total), 0) / 100;
     const original = items.reduce((sum, item) => sum + cents(item.price) * item.quantity, 0) / 100;

@@ -39,6 +39,7 @@ import {
     type AdminOrder,
 } from "@/lib/api";
 import "./admin.css";
+import "./product-editor.css";
 const pendingView = () => (
     <div className="admin-loading" role="status">
         Chargement de votre espace…

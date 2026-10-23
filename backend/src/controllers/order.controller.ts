@@ -214,7 +214,11 @@ export async function createOrder(req: Request, res: Response) {
                         const product = products.find((p) => p.id === item.productId)!;
                         return { ...item, price: product.price, quantityDiscounts: product.quantityDiscounts };
                     }));
-                    pricing.lines.forEach((line, index) => { orderItems[index].unitPrice = line.unitPrice; });
+                    // Allocate whole cents to units so 3 for 500 remains exactly 500 in CRM/COD.
+                    orderItems.splice(0, orderItems.length, ...pricing.lines.flatMap((line) => line.allocations.map((part) => ({
+                        productId: line.item.productId, variantId: line.item.variantId,
+                        quantity: part.quantity, unitPrice: part.unitPrice,
+                    }))));
                     const itemsTotal = pricing.subtotal;
                     // Conditional inventory reservations ensure no overselling. Any failure aborts all writes.
                     for (const [variantId, requested] of grouped) {
