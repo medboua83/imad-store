@@ -1,5 +1,9 @@
 # Current Status — 2026-10-18
 
+## Choix rapide des quantités — candidat du 23 octobre 2026
+
+La fiche propose les boutons 1, 2 et 3 pièces après les couleurs/tailles, ainsi que les paliers marchands supérieurs éventuels. Une sélection unique commande aussi le champ numérique ; quantités indisponibles et ajout désactivés lorsque le stock de la variante est déjà dans le panier. Le récapitulatif et la barre mobile affichent le total exact, avec économie éventuelle et prix moyen secondaire. Si le produit est déjà dans le panier, le libellé et le décompte expliquent que le montant inclut les pièces existantes et celles à ajouter. Les autres produits et la livraison restent exclus de cet aperçu. Aucune donnée commerciale modifiée ; calcul partagé et validation serveur conservés. Recette mobile/ordinateur et publication à vérifier dans la PR.
+
 ## Création produit et totaux par quantité — candidat du 23 octobre 2026
 
 Le formulaire affiche quatre sections avec navigation directe, résumé de la fiche et repères pour les éléments nécessaires à la publication. Adresse suggérée automatiquement pour les nouveaux produits jusqu’à sa personnalisation ; noms anglais facultatifs avec reprise explicite du français, SKU stable généré seulement pour une nouvelle variante sans référence. Identifiants et contrôles de stock historiques préservés, aucune photo remplacée.
