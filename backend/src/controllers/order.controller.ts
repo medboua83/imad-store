@@ -1,3 +1,4 @@
+import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee } from "@imad-store/shared";
 import { recordOrderConversion } from "../lib/store-analytics";
@@ -126,6 +127,7 @@ export async function createOrder(req: Request, res: Response) {
         return res.status(200).json({ success: true, data: previous, idempotentReplay: true });
     }
 
+    const delivery = checkoutDeliverySchema.parse({ customer: body.customer }).customer;
     let order: Awaited<ReturnType<typeof findPrevious>> = null;
     for (let attempt = 0; attempt < 5; attempt++) {
         try {
@@ -257,13 +259,13 @@ export async function createOrder(req: Request, res: Response) {
                                 ? body.aiServiceConsentVersion
                                 : null,
                             aiServiceConsentAt: acceptedAssistance ? new Date() : null,
-                            customerName: body.customer.fullName,
-                            customerPhone: body.customer.phone,
+                            customerName: delivery.fullName,
+                            customerPhone: delivery.phone,
                             customerEmail: body.customer.email || null,
-                            fullName: body.customer.fullName,
-                            phone: body.customer.phone,
-                            street: body.customer.street,
-                            city: body.customer.city,
+                            fullName: delivery.fullName,
+                            phone: delivery.phone,
+                            street: delivery.street,
+                            city: delivery.city,
                             region: body.customer.region,
                             postalCode: body.customer.postalCode,
                             paymentMethod: "COD",

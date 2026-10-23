@@ -3,6 +3,7 @@ import type { useShipping } from "@/hooks/useShipping";
 import type { CartItem } from "@/store/cart.store";
 import { CartTotals } from "./CartTotals";
 import { ProductPhoto } from "./ProductPhoto";
+import { shippingCityLabel } from "@imad-store/shared";
 
 export function CheckoutReview({
     customer,
@@ -28,7 +29,7 @@ export function CheckoutReview({
             <p>{customer.fullName}</p>
             <p dir="ltr">{customer.phone}</p>
             <address>
-                {customer.address}، {customer.city}
+                {customer.address}، {shippingCityLabel(customer.city)}
             </address>
             <ul>
                 {items.map((item) => (

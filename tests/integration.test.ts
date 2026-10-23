@@ -272,6 +272,21 @@ test("Concurrent checkout creates one order and one CRM event; public tracking h
         409,
     );
 });
+test("carrier-incompatible new addresses are refused before stock reservation or outbox", async () => {
+    const stock = await prisma.productVariant.findUnique({ where: { id: product.variants[0].id } });
+    const count = await prisma.order.count();
+    const outbox = await prisma.deskcommOutbox.count();
+    for (const invalid of [{ fullName: "AB" }, { street: "A".repeat(125) }, { city: "inconnue" }, { phone: "0600000000" }]) {
+        const body = checkout();
+        const response = await request(app).post("/api/orders").set("Idempotency-Key", key())
+            .send({ ...body, customer: { ...body.customer, ...invalid } });
+        assert.equal(response.status, 400, JSON.stringify(response.body));
+        assert.equal(response.body.details[0].path[0], "customer");
+    }
+    assert.equal(await prisma.order.count(), count);
+    assert.equal(await prisma.deskcommOutbox.count(), outbox);
+    assert.deepEqual(await prisma.productVariant.findUnique({ where: { id: product.variants[0].id } }), stock);
+});
 test("CRM retries use the same idempotency key; successful jobs are not resent", async () => {
     const { processDeskcommOutbox } = await import("../backend/src/lib/deskcomm-outbox");
     await processDeskcommOutbox();
@@ -1028,7 +1043,7 @@ test("Explicit WhatsApp request is saved once and signed as typed JSON; legacy o
     assert.ok(data.message.includes(`Client de la commande: ${body.customer.fullName}\n`));
     assert.ok(data.message.includes(`#${id.slice(-8).toUpperCase()}\n`));
     assert.ok(data.message.includes(`Adresse de livraison: ${body.customer.street}\n`));
-    assert.ok(data.message.includes(`Ville: ${body.customer.city}\nRégion: ${body.customer.region}`));
+    assert.ok(data.message.includes(`Ville: rabat\nRégion: ${body.customer.region}`));
     assert.equal(data.telefone, body.customer.phone);
     assert.equal(data.ai_service_phone_explicit, undefined); // Established only by CRM from the original phone.
     await sendOrderToDeskcomm({ ...job.payload, aiServiceConsentVersion: undefined });

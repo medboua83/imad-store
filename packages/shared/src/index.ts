@@ -148,3 +148,5 @@ export function shippingFee(
 
 /** Merchant instruction for transactional order service; never customer consent. */
 export const ORDER_SERVICE_POLICY_VERSION = "store-order-service-v1-2026-10-19";
+
+export * from "./shipping-address";

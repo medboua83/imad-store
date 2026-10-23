@@ -1,3 +1,4 @@
+import { resolveCityFromCatalog } from "@imad-store/shared";
 /** Olivraison Partners API v1. Production URL is fixed; credentials never reach the browser. */
 export const OLIVRAISON_ORIGIN = "https://partners.olivraison.com";
 export class CarrierError extends Error {
@@ -31,12 +32,12 @@ export function resolveCity(
   mapping: Record<string, string>,
 ) {
   const target = mapping[city] || city;
-  const matches = cities.filter((c) => normalizeCity(c.name) === normalizeCity(target));
-  if (matches.length !== 1)
+  const canonical = resolveCityFromCatalog(target, cities.map(c => c.name));
+  if (!canonical)
     throw new CarrierError(
       "Ville non reconnue : compléter la correspondance des villes dans les paramètres.",
     );
-  return matches[0].name;
+  return canonical;
 }
 export function packagePayload(order: any, city: string, pickupAddress: unknown) {
   const name = order.fullName || order.customerName || "";
