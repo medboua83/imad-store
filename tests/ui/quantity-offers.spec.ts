@@ -7,7 +7,7 @@ for (const width of [390, 1440]) {
         const errors: string[] = [];
         page.on("pageerror", (e) => errors.push(e.message));
         await page.goto("/products/fixture-offer");
-        await expect(page.getByRole("region", { name: "عروض الكمية" })).toContainText("200.00");
+        await expect(page.getByRole("region", { name: "عروض الكمية" })).toContainText("400.00");
         await expect(page.locator(".purchase-price")).toContainText("230.00");
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog")).toContainText("230.00");
@@ -81,7 +81,10 @@ for (const width of [390, 1440]) {
             let data: any = [];
             if (path === "/api/products/admin/catalog") data = [product];
             if (path === "/api/categories") data = [category];
-            if (path === `/api/products/${product.id}` && req.method() === "PUT") {
+            if (
+                (path === `/api/products/${product.id}` && req.method() === "PUT") ||
+                (path === "/api/products" && req.method() === "POST")
+            ) {
                 Object.assign(product, req.postDataJSON());
                 data = product;
                 writes++;
@@ -95,30 +98,77 @@ for (const width of [390, 1440]) {
             await page.getByRole("button", { name: "Navigation", exact: true }).click();
         await page.getByRole("button", { name: "Produits", exact: true }).click();
         await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
-        await page.getByRole("button", { name: "Ajouter un palier", exact: true }).click();
-        await page.getByLabel("Dès (articles)", { exact: true }).fill("2");
-        await page.getByLabel("Prix par article (MAD)", { exact: true }).fill("200");
+        await page.getByRole("button", { name: "Ajouter une offre", exact: true }).click();
+        await page.getByLabel("Quantité minimum", { exact: true }).fill("2");
+        await page.getByLabel("Total du lot (MAD)", { exact: true }).fill("400");
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
         await expect(
             page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true }),
         ).toBeVisible();
-        expect(product.quantityDiscounts).toEqual([{ minQuantity: 2, unitPrice: 200 }]);
+        expect(product.quantityDiscounts).toEqual([
+            { minQuantity: 2, unitPrice: 200, totalPrice: 400 },
+        ]);
         expect(writes).toBe(1);
         await page.getByRole("button", { name: "Modifier Article fictif", exact: true }).click();
-        await expect(page.getByLabel("Prix par article (MAD)", { exact: true })).toHaveValue("200");
-        await page.getByLabel("Prix par article (MAD)", { exact: true }).fill("250");
+        await expect(page.getByLabel("Total du lot (MAD)", { exact: true })).toHaveValue("400");
+        await page.getByLabel("Total du lot (MAD)", { exact: true }).fill("500");
         // Native validation blocks a price above the normal price without sending a request.
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
         expect(writes).toBe(1);
-        await page.getByRole("button", { name: "Supprimer le palier 1", exact: true }).click();
+        await page.getByRole("button", { name: "Supprimer l’offre 1", exact: true }).click();
         await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
         await expect(
             page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true }),
         ).toBeVisible();
         expect(product.quantityDiscounts).toEqual([]);
         expect(writes).toBe(2);
+        await page.getByRole("button", { name: "Ajouter un produit", exact: true }).click();
+        await page.getByLabel("Nom français", { exact: true }).fill("Nouveau sac");
+        await page.getByLabel("Nom arabe", { exact: true }).fill("حقيبة تجريبية");
+        await expect(page.getByLabel("Adresse du produit", { exact: true })).toHaveValue(
+            "nouveau-sac",
+        );
+        await page.getByLabel("Catégorie", { exact: true }).selectOption(category.id);
+        await page.getByLabel("Prix de vente (MAD)", { exact: true }).fill("200");
+        const preview = page.getByLabel("Aperçu des prix par quantité", { exact: true });
+        await expect(preview).toContainText("400,00");
+        await expect(preview).toContainText("600,00");
+        await page.screenshot({
+            path: `test-results/product-builder-${width}.png`,
+            fullPage: true,
+        });
+        await page.getByRole("button", { name: "Enregistrer le produit", exact: true }).click();
+        await expect(
+            page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true }),
+        ).toBeVisible();
+        expect(writes).toBe(3);
+        expect(product.status).toBe("DRAFT");
+        expect(product.nameEn).toBe("Nouveau sac");
+        expect(product.quantityDiscounts).toEqual([]);
+        expect(product.variants[0].stock).toBe(0);
+        expect(product.variants[0].sku).toMatch(/^NOUVEAU-SAC-/);
+
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
     });
 }
+
+for (const width of [390, 1440])
+    test(`A pack of three keeps its exact total at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 950 });
+        await page.goto("/products/fixture-pack");
+        await page.getByRole("button", { name: "بني", exact: true }).click();
+        await page.getByLabel("الكمية", { exact: true }).fill("3");
+        await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog.locator(".bag-grand-total")).toContainText("500.00");
+        await expect(dialog.locator(".bag-line-total")).toContainText("500.00");
+        await expect(dialog.locator(".bag-unit-price")).toContainText("≈");
+        await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
+        await page.goto("/checkout");
+        const summary = page.getByRole("complementary", { name: "ملخص الطلب", exact: true });
+        await expect(summary.locator(".bag-grand-total")).toContainText("500.00");
+        await page.reload();
+        await expect(summary.locator(".bag-grand-total")).toContainText("500.00");
+    });

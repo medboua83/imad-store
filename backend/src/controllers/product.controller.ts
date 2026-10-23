@@ -33,6 +33,7 @@ const productSchema = z.object({
     quantityDiscounts: z.array(z.object({
         minQuantity: z.number().int().min(2).max(100),
         unitPrice: z.number().positive().max(1000000),
+        totalPrice: z.number().positive().max(100000000).optional(),
     }).strict()).max(5).optional(),
     freeShipping: z.boolean().optional(),
     images: z

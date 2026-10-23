@@ -50,7 +50,15 @@ export function CheckoutReview({
                                     .join(" · ")}
                             </p>
                             <p>
-                                {item.quantity} × <span dir="ltr">{unitPrice.toFixed(2)} MAD</span>
+                                {item.quantity} قطعة ·{" "}
+                                <span dir="ltr">
+                                    {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) >
+                                    0.000001
+                                        ? "≈ "
+                                        : ""}
+                                    {unitPrice.toFixed(2)} MAD
+                                </span>{" "}
+                                للقطعة
                             </p>
                         </div>
                         <strong dir="ltr">{total.toFixed(2)} MAD</strong>

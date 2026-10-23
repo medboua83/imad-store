@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
+import { isAmbiguousSize } from "@imad-store/shared";
+import { QuantityOfferEditor, packOffers, type DraftQuantityOffer } from "./quantity-offer-editor";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { type Product, type Category } from "@/lib/api";
@@ -8,6 +9,7 @@ import { ProductPhotos } from "./product-photos";
 import {
     type DraftVariant,
     productSlug,
+    prepareNewVariantSkus,
     variantPayload,
     sizeVariants,
     stockMatches,
@@ -24,7 +26,7 @@ const blank = {
     descriptionEn: "",
     price: "",
     compareAtPrice: "",
-    quantityDiscounts: [] as { minQuantity: string; unitPrice: string }[],
+    quantityDiscounts: [] as DraftQuantityOffer[],
     promotionEnabled: false,
     freeShipping: false,
     categoryId: "",
@@ -68,6 +70,7 @@ export function ProductsTab({
         [variants, setVariants] = useState<DraftVariant[]>([]),
         [images, setImages] = useState<string[]>([]),
         [baseline, setBaseline] = useState("");
+    const [slugEdited, setSlugEdited] = useState(false);
     const [busy, setBusy] = useState(false),
         [uploading, setUploading] = useState(false),
         [error, setError] = useState(""),
@@ -126,7 +129,7 @@ export function ProductsTab({
                   compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "",
                   quantityDiscounts: (p.quantityDiscounts ?? []).map((tier) => ({
                       minQuantity: String(tier.minQuantity),
-                      unitPrice: String(tier.unitPrice),
+                      totalPrice: (tier.totalPrice ?? tier.unitPrice * tier.minQuantity).toFixed(2),
                   })),
                   promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
                   freeShipping: Boolean(p.freeShipping),
@@ -147,6 +150,7 @@ export function ProductsTab({
         setSession((n) => n + 1);
         setId(p?.id || null);
         setForm(next);
+        setSlugEdited(Boolean(p));
         setVariants(nextVariants);
         setImages(nextImages);
         setBaseline(JSON.stringify({ form: next, variants: nextVariants, images: nextImages }));
@@ -209,15 +213,8 @@ export function ProductsTab({
         if (lock.current || disabled || uncertain) return;
         let data: Record<string, unknown>;
         try {
-            const payload = variantPayload(variants);
-            const tiers = form.quantityDiscounts
-                .map((tier) => ({
-                    minQuantity: Number(tier.minQuantity),
-                    unitPrice: Number(tier.unitPrice),
-                }))
-                .sort((a, b) => a.minQuantity - b.minQuantity);
-            const tierError = quantityDiscountError(Number(form.price), tiers);
-            if (tierError) throw new Error(tierError);
+            const payload = variantPayload(prepareNewVariantSkus(variants, form.slug));
+            const tiers = packOffers(Number(form.price), form.quantityDiscounts);
             if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug))
                 throw new Error(
                     "L’adresse utilise uniquement des lettres minuscules sans accents, des chiffres et des tirets.",
@@ -235,6 +232,7 @@ export function ProductsTab({
                 );
             data = {
                 ...form,
+                nameEn: form.nameEn.trim() || form.nameFr.trim(),
                 price: Number(form.price),
                 quantityDiscounts: tiers,
                 compareAtPrice:
@@ -348,7 +346,67 @@ export function ProductsTab({
                             {dirty ? "Modifications non enregistrées" : "Fiche chargée"}
                         </span>
                     </div>
-                    <fieldset disabled={disabled} className="product-identity">
+                    <nav className="product-editor-nav" aria-label="Sections de la fiche produit">
+                        <a href="#product-details">1 · Informations</a>
+                        <a href="#product-photos">2 · Photos</a>
+                        <a href="#product-pricing">3 · Prix et offres</a>
+                        <a href="#product-variants">4 · Stock</a>
+                    </nav>
+                    <aside className="product-editor-summary" aria-label="Résumé du produit">
+                        <span className="admin-eyebrow">APERÇU DE LA FICHE</span>
+                        {images.length > 0 && (
+                            <AdminProductPhoto
+                                images={images}
+                                name={form.nameFr || "Votre produit"}
+                            />
+                        )}
+                        <h4>{form.nameFr || "Votre nouveau produit"}</h4>
+                        <p dir="rtl">{form.nameAr || "Le nom arabe apparaîtra ici"}</p>
+                        <strong>
+                            {Number(form.price) > 0
+                                ? money(Number(form.price))
+                                : "Prix à renseigner"}
+                        </strong>
+                        <small>pour 1 pièce · hors livraison</small>
+                        <ul>
+                            {[
+                                [
+                                    "Informations principales",
+                                    Boolean(
+                                        form.nameFr.trim() &&
+                                        form.nameAr.trim() &&
+                                        form.slug &&
+                                        form.categoryId,
+                                    ),
+                                ],
+                                ["Prix d’une pièce", Number(form.price) > 0],
+                                ["Photos", images.length > 0],
+                                [
+                                    "Variante en stock",
+                                    variants.some(
+                                        (v) => Number(v.stock) > 0 && !isAmbiguousSize(v.size),
+                                    ),
+                                ],
+                            ].map(([label, ready]) => (
+                                <li key={String(label)}>
+                                    <span aria-hidden="true">{ready ? "✓" : "○"}</span>
+                                    {label}
+                                    <small>{ready ? "Renseigné" : "À compléter"}</small>
+                                </li>
+                            ))}
+                        </ul>
+                        <p>
+                            {form.status === "ACTIVE"
+                                ? "En vente : une photo et une variante en stock sont nécessaires."
+                                : "Vous pouvez enregistrer un brouillon et terminer les photos et le stock plus tard."}
+                        </p>
+                        <p>
+                            Le nom anglais et les noms de couleurs anglais reprennent le français
+                            lorsqu’ils sont laissés vides. Une référence est créée automatiquement
+                            pour chaque nouvelle variante sans SKU.
+                        </p>
+                    </aside>
+                    <fieldset disabled={disabled} className="product-identity" id="product-details">
                         <legend>1. Informations du produit</legend>
                         <div className="grid gap-3 md:grid-cols-2">
                             <label>
@@ -358,7 +416,15 @@ export function ProductsTab({
                                     required
                                     maxLength={200}
                                     value={form.nameFr}
-                                    onChange={(e) => set("nameFr", e.target.value)}
+                                    onChange={(e) =>
+                                        setForm((v) => ({
+                                            ...v,
+                                            nameFr: e.target.value,
+                                            ...(!id && !slugEdited
+                                                ? { slug: productSlug(e.target.value) }
+                                                : {}),
+                                        }))
+                                    }
                                 />
                             </label>
                             <label>
@@ -371,7 +437,10 @@ export function ProductsTab({
                                         value={form.slug}
                                         aria-label="Adresse du produit"
                                         placeholder="exemple-sac-beige"
-                                        onChange={(e) => set("slug", e.target.value)}
+                                        onChange={(e) => {
+                                            setSlugEdited(true);
+                                            set("slug", e.target.value);
+                                        }}
                                     />
                                     <button
                                         type="button"
@@ -385,7 +454,7 @@ export function ProductsTab({
                             {(
                                 [
                                     ["nameAr", "Nom arabe"],
-                                    ["nameEn", "Nom anglais"],
+                                    ["nameEn", "Nom anglais (facultatif)"],
                                 ] as const
                             ).map(([key, label]) => (
                                 <label key={key}>
@@ -393,13 +462,74 @@ export function ProductsTab({
                                     <input
                                         className={inputClass}
                                         dir={key === "nameAr" ? "rtl" : undefined}
-                                        required
+                                        required={key !== "nameEn"}
                                         maxLength={200}
                                         value={form[key]}
                                         onChange={(e) => set(key, e.target.value)}
                                     />
                                 </label>
                             ))}
+                            <label>
+                                Catégorie
+                                <select
+                                    className={inputClass}
+                                    required
+                                    value={form.categoryId}
+                                    onChange={(e) => set("categoryId", e.target.value)}
+                                >
+                                    <option value="">Choisir une catégorie</option>
+                                    {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nameFr}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>
+                                Publication
+                                <select
+                                    className={inputClass}
+                                    value={form.status}
+                                    onChange={(e) => set("status", e.target.value)}
+                                >
+                                    <option value="DRAFT">Brouillon</option>
+                                    <option value="ACTIVE">En vente</option>
+                                    <option value="ARCHIVED">Archivé</option>
+                                </select>
+                            </label>
+                        </div>
+                        <details className="product-descriptions">
+                            <summary>Descriptions et détails supplémentaires</summary>
+                            {(["Fr", "Ar", "En"] as const).map((lang) => (
+                                <label key={lang}>
+                                    Description {lang}
+                                    <textarea
+                                        className={inputClass}
+                                        maxLength={20000}
+                                        dir={lang === "Ar" ? "rtl" : undefined}
+                                        value={form[`description${lang}`]}
+                                        onChange={(e) => set(`description${lang}`, e.target.value)}
+                                    />
+                                </label>
+                            ))}
+                        </details>
+                    </fieldset>
+                    <div id="product-photos" className="product-photos-section">
+                        <ProductPhotos
+                            key={session}
+                            images={images}
+                            onChange={setImages}
+                            busy={disabled}
+                            onBusy={setUploading}
+                        />
+                    </div>
+                    <fieldset disabled={disabled} className="product-pricing" id="product-pricing">
+                        <legend>3. Prix et offres</legend>
+                        <p className="admin-muted">
+                            Le prix d’une pièce est votre base. Les offres et la livraison sont
+                            facultatives.
+                        </p>
+                        <div className="grid gap-3 md:grid-cols-2">
                             <label>
                                 Prix de vente (MAD)
                                 <input
@@ -450,179 +580,22 @@ export function ProductsTab({
                                     onChange={(e) => set("compareAtPrice", e.target.value)}
                                 />
                             </label>
-                            <label>
-                                Catégorie
-                                <select
-                                    className={inputClass}
-                                    required
-                                    value={form.categoryId}
-                                    onChange={(e) => set("categoryId", e.target.value)}
-                                >
-                                    <option value="">Choisir une catégorie</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.nameFr}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label>
-                                Publication
-                                <select
-                                    className={inputClass}
-                                    value={form.status}
-                                    onChange={(e) => set("status", e.target.value)}
-                                >
-                                    <option value="DRAFT">Brouillon</option>
-                                    <option value="ACTIVE">En vente</option>
-                                    <option value="ARCHIVED">Archivé</option>
-                                </select>
-                            </label>
                         </div>
-                        <fieldset className="quantity-admin" disabled={disabled}>
-                            <legend>Promotions par quantité</legend>
-                            <p>
-                                Prix par article dès la quantité indiquée. Les tailles et couleurs
-                                du même produit se cumulent. Le meilleur palier atteint s’applique à
-                                toutes ses unités, sans remise supplémentaire sur le prix barré.
-                            </p>
-                            {form.quantityDiscounts.map((tier, index) => (
-                                <div className="quantity-admin-row" key={index}>
-                                    <label>
-                                        Dès (articles)
-                                        <input
-                                            className={inputClass}
-                                            type="number"
-                                            min={2}
-                                            max={100}
-                                            step={1}
-                                            required
-                                            value={tier.minQuantity}
-                                            onChange={(e) =>
-                                                setForm((v) => ({
-                                                    ...v,
-                                                    quantityDiscounts: v.quantityDiscounts.map(
-                                                        (t, i) =>
-                                                            i === index
-                                                                ? {
-                                                                      ...t,
-                                                                      minQuantity: e.target.value,
-                                                                  }
-                                                                : t,
-                                                    ),
-                                                }))
-                                            }
-                                        />
-                                    </label>
-                                    <label>
-                                        Prix par article (MAD)
-                                        <input
-                                            className={inputClass}
-                                            type="number"
-                                            min="0.01"
-                                            max={form.price || 1000000}
-                                            step="0.01"
-                                            required
-                                            value={tier.unitPrice}
-                                            onChange={(e) =>
-                                                setForm((v) => ({
-                                                    ...v,
-                                                    quantityDiscounts: v.quantityDiscounts.map(
-                                                        (t, i) =>
-                                                            i === index
-                                                                ? {
-                                                                      ...t,
-                                                                      unitPrice: e.target.value,
-                                                                  }
-                                                                : t,
-                                                    ),
-                                                }))
-                                            }
-                                        />
-                                    </label>
-                                    <button
-                                        type="button"
-                                        className="admin-button"
-                                        aria-label={`Supprimer le palier ${index + 1}`}
-                                        onClick={() =>
-                                            setForm((v) => ({
-                                                ...v,
-                                                quantityDiscounts: v.quantityDiscounts.filter(
-                                                    (_, i) => i !== index,
-                                                ),
-                                            }))
-                                        }
-                                    >
-                                        Supprimer
-                                    </button>
-                                    {Number(tier.minQuantity) >= 2 &&
-                                        Number(tier.unitPrice) > 0 && (
-                                            <p>
-                                                Exemple : {tier.minQuantity} articles ={" "}
-                                                {money(
-                                                    Number(tier.minQuantity) *
-                                                        Number(tier.unitPrice),
-                                                )}
-                                                , hors livraison.
-                                            </p>
-                                        )}
-                                </div>
-                            ))}
-                            <button
-                                type="button"
-                                className="admin-button"
-                                disabled={form.quantityDiscounts.length >= 5}
-                                onClick={() =>
-                                    setForm((v) => ({
-                                        ...v,
-                                        quantityDiscounts: [
-                                            ...v.quantityDiscounts,
-                                            {
-                                                minQuantity: String(
-                                                    Math.max(
-                                                        1,
-                                                        ...v.quantityDiscounts.map(
-                                                            (t) => Number(t.minQuantity) || 1,
-                                                        ),
-                                                    ) + 1,
-                                                ),
-                                                unitPrice: "",
-                                            },
-                                        ],
-                                    }))
-                                }
-                            >
-                                Ajouter un palier
-                            </button>
-                            {!form.quantityDiscounts.length && (
-                                <p>Aucune remise par quantité. Les prix actuels sont conservés.</p>
-                            )}
-                        </fieldset>
-                        <details className="product-descriptions">
-                            <summary>Descriptions · français, arabe et anglais</summary>
-                            {(["Fr", "Ar", "En"] as const).map((lang) => (
-                                <label key={lang}>
-                                    Description {lang}
-                                    <textarea
-                                        className={inputClass}
-                                        maxLength={20000}
-                                        dir={lang === "Ar" ? "rtl" : undefined}
-                                        value={form[`description${lang}`]}
-                                        onChange={(e) => set(`description${lang}`, e.target.value)}
-                                    />
-                                </label>
-                            ))}
-                        </details>
+                        <QuantityOfferEditor
+                            price={Number(form.price)}
+                            offers={form.quantityDiscounts}
+                            onChange={(offers) =>
+                                setForm((v) => ({ ...v, quantityDiscounts: offers }))
+                            }
+                            disabled={disabled}
+                        />
                     </fieldset>
-                    <ProductPhotos
-                        key={session}
-                        images={images}
-                        onChange={setImages}
-                        busy={disabled}
-                        onBusy={setUploading}
-                    />
-                    <fieldset disabled={disabled} className="product-variants">
-                        <legend>3. Variantes et stocks</legend>
+                    <fieldset
+                        disabled={disabled}
+                        className="product-variants"
+                        id="product-variants"
+                    >
+                        <legend>4. Tailles, couleurs et stock</legend>
                         <p className="admin-muted">
                             Chaque variante possède une référence SKU unique. Le stock correspond
                             aux unités disponibles, après les réservations des commandes.
@@ -754,7 +727,8 @@ export function ProductsTab({
                                         Référence SKU
                                         <input
                                             className={inputClass}
-                                            required
+                                            required={Boolean(v.id)}
+                                            placeholder="Générée automatiquement si vide"
                                             maxLength={100}
                                             value={v.sku}
                                             onChange={(e) => variant(v.key, "sku", e.target.value)}
@@ -829,7 +803,7 @@ export function ProductsTab({
                                             {label}
                                             <input
                                                 className={inputClass}
-                                                required
+                                                required={key !== "colorNameEn"}
                                                 maxLength={80}
                                                 dir={key === "colorNameAr" ? "rtl" : undefined}
                                                 value={v[key]}

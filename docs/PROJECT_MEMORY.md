@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Product builder and pack totals — 23 October 2026 candidate
+
+Quantity tier JSON remains backward compatible: unitPrice stays required for legacy clients, optional totalPrice preserves the merchant's exact reference-quantity total. Validate consistency, positive whole-cent totals and nonincreasing average rates. New total-based tiers may equal the ordinary price (1=200,2=400). Old unit-only discounted schedules remain supported. priceCart rounds each product's aggregate total once and allocates whole cents across its units; server snapshots those allocations as order lines, never an extra order/outbox. Cancellation must restore the summed quantity once. Preserve stock CAS and idempotent historical snapshots. Display an approximate average unit price when cents cannot divide evenly, with the exact line/order total authoritative.
+
+Admin edits total per quantity, with a live 1–5 preview. Main editor has section navigation and readiness summary. Only new products auto-suggest their slug; manual edits and existing URLs remain authoritative. New blank SKU references derive from the stable draft key and slug; never regenerate an existing variant's identity. Blank English names explicitly fall back to French. No schema migration or production catalog rewrite. See the current PR for final validation/deployment status.
+
 ## Quantity offers — 23 October 2026 candidate
 
 Optional per-product quantityDiscounts JSON: up to five decreasing unit-price tiers, minimum quantities 2–100. Sum all variants/aliases of the same product; never mix unrelated products. The highest reached tier applies to all its units and replaces the current unit price without subtracting compareAtPrice. Shared integer-cent calculation drives basket and checkout; server catalogue remains authoritative and snapshots discounted unitPrice in order/outbox. Delivery threshold uses discounted subtotal. Missing legacy field means no quantity offer. Admin can add/remove tiers, with no production offer enabled by default. Generate Prisma only; no db push or historical rewrite. Local 85 tests and builds/lint passed; CI includes mobile/desktop buyer and admin coverage. See the PR for final CI/deployment state.

@@ -6,9 +6,9 @@ import { useCartStore, type CartItem } from "@/store/cart.store";
 import { priceCart } from "@imad-store/shared";
 export function CartLine({ item, disabled = false }: { item: CartItem; disabled?: boolean }) {
     const { items, updateQty, removeItem } = useCartStore();
-    const unitPrice =
-        priceCart(items).lines.find((line) => line.item.variantId === item.variantId)?.unitPrice ??
-        item.price;
+    const priced = priceCart(items).lines.find((line) => line.item.variantId === item.variantId);
+    const unitPrice = priced?.unitPrice ?? item.price;
+    const approximate = Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001;
     const name = item.nameAr || item.nameFr;
     return (
         <article className="bag-line">
@@ -33,7 +33,11 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                 </p>
                 <p className="bag-unit-price">
                     {unitPrice < item.price && <del dir="ltr">{item.price.toFixed(2)} MAD </del>}
-                    <span dir="ltr">{unitPrice.toFixed(2)} MAD</span> / القطعة
+                    <span dir="ltr">
+                        {approximate ? "≈ " : ""}
+                        {unitPrice.toFixed(2)} MAD
+                    </span>{" "}
+                    / {approximate ? "متوسط القطعة" : "القطعة"}
                     {unitPrice < item.price && (
                         <span className="quantity-saving">عرض الكمية مطبّق</span>
                     )}
@@ -75,7 +79,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     </button>
                 </div>
                 <p className="bag-line-total" dir="ltr">
-                    {(unitPrice * item.quantity).toFixed(2)} <span>MAD</span>
+                    {(priced?.total ?? item.price * item.quantity).toFixed(2)} <span>MAD</span>
                 </p>
             </div>
         </article>
