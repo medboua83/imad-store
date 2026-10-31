@@ -51,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           as="image"
           type="image/webp"
           fetchPriority="high"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="font-arabic">
