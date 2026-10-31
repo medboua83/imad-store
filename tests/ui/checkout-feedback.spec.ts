@@ -28,10 +28,10 @@ async function seed(page: Page) {
     );
 }
 async function fill(page: Page) {
-    await page.getByLabel("الاسم الكامل", { exact: true }).fill("اختبار واجهة — لا شحن");
-    await page.getByLabel("رقم الهاتف", { exact: true }).fill("0600000099");
+    await page.getByRole("textbox", { name: "الاسم الكامل", exact: true }).fill("اختبار واجهة — لا شحن");
+    await page.getByRole("textbox", { name: "رقم الهاتف", exact: true }).fill("0600000099");
     await page.locator("#checkout-city").selectOption("tangier");
-    await page.getByLabel("عنوان التوصيل", { exact: true }).fill("Adresse fictive de test 1");
+    await page.getByRole("textbox", { name: "عنوان التوصيل", exact: true }).fill("Adresse fictive de test 1");
 }
 
 for (const width of [390, 1440]) {
@@ -64,12 +64,12 @@ for (const width of [390, 1440]) {
                 }),
             )
             .toBe(true);
-        await expect(page.getByLabel("الاسم الكامل", { exact: true })).toHaveValue(
+        await expect(page.getByRole("textbox", { name: "الاسم الكامل", exact: true })).toHaveValue(
             "اختبار واجهة — لا شحن",
         );
-        await expect(page.getByLabel("رقم الهاتف", { exact: true })).toHaveValue("0600000099");
+        await expect(page.getByRole("textbox", { name: "رقم الهاتف", exact: true })).toHaveValue("0600000099");
         await expect(page.locator("#checkout-city")).toHaveValue("tangier");
-        await expect(page.getByLabel("عنوان التوصيل", { exact: true })).toHaveValue(
+        await expect(page.getByRole("textbox", { name: "عنوان التوصيل", exact: true })).toHaveValue(
             "Adresse fictive de test 1",
         );
         await expect(submit).toBeEnabled();
@@ -103,7 +103,7 @@ for (const width of [390, 1440]) {
             return route.abort();
         });
         await page.goto("/checkout");
-        const name = page.getByLabel("الاسم الكامل", { exact: true });
+        const name = page.getByRole("textbox", { name: "الاسم الكامل", exact: true });
         await name.fill("Saisie fictive conservée");
         await name.focus();
         release();
