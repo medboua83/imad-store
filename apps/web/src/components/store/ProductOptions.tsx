@@ -12,6 +12,7 @@ export function ProductOptions({ product }: { product: Product }) {
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
     const [id, setId] = useState(variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "");
     const [quantity, setQuantity] = useState(1);
+    const [quantityDraft, setQuantityDraft] = useState<string | null>(null);
     const cart = useCartStore((state) => state.items);
     const inCart = cart
         .filter((item) => item.productId === product.id)
@@ -24,6 +25,15 @@ export function ProductOptions({ product }: { product: Product }) {
         stock - (cart.find((item) => item.variantId === id)?.quantity ?? 0),
     );
     const selectedQuantity = Math.min(quantity, available || 1);
+    const draftNumber = Number(quantityDraft);
+    const quantityInvalid =
+        available > 0 &&
+        quantityDraft !== null &&
+        (quantityDraft === "" ||
+            !Number.isSafeInteger(draftNumber) ||
+            draftNumber < 1 ||
+            draftNumber > available);
+    const quantityError = `أدخلوا عدداً صحيحاً من 1 إلى ${available}.`;
     const anticipatedQuantity = inCart + (available ? selectedQuantity : 0);
     const selectionQuantity = available ? selectedQuantity : 0;
     const pricing = quantityPriceBreakdown(product.price, tiers, selectionQuantity);
@@ -41,6 +51,10 @@ export function ProductOptions({ product }: { product: Product }) {
     const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
     const sizes = orderedSizes(variants);
     const selectedColor = variant ? colorKey(variant) : "";
+    function chooseQuantity(value: number) {
+        setQuantity(value);
+        setQuantityDraft(null);
+    }
     function selectVariant(next: Product["variants"][number] | undefined) {
         if (!next) return;
         const remaining = Math.max(
@@ -48,7 +62,7 @@ export function ProductOptions({ product }: { product: Product }) {
             next.stock - (cart.find((item) => item.variantId === next.id)?.quantity ?? 0),
         );
         setId(next.id);
-        setQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
+        chooseQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
     }
     return (
         <div className="product-options refined-options" id="product-options">
@@ -140,7 +154,9 @@ export function ProductOptions({ product }: { product: Product }) {
                             type="button"
                             key={count}
                             className="quantity-choice"
-                            aria-pressed={selectedQuantity === count && available > 0}
+                            aria-pressed={
+                                selectedQuantity === count && available > 0 && !quantityInvalid
+                            }
                             aria-label={
                                 count === 1
                                     ? "اختيار قطعة واحدة"
@@ -149,7 +165,7 @@ export function ProductOptions({ product }: { product: Product }) {
                                       : `اختيار ${count} قطع`
                             }
                             disabled={count > available}
-                            onClick={() => setQuantity(count)}
+                            onClick={() => chooseQuantity(count)}
                         >
                             <strong>{count}</strong>
                             <span>
@@ -160,7 +176,11 @@ export function ProductOptions({ product }: { product: Product }) {
                     ))}
                 </div>
                 <div className="quantity-selection-summary" aria-live="polite" aria-atomic="true">
-                    {available > 0 ? (
+                    {quantityInvalid ? (
+                        <p id="product-quantity-error" className="quantity-input-error">
+                            {quantityError}
+                        </p>
+                    ) : available > 0 ? (
                         <>
                             <p>سعر الكمية المختارة</p>
                             <strong className="quantity-selection-total" dir="ltr">
@@ -206,7 +226,7 @@ export function ProductOptions({ product }: { product: Product }) {
                         type="button"
                         aria-label="تقليل الكمية"
                         disabled={selectedQuantity <= 1 || !available}
-                        onClick={() => setQuantity(Math.max(1, selectedQuantity - 1))}
+                        onClick={() => chooseQuantity(Math.max(1, selectedQuantity - 1))}
                     >
                         <Minus size={17} aria-hidden="true" />
                     </button>
@@ -219,21 +239,30 @@ export function ProductOptions({ product }: { product: Product }) {
                         max={available || 1}
                         step={1}
                         disabled={!available}
-                        value={selectedQuantity}
+                        aria-invalid={quantityInvalid}
+                        aria-describedby={quantityInvalid ? "product-quantity-error" : undefined}
+                        value={available && quantityDraft !== null ? quantityDraft : selectedQuantity}
                         onChange={(e) => {
-                            const n = Number(e.target.value);
-                            setQuantity(
-                                Number.isFinite(n)
-                                    ? Math.max(1, Math.min(available || 1, Math.floor(n)))
-                                    : 1,
-                            );
+                            const value = e.target.value;
+                            const n = Number(value);
+                            setQuantityDraft(value);
+                            if (
+                                value !== "" &&
+                                Number.isSafeInteger(n) &&
+                                n >= 1 &&
+                                n <= available
+                            )
+                                setQuantity(n);
+                        }}
+                        onBlur={() => {
+                            if (!quantityInvalid) setQuantityDraft(null);
                         }}
                     />
                     <button
                         type="button"
                         aria-label="زيادة الكمية"
                         disabled={selectedQuantity >= available || !available}
-                        onClick={() => setQuantity(Math.min(available, selectedQuantity + 1))}
+                        onClick={() => chooseQuantity(Math.min(available, selectedQuantity + 1))}
                     >
                         <Plus size={17} aria-hidden="true" />
                     </button>
@@ -241,13 +270,14 @@ export function ProductOptions({ product }: { product: Product }) {
             </div>
             <div className="product-purchase-bar">
                 <p className="purchase-price" dir="ltr">
-                    {available ? total.toFixed(2) : "—"} <span>MAD · سعر الكمية المختارة</span>
+                    {available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
+                    <span>MAD · سعر الكمية المختارة</span>
                 </p>
                 <button
                     className="btn-primary w-full"
-                    disabled={!variant || !available}
+                    disabled={!variant || !available || quantityInvalid}
                     onClick={() => {
-                        if (variant && available)
+                        if (variant && available && !quantityInvalid)
                             useCartStore.getState().addItem(product, variant, selectedQuantity);
                     }}
                 >
@@ -264,7 +294,7 @@ export function ProductOptions({ product }: { product: Product }) {
                     <p>
                         في السلة الآن: <bdi>{inCart}</bdi> قطعة من هذا المنتج.
                     </p>
-                    {available > 0 && (
+                    {available > 0 && !quantityInvalid && (
                         <>
                             <p>
                                 بعد إضافة <bdi>{selectedQuantity}</bdi>:{" "}
@@ -289,7 +319,7 @@ export function ProductOptions({ product }: { product: Product }) {
                         ? "العرض الأصغر يتكرر لكل مجموعة كاملة، والقطع المتبقية بالسعر العادي. إذا وُجد سعر خاص للعدد المختار فهو المعتمد. المقاسات والألوان من نفس المنتج تتجمع في السلة."
                         : "اختاروا عدد القطع، وشاهدوا المبلغ قبل الإضافة إلى السلة."}
                 </p>
-                {available > 0 && (
+                {available > 0 && !quantityInvalid && (
                     <>
                         {pricing.packs.length > 0 && (
                             <ul className="quantity-pack-lines" aria-label="تفصيل السعر حسب العروض">

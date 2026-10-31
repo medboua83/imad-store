@@ -162,6 +162,13 @@
     height: 44px;
     min-height: 44px;
 }
+.product-page .quantity-stepper input[aria-invalid="true"] {
+    outline: 1px solid #9a3427;
+    outline-offset: -1px;
+}
+.product-page .quantity-selection-summary .quantity-input-error {
+    color: #9a3427;
+}
 .product-page .product-purchase-bar {
     position: relative;
     z-index: 20;
