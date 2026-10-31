@@ -28,10 +28,20 @@ import {
 import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
 import { CartRecoveryNotice } from "@/components/store/CartRecoveryNotice";
+type CheckoutForm = { fullName: string; phone: string; city: string; address: string };
+function checkoutFieldError(field: keyof CheckoutForm, value: string): string {
+    if (field === "fullName") return value.trim().length < 3 ? "أدخلوا الاسم الكامل" : "";
+    if (field === "phone") return normalizeShippingPhone(value) ? "" : "أدخلوا رقم هاتف مغربي صالحاً";
+    if (field === "city") return canonicalShippingCity(value) ? "" : "اختاروا مدينة التوصيل من القائمة";
+    return value.trim().length < 5 || value.trim().length > 124
+        ? "أدخلوا العنوان الكامل بين 5 و124 حرفاً"
+        : "";
+}
 export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
     const shipping = useShipping(total(), items);
-    const [form, setForm] = useState({ fullName: "", phone: "", city: "", address: "" });
+    const [form, setForm] = useState<CheckoutForm>({ fullName: "", phone: "", city: "", address: "" });
+    const validationAttempted = useRef(false);
     const [citySearch, setCitySearch] = useState("");
     const matchingCities = searchShippingCities(citySearch);
     const visibleCities =
@@ -96,15 +106,17 @@ export default function CheckoutPage() {
     async function submit(e: React.FormEvent) {
         e.preventDefault();
         if (submissionLock.current) return;
+        validationAttempted.current = true;
         const errors: Record<string, string> = {};
-        if (form.fullName.trim().length < 3) errors.fullName = "أدخلوا الاسم الكامل";
-        if (!normalizeShippingPhone(form.phone)) errors.phone = "أدخلوا رقم هاتف مغربي صالحاً";
-        if (!canonicalShippingCity(form.city)) errors.city = "اختاروا مدينة التوصيل من القائمة";
-        if (form.address.trim().length < 5 || form.address.trim().length > 124)
-            errors.address = "أدخلوا العنوان الكامل بين 5 و124 حرفاً";
+        for (const field of Object.keys(form) as (keyof CheckoutForm)[]) {
+            const message = checkoutFieldError(field, form[field]);
+            if (message) errors[field] = message;
+        }
         setFields(errors);
         if (Object.keys(errors).length) {
-            document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus();
+            requestAnimationFrame(() =>
+                document.getElementById(`checkout-${Object.keys(errors)[0]}`)?.focus(),
+            );
             return;
         }
         submissionLock.current = true;
@@ -248,8 +260,19 @@ export default function CheckoutPage() {
             onChange: (
                 event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
             ) => {
+                const value = event.target.value;
                 setReview(null);
-                setForm((old) => ({ ...old, [field]: event.target.value }));
+                setForm((old) => ({ ...old, [field]: value }));
+                if (validationAttempted.current) {
+                    const message = checkoutFieldError(field, value);
+                    setFields((old) => {
+                        if ((old[field] || "") === message) return old;
+                        const next = { ...old };
+                        if (message) next[field] = message;
+                        else delete next[field];
+                        return next;
+                    });
+                }
             },
         };
         return (

@@ -1,5 +1,11 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Validation des champs au fil de la correction — candidat du 31 octobre 2026
+
+Après une première validation, les champs corrigés gardaient leur message et aria-invalid jusqu’à la soumission suivante. Un test avant correction confirme le nom valide encore marqué incorrect. Le candidat partage les mêmes règles entre soumission et changements de saisie, uniquement après une première tentative. Une valeur redevenue incorrecte est à nouveau signalée ; la recherche de ville ne remplace pas la sélection effective. Le premier champ incorrect reçoit le focus après le rendu des messages et références accessibles. Pas de modification des critères métier, du téléphone transmis, des frais, prix, stocks, modes de confirmation ou clés de reprise. Tests isolés à 320/390/1440 px, sans commande réelle ; recette et publication à consigner.
+
+La PR 83 est publiée sur Master 1077a573 : 94 UI et 100 intégration réussis, Hostinger Completed/Current. Panier et passage au checkout vérifiés à 390/1470 px, deux pièces et total 400 MAD conservés ; catalogue et réglages publics inchangés.
+
 ## Détails actuels du catalogue dans le panier — candidat du 31 octobre 2026
 
 Le panier actualisait prix, photos et stock mais gardait le nom sauvegardé du produit ; un test avant correction confirme l’ancien nom encore affiché après relecture du catalogue. Le candidat actualise les trois noms du produit et signale aussi les changements de libellés de couleur dans les trois langues. Les traductions absentes conservent leur valeur précédente. Les messages de relecture couvrent désormais les détails produits, et la soumission s’arrête pour les revoir si un libellé change, même sans changement de prix. La relecture directe déjà faite est invalidée si les détails changent pendant sa confirmation. Six scénarios couvrent panier sauvegardé, mode service et confirmation directe à 390/1440 px. Quantités, identifiants, offres, livraison et instantanés des commandes déjà créées inchangés. Recette et publication à consigner après validation.
