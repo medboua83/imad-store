@@ -1,4 +1,12 @@
-# Current Status — 2026-10-18
+# Current Status — 2026-10-31
+
+## Priorité des ressources et diagnostic — candidat du 31 octobre 2026
+
+Logo du header préchargé comme image, police Cormorant conservée à la demande plutôt que préchargée sur toutes les pages. Première couverture du catalogue seule chargée en eager/high ; les autres restent lazy, sans modifier les fichiers ni les dimensions. Le mécanisme de repli garde les mêmes priorités quand une source échoue. Photos déjà WebP et cache immuable d’un an sur les fichiers nommés par leur empreinte : aucun changement du stockage.
+
+Le mode volontaire ?measure ajoute la largeur/visibilité et décompose INP en attente, traitement et présentation. Console locale uniquement, sans cible DOM, URL, contenu de champ ni transmission. Aucune instrumentation supplémentaire pour les visites ordinaires. Les mesures navigateur et ressources des fixtures sont jointes aux tests UI ; elles ne constituent pas un score Lighthouse ou un percentile de terrain. Le service PageSpeed a répondu 429 pendant cette intervention. Une interaction du menu à 1 240 ms dans le navigateur intégré reste à analyser par attribution, sans l’attribuer arbitrairement au site ni annoncer sa correction.
+
+La PR 75 est publiée sur Master daccf0ad : 55 UI et 100 intégration, installation et hébergement combiné validés. Checkout compact vérifié à 320/390/1440 ; cartes de marque et photos propres aux produits vérifiées en ligne. Conditions commerciales inchangées.
 
 Règles commerciales actuelles : [COMMERCE_RULES.md](COMMERCE_RULES.md). Les notes datées ci-dessous conservent l’historique ; elles ne remplacent pas cette référence.
 

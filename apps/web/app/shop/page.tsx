@@ -269,8 +269,8 @@ export default async function ShopPage({
             </div>
             {result.data.length ? (
                 <div className="catalog-grid">
-                    {result.data.map((p) => (
-                        <ProductCard product={p} key={p.id} headingLevel={3} />
+                    {result.data.map((p, index) => (
+                        <ProductCard product={p} key={p.id} headingLevel={3} eagerImage={index === 0} />
                     ))}
                 </div>
             ) : (
