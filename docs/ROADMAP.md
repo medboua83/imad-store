@@ -1,5 +1,11 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Filtres et pagination du catalogue — candidat du 31 octobre 2026
+
+Audit public : une réponse 400 sur des filtres invalides était remplacée par le catalogue entier, sous les critères pourtant affichés comme appliqués. Le candidat conserve la saisie et ouvre le formulaire avec une erreur, sans résultats non filtrés ni faux compteur. Les pannes de service restent des erreurs, jamais un catalogue vide. Un lien vers une page hors limites propose la première page en conservant recherche, catégorie, tri, prix et disponibilité ; un vrai zéro résultat garde son message distinct. Aucun changement de photos, prix, promotions, stocks ou réglages.
+
+La PR 76 est publiée sur Master 0a1e6b5c : 61 UI et 100 intégration validés, Hostinger Completed/Current et affichage 390/1440 vérifiés. Le pic isolé de réactivité du menu n’a pas été reproduit ; aucune cause ni correction spécifique n’est revendiquée. La recette et la publication du présent candidat seront consignées après les contrôles.
+
 ## Priorité des ressources et diagnostic — candidat du 31 octobre 2026
 
 Logo du header préchargé comme image, police Cormorant conservée à la demande plutôt que préchargée sur toutes les pages. Première couverture du catalogue seule chargée en eager/high ; les autres restent lazy, sans modifier les fichiers ni les dimensions. Le mécanisme de repli garde les mêmes priorités quand une source échoue. Photos déjà WebP et cache immuable d’un an sur les fichiers nommés par leur empreinte : aucun changement du stockage.

@@ -261,6 +261,8 @@
     padding: 15px;
     border-radius: 10px;
     font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 12px;
 }
 .shop-empty-state {
     text-align: center;
