@@ -30,33 +30,54 @@ for (const width of [390, 1440])
         await page.goto("/products/fixture-gallery");
         const stage = page.locator(".gallery-stage");
         const photo = stage.locator("img");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/sac.webp", page.url()).href,
+        );
         const control = page
             .locator(".gallery-caption")
             .getByRole("button", { name: "الصورة التالية", exact: true });
         await control.focus();
         await control.press("Control+ArrowRight");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/sac.webp", page.url()).href,
+        );
         await control.press("ArrowRight");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/abaya.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/abaya.webp", page.url()).href,
+        );
         await expect(
             page.getByRole("button", { name: "عرض الصورة 2", exact: true }),
         ).toHaveAttribute("aria-pressed", "true");
         await control.press("End");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/chale.webp", page.url()).href,
+        );
         await control.press("ArrowRight");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/sac.webp", page.url()).href,
+        );
         await control.press("ArrowLeft");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/chale.webp", page.url()).href,
+        );
         await control.press("Home");
-        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+        await expect(photo).toHaveJSProperty(
+            "src",
+            new URL("/images/catalogue-test/sac.webp", page.url()).href,
+        );
         await page.getByRole("button", { name: "تكبير صورة المنتج", exact: true }).click();
         const dialog = page.locator(".gallery-dialog");
         await expect(dialog).toBeVisible();
         await dialog.press("End");
-        await expect(dialog.locator("img")).toHaveAttribute(
+        await expect(dialog.locator("img")).toHaveJSProperty(
             "src",
-            "/images/catalogue-test/chale.webp",
+            new URL("/images/catalogue-test/chale.webp", page.url()).href,
         );
         await dialog.press("Escape");
         await expect(dialog).not.toBeVisible();
@@ -78,15 +99,30 @@ test("Native mobile swipes change photos while vertical, cancelled and multi-tou
     const stage = page.locator(".gallery-stage");
     const photo = stage.locator("img");
     await swipe(page, stage, -120);
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/abaya.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/abaya.webp", page.url()).href,
+    );
     await swipe(page, stage, 120);
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/sac.webp", page.url()).href,
+    );
     await swipe(page, stage, -20);
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/sac.webp", page.url()).href,
+    );
     await swipe(page, stage, -120, 0, true);
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/sac.webp", page.url()).href,
+    );
     await swipe(page, stage, 0, -120);
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/sac.webp", page.url()).href,
+    );
     await expect(stage).toHaveCSS("touch-action", "pan-y pinch-zoom");
     const box = (await stage.boundingBox())!;
     const client = await page.context().newCDPSession(page);
@@ -99,17 +135,23 @@ test("Native mobile swipes change photos while vertical, cancelled and multi-tou
     });
     await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await client.detach();
-    await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
+    await expect(photo).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/sac.webp", page.url()).href,
+    );
     await page.getByRole("button", { name: "تكبير صورة المنتج", exact: true }).click();
     const zoomPhoto = page.locator(".gallery-dialog .zoom-photo");
     await swipe(page, zoomPhoto, -120);
-    await expect(zoomPhoto.locator("img")).toHaveAttribute(
+    await expect(zoomPhoto.locator("img")).toHaveJSProperty(
         "src",
-        "/images/catalogue-test/abaya.webp",
+        new URL("/images/catalogue-test/abaya.webp", page.url()).href,
     );
     await page.screenshot({ path: info.outputPath("gallery-touch-zoom.png") });
     await page.getByRole("button", { name: "إغلاق الصورة", exact: true }).click();
-    await expect(stage.locator("img")).toHaveAttribute("src", "/images/catalogue-test/abaya.webp");
+    await expect(stage.locator("img")).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/abaya.webp", page.url()).href,
+    );
     await expect(
         page.getByRole("button", { name: "فتح السلة، 0 قطعة", exact: true }).first(),
     ).toBeVisible();
@@ -125,7 +167,10 @@ test("Failed gallery photos are skipped by keyboard navigation", async ({ page }
         .getByRole("button", { name: "الصورة التالية", exact: true });
     await control.focus();
     await control.press("End");
-    await expect(stage.locator("img")).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
+    await expect(stage.locator("img")).toHaveJSProperty(
+        "src",
+        new URL("/images/catalogue-test/chale.webp", page.url()).href,
+    );
     await expect
         .poll(() =>
             stage.locator("img").evaluate((image) => (image as HTMLImageElement).naturalWidth),
