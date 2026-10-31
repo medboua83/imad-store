@@ -2,6 +2,25 @@
 .store-shell main > .page-shell {
   scroll-margin-top: var(--store-header-offset, 140px);
 }
+.store-shell .store-page-error {
+  max-width: 760px;
+  width: calc(100% - 32px);
+  min-height: 0;
+  margin: 28px auto;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid #d8c39c;
+  border-radius: 18px;
+  background: #faf7f0;
+  color: #493a23;
+}
+.store-error-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #896325; background: #f3e9d7; }
+.store-page-error h1 { font-size: clamp(28px, 5vw, 36px); margin-block: 18px 12px; line-height: 1.5; }
+.store-page-error p { line-height: 1.9; }
+.store-error-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 24px; }
+.store-error-actions .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; border-radius: 10px; }
+.store-error-actions .btn-primary:disabled { opacity: .65; cursor: wait; }
+.store-error-actions a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
+.store-error-actions :is(a, button):focus-visible { outline: 3px solid #b38a43; outline-offset: 4px; }
 .store-shell .shopping-questions {
   scroll-margin-block-start: calc(var(--store-header-offset, 140px) + 16px);
 }

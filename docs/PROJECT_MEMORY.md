@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Reprise après erreur serveur — candidat du 31 octobre 2026
+
+Le bouton de reprise utilisait reset(), qui efface la frontière d’erreur sans relire les données serveur. Deux scénarios isolés avant correction restent bloqués après une panne temporaire, à 390/1440 px. Le candidat utilise retry() de Next 16, qui redemande les données avant le rendu ; état de chargement et protection contre les clics répétés. Présentation dorée compacte avec liens vers le catalogue et l’aide. Le lien vers le catalogue effectue une navigation complète : une navigation cliente sur le même chemin avec une autre recherche pouvait conserver la frontière d’erreur. Tests de panne temporaire, conservation des filtres et du panier, panne persistante et sortie vers le catalogue. Aucune panne provoquée sur le site réel ni action commande/CRM/transporteur. Recette et publication à consigner après validation.
+
+La PR 81 est publiée sur Master c570720f : 84 UI et 100 intégration réussis, Hostinger Completed/Current. Quantité de deux pièces et total 400 MAD conservés après choix de taille/couleur, aux formats 390/1470 px ; photos, prix, variantes et réglages publics inchangés.
+
 ## Quantité conservée lors du choix des variantes — candidat du 31 octobre 2026
 
 Sur quickydev.com, choisir deux pièces puis cliquer sur la taille déjà sélectionnée remettait la quantité à une. La sélection d’un coloris ou d’une taille conserve désormais la quantité affichée, limitée au stock du nouvel élément après déduction des unités déjà présentes dans le panier. Aucun ajout au panier par le seul choix d’une variante. Prix et promotions calculés par les fonctions partagées existantes, sans modification du catalogue ni de règles commerciales. Quatre scénarios UI couvrent 390/1440 px, répétition du choix, changement de coloris, limite de stock et unités déjà dans le panier. Recette et publication à consigner après validation.

@@ -47,6 +47,7 @@ const recommended = (id, slug, nameAr, price) => ({ ...product, id, slug, nameAr
 const premium = recommended("444444444444444444444444", "fixture-premium", "موديل للمقارنة", 300);
 const accessory = recommended("555555555555555555555555", "fixture-accessory", "قطعة مكملة تجريبية", 50);
 const secondSource = recommended("666666666666666666666666", "fixture-second-source", "منتج ثان تجريبي", 80);
+const catalogueAttempts = new Map();
 createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
   if (req.method !== "GET") {
@@ -62,6 +63,14 @@ createServer((req, res) => {
   else if (pathname === "/api/categories") data = [category, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
   else if (pathname === "/api/products") {
     const search = url.searchParams.get("search");
+    if (/^retry-fixture-(390|1440)$/.test(search || "")) {
+      const attempts = catalogueAttempts.get(search) || 0;
+      catalogueAttempts.set(search, attempts + 1);
+      if (attempts === 0) {
+        res.writeHead(503);
+        return res.end(JSON.stringify({ success: false }));
+      }
+    }
     if ((url.searchParams.has("minPrice") && url.searchParams.has("maxPrice") &&
         Number(url.searchParams.get("minPrice")) > Number(url.searchParams.get("maxPrice"))) ||
         url.searchParams.get("sort") === "invalid-sort") {
