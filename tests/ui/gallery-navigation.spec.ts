@@ -84,7 +84,7 @@ for (const width of [390, 1440])
         await expect(
             page.getByRole("button", { name: "تكبير صورة المنتج", exact: true }),
         ).toBeFocused();
-        expect(await page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+        await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
