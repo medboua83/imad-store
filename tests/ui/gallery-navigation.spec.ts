@@ -31,19 +31,22 @@ for (const width of [390, 1440])
         const stage = page.locator(".gallery-stage");
         const photo = stage.locator("img");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
-        await stage.focus();
-        await stage.press("ArrowRight");
+        const control = page
+            .locator(".gallery-caption")
+            .getByRole("button", { name: "الصورة التالية", exact: true });
+        await control.focus();
+        await control.press("ArrowRight");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/abaya.webp");
         await expect(
             page.getByRole("button", { name: "عرض الصورة 2", exact: true }),
         ).toHaveAttribute("aria-pressed", "true");
-        await stage.press("End");
+        await control.press("End");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
-        await stage.press("ArrowRight");
+        await control.press("ArrowRight");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
-        await stage.press("ArrowLeft");
+        await control.press("ArrowLeft");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
-        await stage.press("Home");
+        await control.press("Home");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
         await page.getByRole("button", { name: "تكبير صورة المنتج", exact: true }).click();
         const dialog = page.locator(".gallery-dialog");
@@ -115,8 +118,11 @@ test("Failed gallery photos are skipped by keyboard navigation", async ({ page }
     await page.goto("/products/fixture-gallery");
     const stage = page.locator(".gallery-stage");
     await expect(page.locator(".gallery-thumbnails button")).toHaveCount(2);
-    await stage.focus();
-    await stage.press("End");
+    const control = page
+        .locator(".gallery-caption")
+        .getByRole("button", { name: "الصورة التالية", exact: true });
+    await control.focus();
+    await control.press("End");
     await expect(stage.locator("img")).toHaveAttribute("src", "/images/catalogue-test/chale.webp");
     await expect
         .poll(() =>

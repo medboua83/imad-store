@@ -81,29 +81,30 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 className={inZoom ? "gallery-navigation zoom-navigation" : "gallery-navigation"}
                 dir="ltr"
             >
-                <button type="button" aria-label="الصورة السابقة" onClick={() => move(-1)}>
+                <button
+                    type="button"
+                    aria-label="الصورة السابقة"
+                    onKeyDown={inZoom ? undefined : navigate}
+                    onClick={() => move(-1)}
+                >
                     <ChevronLeft size={20} aria-hidden="true" />
                 </button>
                 <span aria-live="polite">
                     {active + 1} / {available.length}
                 </span>
-                <button type="button" aria-label="الصورة التالية" onClick={() => move(1)}>
+                <button
+                    type="button"
+                    aria-label="الصورة التالية"
+                    onKeyDown={inZoom ? undefined : navigate}
+                    onClick={() => move(1)}
+                >
                     <ChevronRight size={20} aria-hidden="true" />
                 </button>
             </div>
         );
     return (
         <div className="product-gallery refined-gallery">
-            <div
-                className="gallery-stage"
-                role="region"
-                aria-label={`صور ${name} — استخدموا الأسهم للتنقل`}
-                tabIndex={available.length > 1 ? 0 : undefined}
-                onKeyDown={(event) => {
-                    if (event.target === event.currentTarget) navigate(event);
-                }}
-                {...touchNavigation}
-            >
+            <div className="gallery-stage" {...touchNavigation}>
                 {src ? (
                     <Image
                         src={src}
@@ -125,6 +126,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                         ref={trigger}
                         className="gallery-expand"
                         type="button"
+                        onKeyDown={navigate}
                         onClick={() => {
                             zoom.current?.showModal();
                             setZoomOpen(true);
@@ -156,6 +158,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                             type="button"
                             aria-label={`عرض الصورة ${i + 1}`}
                             aria-pressed={active === i}
+                            onKeyDown={navigate}
                             onClick={() => setSelected(image)}
                         >
                             <Image
