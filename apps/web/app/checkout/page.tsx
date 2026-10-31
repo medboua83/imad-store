@@ -81,7 +81,7 @@ export default function CheckoutPage() {
             checked = true;
             refreshCart()
                 .then((changed) => {
-                    if (active && changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
+                    if (active && changed) setError("تم تحديث تفاصيل المنتجات أو الأسعار أو الكميات. راجعوا ملخص الطلب.");
                 })
                 .catch(() => {
                     if (active) setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق.");
@@ -114,7 +114,8 @@ export default function CheckoutPage() {
             const changed = await refreshCart();
             const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
-                announceSubmissionError("تغير السعر أو التوفر. راجعوا المجموع الجديد ثم أكدوا مجدداً.");
+                setReview(null);
+                announceSubmissionError("تغيرت تفاصيل المنتجات أو السعر أو التوفر. راجعوا ملخص الطلب ثم أكدوا مجدداً.");
                 return;
             }
             const cart = useCartStore.getState().items;

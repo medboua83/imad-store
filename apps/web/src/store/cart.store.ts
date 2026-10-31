@@ -153,13 +153,21 @@ export const useCartStore = create<CartStore>()(
                             JSON.stringify(product?.quantityDiscounts ?? []) !== JSON.stringify(item.quantityDiscounts ?? []) ||
                             quantity !== item.quantity ||
                             stock === 0 ||
+                            (product?.nameFr ?? item.nameFr) !== item.nameFr ||
+                            (product?.nameAr ?? item.nameAr) !== item.nameAr ||
+                            (product?.nameEn ?? item.nameEn) !== item.nameEn ||
                             (variant?.size ?? "") !== (item.size ?? "") ||
-                            (variant && variant.colorNameFr !== item.colorNameFr) ||
+                            (variant?.colorNameFr ?? item.colorNameFr) !== item.colorNameFr ||
+                            (variant?.colorNameAr ?? item.colorNameAr) !== item.colorNameAr ||
+                            (variant?.colorNameEn ?? item.colorNameEn) !== item.colorNameEn ||
                             Boolean(product?.freeShipping) !== Boolean(item.freeShipping)
                         )
                             changed = true;
                         return {
                             ...item,
+                            nameFr: product?.nameFr ?? item.nameFr,
+                            nameAr: product?.nameAr ?? item.nameAr,
+                            nameEn: product?.nameEn ?? item.nameEn,
                             price,
                             quantityDiscounts: product?.quantityDiscounts ?? [],
                             stock,
