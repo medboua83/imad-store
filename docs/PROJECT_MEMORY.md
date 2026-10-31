@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Détails actuels du catalogue dans le panier — candidat du 31 octobre 2026
+
+Le panier actualisait prix, photos et stock mais gardait le nom sauvegardé du produit ; un test avant correction confirme l’ancien nom encore affiché après relecture du catalogue. Le candidat actualise les trois noms du produit et signale aussi les changements de libellés de couleur dans les trois langues. Les traductions absentes conservent leur valeur précédente. Les messages de relecture couvrent désormais les détails produits, et la soumission s’arrête pour les revoir si un libellé change, même sans changement de prix. Quantités, identifiants, offres, livraison et instantanés des commandes déjà créées inchangés. Recette et publication à consigner après validation.
+
+La PR 82 est publiée sur Master dd116519 : 88 UI et 100 intégration réussis, Hostinger Completed/Current. Pannes simulées uniquement en recette ; catalogue, fiche produit et contact vérifiés sur le site public à 390/1470 px, avec nouveau bundle d’erreur présent.
+
 ## Reprise après erreur serveur — candidat du 31 octobre 2026
 
 Le bouton de reprise utilisait reset(), qui efface la frontière d’erreur sans relire les données serveur. Deux scénarios isolés avant correction restent bloqués après une panne temporaire, à 390/1440 px. Le candidat utilise retry() de Next 16, qui redemande les données avant le rendu ; état de chargement et protection contre les clics répétés. Présentation dorée compacte avec liens vers le catalogue et l’aide. Le lien vers le catalogue effectue une navigation complète : une navigation cliente sur le même chemin avec une autre recherche pouvait conserver la frontière d’erreur. Tests de panne temporaire, conservation des filtres et du panier, panne persistante et sortie vers le catalogue. Aucune panne provoquée sur le site réel ni action commande/CRM/transporteur. Recette et publication à consigner après validation.
