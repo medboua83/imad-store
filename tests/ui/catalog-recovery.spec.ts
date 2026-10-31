@@ -6,7 +6,7 @@ for (const width of [390, 1440]) {
     }, info) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/shop?category=mens-clogs&search=fixture&minPrice=500&maxPrice=100");
-        await expect(page.getByRole("alert")).toContainText("صححوا الفلاتر");
+        await expect(page.getByRole("main").getByRole("alert")).toContainText("صححوا الفلاتر");
         await expect(page.locator("#catalog-search")).toHaveAttribute("open", "");
         await expect(page.locator(".catalog-card")).toHaveCount(0);
         await expect(
@@ -25,11 +25,11 @@ for (const width of [390, 1440]) {
         await page.locator('[name="maxPrice"]').fill("500");
         await page.getByRole("button", { name: "عرض النتائج", exact: true }).click();
         await expect(page.locator(".catalog-card")).toHaveCount(1);
-        await expect(page.getByRole("alert")).toHaveCount(0);
+        await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
         expect(new URL(page.url()).searchParams.get("category")).toBe("mens-clogs");
         await expect(page.locator(".active-filter-chips")).toContainText("fixture");
         await page.goto("/shop?sort=invalid-sort");
-        await expect(page.getByRole("alert")).toContainText("صححوا الفلاتر");
+        await expect(page.getByRole("main").getByRole("alert")).toContainText("صححوا الفلاتر");
         await expect(page.locator(".catalog-card")).toHaveCount(0);
     });
 
