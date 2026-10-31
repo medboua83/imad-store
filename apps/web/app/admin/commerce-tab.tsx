@@ -3,13 +3,16 @@ import { OlivraisonSettings } from "./olivraison-settings";
 import { OrderSettings } from "./order-settings";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSettings, updateSettings } from "@/lib/api";
+import { getSettings, updateSettings, type StoreSettings } from "@/lib/api";
 
 export default function CommerceTab() {
     const cache = useQueryClient();
     const [form, setForm] = useState({
         shippingCost: "30",
         freeShippingMin: "500",
+        deliveryMaxDays: "",
+        returnWindowDays: "",
+        returnFeePayer: "" as NonNullable<StoreSettings["returnFeePayer"]> | "",
         metaPixelId: "",
         metaPixelEnabled: false,
         metaPixelMadPerUsd: "",
@@ -25,6 +28,9 @@ export default function CommerceTab() {
             setForm({
                 shippingCost: String(settings.shippingCost),
                 freeShippingMin: String(settings.freeShippingMin),
+                deliveryMaxDays: settings.deliveryMaxDays ? String(settings.deliveryMaxDays) : "",
+                returnWindowDays: settings.returnWindowDays ? String(settings.returnWindowDays) : "",
+                returnFeePayer: settings.returnFeePayer || "",
                 metaPixelId: settings.metaPixelId || "",
                 metaPixelEnabled: Boolean(settings.metaPixelEnabled),
                 metaPixelMadPerUsd: settings.metaPixelMadPerUsd ? String(settings.metaPixelMadPerUsd) : "",
@@ -71,6 +77,9 @@ export default function CommerceTab() {
                             await updateSettings({
                                 shippingCost: Number(form.shippingCost),
                                 freeShippingMin: Number(form.freeShippingMin),
+                                deliveryMaxDays: form.deliveryMaxDays ? Number(form.deliveryMaxDays) : null,
+                                returnWindowDays: form.returnWindowDays ? Number(form.returnWindowDays) : null,
+                                returnFeePayer: form.returnFeePayer || null,
                                 metaPixelId: form.metaPixelId.trim() || null,
                                 metaPixelEnabled: form.metaPixelEnabled,
                                 metaPixelMadPerUsd: form.metaPixelMadPerUsd ? Number(form.metaPixelMadPerUsd) : null,
@@ -79,7 +88,7 @@ export default function CommerceTab() {
                             setSaved(true);
                         } catch {
                             setError(
-                                "Enregistrement impossible. Vérifiez les montants et l’identifiant du pixel.",
+                                "Enregistrement impossible. Vérifiez les montants, les délais et l’identifiant du pixel.",
                             );
                         } finally {
                             setBusy(false);
@@ -123,6 +132,32 @@ export default function CommerceTab() {
                             livrer, même avec d’autres produits. Sinon, les frais ci-dessus
                             s’appliquent jusqu’au seuil.
                         </p>
+                    </fieldset>
+                    <fieldset disabled={busy}>
+                        <legend>Délais et retours affichés aux clients</legend>
+                        <label>
+                            Délai maximal de livraison (jours)
+                            <input type="number" min="1" max="365" step="1" value={form.deliveryMaxDays}
+                                onChange={e => setForm({ ...form, deliveryMaxDays: e.target.value })} />
+                        </label>
+                        <label>
+                            Délai de demande de retour après réception (jours)
+                            <input type="number" min="1" max="365" step="1" value={form.returnWindowDays}
+                                onChange={e => setForm({ ...form, returnWindowDays: e.target.value })} />
+                        </label>
+                        <label>
+                            Frais de retour à la charge de
+                            <select value={form.returnFeePayer}
+                                onChange={e => setForm({ ...form, returnFeePayer: e.target.value as typeof form.returnFeePayer })}>
+                                <option value="">Non renseigné</option>
+                                <option value="STORE">La boutique</option>
+                                <option value="DELIVERY_TRY_ON">Essai à la livraison : boutique ; après paiement et départ : client</option>
+                                <option value="CUSTOMER">Le client</option>
+                                <option value="BY_REASON">Selon le motif</option>
+                            </select>
+                        </label>
+                        {form.returnFeePayer === "DELIVERY_TRY_ON" && <p>La boutique prend en charge le retour confirmé pendant l’essayage à la livraison. Après paiement et départ du livreur, le client paie les frais d’un retour demandé dans le délai indiqué.</p>}
+                        <p>Laissez un délai vide pour ne pas annoncer d’engagement. Ces informations apparaissent sur les pages pratiques et les fiches produits. Vérifiez leur cohérence avec vos conditions détaillées ; aucun remboursement ni colis n’est déclenché.</p>
                     </fieldset>
                     <fieldset disabled={busy}>
                         <legend>Meta Pixel</legend>

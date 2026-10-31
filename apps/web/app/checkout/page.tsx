@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
+import { CartRecoveryNotice } from "@/components/store/CartRecoveryNotice";
 export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
     const shipping = useShipping(total(), items);
@@ -120,7 +121,7 @@ export default function CheckoutPage() {
                     expectedTotal: confirmedTotal,
                     customer: {
                         fullName: form.fullName.trim(),
-                        phone: form.phone.replace(/[\s()-]/g, ""),
+                        phone: form.phone.replace(/[\s().-]/g, ""),
                         city: canonicalShippingCity(form.city)!,
                         region: canonicalShippingCity(form.city)!,
                         street: form.address.trim(),
@@ -356,6 +357,7 @@ export default function CheckoutPage() {
                     </li>
                 </ol>
             )}
+            <CartRecoveryNotice />
             {!items.length ? (
                 <div className="checkout-empty">
                     <ShoppingBag size={38} aria-hidden="true" />

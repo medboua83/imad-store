@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { cartStorage, recoverCart } from "../lib/cart-recovery";
 import { isAmbiguousSize, priceCart, type QuantityDiscount } from "@imad-store/shared";
 import { getProduct, ProductVariant, Product } from "../lib/api";
 import { trackCart } from "../lib/store-analytics";
@@ -26,6 +27,8 @@ export interface CartItem {
 
 interface CartStore {
     items: CartItem[];
+    cartRecovered: boolean;
+    dismissRecovery: () => void;
     isOpen: boolean;
     openCart: () => void;
     closeCart: () => void;
@@ -42,6 +45,8 @@ export const useCartStore = create<CartStore>()(
     persist(
         (set, get) => ({
             items: [],
+            cartRecovered: false,
+            dismissRecovery: () => set({ cartRecovered: false }),
             isOpen: false,
             openCart: () => set({ isOpen: true }),
             closeCart: () => set({ isOpen: false }),
@@ -177,7 +182,12 @@ export const useCartStore = create<CartStore>()(
         }),
         {
             name: "imad-store-cart",
+            storage: createJSONStorage(() => cartStorage),
             partialize: (state) => ({ items: state.items }),
+            merge: (saved, current) => {
+                const restored = recoverCart(saved);
+                return { ...current, items: restored.items, cartRecovered: restored.recovered };
+            },
             // Rehydrate after React attaches to the identical empty server snapshot.
             skipHydration: true,
         },

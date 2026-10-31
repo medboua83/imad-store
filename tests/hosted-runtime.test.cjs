@@ -40,6 +40,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     await mongo.connect();
     await prisma.user.create({ data: { email: "hosted@example.invalid", passwordHash: await bcrypt.hash("isolated-hosted-test", 10), firstName: "Test", lastName: "Isolated", role: "ADMIN" } });
     const category = await prisma.category.create({ data: { slug: "hosted-test", nameFr: "Test", nameAr: "اختبار", nameEn: "Test" } });
+    await prisma.storeSettings.create({ data: { id: "settings", deliveryMaxDays: 3, returnWindowDays: 3, returnFeePayer: "DELIVERY_TRY_ON" } });
     const complement = await prisma.product.create({ data: {
       slug: "hosted-complement-test", nameFr: "HOSTED COMPLEMENT", nameAr: "HOSTED COMPLEMENT", nameEn: "HOSTED COMPLEMENT",
       descriptionFr: "Test", descriptionAr: "Test", descriptionEn: "Test", price: 50, status: "ACTIVE", images: ["/images/cat-abayas.png"], categoryId: category.id,
@@ -79,6 +80,16 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     const detailHtml = await detail.text();
     assert.match(detailHtml, /HOSTED CATALOGUE TEST/);
     assert.match(detailHtml, /HOSTED COMPLEMENT/);
+    assert.match(detailHtml, /التوصيل خلال/);
+    const delivery = await get("/delivery");
+    assert.equal(delivery.status, 200);
+    assert.match(await delivery.text(), /التوصيل خلال 3 أيام كحد أقصى/);
+    const returns = await get("/returns");
+    assert.equal(returns.status, 200);
+    const returnsHtml = await returns.text();
+    assert.match(returnsHtml, /خلال 3 أيام من استلام الطلب/);
+    assert.match(returnsHtml, /يتحمل المتجر رسوم الإرجاع إذا تم تأكيد الإرجاع أثناء التجربة عند التسليم/);
+    assert.match(returnsHtml, /بعد الدفع ومغادرة المندوب، يتحمل العميل رسوم/);
     const recommendations = await (await get("/api/products/hosted-product-test/recommendations")).json();
     assert.deepEqual(recommendations.data.upsell, []);
     assert.deepEqual(recommendations.data.crossSell.map(p => p.id), [complement.id]);

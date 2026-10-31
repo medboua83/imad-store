@@ -12,6 +12,7 @@ import "./photo-presentation.css";
 import "./quantity-offers.css";
 import "./product-compact.css";
 import "./recommendations.css";
+import "./store-refinements.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 

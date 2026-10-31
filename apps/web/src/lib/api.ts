@@ -254,6 +254,9 @@ export interface StoreSettings {
     whatsappPhone: string;
     shippingCost: number;
     freeShippingMin: number;
+    deliveryMaxDays?: number | null;
+    returnWindowDays?: number | null;
+    returnFeePayer?: "STORE" | "CUSTOMER" | "BY_REASON" | "DELIVERY_TRY_ON" | null;
     metaPixelEnabled?: boolean;
     metaPixelId?: string | null;
     metaPixelMadPerUsd?: number | null;

@@ -1,5 +1,14 @@
 # Current Status — 2026-10-18
 
+## Fiabilité et lisibilité — candidat du 31 octobre 2026
+
+Audit en ligne et reproductions isolées : titre couvert par le header après navigation, ponctuation du téléphone acceptée puis refusée, panier local invalide provoquant une erreur. Correction par marge de défilement liée à la hauteur réelle du header (pas de défilement forcé), nettoyage du téléphone identique à la validation en conservant le format local/international, et restauration du panier limitée aux lignes valides. JSON illisible, stockage indisponible, doublons et données de prix/quantité invalides ne doivent plus faire planter l’interface. Les lignes indisponibles restent affichées pour vérification ; un avertissement accompagne la récupération. Montants recalculés par le catalogue et le serveur, idempotence et historique inchangés.
+
+Catalogue ordinateur raccourci, photos affichées entières dans un cadre carré sans changer les fichiers ; aides aux tailles/prix plus lisibles. Réglages de livraison : trois champs facultatifs deliveryMaxDays, returnWindowDays et returnFeePayer, absents par défaut pour chaque installation. Le marchand a confirmé pour quickydev.com : livraison 3 jours maximum, demande de retour dans les 3 jours suivant réception, frais de retour à la charge de la boutique uniquement si le retour est confirmé pendant l’essayage à la livraison ; après paiement et départ du livreur, frais à la charge du client (DELIVERY_TRY_ON). Appliquer ces valeurs uniquement sur cette boutique après déploiement ; ne jamais les préremplir pour les autres entreprises. Les conditions de produit, l’adresse de retour et le traitement du montant ne sont pas inventés. Aucune commande, sortie CRM ni opération transporteur autorisée par cette recette.
+
+Tests ajoutés : récupération du panier, navigation mobile/ordinateur, téléphone ponctué, administration et rendu public des délais. Vérification finale, CI, publication et enregistrement des valeurs réelles à consigner dans le rapport de cette intervention. Génération Prisma uniquement, sans db push ni migration de données.
+
+
 ## Recommandations manuelles par produit — 23 octobre 2026
 
 Upsell/cross-sell facultatif, initialement désactivé pour tous les produits. Administration → Produits → Modifier → 5 · Recommandations : activer, rechercher et sélectionner jusqu’à quatre alternatives et quatre compléments, ordonner puis enregistrer. Alternatives sous les informations d’achat ; compléments sur la fiche et dans le panier (deux maximum, trois produits sources maximum). Chaque lien ouvre la fiche pour choisir couleur/taille ; aucun ajout ni remplacement automatique, aucune remise supplémentaire.

@@ -161,6 +161,16 @@ test("standard checkout has no customer AI option", async ({ page }) => {
     expect(requests[0].body.confirmationMode).toBeUndefined();
     expect(requests[0].body.aiServiceConsent).toBe(false);
 });
+for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
+    test(`Checkout submits the validated phone without separators: ${phone}`, async ({ page }) => {
+        const { requests } = await fixture(page, false);
+        await fillCheckout(page, phone);
+        await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+        await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
+        expect(requests).toHaveLength(1);
+        expect(requests[0].body.customer.phone).toBe(phone.startsWith("+") ? "+212612345678" : "0612345678");
+    });
+}
 test("delivery fields use official cities and preserve local delivery phone", async ({ page }, info) => {
     const { requests } = await fixture(page, false);
     await fillCheckout(page, "0600000099");
