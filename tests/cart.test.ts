@@ -26,7 +26,8 @@ test("Cart quantity promotions combine colours, survive hydration and refresh wh
         quantityDiscounts: [{ minQuantity: 2, unitPrice: 85 }],
         variants: [
             product.variants[0],
-            { ...product.variants[0], id: "another-colour", sku: "OTHER" },
+            // Persisted references use the same ObjectId format as catalogue variants.
+            { ...product.variants[0], id: "123456789012345678901237", sku: "OTHER" },
         ],
     };
     store().addItem(promoted, promoted.variants[0]);
