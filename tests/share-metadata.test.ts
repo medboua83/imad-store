@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { productShareMetadata, resolvePublicOrigin } from "../apps/web/src/lib/share-metadata";
+import { productShareMetadata, resolvePublicOrigin, storefrontShareMetadata } from "../apps/web/src/lib/share-metadata";
 import { descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
 test("Size presentation follows numeric and clothing order, without duplicates", () => {
   assert.deepEqual(orderedSizes(["43","40","42","41","44","40"].map(size=>({size}))), ["40","41","42","43","44"]);
@@ -57,3 +57,18 @@ test("empty catalogue image does not substitute an unrelated logo; multilingual 
   assert.equal(result.description, "Details");
   assert.deepEqual((result.openGraph as any).images, []);
 });
+
+for (const page of ["home", "shop"] as const) {
+  test(`The ${page} brand card uses the installation origin and a clean canonical URL`, () => {
+    const result = storefrontShareMetadata(page, new URL("https://another-store.example"));
+    const og = result.openGraph as any, twitter = result.twitter as any;
+    assert.equal(og.url, `https://another-store.example${page === "home" ? "/" : "/shop"}`);
+    assert.equal(result.alternates?.canonical, og.url);
+    assert.equal(og.title, (result.title as any).absolute);
+    assert.equal(og.description, result.description);
+    assert.deepEqual(og.images, [{url:"https://another-store.example/images/brand/imad-share-gold-v1.png",width:1200,height:630,type:"image/png",alt:"IMAD Mode"}]);
+    assert.equal(twitter.card, "summary_large_image");
+    assert.deepEqual(twitter.images, og.images);
+    assert.ok(!JSON.stringify(result).includes("quickydev.com"));
+  });
+}
