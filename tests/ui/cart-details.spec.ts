@@ -129,7 +129,7 @@ for (const width of [390, 1440]) {
       await expect(notice).toContainText("تغيرت تفاصيل المنتجات");
       await expect(notice).toBeFocused();
       expect(orders).toHaveLength(0);
-      await expect(page.locator(".checkout-items-disclosure .bag-line-variant")).toContainText(
+      await expect(page.locator(".checkout-item-disclosure .bag-line-variant")).toContainText(
         "أسود محدث",
       );
       await expect(page.getByRole("textbox", { name: "الاسم الكامل", exact: true })).toHaveValue(
