@@ -1,5 +1,11 @@
 # Current Status — 2026-10-31
 
+## Contact et accès aux questions — candidat du 31 octobre 2026
+
+Le lien direct vers les questions plaçait le titre et la première question derrière le header fixe. La marge de défilement suit désormais la hauteur réelle du header, sans script de défilement ni changement de navigation native. Page contact harmonisée avec la charte dorée, raccourcis vers livraison, retours et questions, focus visible au clavier. Le layout déclare le défilement fluide à Next 16 pour que les changements de page utilisent le repositionnement natif immédiat documenté, tout en conservant les ancres. Lien WhatsApp et horaires existants conservés ; aucune modification des règles commerciales ni des données. Recette et publication à consigner après les contrôles.
+
+La PR 79 est publiée sur Master 5ec54ef6 : 77 UI et 100 intégration réussis, Hostinger Completed/Current. La restauration du panier est vérifiée avant lecture du catalogue ; erreurs et reprise vérifiées à 390/1470 px, panne simulée retirée sans commande réelle.
+
 ## Erreurs et reprise du checkout — candidat du 31 octobre 2026
 
 L’ouverture directe attend la restauration du panier enregistré avant de relire le catalogue, au lieu de vérifier uniquement la liste vide du rendu serveur. Les messages généraux de reprise sont placés avant les champs de livraison. Après une tentative de validation, le focus rejoint le message une fois rendu, avec marge sous le header fixe ; une erreur de chargement en arrière-plan ne déplace pas le focus pendant la saisie. Un nouvel échec identique doit être annoncé à nouveau. Les lignes indisponibles proposent un accès direct au panier pour les retirer, sans devoir trouver le récapitulatif mobile replié. Champs saisis, signature de relecture, clé d’idempotence, prix/stock, validation serveur et envoi CRM inchangés. Aucun nouvel enregistrement des coordonnées dans le navigateur.
