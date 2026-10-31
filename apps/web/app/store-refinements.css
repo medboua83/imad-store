@@ -2,6 +2,40 @@
 .store-shell main > .page-shell {
   scroll-margin-top: var(--store-header-offset, 140px);
 }
+.store-shell .shopping-questions {
+  scroll-margin-block-start: calc(var(--store-header-offset, 140px) + 16px);
+}
+.store-shell .shopping-questions summary:focus-visible {
+  outline: 3px solid #b38a43;
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+.store-shell .contact-page {
+  max-width: 960px;
+  margin-inline: auto;
+  color: #493a23;
+}
+.contact-intro { max-width: 660px; margin-bottom: 28px; }
+.contact-intro h1 { font-size: clamp(32px, 5vw, 44px); margin-block: 8px 16px; }
+.contact-intro > p { line-height: 1.9; }
+.contact-intro .contact-eyebrow { font-size: 13px; color: #756044; }
+.contact-intro .contact-hours { font-size: 14px; color: #756044; margin-top: 14px; }
+.contact-page .contact-whatsapp { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; margin-top: 20px; border-radius: 12px; }
+.contact-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.contact-shortcuts a { display: flex; align-items: flex-start; gap: 12px; padding: 18px; border: 1px solid #d8c39c; border-radius: 14px; background: #faf7f0; min-height: 88px; }
+.contact-shortcuts a:hover { background: #f3e9d7; border-color: #b38a43; }
+.contact-shortcuts a:focus-visible, .contact-back:focus-visible, .contact-whatsapp:focus-visible { outline: 3px solid #b38a43; outline-offset: 4px; }
+.contact-shortcuts svg { flex-shrink: 0; color: #896325; }
+.contact-shortcuts span { min-width: 0; }
+.contact-shortcuts strong, .contact-shortcuts small { display: block; }
+.contact-shortcuts strong { font-weight: 600; line-height: 1.6; }
+.contact-shortcuts small { font-size: 13px; line-height: 1.7; margin-top: 5px; color: #756044; }
+.contact-back { display: inline-flex; align-items: center; min-height: 44px; margin-top: 24px; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 639px) {
+  .contact-shortcuts { grid-template-columns: minmax(0, 1fr); }
+  .contact-shortcuts a { min-height: 76px; padding: 14px 16px; }
+  .contact-page .shopping-questions { padding: 18px; margin-top: 28px; }
+}
 .cart-recovery-notice {
   padding: 14px 16px;
   margin-bottom: 16px;
