@@ -40,6 +40,15 @@ export default function CheckoutPage() {
             : matchingCities;
     const [fields, setFields] = useState<Record<string, string>>({});
     const [error, setError] = useState("");
+    const submissionError = useRef<HTMLParagraphElement>(null);
+    const [submissionErrorVersion, setSubmissionErrorVersion] = useState(0);
+    useEffect(() => {
+        if (submissionErrorVersion > 0) submissionError.current?.focus();
+    }, [submissionErrorVersion]);
+    function announceSubmissionError(message: string) {
+        setError(message);
+        setSubmissionErrorVersion(version => version + 1);
+    }
     const [busy, setBusy] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
     useEffect(() => {
@@ -65,11 +74,24 @@ export default function CheckoutPage() {
     const reviewReady = direct && review !== null && review === reviewSignature();
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
-        refreshCart()
-            .then((changed) => {
-                if (changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
-            })
-            .catch(() => setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق."));
+        let active = true;
+        let checked = false;
+        const check = () => {
+            if (!active || checked) return;
+            checked = true;
+            refreshCart()
+                .then((changed) => {
+                    if (active && changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
+                })
+                .catch(() => {
+                    if (active) setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق.");
+                });
+        };
+        // The provider restores persisted items after child effects. Checking the
+        // empty server snapshot would otherwise skip the saved basket entirely.
+        const unsubscribe = useCartStore.persist.onFinishHydration(check);
+        if (useCartStore.persist.hasHydrated()) check();
+        return () => { active = false; unsubscribe(); };
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -92,24 +114,24 @@ export default function CheckoutPage() {
             const changed = await refreshCart();
             const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
-                setError("تغير السعر أو التوفر. راجعوا المجموع الجديد ثم أكدوا مجدداً.");
+                announceSubmissionError("تغير السعر أو التوفر. راجعوا المجموع الجديد ثم أكدوا مجدداً.");
                 return;
             }
             const cart = useCartStore.getState().items;
             if (!cart.length || cart.some((i) => i.quantity < 1 || i.quantity > i.stock)) {
-                setError("احذفوا المنتجات غير المتوفرة من السلة قبل المتابعة.");
+                announceSubmissionError("احذفوا المنتجات غير المتوفرة من السلة قبل المتابعة.");
                 return;
             }
             if (!freshSettings) throw new Error("Shipping settings unavailable");
             if ((freshSettings.directSiteConfirmation === true) !== direct) {
                 setReview(null);
-                setError("تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.");
+                announceSubmissionError("تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.");
                 return;
             }
             const subtotal = priceCart(cart).subtotal;
             const confirmedTotal = subtotal + shippingFee(subtotal, cart, freshSettings);
             if (shipping.total === null || Math.abs(confirmedTotal - shipping.total) > 0.005) {
-                setError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");
+                announceSubmissionError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");
                 return;
             }
             if (direct && review !== reviewSignature(cart, confirmedTotal)) {
@@ -167,7 +189,7 @@ export default function CheckoutPage() {
                 }
                 setFields(errors);
             }
-            setError(
+            announceSubmissionError(
                 response?.data?.error ||
                     "تعذر الاتصال. بياناتكم محفوظة هنا، ويمكنكم المحاولة مجدداً.",
             );
@@ -383,6 +405,20 @@ export default function CheckoutPage() {
                         className="checkout-form checkout-details-form"
                         aria-busy={busy}
                     >
+                        {error && (
+                            <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">
+                                {error}
+                            </p>
+                        )}
+                        {invalidItems && (
+                            <p role="alert" className="checkout-alert">
+                                احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.{" "}
+                                <button type="button" className="text-link" disabled={busy}
+                                    onClick={() => useCartStore.getState().openCart()}>
+                                    مراجعة الحقيبة
+                                </button>
+                            </p>
+                        )}
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
                                 <span>01</span>لنتواصل بشأن طلبكم
@@ -416,11 +452,6 @@ export default function CheckoutPage() {
                                 <p>راجعوا المبلغ الكامل قبل تأكيد الطلب.</p>
                             </div>
                         </div>
-                        {error && (
-                            <p role="alert" className="checkout-alert">
-                                {error}
-                            </p>
-                        )}
                         {shipping.error && (
                             <p role="alert" className="checkout-alert">
                                 تعذر تحميل رسوم التوصيل.{" "}
@@ -436,11 +467,6 @@ export default function CheckoutPage() {
                         {shipping.settings?.codEnabled === false && (
                             <p role="alert" className="checkout-alert">
                                 الطلب بالدفع عند الاستلام متوقف مؤقتاً.
-                            </p>
-                        )}
-                        {invalidItems && (
-                            <p role="alert" className="checkout-alert">
-                                احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.
                             </p>
                         )}
                         <p className="checkout-policy">
