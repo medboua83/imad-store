@@ -2,7 +2,7 @@
 
 ## Erreurs et reprise du checkout — candidat du 31 octobre 2026
 
-Les messages généraux de reprise sont placés avant les champs de livraison. Après une tentative de validation, le focus rejoint le message une fois rendu, avec marge sous le header fixe ; une erreur de chargement en arrière-plan ne déplace pas le focus pendant la saisie. Un nouvel échec identique doit être annoncé à nouveau. Les lignes indisponibles proposent un accès direct au panier pour les retirer, sans devoir trouver le récapitulatif mobile replié. Champs saisis, signature de relecture, clé d’idempotence, prix/stock, validation serveur et envoi CRM inchangés. Aucun nouvel enregistrement des coordonnées dans le navigateur.
+L’ouverture directe attend la restauration du panier enregistré avant de relire le catalogue, au lieu de vérifier uniquement la liste vide du rendu serveur. Les messages généraux de reprise sont placés avant les champs de livraison. Après une tentative de validation, le focus rejoint le message une fois rendu, avec marge sous le header fixe ; une erreur de chargement en arrière-plan ne déplace pas le focus pendant la saisie. Un nouvel échec identique doit être annoncé à nouveau. Les lignes indisponibles proposent un accès direct au panier pour les retirer, sans devoir trouver le récapitulatif mobile replié. Champs saisis, signature de relecture, clé d’idempotence, prix/stock, validation serveur et envoi CRM inchangés. Aucun nouvel enregistrement des coordonnées dans le navigateur.
 
 La PR 78 est publiée sur Master 7efe5350 : 71 UI et 100 intégration réussis, Hostinger Completed/Current et vrais gestes vérifiés sur les photos originales à 390 px, clavier à 1470 px. Recette et publication du présent candidat à consigner après les contrôles.
 

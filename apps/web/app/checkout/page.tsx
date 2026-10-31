@@ -74,11 +74,24 @@ export default function CheckoutPage() {
     const reviewReady = direct && review !== null && review === reviewSignature();
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
-        refreshCart()
-            .then((changed) => {
-                if (changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
-            })
-            .catch(() => setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق."));
+        let active = true;
+        let checked = false;
+        const check = () => {
+            if (!active || checked) return;
+            checked = true;
+            refreshCart()
+                .then((changed) => {
+                    if (active && changed) setError("تم تحديث الأسعار أو الكميات. راجعوا ملخص الطلب.");
+                })
+                .catch(() => {
+                    if (active) setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق.");
+                });
+        };
+        // The provider restores persisted items after child effects. Checking the
+        // empty server snapshot would otherwise skip the saved basket entirely.
+        const unsubscribe = useCartStore.persist.onFinishHydration(check);
+        if (useCartStore.persist.hasHydrated()) check();
+        return () => { active = false; unsubscribe(); };
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();

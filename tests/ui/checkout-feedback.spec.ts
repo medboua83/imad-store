@@ -84,7 +84,7 @@ for (const width of [390, 1440]) {
         );
     });
 
-    test(`A background basket error does not steal typing focus at ${width}px`, async ({
+    test(`A restored basket checks the catalogue without stealing typing focus at ${width}px`, async ({
         page,
     }) => {
         await page.setViewportSize({ width, height: 844 });
