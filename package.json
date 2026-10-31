@@ -22,7 +22,8 @@
     "store:run": "node scripts/run-company-store.cjs",
     "test:installer": "node --test tests/store-installer.test.cjs",
     "store:bundle": "node scripts/bundle-company-store.cjs",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "test:storefront": "node --import tsx --test tests/cart-recovery.test.ts"
   },
   "devDependencies": {
     "eslint": "^9.39.0",

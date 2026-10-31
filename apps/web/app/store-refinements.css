@@ -1,0 +1,110 @@
+/* Offset native route/hash scrolling by the actual sticky header, without overriding history. */
+.store-shell main > .page-shell {
+  scroll-margin-top: var(--store-header-offset, 140px);
+}
+.cart-recovery-notice {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #d8c39c;
+  border-radius: 12px;
+  background: #faf3e4;
+  color: #594018;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.cart-recovery-notice button {
+  min-height: 44px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.store-shell
+  .product-page
+  :is(.variant-help, .quantity-selection-summary small, .quantity-selection-saving) {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #6e604b;
+}
+.store-shell
+  .product-page
+  :is(.product-category-label, .product-service-note, .gallery-caption, .product-shipping-badge) {
+  font-size: 13px;
+}
+.store-shell .product-description {
+  font-size: 16px;
+  line-height: 1.9;
+  max-width: 68ch;
+  margin-block: 14px;
+}
+.store-shell .product-facts {
+  font-size: 15px;
+}
+.store-shell .policy-page {
+    max-width: 900px;
+    margin-inline: auto;
+}
+.store-shell .policy-page p,
+.store-shell .policy-steps {
+    font-size: 16px;
+    line-height: 1.9;
+}
+.policy-fee-note {
+    padding: 14px 18px;
+    border-inline-start: 3px solid #b38a43;
+    border-radius: 8px;
+    background: #faf4e8;
+    color: #594018;
+}
+@media (min-width: 768px) {
+  .store-shell .refined-shop {
+        padding-top: 8px;
+  }
+  .refined-shop .shop-breadcrumb {
+    margin-bottom: 4px;
+  }
+  .store-shell .refined-shop .shop-intro {
+    padding: 14px 20px;
+        margin-bottom: 8px;
+    gap: 16px;
+  }
+  .refined-shop .shop-intro .eyebrow,
+    .refined-shop .shop-intro-note,
+    .refined-shop .shop-intro > div > p:not(.eyebrow) {
+    display: none;
+  }
+  .store-shell .refined-shop .shop-intro h1 {
+        font-size: 30px;
+        line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .refined-shop .shop-category-rail {
+    padding-bottom: 6px;
+  }
+  .refined-shop .catalog-results-heading {
+        margin: 8px 0;
+  }
+    .refined-shop .catalog-filter-panel > summary {
+        min-height: 52px;
+        padding: 12px 18px;
+    }
+  .refined-shop .catalog-card-image {
+    aspect-ratio: 1;
+        max-height: 300px;
+  }
+}
+@media (max-width: 767px) {
+  .store-shell .product-page .product-identity {
+    gap: 6px 8px;
+  }
+  .store-shell .product-page .quantity-selection-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .store-shell .product-page .quantity-selection-total {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .store-shell .product-page .product-shipping-badge {
+    max-width: 150px;
+  }
+}

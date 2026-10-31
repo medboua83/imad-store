@@ -248,6 +248,9 @@ model StoreSettings {
   whatsappPhone   String  @default("212XXXXXXXXX")
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
+  deliveryMaxDays Int?
+  returnWindowDays Int?
+  returnFeePayer String?
   codEnabled      Boolean @default(true)
   directSiteConfirmation Boolean @default(false)
   metaPixelEnabled Boolean @default(false)

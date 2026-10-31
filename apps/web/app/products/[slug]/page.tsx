@@ -102,6 +102,10 @@ export default async function ProductPage({ params }: Props) {
             <details>
               <summary>التوصيل والاستبدال</summary>
               <p>{product.freeShipping ? "التوصيل مجاني عند إضافة هذا المنتج إلى السلة." : `رسوم التوصيل ${settings.shippingCost.toFixed(2)} MAD، وتصبح مجانية من ${settings.freeShippingMin.toFixed(2)} MAD أو عند إضافة منتج مؤهل.`}</p>
+              {settings.deliveryMaxDays && <p>التوصيل خلال {settings.deliveryMaxDays} أيام كحد أقصى.</p>}
+              {settings.returnWindowDays && <p>طلب الاستبدال أو الإرجاع خلال {settings.returnWindowDays} أيام من الاستلام.</p>}
+              {settings.returnFeePayer === "STORE" && <p>يتحمل المتجر رسوم الشحن الخاصة بالإرجاع.</p>}
+              {settings.returnFeePayer === "DELIVERY_TRY_ON" && <p>الإرجاع المؤكد أثناء التجربة عند التسليم على حساب المتجر. بعد الدفع ومغادرة المندوب، يتحمل العميل رسوم الإرجاع ضمن المدة المحددة.</p>}
               <p>تُحسب الرسوم النهائية في ملخص الطلب. راجعوا آجال التوصيل وشروط الاستبدال والإرجاع قبل تأكيد طلبكم.</p>
               <nav aria-label="معلومات التوصيل والاستبدال">
                 <Link href="/delivery">

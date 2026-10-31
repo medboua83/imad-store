@@ -16,6 +16,7 @@ import { useShipping } from "@/hooks/useShipping";
 import { CartLine } from "../store/CartLine";
 import { CartTotals } from "../store/CartTotals";
 import { CartRecommendations } from "../store/CartRecommendations";
+import { CartRecoveryNotice } from "../store/CartRecoveryNotice";
 export function CartDrawer() {
     const dialog = useRef<HTMLDialogElement>(null);
     const { items, isOpen, closeCart, total, refreshCart, itemCount } = useCartStore();
@@ -95,6 +96,7 @@ export function CartDrawer() {
                 </button>
             </div>
             <div className="bag-scroll">
+                <CartRecoveryNotice />
                 {notice && (
                     <div
                         className={`bag-notice ${review === "error" ? "bag-notice-error" : ""}`}

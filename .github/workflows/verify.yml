@@ -30,6 +30,7 @@ jobs:
                     sleep 1
                   done
             - run: npm run check
+            - run: npm run test:storefront
             - name: Verify preinstalled UI test browser
               run: google-chrome --version
             - name: Test checkout and dashboard UI with local fixtures

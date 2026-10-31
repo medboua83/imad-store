@@ -1463,6 +1463,29 @@ test("Analytics scope comes from the installation, never from request inputs, an
     }
 });
 
+test("Delivery commitments are optional, validated and independent of prices and tracking", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    try {
+        assert.equal((await request(app).put("/api/settings").send({ deliveryMaxDays: 3 })).status, 401);
+        for (const data of [{ deliveryMaxDays: 0 }, { returnWindowDays: 1.5 }, { deliveryMaxDays: 366 }, { returnFeePayer: "ANYONE" }])
+            assert.equal((await request(app).put("/api/settings").set(admin()).send(data)).status, 400);
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ deliveryMaxDays: 3, returnWindowDays: 3, returnFeePayer: "STORE" })).status, 200);
+        const saved = (await request(app).get("/api/settings")).body.data;
+        assert.equal(saved.deliveryMaxDays, 3);
+        assert.equal(saved.returnWindowDays, 3);
+        assert.equal(saved.returnFeePayer, "STORE");
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ returnFeePayer: "DELIVERY_TRY_ON" })).status, 200);
+        assert.equal((await request(app).get("/api/settings")).body.data.returnFeePayer, "DELIVERY_TRY_ON");
+        if (initial) for (const key of ["shippingCost", "freeShippingMin", "metaPixelId", "metaPixelEnabled"])
+            assert.equal(saved[key], initial[key]);
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ deliveryMaxDays: null, returnWindowDays: null, returnFeePayer: null })).status, 200);
+        assert.equal((await request(app).get("/api/settings")).body.data.deliveryMaxDays, null);
+    } finally {
+        if (initial) await prisma.storeSettings.update({ where: { id: "settings" }, data: { deliveryMaxDays: initial.deliveryMaxDays ?? null, returnWindowDays: initial.returnWindowDays ?? null, returnFeePayer: initial.returnFeePayer ?? null } });
+        else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});
+
 test("Commerce settings and promotions validate inputs; server decides delivery and price", async () => {
     assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelMadPerUsd: 0 })).status, 400);
     assert.equal((await request(app).put("/api/settings").set(admin()).send({ metaPixelMadPerUsd: -2 })).status, 400);

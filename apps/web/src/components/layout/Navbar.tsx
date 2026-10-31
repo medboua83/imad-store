@@ -33,6 +33,17 @@ const links = [
     ["/contact", "تواصلوا معنا"],
 ];
 export function Navbar() {
+    const header = useRef<HTMLElement>(null);
+    useEffect(() => {
+        const element = header.current;
+        const shell = element?.closest<HTMLElement>(".store-shell");
+        if (!element || !shell) return;
+        const update = () => shell.style.setProperty("--store-header-offset", `${Math.ceil(element.getBoundingClientRect().height) + 12}px`);
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
     const {data = []} = useQuery({queryKey:["public-categories"],queryFn:getCategories,staleTime:60_000});
     const categories = publishedCategories(data);
     const menu = useRef<HTMLDialogElement>(null);
@@ -77,7 +88,7 @@ export function Navbar() {
     }, []);
     return (
         <>
-            <header className="site-header refined-header">
+            <header ref={header} className="site-header refined-header">
                 <div className="nav-inner">
                     <Link
                         href="/"

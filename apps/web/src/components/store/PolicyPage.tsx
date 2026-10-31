@@ -13,6 +13,15 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                   "deliveryText" | "returnsText" | "privacyText"
           ]
         : "";
+    const returnFeeText = settings.returnFeePayer === "DELIVERY_TRY_ON"
+        ? "يتحمل المتجر رسوم الإرجاع إذا تم تأكيد الإرجاع أثناء التجربة عند التسليم. بعد الدفع ومغادرة المندوب، يتحمل العميل رسوم أي إرجاع يُطلب ضمن المدة المحددة."
+        : settings.returnFeePayer === "STORE"
+        ? "يتحمل المتجر رسوم الشحن الخاصة بالإرجاع."
+        : settings.returnFeePayer === "CUSTOMER"
+          ? "يتحمل العميل رسوم الشحن الخاصة بالإرجاع."
+          : settings.returnFeePayer === "BY_REASON"
+            ? "تتحدد رسوم الإرجاع حسب السبب. يؤكد الفريق الجهة التي تتحمل الرسوم قبل إرسال المنتج."
+            : "لم تُنشر بعد الجهة التي تتحمل رسوم الشحن الخاصة بالإرجاع.";
     return (
         <section className="page-shell policy-page max-w-3xl space-y-6">
             <h1 className="text-3xl">{title}</h1>
@@ -33,12 +42,18 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                             : "الطلب بالدفع عند الاستلام متوقف مؤقتاً."}
                     </p>
                     <h2>موعد التوصيل</h2>
-                    <p>لم يُنشر أجل توصيل محدد بعد. تواصلوا مع فريق المتجر لتأكيد المدة المتاحة لمدينتكم قبل الطلب.</p>
+                    <p>{settings.deliveryMaxDays
+                        ? `التوصيل خلال ${settings.deliveryMaxDays} أيام كحد أقصى.`
+                        : "لم يُنشر أجل توصيل محدد بعد. تواصلوا مع فريق المتجر لتأكيد المدة المتاحة لمدينتكم قبل الطلب."}</p>
                 </>
             ) : kind === "returns" ? (
                 <>
                     <h2>شروط يجب معرفتها قبل الشراء</h2>
-                    <p>لم تُنشر بعد مدة طلب الاستبدال أو الإرجاع، وحالة المنتج المطلوبة، ورسوم إعادة الشحن وطريقة معالجة المبلغ. تواصلوا معنا لتوضيح هذه المعلومات قبل تأكيد الطلب.</p>
+                    <p>{settings.returnWindowDays
+                        ? `يمكنكم تقديم طلب استبدال أو إرجاع خلال ${settings.returnWindowDays} أيام من استلام الطلب.`
+                        : "لم تُنشر بعد مدة طلب الاستبدال أو الإرجاع. تواصلوا معنا لتوضيح المدة قبل تأكيد الطلب."}</p>
+                    <p className="policy-fee-note">{returnFeeText}</p>
+                    <p>قبل إرسال المنتج، تواصلوا مع الفريق لتأكيد حالة المنتج المطلوبة وعنوان الإرجاع وطريقة معالجة المبلغ. تقديم الطلب لا يعني أن المبلغ قد أُعيد بالفعل.</p>
                     <h2>التواصل بخصوص طلبكم</h2>
                     <ol className="policy-steps">
                         <li>اذكروا رقم الطلب والمنتج والمقاس أو اللون المعني.</li>
@@ -54,6 +69,15 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                     </p>
                     <p>تحفظ السلة على هذا المتصفح ويمكنكم إفراغها في أي وقت.</p>
                     <p>للاستفسار عن استخدام بيانات طلبكم أو طلب تصحيحها، تواصلوا مع فريق المتجر.</p>
+                </>
+            )}
+            {published && kind === "delivery" && settings.deliveryMaxDays && (
+                <p>التوصيل خلال {settings.deliveryMaxDays} أيام كحد أقصى.</p>
+            )}
+            {published && kind === "returns" && (
+                <>
+                    {settings.returnWindowDays && <p>يمكنكم تقديم طلب استبدال أو إرجاع خلال {settings.returnWindowDays} أيام من استلام الطلب.</p>}
+                    {settings.returnFeePayer && <p className="policy-fee-note">{returnFeeText}</p>}
                 </>
             )}
             {kind === "privacy" && (
