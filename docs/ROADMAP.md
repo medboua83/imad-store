@@ -1,5 +1,11 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Quantité conservée lors du choix des variantes — candidat du 31 octobre 2026
+
+Sur quickydev.com, choisir deux pièces puis cliquer sur la taille déjà sélectionnée remettait la quantité à une. La sélection d’un coloris ou d’une taille conserve désormais la quantité affichée, limitée au stock du nouvel élément après déduction des unités déjà présentes dans le panier. Aucun ajout au panier par le seul choix d’une variante. Prix et promotions calculés par les fonctions partagées existantes, sans modification du catalogue ni de règles commerciales. Quatre scénarios UI couvrent 390/1440 px, répétition du choix, changement de coloris, limite de stock et unités déjà dans le panier. Recette et publication à consigner après validation.
+
+La PR 80 est publiée sur Master cc805ed3 : 80 UI et 100 intégration réussis, Hostinger Completed/Current et page contact / ancrage des questions vérifiés à 390/1470 px. Réglages et conditions publics inchangés.
+
 ## Contact et accès aux questions — candidat du 31 octobre 2026
 
 Le lien direct vers les questions plaçait le titre et la première question derrière le header fixe. La marge de défilement suit désormais la hauteur réelle du header, sans script de défilement ni changement de navigation native. Page contact harmonisée avec la charte dorée, raccourcis vers livraison, retours et questions, focus visible au clavier. Le layout déclare le défilement fluide à Next 16 pour que les changements de page utilisent le repositionnement natif immédiat documenté, tout en conservant les ancres. Lien WhatsApp et horaires existants conservés ; aucune modification des règles commerciales ni des données. Recette et publication à consigner après les contrôles.

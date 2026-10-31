@@ -43,8 +43,12 @@ export function ProductOptions({ product }: { product: Product }) {
     const selectedColor = variant ? colorKey(variant) : "";
     function selectVariant(next: Product["variants"][number] | undefined) {
         if (!next) return;
+        const remaining = Math.max(
+            0,
+            next.stock - (cart.find((item) => item.variantId === next.id)?.quantity ?? 0),
+        );
         setId(next.id);
-        setQuantity(1);
+        setQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
     }
     return (
         <div className="product-options refined-options" id="product-options">
