@@ -42,14 +42,14 @@
 }
 @media (min-width: 768px) {
   .store-shell .refined-shop {
-    padding-top: 16px;
+        padding-top: 8px;
   }
   .refined-shop .shop-breadcrumb {
     margin-bottom: 4px;
   }
   .store-shell .refined-shop .shop-intro {
     padding: 14px 20px;
-    margin-bottom: 12px;
+        margin-bottom: 8px;
     gap: 16px;
   }
   .refined-shop .shop-intro .eyebrow,
@@ -66,7 +66,7 @@
     padding-bottom: 6px;
   }
   .refined-shop .catalog-results-heading {
-    margin: 12px 0;
+        margin: 8px 0;
   }
     .refined-shop .catalog-filter-panel > summary {
         min-height: 52px;
