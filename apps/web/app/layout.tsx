@@ -47,9 +47,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <link
           rel="preload"
-          href="/fonts/cormorant-wordmark.ttf"
-          as="font"
-          type="font/ttf"
+          href="/images/brand/imad-mode-selected-v1.webp"
+          as="image"
+          type="image/webp"
+          fetchPriority="high"
           crossOrigin="anonymous"
         />
       </head>

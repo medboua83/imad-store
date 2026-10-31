@@ -7,9 +7,11 @@ import { quantityDiscounts } from "@imad-store/shared";
 export function ProductCard({
     product: p,
     headingLevel = 2,
+    eagerImage = false,
 }: {
     product: Product;
     headingLevel?: 2 | 3;
+    eagerImage?: boolean;
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
@@ -26,7 +28,7 @@ export function ProductCard({
                 className="catalog-card-image"
                 aria-label={`عرض تفاصيل ${name}`}
             >
-                <ProductPhoto images={p.images} name={name} />
+                <ProductPhoto images={p.images} name={name} eager={eagerImage} />
                 <span className={`stock-pill ${available ? "" : "stock-pill-empty"}`}>
                     {available ? "متوفر الآن" : "نفدت الكمية"}
                 </span>

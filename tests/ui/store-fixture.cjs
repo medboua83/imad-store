@@ -53,7 +53,8 @@ createServer((req, res) => {
     res.writeHead(405);
     return res.end("{}");
   }
-  const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+  const url = new URL(req.url, "http://127.0.0.1");
+  const pathname = url.pathname;
   let data;
   if (pathname === "/api/settings")
     data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false };
@@ -61,7 +62,12 @@ createServer((req, res) => {
   else if (pathname === "/api/categories") data = [category, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
   else if (pathname === "/api/products")
     return res.end(
-      JSON.stringify({ success: true, data: [product], total: 1, totalPages: 1, page: 1 }),
+      JSON.stringify({ success: true,
+        data: url.searchParams.get("search") === "loading-fixture" ? [
+          { ...product, images: ["/images/missing-first-cover.webp", ...product.images] },
+          { ...product, id: "777777777777777777777777", slug: "fixture-lazy", images:["/images/catalogue-test/abaya.webp"] },
+        ] : [product],
+        total: url.searchParams.get("search") === "loading-fixture" ? 2 : 1, totalPages: 1, page: 1 }),
     );
   else if (pathname === "/api/products/fixture-recommendations") data = {...product, slug:"fixture-recommendations"};
   else if (pathname === "/api/products/fixture-premium") data = premium;

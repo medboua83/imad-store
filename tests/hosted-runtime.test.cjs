@@ -80,6 +80,9 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     const detailHtml = await detail.text();
     assert.match(detailHtml, /HOSTED CATALOGUE TEST/);
     assert.match(detailHtml, /HOSTED COMPLEMENT/);
+    const preloads = (detailHtml.match(/<link\b[^>]*>/g) || []).filter(tag => tag.includes('rel="preload"'));
+    assert.ok(preloads.some(tag => tag.includes('/images/brand/imad-mode-selected-v1.webp') && tag.includes('as="image"')));
+    assert.ok(preloads.every(tag => !tag.includes('/fonts/cormorant-wordmark.ttf')));
     assert.match(detailHtml, /التوصيل خلال/);
     const delivery = await get("/delivery");
     assert.equal(delivery.status, 200);
