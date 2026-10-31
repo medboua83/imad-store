@@ -45,6 +45,9 @@
     border: 1px solid #e0dbd2;
     border-radius: 50%;
 }
+.bag-body {
+    display: contents;
+}
 .bag-scroll {
     flex: 1;
     min-height: 0;
@@ -992,4 +995,22 @@
 .checkout-submission-error:focus-visible {
     outline: 2px solid #9d762f;
     outline-offset: 3px;
+}
+
+/* A short viewport needs one scroll surface, with the close control outside it. */
+@media (max-height: 600px) {
+    .store-shell .cart-dialog .bag-body {
+        display: block;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .store-shell .cart-dialog .bag-scroll {
+        overflow-y: visible;
+    }
+    .store-shell .cart-dialog .bag-footer {
+        max-height: none;
+        overflow-y: visible;
+    }
 }
