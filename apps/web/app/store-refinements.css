@@ -40,6 +40,22 @@
 .store-shell .product-facts {
   font-size: 15px;
 }
+.store-shell .policy-page {
+    max-width: 900px;
+    margin-inline: auto;
+}
+.store-shell .policy-page p,
+.store-shell .policy-steps {
+    font-size: 16px;
+    line-height: 1.9;
+}
+.policy-fee-note {
+    padding: 14px 18px;
+    border-inline-start: 3px solid #b38a43;
+    border-radius: 8px;
+    background: #faf4e8;
+    color: #594018;
+}
 @media (min-width: 768px) {
   .store-shell .refined-shop {
         padding-top: 8px;

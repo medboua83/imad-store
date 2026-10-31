@@ -52,7 +52,7 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
                     <p>{settings.returnWindowDays
                         ? `يمكنكم تقديم طلب استبدال أو إرجاع خلال ${settings.returnWindowDays} أيام من استلام الطلب.`
                         : "لم تُنشر بعد مدة طلب الاستبدال أو الإرجاع. تواصلوا معنا لتوضيح المدة قبل تأكيد الطلب."}</p>
-                    <p>{returnFeeText}</p>
+                    <p className="policy-fee-note">{returnFeeText}</p>
                     <p>قبل إرسال المنتج، تواصلوا مع الفريق لتأكيد حالة المنتج المطلوبة وعنوان الإرجاع وطريقة معالجة المبلغ. تقديم الطلب لا يعني أن المبلغ قد أُعيد بالفعل.</p>
                     <h2>التواصل بخصوص طلبكم</h2>
                     <ol className="policy-steps">
@@ -77,7 +77,7 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
             {published && kind === "returns" && (
                 <>
                     {settings.returnWindowDays && <p>يمكنكم تقديم طلب استبدال أو إرجاع خلال {settings.returnWindowDays} أيام من استلام الطلب.</p>}
-                    {settings.returnFeePayer && <p>{returnFeeText}</p>}
+                    {settings.returnFeePayer && <p className="policy-fee-note">{returnFeeText}</p>}
                 </>
             )}
             {kind === "privacy" && (
