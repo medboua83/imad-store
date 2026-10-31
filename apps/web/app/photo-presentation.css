@@ -133,3 +133,15 @@
         border-color: var(--gold-dark);
     }
 }
+.refined-gallery .gallery-stage,
+.refined-gallery-dialog .zoom-photo {
+    touch-action: pan-y pinch-zoom;
+}
+.refined-gallery .gallery-stage:focus-visible {
+    outline: 2px solid #9d762f;
+    outline-offset: 4px;
+}
+.gallery-swipe-hint { display: none; }
+@media (max-width: 767px) {
+    .gallery-swipe-hint { display: block; font-size: 11px; margin-top: 3px; }
+}

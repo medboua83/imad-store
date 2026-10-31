@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Consultation des photos — candidat du 31 octobre 2026
+
+La galerie ajoute un glissement horizontal volontaire sur mobile, dans la fiche et la vue agrandie, avec seuil et séparation des gestes verticaux. Gestes courts, annulés ou à plusieurs doigts ignorés ; défilement vertical et zoom natif conservés. Flèches du clavier, Début et Fin pour parcourir les mêmes photos, avec focus visible doré ; retour du focus au bouton de zoom à la fermeture. Aucune modification des photos originales, des variantes, des prix, du panier ou des règles commerciales. Recette et publication à consigner après les contrôles.
+
+La PR 77 est publiée sur Master 68a830e6 : 66 UI et 100 intégration réussis, Hostinger Completed/Current, recette à 390 et 1470 px. Filtres invalides et liens de page hors limites corrigés ; les photos et réglages ont été comparés avant/après sans changement commercial.
+
 ## Filtres et pagination du catalogue — candidat du 31 octobre 2026
 
 Audit public : une réponse 400 sur des filtres invalides était remplacée par le catalogue entier, sous les critères pourtant affichés comme appliqués. Le candidat conserve la saisie et ouvre le formulaire avec une erreur, sans résultats non filtrés ni faux compteur. Les pannes de service restent des erreurs, jamais un catalogue vide. Un lien vers une page hors limites propose la première page en conservant recherche, catégorie, tri, prix et disponibilité ; un vrai zéro résultat garde son message distinct. Aucun changement de photos, prix, promotions, stocks ou réglages.

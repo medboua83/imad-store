@@ -95,6 +95,11 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-second-source/recommendations") data = {upsell:[],crossSell:[accessory,premium,product]};
   else if (pathname.endsWith("/recommendations")) data = {upsell:[],crossSell:[]};
   else if (pathname === "/api/products/fixture-sabot") data = product;
+  else if (pathname === "/api/products/fixture-gallery") data = {
+    ...product, slug: "fixture-gallery", images: [
+      "/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp", "/images/catalogue-test/chale.webp",
+    ],
+  };
   else if (pathname === "/api/products/fixture-offer") data = {
     ...product, slug: "fixture-offer", quantityDiscounts: [{minQuantity:2,unitPrice:200},{minQuantity:3,unitPrice:180}],
   };

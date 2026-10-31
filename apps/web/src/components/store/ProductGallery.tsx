@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Expand, X, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
     const [selected, setSelected] = useState(images[0]);
@@ -14,11 +14,59 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
     const [zoomOpen, setZoomOpen] = useState(false);
     const zoom = useRef<HTMLDialogElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
+    const swipe = useRef<{ x: number; y: number } | null>(null);
     const src = available[active];
     function move(offset: number) {
         if (available.length > 1)
             setSelected(available[(active + offset + available.length) % available.length]);
     }
+    function navigate(event: KeyboardEvent<HTMLElement>) {
+        if (available.length < 2) return;
+        if (event.key === "ArrowRight") move(1);
+        else if (event.key === "ArrowLeft") move(-1);
+        else if (event.key === "Home") setSelected(available[0]);
+        else if (event.key === "End") setSelected(available[available.length - 1]);
+        else return;
+        event.preventDefault();
+    }
+    const touchNavigation = {
+        onTouchStart(event: TouchEvent<HTMLDivElement>) {
+            swipe.current = null;
+            if (
+                available.length < 2 ||
+                event.touches.length !== 1 ||
+                (event.target instanceof Element && event.target.closest("button"))
+            )
+                return;
+            const touch = event.touches[0];
+            swipe.current = { x: touch.clientX, y: touch.clientY };
+        },
+        onTouchMove(event: TouchEvent<HTMLDivElement>) {
+            const start = swipe.current;
+            if (!start) return;
+            if (event.touches.length !== 1) {
+                swipe.current = null;
+                return;
+            }
+            const touch = event.touches[0];
+            const x = Math.abs(touch.clientX - start.x),
+                y = Math.abs(touch.clientY - start.y);
+            // Once the gesture becomes vertical, leave the entire gesture to page scrolling.
+            if (y > 32 && y > x) swipe.current = null;
+        },
+        onTouchEnd(event: TouchEvent<HTMLDivElement>) {
+            const start = swipe.current;
+            swipe.current = null;
+            if (!start || event.touches.length || event.changedTouches.length !== 1) return;
+            const touch = event.changedTouches[0];
+            const x = touch.clientX - start.x,
+                y = touch.clientY - start.y;
+            if (Math.abs(x) >= 48 && Math.abs(x) > Math.abs(y) * 1.5) move(x < 0 ? 1 : -1);
+        },
+        onTouchCancel() {
+            swipe.current = null;
+        },
+    };
     useEffect(() => {
         if (!zoomOpen) return;
         const old = document.body.style.overflow;
@@ -46,7 +94,16 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
         );
     return (
         <div className="product-gallery refined-gallery">
-            <div className="gallery-stage">
+            <div
+                className="gallery-stage"
+                role="region"
+                aria-label={`صور ${name} — استخدموا الأسهم للتنقل`}
+                tabIndex={available.length > 1 ? 0 : undefined}
+                onKeyDown={(event) => {
+                    if (event.target === event.currentTarget) navigate(event);
+                }}
+                {...touchNavigation}
+            >
                 {src ? (
                     <Image
                         src={src}
@@ -83,7 +140,12 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 </span>
             </div>
             <div className="gallery-caption">
-                <p>{src ? "شاهدوا التفاصيل عن قرب" : "تواصلوا معنا للاستفسار عن صور القطعة"}</p>
+                <p>
+                    {src ? "شاهدوا التفاصيل عن قرب" : "تواصلوا معنا للاستفسار عن صور القطعة"}
+                    {available.length > 1 && (
+                        <span className="gallery-swipe-hint">اسحبوا لتصفح الصور</span>
+                    )}
+                </p>
                 {controls()}
             </div>
             {available.length > 1 && (
@@ -114,14 +176,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 aria-label={`صور ${name}`}
                 onKeyDown={(event) => {
                     trapDialogFocus(event);
-                    if (event.key === "ArrowRight") {
-                        event.preventDefault();
-                        move(1);
-                    }
-                    if (event.key === "ArrowLeft") {
-                        event.preventDefault();
-                        move(-1);
-                    }
+                    navigate(event);
                 }}
                 onClose={() => {
                     setZoomOpen(false);
@@ -139,7 +194,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                         <X size={24} aria-hidden="true" />
                     </button>
                 </div>
-                <div className="zoom-photo">
+                <div className="zoom-photo" {...touchNavigation}>
                     {src ? (
                         <Image
                             src={src}
