@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 
 for (const route of ["/", "/shop", "/products/fixture-sabot"]) {
   test(`Opt-in browser diagnostics and critical assets work on ${route}`, async ({page}, info) => {
@@ -33,11 +34,13 @@ for (const route of ["/", "/shop", "/products/fixture-sabot"]) {
       expect(Object.keys(interaction).sort()).toEqual(["inputDelay","presentationDelay","processingDuration"]);
       for (const value of Object.values(interaction)) expect(Number.isFinite(value)).toBe(true);
     }
-    await info.attach("browser-loading-diagnostics", {body:JSON.stringify({
+    const diagnosticPath = info.outputPath("browser-loading-diagnostics.json");
+    await writeFile(diagnosticPath, JSON.stringify({
       route, viewport:{width:390,height:844}, network:"isolated local fixture, no throttling",
       notes:"Informational browser measurements; no Lighthouse score or field percentile.",
       metrics, interactions, resources:initialResources,
-    },null,2),contentType:"application/json"});
+    },null,2));
+    await info.attach("browser-loading-diagnostics", {path:diagnosticPath,contentType:"application/json"});
   });
 }
 
