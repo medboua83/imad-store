@@ -8,6 +8,8 @@ Catalogue ordinateur raccourci, photos affichées entières dans un cadre carré
 
 Tests ajoutés : récupération du panier, navigation mobile/ordinateur, téléphone ponctué, administration et rendu public des délais. Vérification finale, CI, publication et enregistrement des valeurs réelles à consigner dans le rapport de cette intervention. Génération Prisma uniquement, sans db push ni migration de données.
 
+Contrôle de sécurité du 31 octobre : follow-redirects verrouillé à 1.16.2, correctif compatible de GHSA-mrwp-f3q8-3g9p. Audit au seuil élevé conservé ; les avis modérés et faibles restent à traiter séparément sans mise à niveau majeure forcée.
+
 
 ## Recommandations manuelles par produit — 23 octobre 2026
 
