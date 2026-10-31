@@ -114,6 +114,7 @@ export default function CheckoutPage() {
             const changed = await refreshCart();
             const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
+                setReview(null);
                 announceSubmissionError("تغيرت تفاصيل المنتجات أو السعر أو التوفر. راجعوا ملخص الطلب ثم أكدوا مجدداً.");
                 return;
             }
