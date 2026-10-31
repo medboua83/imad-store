@@ -118,6 +118,11 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-manual") data = {
     ...product, slug: "fixture-manual", quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400}],
   };
+  else if (pathname === "/api/products/fixture-quantity-input") data = {
+    ...product, slug: "fixture-quantity-input",
+    quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400}],
+    variants: product.variants.map(v => v.id === "333333333333333333333330" ? {...v, stock:20} : v),
+  };
   else if (pathname === "/api/products/fixture-override") data = {
     ...product, slug: "fixture-override", quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400},{minQuantity:3,unitPrice:650/3,totalPrice:650}],
   };

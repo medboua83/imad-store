@@ -1,5 +1,11 @@
 # Current Status — 2026-10-31
 
+## Saisie fiable des quantités — candidat du 31 octobre 2026
+
+Audit public : effacer 1 dans le champ le remplace immédiatement par 1 ; saisir ensuite 2 donne 11 pièces (limite du stock) et 2230 MAD au lieu des deux pièces attendues à 400 MAD. Le candidat sépare le texte en cours de saisie de la dernière quantité valide. Les quantités vides, nulles, fractionnaires ou supérieures au stock restant doivent conserver leur saisie, expliquer la limite et empêcher l’ajout, sans afficher un prix de remplacement. Une saisie valide, les raccourcis et les boutons +/− retrouvent le calcul existant ; le choix d’une variante conserve la limite au stock disponible. Photos, prix catalogue, promotions, réservations et validation serveur inchangés. Tests isolés, recette complète et publication à consigner.
+
+La PR 85 est publiée sur Master 5d2dd973 : 103 UI et 100 intégration réussis, Hostinger Completed/Current. Panier vérifié à 320×568, 844×390, 390×844 et 1470×701, passage au checkout sans soumission ; panier de deux pièces et 400 MAD, détails catalogue et réglages conservés.
+
 ## Panier utilisable sur les fenêtres peu hautes — candidat du 31 octobre 2026
 
 Constat en production à 844 × 390 : les totaux conservent leur propre zone défilable et la liste des produits ne mesure plus que 51,5 px. Un geste sur les produits ne permet pas d’atteindre le bouton de commande dans la seconde zone ; le test avant correction reproduit ce blocage visuel. Sous 600 px de hauteur, le candidat fait défiler produits et pied de panier dans une même zone, avec l’en-tête et la fermeture hors défilement. Les fenêtres plus hautes conservent leur disposition existante. Aucune information ni commande masquée, photos et données commerciales inchangées. Tests de panier à 320/844/390/1440 px, quantités, clavier et récupération des frais dans les petits formats ; recette complète et publication à consigner.
