@@ -147,7 +147,7 @@ export default function CommerceTab() {
                         </label>
                         <label>
                             Frais de retour à la charge de
-                            <select value={form.returnFeePayer}
+                            <select aria-label="Frais de retour à la charge de" value={form.returnFeePayer}
                                 onChange={e => setForm({ ...form, returnFeePayer: e.target.value as typeof form.returnFeePayer })}>
                                 <option value="">Non renseigné</option>
                                 <option value="STORE">La boutique</option>
