@@ -30,17 +30,18 @@ export default async function ShopPage({
     const page = Number(value("page") || 1);
     params.page = Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
     const categories = await publicCategories();
-    let result;
+    let result: Awaited<ReturnType<typeof publicProducts>> | null = null;
     let invalid = false;
     try {
         result = await publicProducts(params);
     } catch (error) {
-        // Only invalid filter input falls back. An upstream outage must remain an error.
+        // Keep rejected filters editable without presenting unrelated products as matches.
+        // An upstream outage must still reach the error boundary.
         if (error instanceof Error && error.message.endsWith("(400)")) {
             invalid = true;
-            result = await publicProducts({ page: 1, limit: 12 });
         } else throw error;
     }
+    const missingPage = Boolean(result && result.total > 0 && result.page > result.totalPages);
     const queryLink = (changes: Record<string, string | number | null> = {}) => {
         const query = new URLSearchParams();
         for (const key of filterKeys) if (value(key)) query.set(key, value(key));
@@ -105,6 +106,12 @@ export default async function ShopPage({
                     </Link>
                 ))}
             </nav>
+            {invalid && (
+                <p id="catalog-filter-error" role="alert" className="shop-filter-error">
+                    تعذر تطبيق هذه الفلاتر. صححوا الفلاتر، بما فيها نطاق السعر، ثم اعرضوا النتائج
+                    مجدداً. لم يتم عرض منتجات خارج شروط البحث.
+                </p>
+            )}
             <details
                 key={JSON.stringify(raw)}
                 id="catalog-search"
@@ -119,7 +126,12 @@ export default async function ShopPage({
                     )}
                     <span className="filter-result-count">الفئة، السعر والتوفر</span>
                 </summary>
-                <form action="/shop" method="get" className="shop-filters catalog-filter-form">
+                <form
+                    action="/shop"
+                    method="get"
+                    className="shop-filters catalog-filter-form"
+                    aria-describedby={invalid ? "catalog-filter-error" : undefined}
+                >
                     <div className="filter-form-heading">
                         <h2>اختاروا التفاصيل المناسبة</h2>
                         <p>يمكنكم الجمع بين أكثر من فلتر، ثم عرض النتائج.</p>
@@ -220,13 +232,7 @@ export default async function ShopPage({
                     </div>
                 </form>
             </details>
-            {invalid && (
-                <p role="alert" className="shop-filter-error">
-                    بعض الفلاتر غير صالحة. تحققوا من نطاق السعر، ثم أعيدوا المحاولة. تظهر المجموعة
-                    الكاملة مؤقتاً.
-                </p>
-            )}
-            {active.length > 0 && (
+            {result && active.length > 0 && (
                 <nav className="active-filter-chips" aria-label="الفلاتر المطبقة">
                     {active.map((key) => (
                         <Link
@@ -243,66 +249,94 @@ export default async function ShopPage({
                     </Link>
                 </nav>
             )}
-            <div className="catalog-results-heading">
-                <div>
-                    <h2> {category?.nameAr || "كل القطع"}</h2>
-                    <p role="status">
-                        {result.total} {result.total === 1 ? "منتج" : "منتجات"}
-                        {result.totalPages > 1 &&
-                            ` · الصفحة ${result.page} من ${result.totalPages}`}
-                    </p>
-                </div>
-                <Link
-                    className={`stock-quick-filter ${value("availability") === "in-stock" ? "is-active" : ""}`}
-                    href={queryLink({
-                        availability: value("availability") === "in-stock" ? null : "in-stock",
-                    })}
-                    aria-label={
-                        value("availability") === "in-stock"
-                            ? "إلغاء فلتر المتوفر فقط"
-                            : "المتوفر فقط"
-                    }
-                >
-                    <Check size={15} aria-hidden="true" />
-                    المتوفر فقط
-                </Link>
-            </div>
-            {result.data.length ? (
-                <div className="catalog-grid">
-                    {result.data.map((p, index) => (
-                        <ProductCard product={p} key={p.id} headingLevel={3} eagerImage={index === 0} />
-                    ))}
-                </div>
-            ) : (
-                <div className="shop-empty-state">
-                    <Search size={30} aria-hidden="true" />
-                    <h3>
-                        {active.length
-                            ? "لم نجد القطعة بهذه التفاصيل."
-                            : "مجموعتنا الجديدة قيد التحضير."}
-                    </h3>
-                    <p>
-                        {active.length
-                            ? "حاولوا إزالة فلتر أو توسيع نطاق السعر."
-                            : "تواصلوا معنا للاستفسار عن القطع المتوفرة."}
-                    </p>
-                    <Link className="btn-primary" href={active.length ? "/shop" : "/contact"}>
-                        {active.length ? "عرض كل القطع" : "تواصلوا معنا"}
-                    </Link>
-                </div>
-            )}
-            {result.totalPages > 1 && (
-                <nav aria-label="صفحات المنتجات" className="shop-pagination">
-                    {result.page > 1 && (
-                        <Link href={queryLink({ page: result.page - 1 })}>الصفحة السابقة</Link>
+            {result && (
+                <>
+                    <div className="catalog-results-heading">
+                        <div>
+                            <h2> {category?.nameAr || "كل القطع"}</h2>
+                            <p role="status">
+                                {result.total} {result.total === 1 ? "منتج" : "منتجات"}
+                                {!missingPage &&
+                                    result.totalPages > 1 &&
+                                    ` · الصفحة ${result.page} من ${result.totalPages}`}
+                            </p>
+                        </div>
+                        <Link
+                            className={`stock-quick-filter ${value("availability") === "in-stock" ? "is-active" : ""}`}
+                            href={queryLink({
+                                availability:
+                                    value("availability") === "in-stock" ? null : "in-stock",
+                            })}
+                            aria-label={
+                                value("availability") === "in-stock"
+                                    ? "إلغاء فلتر المتوفر فقط"
+                                    : "المتوفر فقط"
+                            }
+                        >
+                            <Check size={15} aria-hidden="true" />
+                            المتوفر فقط
+                        </Link>
+                    </div>
+                    {result.data.length ? (
+                        <div className="catalog-grid">
+                            {result.data.map((p, index) => (
+                                <ProductCard
+                                    product={p}
+                                    key={p.id}
+                                    headingLevel={3}
+                                    eagerImage={index === 0}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="shop-empty-state">
+                            <Search size={30} aria-hidden="true" />
+                            <h3>
+                                {missingPage
+                                    ? "هذه الصفحة غير متاحة."
+                                    : active.length
+                                      ? "لم نجد القطعة بهذه التفاصيل."
+                                      : "مجموعتنا الجديدة قيد التحضير."}
+                            </h3>
+                            <p>
+                                {missingPage
+                                    ? "ما زالت هناك منتجات تطابق بحثكم. عودوا إلى أول صفحة مع الاحتفاظ بالفلاتر."
+                                    : active.length
+                                      ? "حاولوا إزالة فلتر أو توسيع نطاق السعر."
+                                      : "تواصلوا معنا للاستفسار عن القطع المتوفرة."}
+                            </p>
+                            <Link
+                                className="btn-primary"
+                                href={
+                                    missingPage ? queryLink() : active.length ? "/shop" : "/contact"
+                                }
+                            >
+                                {missingPage
+                                    ? "العودة إلى أول صفحة"
+                                    : active.length
+                                      ? "عرض كل القطع"
+                                      : "تواصلوا معنا"}
+                            </Link>
+                        </div>
                     )}
-                    <span>
-                        {result.page} / {result.totalPages}
-                    </span>
-                    {result.page < result.totalPages && (
-                        <Link href={queryLink({ page: result.page + 1 })}>الصفحة التالية</Link>
+                    {!missingPage && result.totalPages > 1 && (
+                        <nav aria-label="صفحات المنتجات" className="shop-pagination">
+                            {result.page > 1 && (
+                                <Link href={queryLink({ page: result.page - 1 })}>
+                                    الصفحة السابقة
+                                </Link>
+                            )}
+                            <span>
+                                {result.page} / {result.totalPages}
+                            </span>
+                            {result.page < result.totalPages && (
+                                <Link href={queryLink({ page: result.page + 1 })}>
+                                    الصفحة التالية
+                                </Link>
+                            )}
+                        </nav>
                     )}
-                </nav>
+                </>
             )}
         </section>
     );

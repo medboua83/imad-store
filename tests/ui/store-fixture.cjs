@@ -60,7 +60,24 @@ createServer((req, res) => {
     data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false };
   else if (pathname === "/api/content") data = defaultSiteContent;
   else if (pathname === "/api/categories") data = [category, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
-  else if (pathname === "/api/products")
+  else if (pathname === "/api/products") {
+    const search = url.searchParams.get("search");
+    if ((url.searchParams.has("minPrice") && url.searchParams.has("maxPrice") &&
+        Number(url.searchParams.get("minPrice")) > Number(url.searchParams.get("maxPrice"))) ||
+        url.searchParams.get("sort") === "invalid-sort") {
+      res.writeHead(400);
+      return res.end(JSON.stringify({ success: false }));
+    }
+    if (search === "outage-fixture") {
+      res.writeHead(503);
+      return res.end(JSON.stringify({ success: false }));
+    }
+    if (search === "page-fixture" || search === "empty-fixture") {
+      const page = Number(url.searchParams.get("page") || 1);
+      const totalPages = search === "page-fixture" ? 3 : 0;
+      return res.end(JSON.stringify({ success: true, data: page <= totalPages ? [product] : [],
+        total: totalPages ? 25 : 0, totalPages, page }));
+    }
     return res.end(
       JSON.stringify({ success: true,
         data: url.searchParams.get("search") === "loading-fixture" ? [
@@ -69,6 +86,7 @@ createServer((req, res) => {
         ] : [product],
         total: url.searchParams.get("search") === "loading-fixture" ? 2 : 1, totalPages: 1, page: 1 }),
     );
+  }
   else if (pathname === "/api/products/fixture-recommendations") data = {...product, slug:"fixture-recommendations"};
   else if (pathname === "/api/products/fixture-premium") data = premium;
   else if (pathname === "/api/products/fixture-accessory") data = accessory;
