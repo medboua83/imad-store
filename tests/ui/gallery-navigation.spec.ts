@@ -35,6 +35,8 @@ for (const width of [390, 1440])
             .locator(".gallery-caption")
             .getByRole("button", { name: "الصورة التالية", exact: true });
         await control.focus();
+        await control.press("Control+ArrowRight");
+        await expect(photo).toHaveAttribute("src", "/images/catalogue-test/sac.webp");
         await control.press("ArrowRight");
         await expect(photo).toHaveAttribute("src", "/images/catalogue-test/abaya.webp");
         await expect(

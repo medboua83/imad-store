@@ -21,7 +21,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
             setSelected(available[(active + offset + available.length) % available.length]);
     }
     function navigate(event: KeyboardEvent<HTMLElement>) {
-        if (available.length < 2) return;
+        if (available.length < 2 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (event.key === "ArrowRight") move(1);
         else if (event.key === "ArrowLeft") move(-1);
         else if (event.key === "Home") setSelected(available[0]);
