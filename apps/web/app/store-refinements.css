@@ -56,6 +56,42 @@
     background: #faf4e8;
     color: #594018;
 }
+.checkout-order-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  cursor: pointer;
+  list-style: none;
+}
+.checkout-order-disclosure > summary::-webkit-details-marker { display: none; }
+.checkout-order-disclosure > summary:focus-visible {
+  outline: 3px solid #b38a43;
+  outline-offset: 5px;
+  border-radius: 5px;
+}
+.checkout-order-disclosure > summary > svg { flex-shrink: 0; }
+.checkout-summary-label { flex: 1; min-width: 0; }
+.checkout-summary-label strong { display: block; font-size: 17px; font-weight: 600; }
+.checkout-summary-label strong small { font-size: 12px; font-weight: 400; margin-inline-start: 6px; }
+.checkout-summary-label > small { display: block; font-size: 13px; color: #75654f; margin-top: 4px; }
+.checkout-compact-total { text-align: end; font-weight: 700; font-size: 17px; }
+.checkout-compact-total small { font-size: 11px; font-weight: 400; }
+.checkout-compact-total > small { display: block; margin-top: 3px; }
+.checkout-order-disclosure[open] > summary > svg:last-child { transform: rotate(180deg); }
+.checkout-order-disclosure[open] .checkout-compact-total { display: none; }
+.checkout-summary-content { padding-top: 14px; }
+@media (max-width: 767px) {
+  .store-shell .checkout-review { padding: 12px 14px; }
+  .checkout-summary-label strong { font-size: 15px; }
+  .checkout-summary-label strong small { display: block; margin-inline-start: 0; }
+  .checkout-summary-label > small { font-size: 12px; }
+  .checkout-order-disclosure > summary > svg:first-child { display: none; }
+  .store-shell .checkout-workspace .checkout-heading { margin-bottom: 10px; }
+  .checkout-workspace .checkout-heading p:last-child { font-size: 13px; }
+  .checkout-workspace .checkout-steps { margin-bottom: 12px; padding-bottom: 10px; }
+  .checkout-workspace .checkout-layout { gap: 14px; }
+}
 @media (min-width: 768px) {
   .store-shell .refined-shop {
         padding-top: 8px;

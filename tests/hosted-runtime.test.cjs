@@ -95,8 +95,24 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     assert.deepEqual(recommendations.data.crossSell.map(p => p.id), [complement.id]);
     assert.deepEqual((await read("/products/hosted-product-test/recommendations")).body, recommendations);
     const shop = await get("/shop");
-    assert.equal(shop.status, 200); assert.match(await shop.text(), /HOSTED CATALOGUE TEST/);
-    assert.equal((await get("/")).status, 200);
+    assert.equal(shop.status, 200);
+    const shopHtml = await shop.text();
+    assert.match(shopHtml, /HOSTED CATALOGUE TEST/);
+    const home = await get("/");
+    assert.equal(home.status, 200);
+    const shareTag = (html, name) => html.match(new RegExp(`<meta (?:property|name)="${name}" content="([^"]+)"`))?.[1];
+    for (const html of [shopHtml, await home.text()]) {
+      assert.match(shareTag(html, "og:image") || "", /\/images\/brand\/imad-share-gold-v1\.png$/);
+      assert.ok(shareTag(html, "og:title"));
+      assert.ok(shareTag(html, "og:description"));
+      assert.equal(shareTag(html, "twitter:card"), "summary_large_image");
+    }
+    assert.match(shareTag(detailHtml, "og:image") || "", /\/images\/cat-abayas\.png$/);
+    const card = await get("/images/brand/imad-share-gold-v1.png");
+    assert.equal(card.status, 200);
+    assert.match(card.headers.get("content-type"), /image\/png/);
+    const dimensions = await sharp(Buffer.from(await card.arrayBuffer())).metadata();
+    assert.equal(dimensions.width, 1200); assert.equal(dimensions.height, 630);
     assert.equal((await get("/admin")).status, 200);
     assert.equal((await get("/images/cat-abayas.png")).status, 200);
     const login = await get("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "hosted@example.invalid", password: "isolated-hosted-test" }) });

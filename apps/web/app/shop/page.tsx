@@ -1,17 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { publicProducts, publicCategories } from "@/lib/server-api";
+import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/server-api";
+import { storefrontShareMetadata } from "@/lib/share-metadata";
 import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
 import { categoryThumbnail } from "@/components/store/category-visuals";
 import { publishedCategories } from "@/lib/catalog-navigation";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-    title: "المتجر",
-    description: "تصفحوا المنتجات حسب الفئة والسعر والتوفر.",
-    alternates: { canonical: "/shop" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+    return storefrontShareMetadata("shop", await requestSiteOrigin());
+}
 const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability"] as const;
 const sortLabels: Record<string, string> = {
     newest: "الأحدث",

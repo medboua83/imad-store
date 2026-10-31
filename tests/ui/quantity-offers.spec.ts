@@ -140,6 +140,7 @@ for (const width of [390, 1440]) {
         await expect(summary.locator(".bag-unit-price del")).toHaveCount(2);
         await page.reload();
         await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
+        if (width < 768) await summary.locator(".checkout-order-disclosure > summary").click();
         await page.getByText("عرض وتعديل المنتجات", { exact: true }).click();
         await summary.getByRole("button", { name: "حذف صابو تجريبي", exact: true }).last().click();
         await expect(summary.locator(".bag-grand-total")).toContainText("230.00");

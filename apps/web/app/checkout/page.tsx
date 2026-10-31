@@ -41,6 +41,14 @@ export default function CheckoutPage() {
     const [fields, setFields] = useState<Record<string, string>>({});
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
+    const [summaryOpen, setSummaryOpen] = useState(false);
+    useEffect(() => {
+        const desktop = window.matchMedia("(min-width: 768px)");
+        const update = () => setSummaryOpen(desktop.matches);
+        update();
+        desktop.addEventListener("change", update);
+        return () => desktop.removeEventListener("change", update);
+    }, []);
     const [orderId, setOrderId] = useState("");
     const key = useRef("");
     const submissionLock = useRef(false);
@@ -478,51 +486,65 @@ export default function CheckoutPage() {
                         </p>
                     </form>
                     <aside className="checkout-summary checkout-review" aria-label="ملخص الطلب">
-                        <div className="checkout-summary-title">
-                            <ShoppingBag size={20} aria-hidden="true" />
-                            <h2>ملخص طلبكم</h2>
-                            <span>{count} قطعة</span>
-                        </div>
-                        <details className="checkout-item-disclosure">
-                            <summary>
-                                <span className="checkout-mini-photo">
-                                    {items[0] && (
-                                        <ProductPhoto
-                                            images={items[0].images ?? [items[0].image]}
-                                            name=""
-                                            sizes="52px"
-                                            className="object-contain"
-                                        />
-                                    )}
+                        <details className="checkout-order-disclosure" open={summaryOpen}
+                            onToggle={event => setSummaryOpen(event.currentTarget.open)}>
+                            <summary aria-label="عرض أو إخفاء ملخص الطلب">
+                                <ShoppingBag size={20} aria-hidden="true" />
+                                <span className="checkout-summary-label">
+                                    <strong>ملخص طلبكم <small>{count} قطعة</small></strong>
+                                    <small>{summaryOpen ? "إخفاء التفاصيل" : "عرض المنتجات والتوصيل"}</small>
                                 </span>
-                                <span>
-                                    <strong>
-                                        {items[0]?.nameAr || items[0]?.nameFr}
-                                        {items.length > 1 ? ` + ${items.length - 1}` : ""}
-                                    </strong>
-                                    <small>عرض وتعديل المنتجات</small>
+                                <span className="checkout-compact-total" aria-live="polite">
+                                    {shipping.loading ? "جارٍ الحساب…" : shipping.error || shipping.total === null
+                                        ? "بانتظار رسوم التوصيل"
+                                        : <bdi>{shipping.total.toFixed(2)} <small>MAD</small></bdi>}
+                                    <small>شامل التوصيل</small>
                                 </span>
                                 <ChevronDown size={18} aria-hidden="true" />
                             </summary>
-                            <div>
-                                {items.map((item) => (
-                                    <CartLine key={item.variantId} item={item} disabled={busy} />
-                                ))}
+                            <div className="checkout-summary-content">
+                                <details className="checkout-item-disclosure">
+                                    <summary>
+                                        <span className="checkout-mini-photo">
+                                            {items[0] && (
+                                                <ProductPhoto
+                                                    images={items[0].images ?? [items[0].image]}
+                                                    name=""
+                                                    sizes="52px"
+                                                    className="object-contain"
+                                                />
+                                            )}
+                                        </span>
+                                        <span>
+                                            <strong>
+                                                {items[0]?.nameAr || items[0]?.nameFr}
+                                                {items.length > 1 ? ` + ${items.length - 1}` : ""}
+                                            </strong>
+                                            <small>عرض وتعديل المنتجات</small>
+                                        </span>
+                                        <ChevronDown size={18} aria-hidden="true" />
+                                    </summary>
+                                    <div>
+                                        {items.map((item) => (
+                                            <CartLine key={item.variantId} item={item} disabled={busy} />
+                                        ))}
+                                    </div>
+                                </details>
+                                <CartTotals subtotal={total()} shipping={shipping} />
+                                <p className="checkout-summary-note">
+                                    <Truck size={18} aria-hidden="true" />
+                                    رسوم التوصيل ضمن الإجمالي أعلاه.
+                                </p>
+                                <button
+                                    type="button"
+                                    className="checkout-edit-bag"
+                                    disabled={busy}
+                                    onClick={() => useCartStore.getState().openCart()}
+                                >
+                                    فتح الحقيبة
+                                </button>
                             </div>
                         </details>
-                        <CartTotals subtotal={total()} shipping={shipping} />
-                        <p className="checkout-summary-note">
-                            <Truck size={18} aria-hidden="true" />
-                            رسوم التوصيل ضمن الإجمالي أعلاه.
-                        </p>
-                        <button
-                            type="button"
-                            className="checkout-edit-bag"
-                            disabled={busy}
-                            onClick={() => useCartStore.getState().openCart()}
-                        >
-                            فتح الحقيبة
-                        </button>
                     </aside>
                 </div>
             )}

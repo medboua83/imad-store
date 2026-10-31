@@ -19,6 +19,23 @@ const text = (...values: (string | undefined)[]) =>
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+/** Brand cards belong only to these public pages; product cards keep their own photos. */
+export function storefrontShareMetadata(page: "home" | "shop", origin: URL): Metadata {
+  const title = page === "home" ? "IMAD Mode — اختيارات على ذوقكم" : "المتجر | IMAD Mode";
+  const description = page === "home"
+    ? "اكتشفوا اختيارات IMAD Mode، وقارنوا الألوان والمقاسات مع تفاصيل واضحة قبل الطلب."
+    : "تصفحوا منتجات IMAD Mode حسب الفئة والسعر والتوفر، واختاروا اللون والمقاس المناسبين.";
+  const url = new URL(page === "home" ? "/" : "/shop", origin).href;
+  const images = [{ url: new URL("/images/brand/imad-share-gold-v1.png", origin).href,
+    width: 1200, height: 630, type: "image/png", alt: "IMAD Mode" }];
+  return {
+    title: { absolute: title }, description, alternates: { canonical: url },
+    openGraph: { type: "website", siteName: "IMAD Mode", locale: "ar_MA", title,
+      description, url, images },
+    twitter: { card: "summary_large_image", title, description, images },
+  };
+}
 export function productShareMetadata(
   product: {
     slug: string;

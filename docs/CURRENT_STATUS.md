@@ -1,5 +1,13 @@
 # Current Status — 2026-10-18
 
+Règles commerciales actuelles : [COMMERCE_RULES.md](COMMERCE_RULES.md). Les notes datées ci-dessous conservent l’historique ; elles ne remplacent pas cette référence.
+
+## Checkout compact et cartes de partage — candidat du 31 octobre 2026
+
+Récapitulatif replié sur mobile, avec total complet et ouverture native au clavier ; détails dépliés par défaut sur ordinateur. Montants, frais, relecture finale, stock et idempotence inchangés. Cartes Open Graph/Twitter spécifiques à l’accueil et au catalogue, logo original repris dans le doré du site ; métadonnées produit indépendantes conservées. Aucune modification des photos ni des données commerciales. Recette et publication à consigner après CI.
+
+La PR 74 est publiée sur Master acc385e3 : 7 tests de récupération, 51 UI, 98 intégration, installation et hébergement combiné validés. Les paramètres réels 3 jours / 3 jours / DELIVERY_TRY_ON ont été enregistrés uniquement sur quickydev.com et vérifiés après rechargement.
+
 ## Fiabilité et lisibilité — candidat du 31 octobre 2026
 
 Audit en ligne et reproductions isolées : titre couvert par le header après navigation, ponctuation du téléphone acceptée puis refusée, panier local invalide provoquant une erreur. Correction par marge de défilement liée à la hauteur réelle du header (pas de défilement forcé), nettoyage du téléphone identique à la validation en conservant le format local/international, et restauration du panier limitée aux lignes valides. JSON illisible, stockage indisponible, doublons et données de prix/quantité invalides ne doivent plus faire planter l’interface. Les lignes indisponibles restent affichées pour vérification ; un avertissement accompagne la récupération. Montants recalculés par le catalogue et le serveur, idempotence et historique inchangés.
