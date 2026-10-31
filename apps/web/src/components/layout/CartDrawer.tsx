@@ -95,111 +95,113 @@ export function CartDrawer() {
                     <X size={22} aria-hidden="true" />
                 </button>
             </div>
-            <div className="bag-scroll">
-                <CartRecoveryNotice />
-                {notice && (
-                    <div
-                        className={`bag-notice ${review === "error" ? "bag-notice-error" : ""}`}
-                        role="status"
-                    >
-                        <p>{notice}</p>
-                        {review === "error" && (
-                            <button
-                                type="button"
-                                className="text-link"
-                                onClick={() => {
-                                    setReview("checking");
-                                    setRefreshVersion((v) => v + 1);
-                                }}
+            <div className="bag-body">
+                <div className="bag-scroll">
+                    <CartRecoveryNotice />
+                    {notice && (
+                        <div
+                            className={`bag-notice ${review === "error" ? "bag-notice-error" : ""}`}
+                            role="status"
+                        >
+                            <p>{notice}</p>
+                            {review === "error" && (
+                                <button
+                                    type="button"
+                                    className="text-link"
+                                    onClick={() => {
+                                        setReview("checking");
+                                        setRefreshVersion((v) => v + 1);
+                                    }}
+                                >
+                                    إعادة التحقق من السلة
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {!items.length ? (
+                        <div className="bag-empty">
+                            <span className="empty-bag-icon">
+                                <ShoppingBag size={32} aria-hidden="true" />
+                            </span>
+                            <h3>مساحة لاختياراتكم القادمة.</h3>
+                            <p>أضيفوا القطع التي تفضلونها، وستجدون تفاصيلها هنا.</p>
+                            <Link href="/shop" onClick={close} className="btn-primary">
+                                اكتشفوا المجموعة <ArrowLeft size={18} aria-hidden="true" />
+                            </Link>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="bag-review-status" role="status">
+                                {review === "ready" ? (
+                                    <Check size={15} aria-hidden="true" />
+                                ) : review === "error" ? (
+                                    <TriangleAlert size={15} aria-hidden="true" />
+                                ) : (
+                                    <LoaderCircle size={15} aria-hidden="true" />
+                                )}
+                                {review === "checking"
+                                    ? "جارٍ التحقق من الأسعار والتوفر…"
+                                    : review === "ready"
+                                      ? "الأسعار والتوفر محدثان"
+                                      : "يلزم التحقق من السلة"}
+                            </p>
+                            <div className="bag-items">
+                                {items.map((item) => (
+                                    <CartLine key={item.variantId} item={item} />
+                                ))}
+                            </div>
+                            {isOpen && <CartRecommendations active onNavigate={close} />}
+                        </>
+                    )}
+                </div>
+                {!!items.length && (
+                    <div className="bag-footer">
+                        <CartTotals subtotal={total()} shipping={shipping} />
+                        {shipping.error && (
+                            <p role="alert" className="bag-notice-error">
+                                تعذر تحميل رسوم التوصيل.{" "}
+                                <button
+                                    type="button"
+                                    className="text-link"
+                                    onClick={() => shipping.retry()}
+                                >
+                                    إعادة المحاولة
+                                </button>
+                            </p>
+                        )}
+                        {invalidItems && (
+                            <p role="alert" className="bag-notice-error">
+                                احذفوا القطع غير المتوفرة للمتابعة.
+                            </p>
+                        )}
+                        {shipping.settings?.codEnabled === false && (
+                            <p role="alert" className="bag-notice-error">
+                                الطلب بالدفع عند الاستلام متوقف مؤقتاً.
+                            </p>
+                        )}
+                        {canContinue ? (
+                            <Link
+                                href="/checkout"
+                                onClick={close}
+                                className="btn-primary bag-checkout-link"
                             >
-                                إعادة التحقق من السلة
+                                متابعة الطلب <ArrowLeft size={19} aria-hidden="true" />
+                            </Link>
+                        ) : (
+                            <button type="button" className="btn-primary bag-checkout-link" disabled>
+                                متابعة الطلب <ArrowLeft size={19} aria-hidden="true" />
                             </button>
                         )}
-                    </div>
-                )}
-                {!items.length ? (
-                    <div className="bag-empty">
-                        <span className="empty-bag-icon">
-                            <ShoppingBag size={32} aria-hidden="true" />
-                        </span>
-                        <h3>مساحة لاختياراتكم القادمة.</h3>
-                        <p>أضيفوا القطع التي تفضلونها، وستجدون تفاصيلها هنا.</p>
-                        <Link href="/shop" onClick={close} className="btn-primary">
-                            اكتشفوا المجموعة <ArrowLeft size={18} aria-hidden="true" />
-                        </Link>
-                    </div>
-                ) : (
-                    <>
-                        <p className="bag-review-status" role="status">
-                            {review === "ready" ? (
-                                <Check size={15} aria-hidden="true" />
-                            ) : review === "error" ? (
-                                <TriangleAlert size={15} aria-hidden="true" />
-                            ) : (
-                                <LoaderCircle size={15} aria-hidden="true" />
-                            )}
-                            {review === "checking"
-                                ? "جارٍ التحقق من الأسعار والتوفر…"
-                                : review === "ready"
-                                  ? "الأسعار والتوفر محدثان"
-                                  : "يلزم التحقق من السلة"}
+                        <p className="bag-payment-note">
+                            <PackageCheck size={17} aria-hidden="true" />
+                            الدفع عند الاستلام · بدون إنشاء حساب
                         </p>
-                        <div className="bag-items">
-                            {items.map((item) => (
-                                <CartLine key={item.variantId} item={item} />
-                            ))}
-                        </div>
-                        {isOpen && <CartRecommendations active onNavigate={close} />}
-                    </>
+                        <button type="button" className="bag-continue" onClick={close}>
+                            متابعة التسوق
+                        </button>
+                    </div>
                 )}
             </div>
-            {!!items.length && (
-                <div className="bag-footer">
-                    <CartTotals subtotal={total()} shipping={shipping} />
-                    {shipping.error && (
-                        <p role="alert" className="bag-notice-error">
-                            تعذر تحميل رسوم التوصيل.{" "}
-                            <button
-                                type="button"
-                                className="text-link"
-                                onClick={() => shipping.retry()}
-                            >
-                                إعادة المحاولة
-                            </button>
-                        </p>
-                    )}
-                    {invalidItems && (
-                        <p role="alert" className="bag-notice-error">
-                            احذفوا القطع غير المتوفرة للمتابعة.
-                        </p>
-                    )}
-                    {shipping.settings?.codEnabled === false && (
-                        <p role="alert" className="bag-notice-error">
-                            الطلب بالدفع عند الاستلام متوقف مؤقتاً.
-                        </p>
-                    )}
-                    {canContinue ? (
-                        <Link
-                            href="/checkout"
-                            onClick={close}
-                            className="btn-primary bag-checkout-link"
-                        >
-                            متابعة الطلب <ArrowLeft size={19} aria-hidden="true" />
-                        </Link>
-                    ) : (
-                        <button type="button" className="btn-primary bag-checkout-link" disabled>
-                            متابعة الطلب <ArrowLeft size={19} aria-hidden="true" />
-                        </button>
-                    )}
-                    <p className="bag-payment-note">
-                        <PackageCheck size={17} aria-hidden="true" />
-                        الدفع عند الاستلام · بدون إنشاء حساب
-                    </p>
-                    <button type="button" className="bag-continue" onClick={close}>
-                        متابعة التسوق
-                    </button>
-                </div>
-            )}
         </dialog>
     );
 }

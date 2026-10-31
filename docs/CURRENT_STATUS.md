@@ -1,5 +1,11 @@
 # Current Status — 2026-10-31
 
+## Panier utilisable sur les fenêtres peu hautes — candidat du 31 octobre 2026
+
+Constat en production à 844 × 390 : les totaux conservent leur propre zone défilable et la liste des produits ne mesure plus que 51,5 px. Un geste sur les produits ne permet pas d’atteindre le bouton de commande dans la seconde zone ; le test avant correction reproduit ce blocage visuel. Sous 600 px de hauteur, le candidat fait défiler produits et pied de panier dans une même zone, avec l’en-tête et la fermeture hors défilement. Les fenêtres plus hautes conservent leur disposition existante. Aucune information ni commande masquée, photos et données commerciales inchangées. Tests de panier à 320/844/390/1440 px, quantités, clavier et récupération des frais dans les petits formats ; recette complète et publication à consigner.
+
+La PR 84 est publiée sur Master 3d021c90 : 97 UI et 100 intégration réussis, Hostinger Completed/Current. Validation dynamique des champs vérifiée à 390/1470 px avec saisie fictive, zéro envoi de commande, panier de deux pièces et 400 MAD conservé ; réglages et détails du catalogue inchangés.
+
 ## Validation des champs au fil de la correction — candidat du 31 octobre 2026
 
 Après une première validation, les champs corrigés gardaient leur message et aria-invalid jusqu’à la soumission suivante. Un test avant correction confirme le nom valide encore marqué incorrect. Le candidat partage les mêmes règles entre soumission et changements de saisie, uniquement après une première tentative. Une valeur redevenue incorrecte est à nouveau signalée ; la recherche de ville ne remplace pas la sélection effective. Le premier champ incorrect reçoit le focus après le rendu des messages et références accessibles. Pas de modification des critères métier, du téléphone transmis, des frais, prix, stocks, modes de confirmation ou clés de reprise. Tests isolés à 320/390/1440 px, sans commande réelle ; recette et publication à consigner.
