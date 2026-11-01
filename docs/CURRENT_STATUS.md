@@ -1,5 +1,11 @@
 # Current Status — 2026-11-01
 
+## Montants en attente de correction du panier — candidat du 1er novembre 2026
+
+Un panier dont l’article devient indisponible garde une ligne à quantité nulle pour permettre sa suppression. Le total peut alors afficher uniquement les frais de livraison, bien que la commande soit bloquée. Le candidat affiche une invitation à vérifier le panier à la place du total payable et des frais provisoires, dans le panier, le récapitulatif et la barre de commande. Les montants réapparaissent quand les lignes invalides sont retirées ; un panier entièrement retiré devient vide. Calculs de prix, promotions, frais et validation serveur conservés. Six scénarios ciblés à 320/390/1440 px réussis ; suite complète et publication à consigner. Aucune mise en rupture réelle ni commande de production.
+
+La PR 87 est publiée sur Master 7f26dabd : 116 UI et 100 intégration réussis, Hostinger Completed/Current. Retour au clavier vérifié après ouverture mobile puis format ordinateur, pour Échap/croix/Continuer les achats ; panier deux pièces/400 MAD et données publiques conservés.
+
 ## Reprise de la navigation clavier après le panier — candidat du 1er novembre 2026
 
 Audit de navigation entre produits : photos, taille et quantité se réinitialisent correctement ; aucune correction de ce parcours. Le test avant correction confirme une perte de focus après ajout de tout le stock puis Échap : le bouton Ajouter est indisponible et la page reprend le focus global. Le candidat conserve le retour natif vers un déclencheur encore utilisable et prévoit un repli vers le bouton du panier pour les fermetures volontaires (Échap, croix, Continuer les achats), sans imposer ce repli aux liens de navigation. Les boutons du panier indiquent leur dialogue cible. Huit scénarios ciblés à 390/1440 px réussis ; suite complète et publication à consigner. Photos, prix, stocks, commandes et réglages inchangés.

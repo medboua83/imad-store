@@ -514,7 +514,7 @@ export default function CheckoutPage() {
                             <p>
                                 <span>المبلغ عند الاستلام</span>
                                 <strong dir="ltr">
-                                    {shipping.error || shipping.total === null
+                                    {invalidItems || shipping.error || shipping.total === null
                                         ? "—"
                                         : shipping.total.toFixed(2)}{" "}
                                     <small>MAD</small>
@@ -545,7 +545,7 @@ export default function CheckoutPage() {
                                     <small>{summaryOpen ? "إخفاء التفاصيل" : "عرض المنتجات والتوصيل"}</small>
                                 </span>
                                 <span className="checkout-compact-total" aria-live="polite">
-                                    {shipping.loading ? "جارٍ الحساب…" : shipping.error || shipping.total === null
+                                    {invalidItems ? "راجعوا الحقيبة" : shipping.loading ? "جارٍ الحساب…" : shipping.error || shipping.total === null
                                         ? "بانتظار رسوم التوصيل"
                                         : <bdi>{shipping.total.toFixed(2)} <small>MAD</small></bdi>}
                                     <small>شامل التوصيل</small>
@@ -580,7 +580,7 @@ export default function CheckoutPage() {
                                         ))}
                                     </div>
                                 </details>
-                                <CartTotals subtotal={total()} shipping={shipping} />
+                                <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} />
                                 <p className="checkout-summary-note">
                                     <Truck size={18} aria-hidden="true" />
                                     رسوم التوصيل ضمن الإجمالي أعلاه.
