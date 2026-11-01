@@ -17,6 +17,7 @@ import { CartLine } from "../store/CartLine";
 import { CartTotals } from "../store/CartTotals";
 import { CartRecommendations } from "../store/CartRecommendations";
 import { CartRecoveryNotice } from "../store/CartRecoveryNotice";
+import { CartDeliveryBenefit } from "../store/CartDeliveryBenefit";
 export function CartDrawer() {
     const dialog = useRef<HTMLDialogElement>(null);
     const restoreAfterDismiss = useRef(false);
@@ -170,6 +171,11 @@ export function CartDrawer() {
                                       ? "الأسعار والتوفر محدثان"
                                       : "يلزم التحقق من السلة"}
                             </p>
+                            <CartDeliveryBenefit
+                                subtotal={total()}
+                                shipping={shipping}
+                                needsReview={invalidItems || review !== "ready"}
+                            />
                             <div className="bag-items">
                                 {items.map((item) => (
                                     <CartLine key={item.variantId} item={item} />

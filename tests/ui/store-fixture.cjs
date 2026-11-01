@@ -123,6 +123,10 @@ createServer((req, res) => {
     quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400}],
     variants: product.variants.map(v => v.id === "333333333333333333333330" ? {...v, stock:20} : v),
   };
+  else if (pathname === "/api/products/fixture-paid-shipping") data = {
+    ...product, slug: "fixture-paid-shipping", freeShipping: false,
+    quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400}],
+  };
   else if (pathname === "/api/products/fixture-override") data = {
     ...product, slug: "fixture-override", quantityDiscounts: [{minQuantity:2,unitPrice:200,totalPrice:400},{minQuantity:3,unitPrice:650/3,totalPrice:650}],
   };
