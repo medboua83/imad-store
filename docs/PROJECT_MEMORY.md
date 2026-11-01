@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Livraison plus lisible dans le panier — candidat du 1er novembre 2026
+
+Ajout d’un bandeau doré de livraison dans le panier et le récapitulatif : confirmation de gratuité lorsque le montant calculé est nul, sinon montant restant et progression vers le seuil enregistré. Calcul du reste en centimes sur le sous-total après offres. La gratuité accordée par un seul produit éligible est respectée, sans invitation à ajouter davantage d’articles. Aucun seuil ni frais prérempli par cette interface. Le bandeau est masqué pour les lignes invalides, la vérification du panier non terminée, les frais indisponibles et la commande désactivée. Placé dans la zone défilable du panier pour conserver l’accès au bouton de commande. Les montants, photos, données, règles serveur et réglages restent inchangés. Six scénarios ciblés à 320/390/1440 px et lint local réussis ; suite complète et publication à consigner.
+
+La PR 88 est publiée sur Master 1eda02f8 : 122 UI et 100 intégration réussis, Hostinger Completed/Current. Panier valide deux pièces/400 MAD et livraison offerte vérifiés à 320/390/1440 px ; cas de rupture vérifiés uniquement avec les fixtures, données publiques conservées.
+
 ## Montants en attente de correction du panier — candidat du 1er novembre 2026
 
 Un panier dont l’article devient indisponible garde une ligne à quantité nulle pour permettre sa suppression. Le total peut alors afficher uniquement les frais de livraison, bien que la commande soit bloquée. Le candidat affiche une invitation à vérifier le panier à la place du total payable et des frais provisoires, dans le panier, le récapitulatif et la barre de commande. Les montants réapparaissent quand les lignes invalides sont retirées ; un panier entièrement retiré devient vide. Calculs de prix, promotions, frais et validation serveur conservés. Six scénarios ciblés à 320/390/1440 px réussis ; suite complète et publication à consigner. Aucune mise en rupture réelle ni commande de production.

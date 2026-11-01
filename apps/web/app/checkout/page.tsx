@@ -28,6 +28,7 @@ import {
 import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
 import { CartRecoveryNotice } from "@/components/store/CartRecoveryNotice";
+import { CartDeliveryBenefit } from "@/components/store/CartDeliveryBenefit";
 type CheckoutForm = { fullName: string; phone: string; city: string; address: string };
 function checkoutFieldError(field: keyof CheckoutForm, value: string): string {
     if (field === "fullName") return value.trim().length < 3 ? "أدخلوا الاسم الكامل" : "";
@@ -580,6 +581,7 @@ export default function CheckoutPage() {
                                         ))}
                                     </div>
                                 </details>
+                                <CartDeliveryBenefit subtotal={total()} shipping={shipping} needsReview={invalidItems} />
                                 <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} />
                                 <p className="checkout-summary-note">
                                     <Truck size={18} aria-hidden="true" />

@@ -48,6 +48,57 @@
 .bag-body {
     display: contents;
 }
+.store-shell .store-delivery-benefit {
+    display: grid;
+    grid-template-columns: 23px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 13px 14px;
+    margin-block: 12px;
+    border: 1px solid #decaa4;
+    border-radius: 12px;
+    background: #fcf8f0;
+    color: #725321;
+}
+.store-shell .store-delivery-benefit.is-free {
+    background: #f5eddd;
+}
+.store-delivery-benefit > svg {
+    margin-top: 2px;
+}
+.store-shell .store-delivery-benefit p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+}
+.store-delivery-benefit small {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #79684b;
+}
+.store-delivery-benefit progress {
+    display: block;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    margin-top: 9px;
+    border: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #e9dfcb;
+}
+.store-delivery-benefit progress::-webkit-progress-bar {
+    background: #e9dfcb;
+}
+.store-delivery-benefit progress::-webkit-progress-value {
+    border-radius: 20px;
+    background: #a77932;
+}
+.store-delivery-benefit progress::-moz-progress-bar {
+    border-radius: 20px;
+    background: #a77932;
+}
 .bag-scroll {
     flex: 1;
     min-height: 0;
