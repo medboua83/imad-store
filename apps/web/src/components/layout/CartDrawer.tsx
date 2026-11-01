@@ -181,7 +181,7 @@ export function CartDrawer() {
                 </div>
                 {!!items.length && (
                     <div className="bag-footer">
-                        <CartTotals subtotal={total()} shipping={shipping} />
+                        <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} />
                         {shipping.error && (
                             <p role="alert" className="bag-notice-error">
                                 تعذر تحميل رسوم التوصيل.{" "}
