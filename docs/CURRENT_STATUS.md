@@ -1,5 +1,11 @@
 # Current Status — 2026-11-01
 
+## Partage des fiches produits — candidat du 1er novembre 2026
+
+Bouton de partage doré à côté de la catégorie, sans modifier les photos ni les données commerciales. Il transmet uniquement le nom et l’URL canonique du produit, construite avec l’origine de cette installation, sans paramètres ni fragment. Partage natif sur les navigateurs compatibles ; sinon copie explicite du lien. Annuler n’entraîne aucune copie. Un refus de partage propose le lien et un bouton de copie ; un refus de copie affiche une aide à la sélection manuelle. Les messages ne confirment jamais la réception par un destinataire. Protection contre les clics répétés, état de chargement accessible et champ en lecture seule sélectionnable. Métadonnées produit, prix, quantités, panier et intégrations conservés. Neuf tests ciblés et lint local réussis : copie et conservation des prix à 320/390/1440 px, annulation, attente, refus et copie manuelle, plus les trois formats de fiche compacte. Suite complète et publication à consigner.
+
+La PR 89 est publiée sur Master 5e0b8923 : 128 UI et 100 intégration réussis, Hostinger Completed/Current. Le bandeau de livraison et le total de deux pièces/400 MAD sont vérifiés dans le panier et le checkout à 320/390/1440 px. Réglages, catalogue et photos conservés.
+
 ## Livraison plus lisible dans le panier — candidat du 1er novembre 2026
 
 Ajout d’un bandeau doré de livraison dans le panier et le récapitulatif : confirmation de gratuité lorsque le montant calculé est nul, sinon montant restant et progression vers le seuil enregistré. Calcul du reste en centimes sur le sous-total après offres. La gratuité accordée par un seul produit éligible est respectée, sans invitation à ajouter davantage d’articles. Aucun seuil ni frais prérempli par cette interface. Le bandeau est masqué pour les lignes invalides, la vérification du panier non terminée, les frais indisponibles et la commande désactivée. Placé dans la zone défilable du panier pour conserver l’accès au bouton de commande. Les montants, photos, données, règles serveur et réglages restent inchangés. Six scénarios ciblés à 320/390/1440 px et lint local réussis ; suite complète et publication à consigner.

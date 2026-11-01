@@ -34,6 +34,40 @@
     min-height: 22px;
     justify-self: start;
 }
+.product-page .product-heading-tools {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    min-width: 0;
+}
+.product-share { min-width: 0; text-align: end; }
+.product-share :is(button, input) {
+    min-height: 44px;
+    border: 1px solid #d8c29a;
+    border-radius: 9px;
+    background: #fffdf8;
+    color: #78551f;
+    font-size: 12px;
+}
+.product-share button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 12px;
+}
+.product-share button:disabled { opacity: .6; cursor: wait; }
+.product-share :is(button, input):focus-visible { outline: 2px solid #a77932; outline-offset: 3px; }
+.product-share-status { font-size: 12px; line-height: 1.8; color: #725321; margin-top: 5px; }
+.product-share.has-fallback { flex-basis: 100%; }
+.product-share-fallback { margin-top: 8px; padding: 12px; border: 1px solid #e3d1ae; border-radius: 10px; background: #fcf8f0; text-align: start; }
+.product-share-fallback label { display: block; margin-bottom: 6px; font-size: 12px; }
+.product-share-fallback > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.product-share-fallback input { flex: 1 1 180px; min-width: 0; width: 100%; padding: 8px; font-size: 13px; }
+.product-share-fallback button { flex-shrink: 0; }
 .product-page .product-identity h1 {
     grid-column: 1 / -1;
     font-size: clamp(26px, 2.5vw, 34px);
