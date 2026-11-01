@@ -19,6 +19,7 @@ import { CartRecommendations } from "../store/CartRecommendations";
 import { CartRecoveryNotice } from "../store/CartRecoveryNotice";
 export function CartDrawer() {
     const dialog = useRef<HTMLDialogElement>(null);
+    const restoreAfterDismiss = useRef(false);
     const { items, isOpen, closeCart, total, refreshCart, itemCount } = useCartStore();
     const shipping = useShipping(total(), items);
     const [notice, setNotice] = useState("");
@@ -28,9 +29,32 @@ export function CartDrawer() {
         setReview("checking");
         closeCart();
     }
+    function dismiss() {
+        restoreAfterDismiss.current = true;
+        close();
+    }
+    function closed() {
+        const restore = restoreAfterDismiss.current;
+        restoreAfterDismiss.current = false;
+        close();
+        if (!restore) return;
+        const active = document.activeElement;
+        if (
+            active instanceof HTMLElement &&
+            active !== document.body &&
+            !dialog.current?.contains(active) &&
+            !active.matches(":disabled") &&
+            active.getClientRects().length
+        )
+            return;
+        document.getElementById("store-cart-trigger")?.focus({ preventScroll: true });
+    }
     useEffect(() => {
         const element = dialog.current;
-        if (isOpen && !element?.open) element?.showModal();
+        if (isOpen && !element?.open) {
+            restoreAfterDismiss.current = false;
+            element?.showModal();
+        }
         if (!isOpen) {
             if (element?.open) element.close();
             return;
@@ -71,11 +95,12 @@ export function CartDrawer() {
         shipping.settings?.codEnabled !== false;
     return (
         <dialog
+            id="store-cart"
             onKeyDown={trapDialogFocus}
             ref={dialog}
             aria-labelledby="cart-title"
-            onCancel={close}
-            onClose={close}
+            onCancel={dismiss}
+            onClose={closed}
             className="cart-dialog"
             dir="rtl"
         >
@@ -90,7 +115,7 @@ export function CartDrawer() {
                     type="button"
                     aria-label="إغلاق السلة"
                     className="bag-close"
-                    onClick={close}
+                    onClick={dismiss}
                 >
                     <X size={22} aria-hidden="true" />
                 </button>
@@ -196,7 +221,7 @@ export function CartDrawer() {
                             <PackageCheck size={17} aria-hidden="true" />
                             الدفع عند الاستلام · بدون إنشاء حساب
                         </p>
-                        <button type="button" className="bag-continue" onClick={close}>
+                        <button type="button" className="bag-continue" onClick={dismiss}>
                             متابعة التسوق
                         </button>
                     </div>

@@ -1,5 +1,11 @@
 # Imad Store — Persistent Project Memory
 
+## Reprise de la navigation clavier après le panier — candidat du 1er novembre 2026
+
+Audit de navigation entre produits : photos, taille et quantité se réinitialisent correctement ; aucune correction de ce parcours. Le test avant correction confirme une perte de focus après ajout de tout le stock puis Échap : le bouton Ajouter est indisponible et la page reprend le focus global. Le candidat conserve le retour natif vers un déclencheur encore utilisable et prévoit un repli vers le bouton du panier pour les fermetures volontaires (Échap, croix, Continuer les achats), sans imposer ce repli aux liens de navigation. Les boutons du panier indiquent leur dialogue cible. Huit scénarios ciblés à 390/1440 px réussis ; suite complète et publication à consigner. Photos, prix, stocks, commandes et réglages inchangés.
+
+La PR 86 est publiée sur Master 33d9627e : 108 UI et 100 intégration réussis, Hostinger Completed/Current. Saisie effacer puis 2 vérifiée à 320/390/1470 px (400 MAD), quantités invalides bloquées ; panier deux pièces/400 MAD, détails catalogue et réglages conservés.
+
 ## Saisie fiable des quantités — candidat du 31 octobre 2026
 
 Audit public : effacer 1 dans le champ le remplace immédiatement par 1 ; saisir ensuite 2 donne 11 pièces (limite du stock) et 2230 MAD au lieu des deux pièces attendues à 400 MAD. Le candidat sépare le texte en cours de saisie de la dernière quantité valide. Les quantités vides, nulles, fractionnaires ou supérieures au stock restant doivent conserver leur saisie, expliquer la limite et empêcher l’ajout, sans afficher un prix de remplacement. Une saisie valide, les raccourcis et les boutons +/− retrouvent le calcul existant ; le choix d’une variante conserve la limite au stock disponible. Photos, prix catalogue, promotions, réservations et validation serveur inchangés. Tests isolés, recette complète et publication à consigner.

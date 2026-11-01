@@ -130,6 +130,9 @@ export function Navbar() {
                         </Link>
                         <button
                             className="action cart-toggle"
+                            id="store-cart-trigger"
+                            aria-haspopup="dialog"
+                            aria-controls="store-cart"
                             aria-label={`فتح السلة، ${count} قطعة`}
                             onClick={() => useCartStore.getState().openCart()}
                         >
@@ -287,6 +290,8 @@ export function Navbar() {
                     ))}
                     <button
                         type="button"
+                        aria-haspopup="dialog"
+                        aria-controls="store-cart"
                         onClick={() => useCartStore.getState().openCart()}
                         aria-label={`فتح السلة، ${count} قطعة`}
                     >

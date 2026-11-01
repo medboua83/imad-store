@@ -1,4 +1,10 @@
-# Current Status — 2026-10-31
+# Current Status — 2026-11-01
+
+## Reprise de la navigation clavier après le panier — candidat du 1er novembre 2026
+
+Audit de navigation entre produits : photos, taille et quantité se réinitialisent correctement ; aucune correction de ce parcours. Le test avant correction confirme une perte de focus après ajout de tout le stock puis Échap : le bouton Ajouter est indisponible et la page reprend le focus global. Le candidat conserve le retour natif vers un déclencheur encore utilisable et prévoit un repli vers le bouton du panier pour les fermetures volontaires (Échap, croix, Continuer les achats), sans imposer ce repli aux liens de navigation. Les boutons du panier indiquent leur dialogue cible. Huit scénarios ciblés à 390/1440 px réussis ; suite complète et publication à consigner. Photos, prix, stocks, commandes et réglages inchangés.
+
+La PR 86 est publiée sur Master 33d9627e : 108 UI et 100 intégration réussis, Hostinger Completed/Current. Saisie effacer puis 2 vérifiée à 320/390/1470 px (400 MAD), quantités invalides bloquées ; panier deux pièces/400 MAD, détails catalogue et réglages conservés.
 
 ## Saisie fiable des quantités — candidat du 31 octobre 2026
 
