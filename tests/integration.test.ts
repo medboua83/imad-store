@@ -2068,6 +2068,14 @@ test("Size discovery matches positive stock on the same variant and keeps privat
         assert.equal((await request(app).get(`${base}&size=m`)).body.data[0].id,b.id);
         assert.equal((await request(app).get(`${base}&size=99`)).body.total,0);
         assert.equal((await request(app).get(`${base}&size=.%2A`)).body.total,0);
+        assert.equal((await request(app).get(`${base}&size=4`)).body.total,0);
+        assert.equal((await request(app).get(`${base}&size=%5B`)).body.total,0);
+        const literalSize = "M(L).+?^$[]{}|\\";
+        const literal = await create("literal",[{size:literalSize,stock:1}]);
+        const exactLiteral=await request(app).get(`${base}&size=${encodeURIComponent(literalSize.toLowerCase())}`);
+        assert.equal(exactLiteral.status,200);
+        assert.equal(exactLiteral.body.total,1);
+        assert.equal(exactLiteral.body.data[0].id,literal.id);
         assert.equal((await request(app).get(base)).body.filterOptions,undefined);
         assert.equal((await request(app).get(`${base}&size=40%2041`)).status,400);
         assert.equal((await request(app).get(`${base}&size=40&size=44`)).status,400);

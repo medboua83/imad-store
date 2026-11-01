@@ -114,7 +114,8 @@ async function list(queryInput: unknown, admin: boolean) {
         throw new AppError("Le prix minimum dépasse le maximum", 400);
     if (query.availability === "in-stock" || query.size)
         where.variants = { some: { stock: { gt: 0 },
-            ...(query.size ? { size: { equals: query.size, mode: "insensitive" } } : {}),
+            // Prisma's MongoDB insensitive equality uses a regex: keep the size literal.
+            ...(query.size ? { size: { equals: query.size.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), mode: "insensitive" } } : {}),
         } };
     if (query.minPrice !== undefined || query.maxPrice !== undefined)
         where.price = {
