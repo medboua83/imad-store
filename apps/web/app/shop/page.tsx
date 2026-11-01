@@ -7,11 +7,12 @@ import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lu
 import { ProductCard } from "@/components/store/ProductCard";
 import { categoryThumbnail } from "@/components/store/category-visuals";
 import { publishedCategories } from "@/lib/catalog-navigation";
+import { orderedSizes } from "@/lib/product-presentation";
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
     return storefrontShareMetadata("shop", await requestSiteOrigin());
 }
-const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability"] as const;
+const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability", "size"] as const;
 const sortLabels: Record<string, string> = {
     newest: "الأحدث",
     "price-asc": "السعر: من الأقل",
@@ -25,15 +26,15 @@ export default async function ShopPage({
 }) {
     const raw = await searchParams;
     const value = (key: string) => (typeof raw[key] === "string" ? (raw[key] as string) : "");
-    const params: Record<string, string | number> = { limit: 12 };
+    const params: Record<string, string | number> = { limit: 12, includeFilters: "1" };
     for (const key of filterKeys) if (value(key)) params[key] = value(key);
     const page = Number(value("page") || 1);
     params.page = Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
     const categories = await publicCategories();
     let result: Awaited<ReturnType<typeof publicProducts>> | null = null;
-    let invalid = false;
+    let invalid = Array.isArray(raw.size);
     try {
-        result = await publicProducts(params);
+        if (!invalid) result = await publicProducts(params);
     } catch (error) {
         // Keep rejected filters editable without presenting unrelated products as matches.
         // An upstream outage must still reach the error boundary.
@@ -66,7 +67,10 @@ export default async function ShopPage({
             maxPrice: `حتى ${value(key)} MAD`,
             availability: "المتوفر فقط",
             sort: sortLabels[value(key)] || value(key),
+            size: `المقاس: ${value(key)}`,
         })[key];
+    const suggestedSizes = result?.filterOptions?.sizes;
+    const sizes = suggestedSizes ? orderedSizes(suggestedSizes.map(size => ({ size }))) : [];
     return (
         <section className="page-shell shop-page refined-shop">
             <nav className="shop-breadcrumb" aria-label="مسار التصفح">
@@ -124,7 +128,7 @@ export default async function ShopPage({
                     {active.length > 0 && (
                         <span className="active-filter-count">{active.length}</span>
                     )}
-                    <span className="filter-result-count">الفئة، السعر والتوفر</span>
+                    <span className="filter-result-count">المقاس، الفئة والسعر</span>
                 </summary>
                 <form
                     action="/shop"
@@ -163,6 +167,20 @@ export default async function ShopPage({
                                 </option>
                             ))}
                         </select>
+                    </label>
+                    <label>
+                        المقاس
+                        {suggestedSizes ? (
+                            <select className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" defaultValue={value("size")}>
+                                <option value="">جميع المقاسات</option>
+                                {value("size") && !sizes.includes(value("size")) && <option value={value("size")}>{value("size")} — المقاس المحدد</option>}
+                                {sizes.map(size => <option key={size} value={size}>{size}</option>)}
+                            </select>
+                        ) : (
+                            <input className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" maxLength={40}
+                                defaultValue={value("size")} placeholder="مثلاً 40 أو M" />
+                        )}
+                        <small id="catalog-size-help" className="filter-size-help">عند تحديد مقاس، تظهر القطع المتوفرة به فقط. راجعوا اللون في صفحة المنتج.</small>
                     </label>
                     <label>
                         الترتيب
@@ -285,6 +303,7 @@ export default async function ShopPage({
                                     key={p.id}
                                     headingLevel={3}
                                     eagerImage={index === 0}
+                                    preferredSize={value("size") || undefined}
                                 />
                             ))}
                         </div>

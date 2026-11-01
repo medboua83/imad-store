@@ -10,21 +10,25 @@ import { productDescription, descriptionParagraphs, sellableVariants, orderedSiz
 import { ProductOptions } from "@/components/store/ProductOptions";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
+import { isAmbiguousSize } from "@imad-store/shared";
 export const dynamic = "force-dynamic";
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await publicProduct(slug);
   if (!product) notFound();
   return productShareMetadata(product, await requestSiteOrigin());
 }
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const product = await publicProduct(slug);
   if (!product) notFound();
   const origin = await requestSiteOrigin();
   const name = product.nameAr || product.nameFr;
   const variants = sellableVariants(product.variants);
+  const raw = await searchParams;
+  const requestedSize = typeof raw.size === "string" && raw.size.length <= 40 && !isAmbiguousSize(raw.size) ? raw.size : undefined;
+  const sizeUnavailable = Boolean(raw.size) && (!requestedSize || !variants.some(v => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase()));
   const inStock = variants.some((v) => v.stock > 0);
   const settings = await publicSettings();
   const description = productDescription(product);
@@ -93,7 +97,12 @@ export default async function ProductPage({ params }: Props) {
               <span>{settings.codEnabled ? "الدفع عند الاستلام · بدون إنشاء حساب" : "راجعوا طرق الدفع المتاحة مع المتجر"}</span>
             </div>
           </div>
-          <ProductOptions key={product.id} product={product} />
+          {sizeUnavailable ? (
+            <div className="product-size-unavailable" role="status" aria-label="المقاس المطلوب">
+              <p>المقاس المطلوب غير متوفر حالياً. راجعوا المقاسات الأخرى قبل الإضافة.</p>
+              <Link href={`/products/${product.slug}`} prefetch={false}>عرض المقاسات الأخرى</Link>
+            </div>
+          ) : <ProductOptions key={`${product.id}:${requestedSize || ""}`} product={product} preferredSize={requestedSize} />}
           <div className="product-information">
             <details open>
               <summary>تفاصيل القطعة</summary>
