@@ -28,6 +28,7 @@ for (const width of [320, 390, 1440]) {
       .evaluateAll((links) => links.map((a) => a.getAttribute("href"))))
       expect(new URL(href!, page.url()).searchParams.get("size")).toBe("44");
     await page.locator(".catalog-card .text-link").click();
+    await expect(page).toHaveURL(url => url.pathname.startsWith("/products/"), { timeout: 30000 });
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -62,6 +63,7 @@ for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/shop?search=size-race&size=40");
     await page.locator(".catalog-card .text-link").click();
+    await expect(page).toHaveURL(url => url.pathname.startsWith("/products/"), { timeout: 30000 });
     await expect(page.getByRole("status", { name: "المقاس المطلوب", exact: true })).toContainText(
       "غير متوفر",
     );
