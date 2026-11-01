@@ -8,6 +8,7 @@ import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
 import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
 import { ProductOptions } from "@/components/store/ProductOptions";
+import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -62,12 +63,16 @@ export default async function ProductPage({ params }: Props) {
         <ProductGallery key={product.id} images={product.images} name={name} />
         <div className="product-detail refined-detail">
           <div className="product-identity">
-            <Link
-              className="product-category-label"
-              href={`/shop?category=${product.category.slug}`}
-            >
-              {product.category.nameAr || product.category.nameFr}
-            </Link>
+            <div className="product-heading-tools">
+              <Link
+                className="product-category-label"
+                href={`/shop?category=${product.category.slug}`}
+              >
+                {product.category.nameAr || product.category.nameFr}
+              </Link>
+              <ProductShare key={product.id} name={name}
+                url={new URL(`/products/${encodeURIComponent(product.slug)}`, origin).href} />
+            </div>
             <h1>{name}</h1>
             {product.freeShipping && (
               <p className="product-shipping-badge">التوصيل مجاني لهذا المنتج</p>
