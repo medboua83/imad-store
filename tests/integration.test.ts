@@ -2033,3 +2033,50 @@ test("Dashboard controls signed transactional assistance without creating custom
         await prisma.storeSettings.updateMany({ where: { id: "settings" }, data: { directSiteConfirmation: false } });
     }
 });
+
+test("Size discovery matches positive stock on the same variant and keeps private sizes hidden", async () => {
+    const prefix = `SizeDiscovery${randomBytes(4).toString("hex")}`;
+    const ids: string[] = [];
+    const create = async (suffix: string, variants: {size:string;stock:number}[], extra: Record<string, unknown> = {}) => {
+        const body = payload();
+        const record = await prisma.product.create({data:{...body, slug:`size-discovery-${suffix}-${randomBytes(4).toString("hex")}`,
+            nameFr:prefix, nameAr:prefix, nameEn:prefix, ...extra,
+            variants:{create:variants.map(v=>({...body.variants[0],...v,sku:`SIZE-${randomBytes(8).toString("hex")}`}))},
+        }});
+        ids.push(record.id);return record;
+    };
+    try {
+        const a=await create("a",[{size:"40",stock:0},{size:"44",stock:4},{size:"40 41",stock:10}]);
+        const b=await create("b",[{size:"40",stock:2},{size:"M",stock:1}]);
+        const hidden = [`DRAFT${prefix}`,`ARCHIVED${prefix}`,`NOPHOTO${prefix}`,`FIXTURE${prefix}`];
+        await create("draft",[{size:hidden[0],stock:4}],{status:"DRAFT"});
+        await create("archived",[{size:hidden[1],stock:4}],{status:"ARCHIVED"});
+        await create("nophoto",[{size:hidden[2],stock:4}],{images:[]});
+        await create("fixture",[{size:hidden[3],stock:4}],{slug:`test-19a-size-${randomBytes(4).toString("hex")}`});
+        const base=`/api/products?search=${prefix}`;
+        const filtered=await request(app).get(`${base}&size=40&includeFilters=1`);
+        assert.equal(filtered.status,200);
+        assert.equal(filtered.body.total,1);
+        assert.equal(filtered.body.data[0].id,b.id);
+        assert.ok(filtered.body.filterOptions.sizes.includes("40"));
+        assert.ok(filtered.body.filterOptions.sizes.includes("44"));
+        assert.ok(filtered.body.filterOptions.sizes.includes("M"));
+        for(const value of [...hidden,"40 41"]) assert.ok(!filtered.body.filterOptions.sizes.includes(value));
+        const fortyFour=await request(app).get(`${base}&size=44`);
+        assert.equal(fortyFour.body.total,1);
+        assert.equal(fortyFour.body.data[0].id,a.id);
+        assert.equal((await request(app).get(`${base}&size=m`)).body.data[0].id,b.id);
+        assert.equal((await request(app).get(`${base}&size=99`)).body.total,0);
+        assert.equal((await request(app).get(`${base}&size=.%2A`)).body.total,0);
+        assert.equal((await request(app).get(base)).body.filterOptions,undefined);
+        assert.equal((await request(app).get(`${base}&size=40%2041`)).status,400);
+        assert.equal((await request(app).get(`${base}&size=40&size=44`)).status,400);
+        assert.equal((await request(app).get(`${base}&size=${"x".repeat(41)}`)).status,400);
+        await prisma.productVariant.updateMany({where:{productId:b.id,size:"40"},data:{stock:0}});
+        const gone=await request(app).get(`${base}&size=40`);
+        assert.equal(gone.body.total,0);
+    } finally {
+        await prisma.productVariant.deleteMany({where:{productId:{in:ids}}});
+        await prisma.product.deleteMany({where:{id:{in:ids}}});
+    }
+});

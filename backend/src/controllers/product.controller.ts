@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -87,6 +88,8 @@ async function list(queryInput: unknown, admin: boolean) {
             category: slugSchema.optional(),
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
+            size: z.string().max(40).refine(v => !isAmbiguousSize(v), "Une seule taille par filtre").optional(),
+            includeFilters: z.enum(["0", "1"]).optional(),
             ids: z.string().max(199).transform(v => v.split(",")).pipe(z.array(objectIdSchema).min(1).max(8)).optional(),
             minPrice: z.coerce.number().min(0).max(1000000).optional(),
             maxPrice: z.coerce.number().min(0).max(1000000).optional(),
@@ -97,20 +100,22 @@ async function list(queryInput: unknown, admin: boolean) {
     if (!admin && query.status && query.status !== "ACTIVE")
         throw new AppError("Accès refusé", 403);
     if (!admin && query.ids) throw new AppError("Accès refusé", 403);
-    const where: any = admin
-        ? {}
-        : {
+    const visibility: Prisma.ProductWhereInput = {
               status: "ACTIVE",
               images: { isEmpty: false },
               NOT: [{ slug: { startsWith: "test-19a-" } }, { slug: "demo-bag-sample" }],
           };
+    const where: any = admin ? {} : { ...visibility };
     if (
         query.minPrice !== undefined &&
         query.maxPrice !== undefined &&
         query.minPrice > query.maxPrice
     )
         throw new AppError("Le prix minimum dépasse le maximum", 400);
-    if (query.availability === "in-stock") where.variants = { some: { stock: { gt: 0 } } };
+    if (query.availability === "in-stock" || query.size)
+        where.variants = { some: { stock: { gt: 0 },
+            ...(query.size ? { size: { equals: query.size, mode: "insensitive" } } : {}),
+        } };
     if (query.minPrice !== undefined || query.maxPrice !== undefined)
         where.price = {
             ...(query.minPrice !== undefined ? { gte: query.minPrice } : {}),
@@ -131,7 +136,7 @@ async function list(queryInput: unknown, admin: boolean) {
         where.OR = ["nameFr", "nameAr", "nameEn"].map((field) => ({
             [field]: { contains: query.search, mode: "insensitive" },
         }));
-    const [products, total] = await Promise.all([
+    const [products, total, sizes] = await Promise.all([
         prisma.product.findMany({
             where,
             include,
@@ -140,6 +145,14 @@ async function list(queryInput: unknown, admin: boolean) {
             orderBy,
         }),
         prisma.product.count({ where }),
+        !admin && query.includeFilters === "1"
+            ? prisma.productVariant.groupBy({
+                by: ["size"],
+                where: { stock: { gt: 0 }, product: { is: { ...visibility, ...(query.category ? { category: { slug: query.category } } : {}) } } },
+              }).then(rows => rows.flatMap(row => row.size?.trim() && !isAmbiguousSize(row.size) ? [row.size] : []))
+                // Suggestions are optional; a failure must not hide the catalog.
+                .catch(() => null)
+            : Promise.resolve(null),
     ]);
     return {
         success: true,
@@ -147,6 +160,7 @@ async function list(queryInput: unknown, admin: boolean) {
         total,
         page: query.page,
         totalPages: Math.ceil(total / query.limit),
+        ...(sizes ? { filterOptions: { sizes: sizes.sort((a, b) => a.localeCompare(b, "en", { numeric: true })) } } : {}),
     };
 }
 export async function getProducts(req: Request, res: Response) {
