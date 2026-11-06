@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Amélioration de la navigation — candidat du 6 novembre 2026
+
+Le propriétaire demande de poursuivre les améliorations boutique/admin, de tester sur mobile/ordinateur et de publier sur imadmode.com. Deux pertes de contexte sont reproduites en ligne : retour produit vers catalogue sans filtres ; rechargement admin vers la vue d’ensemble. Le candidat limite le retour produit à `/shop` et à ses paramètres publics connus, conserve la page/taille et garde les URL sociales canoniques. Les sections admin utilisent uniquement des identifiants de menu connus dans `tab`, avec historique natif sans démonter les fiches déjà ouvertes. Ne pas exposer de données ou clés dans ces URL. L’heure de synchronisation suit Africa/Casablanca. Aucun changement de photos, tarifs, stocks ou intégrations. Recette et publication à consigner ; la référence VPS reste `c2e3cc6` tant que le nouveau lot n’est pas appliqué.
+
 ## Production publiée — 6 novembre 2026
 
 L’administration français/arabe, les totaux des raccourcis de quantité et la favicon IM dorée sont publiés sur `imadmode.com` (PR 93 et 94). Référence effective du code VPS : `c2e3cc6aa05b9be96c91aba7ad1203a3b4e389dd`, version `admin-arabic-c2e3cc6aa05b`, arbre identique au Master de fusion `257e97a7`. Les futurs changements de documentation ne modifient pas cette référence déployée. Les empreintes de préservation après publication sont identiques à celles prises avant intervention ; ne pas réimporter le catalogue ni réinitialiser les stocks. Sauvegarde vérifiée copiée sur DATA. Accès temporaire expiré et connexion neuve refusée, clé privée locale supprimée. Toute future intervention serveur nécessite un accès à nouveau autorisé. Voir `DEPLOYMENT_ADMIN_FAVICON_2026-11-06.md` ; les notes de préparation ci-dessous sont historiques.

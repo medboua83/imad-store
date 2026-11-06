@@ -269,7 +269,7 @@ export default async function ShopPage({
             )}
             {result && (
                 <>
-                    <div className="catalog-results-heading">
+                    <div id="catalog-results" className="catalog-results-heading">
                         <div>
                             <h2> {category?.nameAr || "كل القطع"}</h2>
                             <p role="status">
@@ -304,6 +304,7 @@ export default async function ShopPage({
                                     headingLevel={3}
                                     eagerImage={index === 0}
                                     preferredSize={value("size") || undefined}
+                                    returnTo={queryLink({ page: result.page > 1 ? result.page : null })}
                                 />
                             ))}
                         </div>

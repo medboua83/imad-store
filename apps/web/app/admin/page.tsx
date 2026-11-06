@@ -133,6 +133,10 @@ const sections = [
         icon: Bell,
     },
 ];
+function tabFromLocation(): Tab {
+    const values = new URLSearchParams(window.location.search).getAll("tab");
+    return values.length === 1 ? sections.find(({ id }) => id === values[0])?.id || "overview" : "overview";
+}
 export default function AdminPage() {
     const { t, locale } = useAdminLocale();
     const [token, setToken] = useState<string | null>(null),
@@ -160,11 +164,27 @@ export default function AdminPage() {
     const menuButton = useRef<HTMLButtonElement>(null),
         nav = useRef<HTMLElement>(null);
     useEffect(() => {
+        const restoreTab = () => {
+            const tab = tabFromLocation();
+            setActiveTab(tab);
+            setOpenedTabs((tabs) => tabs.includes(tab) ? tabs : [...tabs, tab]);
+            setMobileMenu(false);
+            setActionMessage("");
+        };
+        const previousOrNext = () => {
+            restoreTab();
+            requestAnimationFrame(() => mainTitle.current?.focus());
+        };
         const task = setTimeout(() => {
+            restoreTab();
             setToken(localStorage.getItem("adminToken"));
             setSessionReady(true);
         }, 0);
-        return () => clearTimeout(task);
+        window.addEventListener("popstate", previousOrNext);
+        return () => {
+            clearTimeout(task);
+            window.removeEventListener("popstate", previousOrNext);
+        };
     }, []);
     useEffect(() => {
         const expire = (event?: Event) => {
@@ -243,9 +263,15 @@ export default function AdminPage() {
         };
     }, [token]);
     useEffect(() => {
-        if (mobileMenu) nav.current?.querySelector<HTMLButtonElement>("button")?.focus();
+        if (mobileMenu) (nav.current?.querySelector<HTMLButtonElement>('[aria-current="page"]') || nav.current?.querySelector<HTMLButtonElement>("button"))?.focus();
     }, [mobileMenu]);
     const selectTab = (tab: Tab) => {
+        if (tab !== activeTab) {
+            const url = new URL(window.location.href);
+            if (tab === "overview") url.searchParams.delete("tab");
+            else url.searchParams.set("tab", tab);
+            window.history.pushState(null, "", url.pathname + url.search + url.hash);
+        }
         setActiveTab(tab);
         setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
         requestAnimationFrame(() => mainTitle.current?.focus());
@@ -461,7 +487,7 @@ export default function AdminPage() {
                                   ? t("À jour à {0}", {
                                         "0": lastSync.toLocaleTimeString(
                                             locale === "ar" ? "ar-MA" : "fr-MA",
-                                            { hour: "2-digit", minute: "2-digit" },
+                                            { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Casablanca" },
                                         ),
                                     })
                                   : t("Chargement initial")}

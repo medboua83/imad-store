@@ -1,4 +1,9 @@
 /* Offset native route/hash scrolling by the actual sticky header, without overriding history. */
+.product-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.product-catalog-return { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; border: 1px solid #d8c39c; border-radius: 999px; color: #765420; background: #faf7f0; }
+.product-catalog-return:hover { border-color: #b38a43; background: #f3e9d7; }
+.product-catalog-return:focus-visible { outline: 3px solid #b38a43; outline-offset: 3px; }
+#catalog-results { scroll-margin-block-start: calc(var(--store-header-offset, 140px) + 16px); }
 .store-shell main > .page-shell {
   scroll-margin-top: var(--store-header-offset, 140px);
 }
