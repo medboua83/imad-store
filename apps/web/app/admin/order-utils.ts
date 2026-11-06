@@ -5,8 +5,8 @@ export const paymentLabels: Record<string, string> = {
     FAILED: "Paiement échoué",
     REFUNDED: "Remboursé",
 };
-export const orderDate = (value: string) =>
-    new Date(value).toLocaleString("fr-MA", {
+export const orderDate = (value: string, locale = "fr-MA") =>
+    new Date(value).toLocaleString(locale, {
         timeZone: "Africa/Casablanca",
         day: "2-digit",
         month: "short",

@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useRef, useState } from "react";
 import { getAllOrders, trashOrders, type AdminOrder } from "@/lib/api";
 import { money } from "./admin-utils";
@@ -10,6 +12,7 @@ export function OrderTrash({
     onBack: () => void;
     onRefresh: () => Promise<void>;
 }) {
+    const { t } = useAdminLocale();
     const [orders, setOrders] = useState<AdminOrder[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
@@ -50,7 +53,10 @@ export function OrderTrash({
         if (
             id &&
             !confirm(
-                `Restaurer la commande #${id.slice(-8).toUpperCase()} dans les commandes annulées ? Son statut restera inchangé.`,
+                t(
+                    "Restaurer la commande #{reference} dans les commandes annulées ? Son statut restera inchangé.",
+                    { reference: id.slice(-8).toUpperCase() },
+                ),
             )
         )
             return;
@@ -75,19 +81,23 @@ export function OrderTrash({
         <section className="admin-panel">
             <div className="admin-panel-heading">
                 <div>
-                    <h2>Corbeille des commandes</h2>
+                    <h2>{t("Corbeille des commandes")}</h2>
                     <p>
-                        {orders.length} sur {total} commandes. Les commandes restent récupérables et
-                        leur statut ne change pas.
+                        {orders.length}
+                        {t(" sur ")}
+                        {total}
+                        {t(
+                            " commandes. Les commandes restent récupérables et leur statut ne change pas.",
+                        )}
                     </p>
                 </div>
             </div>
             <div className="admin-toolbar">
                 <button className="admin-button" disabled={busy} onClick={onBack}>
-                    Retour aux commandes
+                    {t("Retour aux commandes")}
                 </button>
                 <button className="admin-button" disabled={busy} onClick={() => run()}>
-                    Actualiser
+                    {t("Actualiser")}
                 </button>
             </div>
             {message && (
@@ -95,23 +105,26 @@ export function OrderTrash({
                     className={failed ? "admin-alert" : "admin-feedback"}
                     role={failed ? "alert" : "status"}
                 >
-                    {message}
+                    {t(message)}
                 </p>
             )}
-            {busy && <p role="status">Chargement…</p>}
-            {!busy && !failed && !orders.length && <p>La corbeille est vide.</p>}
+            {busy && <p role="status">{t("Chargement…")}</p>}
+            {!busy && !failed && !orders.length && <p>{t("La corbeille est vide.")}</p>}
             <div className="admin-order-grid">
                 {orders.map((order) => (
                     <article className="admin-order-card" key={order.id}>
                         <strong>#{order.id.slice(-8).toUpperCase()}</strong>
-                        <h3>{order.customerName || order.fullName || "Client invité"}</h3>
-                        <p>Annulée · {money(order.totalAmount)}</p>
+                        <h3>{order.customerName || order.fullName || t("Client invité")}</h3>
+                        <p>
+                            {t("Annulée · ")}
+                            {money(order.totalAmount)}
+                        </p>
                         <button
                             className="admin-button"
                             disabled={busy || failed}
                             onClick={() => run(order.id)}
                         >
-                            Restaurer
+                            {t("Restaurer")}
                         </button>
                     </article>
                 ))}
@@ -122,7 +135,7 @@ export function OrderTrash({
                     disabled={busy || failed}
                     onClick={() => run(undefined, true)}
                 >
-                    Charger la suite
+                    {t("Charger la suite")}
                 </button>
             )}
         </section>

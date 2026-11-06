@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useState } from "react";
 import axios from "axios";
 import { getBaseUrl } from "@/lib/api";
@@ -18,6 +20,7 @@ export default function CrmConnectionForm({
     connection: CompanyConnection;
     onSaved: () => void;
 }) {
+    const { t } = useAdminLocale();
     const [pipeline, setPipeline] = useState(connection.pipeline);
     const [stage, setStage] = useState(connection.stage);
     const [field, setField] = useState(connection.field);
@@ -63,29 +66,35 @@ export default function CrmConnectionForm({
     }
     return (
         <form onSubmit={save} className="space-y-4 border-b pb-6">
-            <h3 className="font-semibold">Connexion de cette entreprise</h3>
+            <h3 className="font-semibold">{t("Connexion de cette entreprise")}</h3>
             <p className="text-sm admin-muted">
-                Une boutique indépendante, une entreprise CRM. Les commandes et les accès
-                appartiennent uniquement à cette installation.
+                {t(
+                    "Une boutique indépendante, une entreprise CRM. Les commandes et les accès appartiennent uniquement à cette installation.",
+                )}
             </p>
             <dl className="text-xs space-y-2 break-all">
                 <div>
-                    <dt>Entreprise CRM</dt>
+                    <dt>{t("Entreprise CRM")}</dt>
                     <dd>{connection.companyId}</dd>
                 </div>
                 <div>
-                    <dt>Identifiant de la boutique</dt>
+                    <dt>{t("Identifiant de la boutique")}</dt>
                     <dd className="flex flex-wrap items-center gap-2">
                         <span dir="ltr">{connection.storeId}</span>
-                        <button type="button" className="admin-button text-xs" onClick={() => void copyStoreId()}>
-                            {copied ? "Identifiant copié" : "Copier l’identifiant"}
+                        <button
+                            type="button"
+                            className="admin-button text-xs"
+                            onClick={() => void copyStoreId()}
+                        >
+                            {copied ? t("Identifiant copié") : t("Copier l’identifiant")}
                         </button>
                     </dd>
                 </div>
             </dl>
             <label className="block text-sm">
-                Pipeline de commandes (identifiant)
+                {t("Pipeline de commandes (identifiant)")}
                 <input
+                    dir="auto"
                     className="admin-field mt-2"
                     value={pipeline}
                     onChange={(e) => setPipeline(e.target.value)}
@@ -94,8 +103,9 @@ export default function CrmConnectionForm({
                 />
             </label>
             <label className="block text-sm">
-                Étape « Commande confirmée » (identifiant)
+                {t("Étape « Commande confirmée » (identifiant)")}
                 <input
+                    dir="auto"
                     className="admin-field mt-2"
                     value={stage}
                     onChange={(e) => setStage(e.target.value)}
@@ -103,8 +113,9 @@ export default function CrmConnectionForm({
                 />
             </label>
             <label className="block text-sm">
-                Champ de référence commande
+                {t("Champ de référence commande")}
                 <input
+                    dir="auto"
                     className="admin-field mt-2"
                     value={field}
                     onChange={(e) => setField(e.target.value)}
@@ -114,8 +125,9 @@ export default function CrmConnectionForm({
                 />
             </label>
             <label className="block text-sm">
-                Clé de signature dédiée
+                {t("Clé de signature dédiée")}
                 <input
+                    dir="auto"
                     className="admin-field mt-2"
                     type="password"
                     autoComplete="new-password"
@@ -125,34 +137,36 @@ export default function CrmConnectionForm({
                     pattern="[a-fA-F0-9]{64}"
                     placeholder={
                         connection.configured
-                            ? "Vide = conserver la clé existante"
-                            : "64 caractères hexadécimaux"
+                            ? t("Vide = conserver la clé existante")
+                            : t("64 caractères hexadécimaux")
                     }
                 />
             </label>
             <p className="text-xs admin-muted">
-                Utilisez la même clé dans la règle webhook de cette entreprise CRM. Elle reste
-                chiffrée et ne sera pas réaffichée. Le pipeline et le champ de référence sont fixes
-                après le premier enregistrement.
+                {t(
+                    "Utilisez la même clé dans la règle webhook de cette entreprise CRM. Elle reste chiffrée et ne sera pas réaffichée. Le pipeline et le champ de référence sont fixes après le premier enregistrement.",
+                )}
             </p>
             <p className="text-xs admin-muted break-all">
-                Adresse de retour : {typeof window !== "undefined" ? window.location.origin : ""}
-                /api/integrations/deskcomm/status-callback
+                {t("Adresse de retour : ")}
+                {typeof window !== "undefined" ? window.location.origin : ""}
+                {t("/api/integrations/deskcomm/status-callback")}
             </p>
             <label className="flex gap-3 text-sm">
                 <input
+                    dir="auto"
                     type="checkbox"
                     checked={enabled}
                     onChange={(e) => setEnabled(e.target.checked)}
                 />
-                Synchroniser les nouvelles confirmations de cette entreprise
+                {t("Synchroniser les nouvelles confirmations de cette entreprise")}
             </label>
             <button className="admin-button primary" disabled={busy} type="submit">
-                {busy ? "Enregistrement…" : "Enregistrer la connexion"}
+                {busy ? t("Enregistrement…") : t("Enregistrer la connexion")}
             </button>
             {message && (
                 <p role="status" className="text-sm">
-                    {message}
+                    {t(message)}
                 </p>
             )}
         </form>

@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
 import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
@@ -21,6 +23,7 @@ export function OrdersTab({
     total: number;
     onRefresh: () => Promise<void>;
 }) {
+    const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
     const [search, setSearch] = useState(""),
         [status, setStatus] = useState("ALL"),
@@ -79,11 +82,11 @@ export function OrdersTab({
         if (lock.current || reloadRequired) return;
         const consequence =
             next === "CANCELLED"
-                ? " Le stock réservé sera restitué uniquement si sa réservation est vérifiée."
+                ? t(" Le stock réservé sera restitué uniquement si sa réservation est vérifiée.")
                 : "";
         if (
             !confirm(
-                `${actionLabels[next]} : #${o.id.slice(-8).toUpperCase()} · ${o.customerName || o.fullName || "Client invité"} · ${money(o.totalAmount)} ?${consequence}`,
+                `${t(actionLabels[next])} : #${o.id.slice(-8).toUpperCase()} · ${o.customerName || o.fullName || t("Client invité")} · ${money(o.totalAmount)} ?${consequence}`,
             )
         )
             return;
@@ -119,7 +122,10 @@ export function OrdersTab({
         if (lock.current || reloadRequired || !ids.length) return;
         if (
             !confirm(
-                `Déplacer ${ids.length} commande(s) annulée(s) dans la corbeille ? Elles seront retirées des listes et compteurs de commandes. Restauration possible depuis la corbeille.`,
+                t(
+                    "Déplacer {count} commande(s) annulée(s) dans la corbeille ? Elles seront retirées des listes et compteurs de commandes. Restauration possible depuis la corbeille.",
+                    { count: ids.length },
+                ),
             )
         )
             return;
@@ -146,41 +152,45 @@ export function OrdersTab({
     const removable = filtered.filter((o) => o.status === "CANCELLED");
     const feedback = message && (
         <p className={error ? "admin-alert" : "admin-feedback"} role={error ? "alert" : "status"}>
-            {message}
+            {t(message)}
         </p>
     );
     return (
         <section className="admin-panel">
             <div className="admin-panel-heading">
                 <div>
-                    <h2>Suivi des commandes</h2>
+                    <h2>{t("Suivi des commandes")}</h2>
                     <p>
-                        {orders.length} dernières commandes chargées sur {total}. Recherche,
-                        compteurs et filtres sur cette sélection.
+                        {orders.length}
+                        {t(" dernières commandes chargées sur ")}
+                        {total}
+                        {t(". Recherche, compteurs et filtres sur cette sélection.")}
                     </p>
                 </div>
                 <button className="admin-button" disabled={busy} onClick={refresh}>
                     <RefreshCw size={16} />
-                    Actualiser
+                    {t("Actualiser")}
                 </button>
             </div>
             <div className="admin-toolbar">
                 <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
-                    Corbeille
+                    {t("Corbeille")}
                 </button>
                 <button
                     className="admin-button"
                     disabled={busy || reloadRequired || !removable.length}
                     onClick={() => remove(removable.map((o) => o.id))}
                 >
-                    Supprimer les annulées affichées ({removable.length})
+                    {t("Supprimer les annulées affichées (")}
+                    {removable.length})
                 </button>
                 <p>
-                    Suppression réversible. Seules les commandes annulées de la sélection affichée
-                    sont concernées.
+                    {t(
+                        "Suppression réversible. Seules les commandes annulées de la sélection affichée sont concernées.",
+                    )}
                 </p>
             </div>
-            <div className="order-quick-filters" aria-label="Filtrer par statut">
+            <div className="order-quick-filters" aria-label={t("Filtrer par statut")}>
                 {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
                     <button
                         key={key}
@@ -188,7 +198,7 @@ export function OrdersTab({
                         aria-pressed={status === key}
                         onClick={() => setStatus(key)}
                     >
-                        {label}
+                        {t(label)}
                         <span>
                             {key === "ALL"
                                 ? orders.length
@@ -199,64 +209,70 @@ export function OrdersTab({
             </div>
             <div className="admin-toolbar">
                 <label className="admin-search">
-                    <span>Rechercher une commande</span>
+                    <span>{t("Rechercher une commande")}</span>
                     <div>
                         <Search size={17} />
                         <input
+                            dir="auto"
                             type="search"
-                            placeholder="Nom, téléphone, ville ou référence"
+                            placeholder={t("Nom, téléphone, ville ou référence")}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                 </label>
                 <label>
-                    Trier par
+                    {t("Trier par")}
                     <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                        <option value="newest">Plus récentes</option>
-                        <option value="oldest">Plus anciennes</option>
-                        <option value="amount">Montant décroissant</option>
+                        <option value="newest">{t("Plus récentes")}</option>
+                        <option value="oldest">{t("Plus anciennes")}</option>
+                        <option value="amount">{t("Montant décroissant")}</option>
                     </select>
                 </label>
             </div>
             <details className="order-extra-filters">
                 <summary>
-                    Dates et paiement{from || to || payment !== "ALL" ? " · filtres actifs" : ""}
+                    {t("Dates et paiement")}
+                    {from || to || payment !== "ALL" ? t(" · filtres actifs") : ""}
                 </summary>
                 <div className="order-filter-fields">
                     <label>
-                        Du
+                        {t("Du")}
                         <input
+                            dir="auto"
                             type="date"
                             value={from}
                             onInput={(e) => setFrom(e.currentTarget.value)}
                         />
                     </label>
                     <label>
-                        Au
+                        {t("Au")}
                         <input
+                            dir="auto"
                             type="date"
                             value={to}
                             onInput={(e) => setTo(e.currentTarget.value)}
                         />
                     </label>
                     <label>
-                        Paiement
+                        {t("Paiement")}
                         <select value={payment} onChange={(e) => setPayment(e.target.value)}>
-                            <option value="ALL">Tous les paiements</option>
+                            <option value="ALL">{t("Tous les paiements")}</option>
                             {Object.entries(paymentLabels).map(([key, label]) => (
                                 <option key={key} value={key}>
-                                    {label}
+                                    {t(label)}
                                 </option>
                             ))}
                         </select>
                     </label>
                 </div>
-                <p>Dates incluses · heure du Maroc.</p>
+                <p>{t("Dates incluses · heure du Maroc.")}</p>
             </details>
             <div className="order-results">
                 <p role="status">
-                    {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
+                    {filtered.length}
+                    {t(" résultat")}
+                    {filtered.length !== 1 ? t("s") : ""}
                 </p>
                 <button
                     className="admin-text-button"
@@ -277,12 +293,12 @@ export function OrdersTab({
                         setSort("newest");
                     }}
                 >
-                    Réinitialiser les filtres
+                    {t("Réinitialiser les filtres")}
                 </button>
             </div>
             {invalidDates && (
                 <p role="alert" className="admin-alert">
-                    La date de fin doit être égale ou postérieure à la date de début.
+                    {t("La date de fin doit être égale ou postérieure à la date de début.")}
                 </p>
             )}
             {feedback}
@@ -292,23 +308,27 @@ export function OrdersTab({
                         <div className="admin-order-heading">
                             <div>
                                 <strong>#{o.id.slice(-8).toUpperCase()}</strong>
-                                <time dateTime={o.createdAt}>{orderDate(o.createdAt)}</time>
+                                <time dateTime={o.createdAt}>
+                                    {orderDate(o.createdAt, locale === "ar" ? "ar-MA" : "fr-MA")}
+                                </time>
                             </div>
                             <span className={`admin-status status-${o.status.toLowerCase()}`}>
-                                {statusLabels[o.status] || o.status}
+                                {t(statusLabels[o.status] || o.status)}
                             </span>
                         </div>
-                        {o.confirmationMethod === "SITE" && <p className="admin-feedback">Confirmée sur le site</p>}
+                        {o.confirmationMethod === "SITE" && (
+                            <p className="admin-feedback">{t("Confirmée sur le site")}</p>
+                        )}
                         <div className="admin-order-customer">
-                            <h3>{o.customerName || o.fullName || "Client invité"}</h3>
-                            <p>{o.city || "Ville non renseignée"}</p>
+                            <h3>{o.customerName || o.fullName || t("Client invité")}</h3>
+                            <p>{o.city || t("Ville non renseignée")}</p>
                             <p dir="ltr">
-                                {o.customerPhone || o.phone || "Téléphone non renseigné"}
+                                {o.customerPhone || o.phone || t("Téléphone non renseigné")}
                             </p>
                         </div>
                         <div className="admin-order-amount">
                             <strong>{money(o.totalAmount)}</strong>
-                            <span>{paymentLabels[o.paymentStatus] || o.paymentStatus}</span>
+                            <span>{t(paymentLabels[o.paymentStatus] || o.paymentStatus)}</span>
                         </div>
                         <button
                             className="admin-button order-details-trigger"
@@ -318,7 +338,7 @@ export function OrdersTab({
                                 if (!reloadRequired) setMessage("");
                             }}
                         >
-                            Voir les détails{" "}
+                            {t("Voir les détails")}{" "}
                             <span className="sr-only">#{o.id.slice(-8).toUpperCase()}</span>
                             <ArrowUpRight size={16} />
                         </button>
@@ -328,7 +348,7 @@ export function OrdersTab({
                                 disabled={busy || reloadRequired}
                                 onClick={() => remove([o.id])}
                             >
-                                Supprimer dans la corbeille
+                                {t("Supprimer dans la corbeille")}
                             </button>
                         )}
                         {
@@ -345,8 +365,8 @@ export function OrdersTab({
             {!filtered.length && (
                 <div className="admin-empty">
                     <Package size={30} />
-                    <h3>Aucune commande trouvée</h3>
-                    <p>Modifiez les filtres ou recherchez une autre référence.</p>
+                    <h3>{t("Aucune commande trouvée")}</h3>
+                    <p>{t("Modifiez les filtres ou recherchez une autre référence.")}</p>
                 </div>
             )}
             <dialog
@@ -357,16 +377,16 @@ export function OrdersTab({
             >
                 <header className="order-detail-header">
                     <div>
-                        <p className="admin-eyebrow">FICHE COMMANDE</p>
+                        <p className="admin-eyebrow">{t("FICHE COMMANDE")}</p>
                         <h2 id="order-detail-title">
                             {order
                                 ? `#${order.id.slice(-8).toUpperCase()}`
-                                : "Commande indisponible"}
+                                : t("Commande indisponible")}
                         </h2>
                     </div>
                     <button
                         className="admin-icon-button"
-                        aria-label="Fermer les détails"
+                        aria-label={t("Fermer les détails")}
                         onClick={() => dialog.current?.close()}
                     >
                         <X size={20} />
@@ -386,14 +406,15 @@ export function OrdersTab({
                         }
                         refresh={
                             <button className="admin-text-button" disabled={busy} onClick={refresh}>
-                                Actualiser cette fiche
+                                {t("Actualiser cette fiche")}
                             </button>
                         }
                     />
                 ) : (
                     <p>
-                        Cette commande ne figure plus dans la sélection. Fermez la fiche et
-                        actualisez.
+                        {t(
+                            "Cette commande ne figure plus dans la sélection. Fermez la fiche et actualisez.",
+                        )}
                     </p>
                 )}
             </dialog>
@@ -411,6 +432,7 @@ function OrderDetails({
     actions: React.ReactNode;
     refresh: React.ReactNode;
 }) {
+    const { t, locale } = useAdminLocale();
     const amounts = orderAmounts(o),
         step = steps.indexOf(o.status);
     const address = [
@@ -423,20 +445,34 @@ function OrderDetails({
         <div className="order-detail-body">
             <div className="order-detail-meta">
                 <span className={`admin-status status-${o.status.toLowerCase()}`}>
-                    {statusLabels[o.status] || o.status}
+                    {t(statusLabels[o.status] || o.status)}
                 </span>
-                <time dateTime={o.createdAt}>Reçue le {orderDate(o.createdAt)}</time>
+                <time dateTime={o.createdAt}>
+                    {t("Reçue le ")}
+                    {orderDate(o.createdAt, locale === "ar" ? "ar-MA" : "fr-MA")}
+                </time>
                 {refresh}
             </div>
-            {o.confirmationMethod === "SITE" && <section className="admin-feedback">
-                <h3>Confirmée sur le site</h3>
-                <p>Méthode : site · {o.confirmedAt ? orderDate(o.confirmedAt) : "Date non renseignée"}</p>
-                <p>Confirmation du client au checkout, sans vérification du numéro ni garantie de livraison.</p>
-            </section>}
+            {o.confirmationMethod === "SITE" && (
+                <section className="admin-feedback">
+                    <h3>{t("Confirmée sur le site")}</h3>
+                    <p>
+                        {t("Méthode : site · ")}
+                        {o.confirmedAt
+                            ? orderDate(o.confirmedAt, locale === "ar" ? "ar-MA" : "fr-MA")
+                            : t("Date non renseignée")}
+                    </p>
+                    <p>
+                        {t(
+                            "Confirmation du client au checkout, sans vérification du numéro ni garantie de livraison.",
+                        )}
+                    </p>
+                </section>
+            )}
             {o.status === "CANCELLED" ? (
-                <p className="order-cancelled">Commande annulée : le suivi s’arrête ici.</p>
+                <p className="order-cancelled">{t("Commande annulée : le suivi s’arrête ici.")}</p>
             ) : (
-                <ol className="order-progress" aria-label="Progression de la commande">
+                <ol className="order-progress" aria-label={t("Progression de la commande")}>
                     {steps.map((s, i) => (
                         <li
                             key={s}
@@ -444,41 +480,46 @@ function OrderDetails({
                             aria-current={s === o.status ? "step" : undefined}
                         >
                             <span>{i + 1}</span>
-                            {statusLabels[s]}
+                            {t(statusLabels[s])}
                         </li>
                     ))}
                 </ol>
             )}
             <p className="admin-scope">
-                Le parcours indique le statut actuel. Les dates de passage entre étapes ne sont pas
-                disponibles.
+                {t(
+                    "Le parcours indique le statut actuel. Les dates de passage entre étapes ne sont pas disponibles.",
+                )}
             </p>
             <div className="order-detail-columns">
                 <section>
-                    <h3>Client et livraison</h3>
+                    <h3>{t("Client et livraison")}</h3>
                     <strong>
-                        {o.customerName || o.fullName || o.address?.fullName || "Client invité"}
+                        {o.customerName || o.fullName || o.address?.fullName || t("Client invité")}
                     </strong>
                     <p dir="ltr">
                         {o.customerPhone ||
                             o.phone ||
                             o.address?.phone ||
-                            "Téléphone non renseigné"}
+                            t("Téléphone non renseigné")}
                     </p>
                     {o.customerEmail && <p>{o.customerEmail}</p>}
                     <address>
-                        {address.length ? address.join(", ") : "Adresse non renseignée"}
+                        {address.length ? address.join(", ") : t("Adresse non renseignée")}
                     </address>
                 </section>
                 <section>
-                    <h3>Paiement</h3>
-                    <p>{o.paymentMethod === "COD" ? "Paiement à la livraison" : o.paymentMethod}</p>
-                    <strong>{paymentLabels[o.paymentStatus] || o.paymentStatus}</strong>
-                    <p>Le statut de livraison ne constitue pas une confirmation de paiement.</p>
+                    <h3>{t("Paiement")}</h3>
+                    <p>
+                        {o.paymentMethod === "COD" ? t("Paiement à la livraison") : o.paymentMethod}
+                    </p>
+                    <strong>{t(paymentLabels[o.paymentStatus] || o.paymentStatus)}</strong>
+                    <p>
+                        {t("Le statut de livraison ne constitue pas une confirmation de paiement.")}
+                    </p>
                 </section>
             </div>
             <section>
-                <h3>Articles commandés</h3>
+                <h3>{t("Articles commandés")}</h3>
                 {o.items?.length ? (
                     <ul className="order-line-items">
                         {o.items.map((i) => (
@@ -488,7 +529,7 @@ function OrderDetails({
                                         {i.product?.nameFr ||
                                             i.product?.nameAr ||
                                             i.product?.nameEn ||
-                                            "Article indisponible"}
+                                            t("Article indisponible")}
                                     </strong>
                                     <p>
                                         {[
@@ -496,10 +537,12 @@ function OrderDetails({
                                             i.variant?.size,
                                         ]
                                             .filter(Boolean)
-                                            .join(" · ") || "Variante non renseignée"}
+                                            .join(" · ") || t("Variante non renseignée")}
                                     </p>
                                     <span>
-                                        {i.quantity} × {money(i.unitPrice)}
+                                        {i.quantity}
+                                        {t(" × ")}
+                                        {money(i.unitPrice)}
                                     </span>
                                 </div>
                                 <strong>{money(i.quantity * i.unitPrice)}</strong>
@@ -507,41 +550,42 @@ function OrderDetails({
                         ))}
                     </ul>
                 ) : (
-                    <p>Articles indisponibles pour cette commande.</p>
+                    <p>{t("Articles indisponibles pour cette commande.")}</p>
                 )}
             </section>
             <dl className="order-totals">
                 {o.items?.length ? (
                     <div>
-                        <dt>Sous-total des articles</dt>
+                        <dt>{t("Sous-total des articles")}</dt>
                         <dd>{money(amounts.subtotal)}</dd>
                     </div>
                 ) : null}
                 <div>
-                    <dt>Livraison</dt>
+                    <dt>{t("Livraison")}</dt>
                     <dd>
                         {amounts.shipping === undefined
-                            ? "Non renseignée"
+                            ? t("Non renseignée")
                             : money(amounts.shipping)}
                     </dd>
                 </div>
                 <div className="order-grand-total">
-                    <dt>Total de la commande</dt>
+                    <dt>{t("Total de la commande")}</dt>
                     <dd>{money(o.totalAmount)}</dd>
                 </div>
             </dl>
             {!amounts.reconciled && (
                 <p className="admin-scope">
-                    Le total enregistré fait foi. Le détail disponible ne permet pas de rapprocher
-                    complètement ce montant.
+                    {t(
+                        "Le total enregistré fait foi. Le détail disponible ne permet pas de rapprocher complètement ce montant.",
+                    )}
                 </p>
             )}
             <section className="order-customer-note">
-                <h3>Note du client</h3>
-                <p>{o.notes || "Aucune note laissée."}</p>
+                <h3>{t("Note du client")}</h3>
+                <p>{o.notes || t("Aucune note laissée.")}</p>
             </section>
             <details className="order-reference">
-                <summary>Référence complète</summary>
+                <summary>{t("Référence complète")}</summary>
                 <code>{o.id}</code>
             </details>
             <footer className="order-detail-footer">
@@ -563,6 +607,7 @@ function OrderActions({
     reloadRequired: boolean;
     onChange: (order: AdminOrder, next: string) => void;
 }) {
+    const { t } = useAdminLocale();
     return (
         <div className="admin-order-actions">
             {(allowedActions[o.status] || []).length ? (
@@ -573,17 +618,17 @@ function OrderActions({
                         disabled={busy || reloadRequired}
                         onClick={() => onChange(o, next)}
                     >
-                        {busy ? "En cours…" : actionLabels[next]}
+                        {busy ? t("En cours…") : t(actionLabels[next])}
                     </button>
                 ))
             ) : (
                 <p>
                     {o.status === "CANCELLED"
-                        ? "Commande annulée."
+                        ? t("Commande annulée.")
                         : o.status === "DELIVERED"
-                          ? "Commande livrée."
-                          : "Statut non reconnu."}{" "}
-                    Aucune action disponible.
+                          ? t("Commande livrée.")
+                          : t("Statut non reconnu.")}{" "}
+                    {t("Aucune action disponible.")}
                 </p>
             )}
         </div>

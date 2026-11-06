@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useState } from "react";
 import { getAdminProducts, type Product, type RecommendationSettings } from "@/lib/api";
 import { AdminProductPhoto } from "./admin-product-photo";
@@ -16,6 +18,7 @@ export function ProductRecommendationEditor({
     products: Product[];
     disabled: boolean;
 }) {
+    const { t } = useAdminLocale();
     const [search, setSearch] = useState("");
     const [results, setResults] = useState(products);
     const [known, setKnown] = useState<Product[]>(products);
@@ -97,43 +100,48 @@ export function ProductRecommendationEditor({
             className="product-recommendation-editor"
             disabled={disabled}
         >
-            <legend>5. Upsell et cross-sell</legend>
+            <legend>{t("5. Upsell et cross-sell")}</legend>
             <label className="recommendation-enable">
                 <input
+                    dir="auto"
                     type="checkbox"
                     checked={value.enabled}
                     onChange={(e) => onChange({ ...value, enabled: e.target.checked })}
                 />
-                Activer les recommandations de ce produit
+                {t("Activer les recommandations de ce produit")}
             </label>
             <p className="admin-muted">
-                Sélectionnez jusqu’à 4 produits par liste, dans l’ordre souhaité. Les produits
-                indisponibles sont masqués aux clients. Le panier propose au maximum 2 compléments,
-                sans ajout automatique.
+                {t(
+                    "Sélectionnez jusqu’à 4 produits par liste, dans l’ordre souhaité. Les produits indisponibles sont masqués aux clients. Le panier propose au maximum 2 compléments, sans ajout automatique.",
+                )}
             </p>
             <label>
-                Rechercher un produit à recommander
+                {t("Rechercher un produit à recommander")}
                 <input
+                    dir="auto"
                     type="search"
                     value={search}
                     onChange={(e) => {
                         setLoading(true);
                         setSearch(e.target.value);
                     }}
-                    placeholder="Nom français, arabe ou anglais"
+                    placeholder={t("Nom français, arabe ou anglais")}
                 />
             </label>
             <p className="admin-muted" role="status">
                 {loading
-                    ? "Recherche…"
-                    : `${eligible.length} résultat(s) affiché(s). Précisez le nom pour trouver d’autres produits.`}
+                    ? t("Recherche…")
+                    : t(
+                          "{0} résultat(s) affiché(s). Précisez le nom pour trouver d’autres produits.",
+                          { "0": eligible.length },
+                      )}
             </p>
-            {error && <p role="alert">{error}</p>}
+            {error && <p role="alert">{t(error)}</p>}
             <div className="recommendation-editor-groups">
                 {groups.map((group) => (
                     <fieldset key={group.key}>
-                        <legend>{group.title}</legend>
-                        <p className="admin-muted">{group.hint}</p>
+                        <legend>{t(group.title)}</legend>
+                        <p className="admin-muted">{t(group.hint)}</p>
                         <ol className="recommendation-selected">
                             {value[group.key].map((id, index) => {
                                 const product = known.find((p) => p.id === id);
@@ -141,16 +149,19 @@ export function ProductRecommendationEditor({
                                     <li key={id}>
                                         <span>
                                             {product?.nameFr ||
-                                                "Produit enregistré — nom indisponible"}
+                                                t("Produit enregistré — nom indisponible")}
                                             {product?.status !== "ACTIVE" && product
-                                                ? " · masqué aux clients"
+                                                ? t(" · masqué aux clients")
                                                 : ""}
                                         </span>
                                         <button
                                             className="admin-text-button"
                                             type="button"
                                             disabled={!index}
-                                            aria-label={`Monter ${product?.nameFr || "le produit"} dans ${group.title}`}
+                                            aria-label={t("Monter {0} dans {1}", {
+                                                "0": product?.nameFr || "le produit",
+                                                "1": t(group.title),
+                                            })}
                                             onClick={() => {
                                                 const next = [...value[group.key]];
                                                 [next[index - 1], next[index]] = [
@@ -160,12 +171,15 @@ export function ProductRecommendationEditor({
                                                 onChange({ ...value, [group.key]: next });
                                             }}
                                         >
-                                            Monter
+                                            {t("Monter")}
                                         </button>
                                         <button
                                             className="admin-text-button"
                                             type="button"
-                                            aria-label={`Retirer ${product?.nameFr || "le produit"} de ${group.title}`}
+                                            aria-label={t("Retirer {0} de {1}", {
+                                                "0": product?.nameFr || "le produit",
+                                                "1": t(group.title),
+                                            })}
                                             onClick={() =>
                                                 onChange({
                                                     ...value,
@@ -175,7 +189,7 @@ export function ProductRecommendationEditor({
                                                 })
                                             }
                                         >
-                                            Retirer
+                                            {t("Retirer")}
                                         </button>
                                     </li>
                                 );
@@ -185,8 +199,9 @@ export function ProductRecommendationEditor({
                             {eligible.map((p) => (
                                 <label key={p.id}>
                                     <input
+                                        dir="auto"
                                         type="checkbox"
-                                        aria-label={`${p.nameFr} — ${group.title}`}
+                                        aria-label={`${p.nameFr} — ${t(group.title)}`}
                                         checked={value[group.key].includes(p.id)}
                                         disabled={
                                             !value[group.key].includes(p.id) &&
@@ -210,9 +225,10 @@ export function ProductRecommendationEditor({
                                     <span>
                                         {p.nameFr}
                                         <small>
-                                            {p.price.toFixed(2)} MAD
+                                            {p.price.toFixed(2)}
+                                            {t(" MAD")}
                                             {!p.variants.some((v) => v.stock > 0)
-                                                ? " · rupture de stock"
+                                                ? t(" · rupture de stock")
                                                 : ""}
                                         </small>
                                     </span>
@@ -220,8 +236,9 @@ export function ProductRecommendationEditor({
                             ))}
                             {!loading && !eligible.length && (
                                 <p className="admin-muted">
-                                    Aucun autre produit publié trouvé. Ajoutez ou publiez un autre
-                                    article pour le recommander.
+                                    {t(
+                                        "Aucun autre produit publié trouvé. Ajoutez ou publiez un autre article pour le recommander.",
+                                    )}
                                 </p>
                             )}
                         </div>
@@ -230,8 +247,9 @@ export function ProductRecommendationEditor({
             </div>
             {!value.enabled && (
                 <p className="admin-muted">
-                    Désactivées : les sélections sont conservées et aucun encadré ne s’affiche aux
-                    clients.
+                    {t(
+                        "Désactivées : les sélections sont conservées et aucun encadré ne s’affiche aux clients.",
+                    )}
                 </p>
             )}
         </fieldset>

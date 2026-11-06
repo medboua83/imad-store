@@ -1,5 +1,15 @@
 # Imad Store — Persistent Project Memory
 
+## Demande explicite d’une administration arabe — 6 novembre 2026
+
+Le propriétaire confirme qu’il cherche l’interface du tableau de bord en arabe. Une préférence français/arabe locale au navigateur est préparée dans le layout privé ; la boutique publique garde sa langue et ses contenus existants. Utiliser le dictionnaire explicite et `useAdminLocale()` pour les futurs textes d’interface, sans traduire les clés d’API, enums, références ni données saisies. Les messages paramétrés gardent leurs valeurs. Les libellés connus du backend peuvent être traduits à l’affichage ; les diagnostics ou notifications libres restent des données. La bascule de langue ne doit pas remonter le formulaire en cours. Recette et publication à consigner.
+
+## Achat plus lisible et domaine principal — 6 novembre 2026
+
+Poursuite des améliorations autorisée, avec conservation des photos et des données. Le candidat affiche le prix sur chaque raccourci de quantité en réutilisant `quantityPriceBreakdown`, sans modifier les règles des lots, puis rappelle la variante choisie près du bouton d’achat. Aucun ajout réseau ou bibliothèque. Recette à consigner avant publication.
+
+La boutique principale est `imadmode.com` sur le VPS Namecheap ; HTTPS et renouvellement automatique testés. L’accès SSH temporaire de raccordement a été retiré et sa clé privée supprimée. Un nouvel accès autorisé serait nécessaire pour un déploiement ultérieur. Le propriétaire a depuis publié les deux produits restaurés et modifié les stocks : conserver l’état actuel et ne jamais rejouer l’import initial à stock nul. Ne pas toucher aux autres sites ni aux onglets d’administration contenant un formulaire en cours.
+
 ## Base PostgreSQL et images sur processeur générique — 6 novembre 2026
 
 Le propriétaire autorise PostgreSQL, la correction des images et la mise en ligne sur Namecheap. Schéma et tests ciblent désormais PostgreSQL 16, sans mise à niveau majeure de Prisma. Garder les identifiants existants et ne jamais convertir une base active en place. Les imports de catalogue public ne constituent pas une sauvegarde des commandes, secrets ou stocks actuels. Le propriétaire a autorisé uniquement la reprise des deux produits retrouvés en brouillon avec stock nul ; les huit originaux sont conservés. Les anciennes connexions ne sont pas relancées.

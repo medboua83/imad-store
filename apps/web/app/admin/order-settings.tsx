@@ -1,9 +1,12 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings } from "@/lib/api";
 
 export function OrderSettings() {
+    const { t } = useAdminLocale();
     const cache = useQueryClient();
     const [enabled, setEnabled] = useState(false);
     const [ready, setReady] = useState(false);
@@ -32,7 +35,7 @@ export function OrderSettings() {
     }, []);
     return (
         <section aria-labelledby="order-settings-title">
-            <h2 id="order-settings-title">Gestion des commandes</h2>
+            <h2 id="order-settings-title">{t("Gestion des commandes")}</h2>
             <form
                 className="commerce-settings"
                 onSubmit={async (e) => {
@@ -61,12 +64,13 @@ export function OrderSettings() {
                 }}
             >
                 <fieldset disabled={!ready || busy}>
-                    <legend>Confirmation directe sur le site</legend>
+                    <legend>{t("Confirmation directe sur le site")}</legend>
                     <label className="admin-option-check">
                         <input
+                            dir="auto"
                             type="checkbox"
                             role="switch"
-                            aria-label="Confirmation directe sur le site"
+                            aria-label={t("Confirmation directe sur le site")}
                             aria-describedby="direct-confirmation-help"
                             checked={enabled}
                             onChange={(e) => {
@@ -74,27 +78,28 @@ export function OrderSettings() {
                                 setMessage("");
                             }}
                         />
-                        {enabled ? "Activée" : "Désactivée"}
+                        {enabled ? t("Activée") : t("Désactivée")}
                     </label>
                     <p id="direct-confirmation-help">
-                        Activée : le client relit le récapitulatif et confirme une seule fois au
-                        checkout, sans demande de confirmation WhatsApp supplémentaire. Désactivée :
-                        le processus actuel est conservé.
+                        {t(
+                            "Activée : le client relit le récapitulatif et confirme une seule fois au checkout, sans demande de confirmation WhatsApp supplémentaire. Désactivée : le processus actuel est conservé.",
+                        )}
                     </p>
                     <p>
-                        Ce choix s’applique aux nouvelles commandes. La confirmation ne vérifie pas
-                        le numéro de téléphone et ne garantit pas la livraison.
+                        {t(
+                            "Ce choix s’applique aux nouvelles commandes. La confirmation ne vérifie pas le numéro de téléphone et ne garantit pas la livraison.",
+                        )}
                     </p>
                 </fieldset>
                 <button className="admin-button primary" disabled={!ready || busy}>
-                    {busy ? "Enregistrement…" : "Enregistrer"}
+                    {busy ? t("Enregistrement…") : t("Enregistrer")}
                 </button>
                 {message && (
                     <p
                         className={failed ? "admin-alert" : "admin-feedback"}
                         role={failed ? "alert" : "status"}
                     >
-                        {message}
+                        {t(message)}
                     </p>
                 )}
             </form>
