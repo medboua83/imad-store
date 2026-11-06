@@ -221,7 +221,11 @@ export function ProductOptions({
                         );
                     })}
                 </div>
-                <div className="quantity-selection-summary" aria-live="polite" aria-atomic="true">
+                <div
+                    className={`quantity-selection-summary${available > 0 && !quantityInvalid ? " is-repeated-total" : ""}`}
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
                     {quantityInvalid ? (
                         <p id="product-quantity-error" className="quantity-input-error">
                             {quantityError}
@@ -253,107 +257,124 @@ export function ProductOptions({
                     )}
                 </div>
             </section>
-            <div className="product-quantity-row">
-                <div className="quantity-heading">
-                    <label htmlFor="product-quantity">الكمية</label>
-                    <span className="availability-note">
+            <div className="product-buy-controls">
+                <div className="product-quantity-row">
+                    <div className="quantity-heading">
+                        <label htmlFor="product-quantity">الكمية</label>
+                        <span className="availability-note">
+                            {available
+                                ? `${available} قطعة متاحة للإضافة`
+                                : stock
+                                  ? "الكمية المتوفرة في السلة"
+                                  : "غير متوفر حالياً"}
+                        </span>
+                    </div>
+                    <div className="quantity-stepper">
+                        <button
+                            type="button"
+                            aria-label="تقليل الكمية"
+                            disabled={selectedQuantity <= 1 || !available}
+                            onClick={() => chooseQuantity(Math.max(1, selectedQuantity - 1))}
+                        >
+                            <Minus size={17} aria-hidden="true" />
+                        </button>
+                        <input
+                            id="product-quantity"
+                            className="store-input"
+                            inputMode="numeric"
+                            type="number"
+                            min={1}
+                            max={available || 1}
+                            step={1}
+                            disabled={!available}
+                            aria-invalid={quantityInvalid}
+                            aria-describedby={
+                                quantityInvalid ? "product-quantity-error" : undefined
+                            }
+                            value={
+                                available && quantityDraft !== null
+                                    ? quantityDraft
+                                    : selectedQuantity
+                            }
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                const n = Number(value);
+                                setQuantityDraft(value);
+                                if (
+                                    value !== "" &&
+                                    Number.isSafeInteger(n) &&
+                                    n >= 1 &&
+                                    n <= available
+                                )
+                                    setQuantity(n);
+                            }}
+                            onBlur={() => {
+                                if (!quantityInvalid) setQuantityDraft(null);
+                            }}
+                        />
+                        <button
+                            type="button"
+                            aria-label="زيادة الكمية"
+                            disabled={selectedQuantity >= available || !available}
+                            onClick={() =>
+                                chooseQuantity(Math.min(available, selectedQuantity + 1))
+                            }
+                        >
+                            <Plus size={17} aria-hidden="true" />
+                        </button>
+                    </div>
+                </div>
+                <div className="product-purchase-bar">
+                    <div className="purchase-summary">
+                        <p className="purchase-price" dir="ltr">
+                            {available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
+                            <span>MAD · سعر الكمية المختارة</span>
+                        </p>
+                        <p className="purchase-selection" aria-live="polite" aria-atomic="true">
+                            {quantityInvalid ? (
+                                "تحققوا من الكمية"
+                            ) : variant ? (
+                                <>
+                                    <bdi>
+                                        {variant.colorNameAr ||
+                                            variant.colorNameFr ||
+                                            variant.colorNameEn}
+                                    </bdi>
+                                    {variant.size && (
+                                        <>
+                                            {" "}
+                                            · <bdi>{variant.size}</bdi>
+                                        </>
+                                    )}
+                                    {available > 0 && (
+                                        <>
+                                            {" "}
+                                            · <bdi>{selectedQuantity}</bdi>{" "}
+                                            {selectedQuantity === 1 ? "قطعة" : "قطع"}
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                "اختاروا لوناً ومقاساً"
+                            )}
+                        </p>
+                    </div>
+                    <button
+                        className="btn-primary w-full"
+                        disabled={!variant || !available || quantityInvalid}
+                        onClick={() => {
+                            if (variant && available && !quantityInvalid)
+                                useCartStore.getState().addItem(product, variant, selectedQuantity);
+                        }}
+                    >
+                        <ShoppingBag size={19} aria-hidden="true" />
                         {available
-                            ? `${available} قطعة متاحة للإضافة`
+                            ? "إضافة إلى السلة"
                             : stock
-                              ? "الكمية المتوفرة في السلة"
+                              ? "الكمية في السلة"
                               : "غير متوفر حالياً"}
-                    </span>
-                </div>
-                <div className="quantity-stepper">
-                    <button
-                        type="button"
-                        aria-label="تقليل الكمية"
-                        disabled={selectedQuantity <= 1 || !available}
-                        onClick={() => chooseQuantity(Math.max(1, selectedQuantity - 1))}
-                    >
-                        <Minus size={17} aria-hidden="true" />
-                    </button>
-                    <input
-                        id="product-quantity"
-                        className="store-input"
-                        inputMode="numeric"
-                        type="number"
-                        min={1}
-                        max={available || 1}
-                        step={1}
-                        disabled={!available}
-                        aria-invalid={quantityInvalid}
-                        aria-describedby={quantityInvalid ? "product-quantity-error" : undefined}
-                        value={
-                            available && quantityDraft !== null ? quantityDraft : selectedQuantity
-                        }
-                        onChange={(e) => {
-                            const value = e.target.value;
-                            const n = Number(value);
-                            setQuantityDraft(value);
-                            if (value !== "" && Number.isSafeInteger(n) && n >= 1 && n <= available)
-                                setQuantity(n);
-                        }}
-                        onBlur={() => {
-                            if (!quantityInvalid) setQuantityDraft(null);
-                        }}
-                    />
-                    <button
-                        type="button"
-                        aria-label="زيادة الكمية"
-                        disabled={selectedQuantity >= available || !available}
-                        onClick={() => chooseQuantity(Math.min(available, selectedQuantity + 1))}
-                    >
-                        <Plus size={17} aria-hidden="true" />
                     </button>
                 </div>
-            </div>
-            <div className="product-purchase-bar">
-                <div className="purchase-summary">
-                    <p className="purchase-price" dir="ltr">
-                        {available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
-                        <span>MAD · سعر الكمية المختارة</span>
-                    </p>
-                    <p className="purchase-selection" aria-live="polite" aria-atomic="true">
-                        {quantityInvalid ? (
-                            "تحققوا من الكمية"
-                        ) : variant ? (
-                            <>
-                                <bdi>
-                                    {variant.colorNameAr ||
-                                        variant.colorNameFr ||
-                                        variant.colorNameEn}
-                                </bdi>
-                                {variant.size && (
-                                    <>
-                                        {" "}
-                                        · <bdi>{variant.size}</bdi>
-                                    </>
-                                )}
-                                {available > 0 && (
-                                    <>
-                                        {" "}
-                                        · <bdi>{selectedQuantity}</bdi>{" "}
-                                        {selectedQuantity === 1 ? "قطعة" : "قطع"}
-                                    </>
-                                )}
-                            </>
-                        ) : (
-                            "اختاروا لوناً ومقاساً"
-                        )}
-                    </p>
-                </div>
-                <button
-                    className="btn-primary w-full"
-                    disabled={!variant || !available || quantityInvalid}
-                    onClick={() => {
-                        if (variant && available && !quantityInvalid)
-                            useCartStore.getState().addItem(product, variant, selectedQuantity);
-                    }}
-                >
-                    <ShoppingBag size={19} aria-hidden="true" />
-                    {available ? "إضافة إلى السلة" : stock ? "الكمية في السلة" : "غير متوفر حالياً"}
-                </button>
             </div>
             {inCart > 0 && (
                 <aside

@@ -135,7 +135,9 @@ const sections = [
 ];
 function tabFromLocation(): Tab {
     const values = new URLSearchParams(window.location.search).getAll("tab");
-    return values.length === 1 ? sections.find(({ id }) => id === values[0])?.id || "overview" : "overview";
+    return values.length === 1
+        ? sections.find(({ id }) => id === values[0])?.id || "overview"
+        : "overview";
 }
 export default function AdminPage() {
     const { t, locale } = useAdminLocale();
@@ -167,7 +169,7 @@ export default function AdminPage() {
         const restoreTab = () => {
             const tab = tabFromLocation();
             setActiveTab(tab);
-            setOpenedTabs((tabs) => tabs.includes(tab) ? tabs : [...tabs, tab]);
+            setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
             setMobileMenu(false);
             setActionMessage("");
         };
@@ -263,7 +265,11 @@ export default function AdminPage() {
         };
     }, [token]);
     useEffect(() => {
-        if (mobileMenu) (nav.current?.querySelector<HTMLButtonElement>('[aria-current="page"]') || nav.current?.querySelector<HTMLButtonElement>("button"))?.focus();
+        if (mobileMenu)
+            (
+                nav.current?.querySelector<HTMLButtonElement>('[aria-current="page"]') ||
+                nav.current?.querySelector<HTMLButtonElement>("button")
+            )?.focus();
     }, [mobileMenu]);
     const selectTab = (tab: Tab) => {
         if (tab !== activeTab) {
@@ -487,7 +493,11 @@ export default function AdminPage() {
                                   ? t("À jour à {0}", {
                                         "0": lastSync.toLocaleTimeString(
                                             locale === "ar" ? "ar-MA" : "fr-MA",
-                                            { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Casablanca" },
+                                            {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                timeZone: "Africa/Casablanca",
+                                            },
                                         ),
                                     })
                                   : t("Chargement initial")}
@@ -601,18 +611,20 @@ export default function AdminPage() {
                                     />
                                 </div>
                             )}
-                            {activeTab === "categories" && (
-                                <CategoriesTab
-                                    categories={categories}
-                                    onCreate={async (d) => {
-                                        await createCategory(d);
-                                        setCategories(await getCategories());
-                                    }}
-                                    onDelete={async (id) => {
-                                        await deleteCategory(id);
-                                        setCategories(await getCategories());
-                                    }}
-                                />
+                            {openedTabs.includes("categories") && (
+                                <div hidden={activeTab !== "categories"}>
+                                    <CategoriesTab
+                                        categories={categories}
+                                        onCreate={async (d) => {
+                                            await createCategory(d);
+                                            setCategories(await getCategories());
+                                        }}
+                                        onDelete={async (id) => {
+                                            await deleteCategory(id);
+                                            setCategories(await getCategories());
+                                        }}
+                                    />
+                                </div>
                             )}
                             {openedTabs.includes("content") && (
                                 <div hidden={activeTab !== "content"}>
@@ -620,8 +632,16 @@ export default function AdminPage() {
                                 </div>
                             )}
                             {activeTab === "analytics" && <AnalyticsTab />}
-                            {activeTab === "commerce" && <CommerceTab />}
-                            {activeTab === "deskcomm" && <DeskcommTab />}
+                            {openedTabs.includes("commerce") && (
+                                <div hidden={activeTab !== "commerce"}>
+                                    <CommerceTab active={activeTab === "commerce"} />
+                                </div>
+                            )}
+                            {openedTabs.includes("deskcomm") && (
+                                <div hidden={activeTab !== "deskcomm"}>
+                                    <DeskcommTab />
+                                </div>
+                            )}
                             {activeTab === "notifications" && (
                                 <section className="admin-panel">
                                     <div className="admin-panel-heading">

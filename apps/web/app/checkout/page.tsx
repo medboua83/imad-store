@@ -301,6 +301,12 @@ export default function CheckoutPage() {
                             aria-controls="checkout-city"
                             aria-describedby="city-search-results"
                             onChange={(e) => setCitySearch(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+                                e.preventDefault();
+                                if (matchingCities.length)
+                                    document.getElementById("checkout-city")?.focus();
+                            }}
                         />
                         <select
                             id={common.id}

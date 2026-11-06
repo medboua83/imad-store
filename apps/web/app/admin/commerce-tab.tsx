@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings, type StoreSettings } from "@/lib/api";
 
-export default function CommerceTab() {
+export default function CommerceTab({ active = true }: { active?: boolean }) {
     const { t } = useAdminLocale();
     const cache = useQueryClient();
     const [form, setForm] = useState({
@@ -56,7 +56,7 @@ export default function CommerceTab() {
     return (
         <section className="admin-panel">
             <OrderSettings />
-            <OlivraisonSettings />
+            <OlivraisonSettings active={active} />
             <h2>{t("Livraison et suivi publicitaire")}</h2>
             {error && (
                 <p className="admin-alert" role="alert">

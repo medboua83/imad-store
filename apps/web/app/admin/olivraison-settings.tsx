@@ -17,7 +17,7 @@ type CityRow = { id: string; source: string; target: string };
 const cityRows = (mapping: Record<string, string>): CityRow[] =>
     Object.entries(mapping).map(([source, target]) => ({ id: `saved-${source}`, source, target }));
 
-export function OlivraisonSettings() {
+export function OlivraisonSettings({ active = true }: { active?: boolean }) {
     const { t } = useAdminLocale();
     const [config, setConfig] = useState<OlivraisonConfig | null>(null);
     const [savedConfig, setSavedConfig] = useState<OlivraisonConfig | null>(null);
@@ -61,18 +61,26 @@ export function OlivraisonSettings() {
                 if (active) setShipments(rows);
             })
             .catch(() => {});
+        return () => {
+            active = false;
+        };
+    }, []);
+    useEffect(() => {
+        if (!active) return;
+        let mounted = true;
         const timer = setInterval(() => {
+            if (document.hidden) return;
             getOlivraisonShipments()
                 .then((rows) => {
-                    if (active) setShipments(rows);
+                    if (mounted) setShipments(rows);
                 })
                 .catch(() => {});
         }, 30_000);
         return () => {
-            active = false;
+            mounted = false;
             clearInterval(timer);
         };
-    }, []);
+    }, [active]);
     async function action(task: () => Promise<void>) {
         if (lock.current) return;
         lock.current = true;
