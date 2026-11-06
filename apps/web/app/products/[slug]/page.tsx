@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ProductGallery } from "@/components/store/ProductGallery";
 import { Suspense } from "react";
 import { ProductSuggestions } from "@/components/store/ProductSuggestions";
-import { PackageCheck, Truck } from "lucide-react";
+import { ArrowRight, PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
 import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
@@ -11,6 +11,7 @@ import { ProductOptions } from "@/components/store/ProductOptions";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
 import { isAmbiguousSize } from "@imad-store/shared";
+import { catalogReturnPath, productDetailsHref } from "@/lib/catalog-return";
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,6 +28,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const name = product.nameAr || product.nameFr;
   const variants = sellableVariants(product.variants);
   const raw = await searchParams;
+  const returnTo = catalogReturnPath(raw.returnTo);
   const requestedSize = typeof raw.size === "string" && raw.size.length <= 40 && !isAmbiguousSize(raw.size) ? raw.size : undefined;
   const sizeUnavailable = Boolean(raw.size) && (!requestedSize || !variants.some(v => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase()));
   const inStock = variants.some((v) => v.stock > 0);
@@ -57,9 +59,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
           __html: JSON.stringify(structured).replace(/</g, "\\u003c"),
         }}
       />
-      <nav aria-label="مسار التصفح" className="mb-7">
-        <Link className="underline" href="/shop">
-          المتجر
+      <nav aria-label="مسار التصفح" className="mb-7 product-breadcrumb">
+        <Link className={returnTo ? "product-catalog-return" : "underline"} href={returnTo || "/shop"}>
+          {returnTo && <ArrowRight size={17} aria-hidden="true" />}
+          {returnTo ? "العودة إلى النتائج" : "المتجر"}
         </Link>{" "}
         / {name}
       </nav>
@@ -100,7 +103,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           {sizeUnavailable ? (
             <div className="product-size-unavailable" role="status" aria-label="المقاس المطلوب">
               <p>المقاس المطلوب غير متوفر حالياً. راجعوا المقاسات الأخرى قبل الإضافة.</p>
-              <Link href={`/products/${product.slug}`} prefetch={false}>عرض المقاسات الأخرى</Link>
+              <Link href={productDetailsHref(product.slug, undefined, returnTo)} prefetch={false}>عرض المقاسات الأخرى</Link>
             </div>
           ) : <ProductOptions key={`${product.id}:${requestedSize || ""}`} product={product} preferredSize={requestedSize} />}
           <div className="product-information">

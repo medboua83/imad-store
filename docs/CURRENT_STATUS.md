@@ -1,5 +1,11 @@
 # Current Status — 2026-11-06
 
+## Navigation boutique et administration — candidat du 6 novembre 2026
+
+Le catalogue transmet aux fiches un retour interne conservant recherche, catégorie, tri, budget, disponibilité, taille et page. Le bouton doré « العودة إلى النتائج » ramène aux résultats avec un décalage adapté au header fixe. Les liens directs sans contexte gardent leur fil de navigation habituel ; le changement de taille après indisponibilité conserve le retour. Les cartes sociales et liens partagés restent canoniques. Seuls les paramètres publics du catalogue sont repris : aucun domaine externe, page admin, paramètre privé ou diagnostic n’est utilisé comme destination.
+
+Les sections admin connues sont représentées par `?tab=…`, sans rechargement lors du changement. Un lien direct, un rechargement et les boutons Précédent/Suivant retrouvent la section sélectionnée ; les fiches déjà ouvertes restent montées pour préserver la saisie. Le menu mobile focalise la section active. L’heure de dernière actualisation est explicitement marocaine, indépendamment du fuseau de l’appareil. Trois tests unitaires de retour sont réussis ; compilation, recette UI, CI et publication de ce nouveau lot à terminer. La production reste au candidat `c2e3cc6` décrit ci-dessous jusqu’à une publication vérifiée.
+
 ## Publication effective — administration arabe, quantités et favicon
 
 Les PR 93 et 94 sont fusionnées et publiées sur `https://imadmode.com`. Le VPS exécute le candidat `c2e3cc6aa05b9be96c91aba7ad1203a3b4e389dd`, dont l’arbre correspond au Master de fusion `257e97a7`. Le nouveau répertoire de version est `admin-arabic-c2e3cc6aa05b` ; ne plus utiliser `f9a6c4ef` comme référence de la production courante. La compilation VPS, les contrôles HTTPS et les trois formats de favicon sont vérifiés. L’administration arabe, la bascule français/arabe, la session, la préférence après rechargement et les photos produits sont vérifiées en ligne sur mobile et ordinateur. Les raccourcis de quantité reprennent les tarifs actuellement enregistrés.

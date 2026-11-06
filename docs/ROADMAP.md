@@ -1,5 +1,12 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Navigation sans perte de contexte — 6 novembre 2026
+
+- [x] Préparer le retour d’une fiche vers les résultats filtrés, avec taille/page conservées et URL internes limitées au catalogue.
+- [x] Préparer les liens directs et l’historique des sections admin, en préservant la saisie des fiches déjà ouvertes.
+- [x] Fixer le fuseau de l’heure d’actualisation au Maroc.
+- [ ] Valider les vues mobiles/ordinateur, l’historique, les liens sociaux et les saisies conservées ; publier avec sauvegarde et contrôle des données.
+
 ## Identité des onglets — 6 novembre 2026
 
 - [x] Préparer une favicon IM dorée, un ICO multi-résolution et une icône Apple avec génération reproductible.

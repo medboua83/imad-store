@@ -4,16 +4,19 @@ import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
 import { quantityDiscounts } from "@imad-store/shared";
+import { productDetailsHref } from "@/lib/catalog-return";
 export function ProductCard({
     product: p,
     headingLevel = 2,
     eagerImage = false,
     preferredSize,
+    returnTo,
 }: {
     product: Product;
     headingLevel?: 2 | 3;
     eagerImage?: boolean;
     preferredSize?: string;
+    returnTo?: string;
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
@@ -22,7 +25,7 @@ export function ProductCard({
     const offered = available ? variants.filter((v) => v.stock > 0) : variants;
     const colors = [...new Map(offered.map((v) => [v.color, v])).values()];
     const sizes = orderedSizes(offered).filter(Boolean);
-    const href = `/products/${p.slug}${preferredSize ? `?${new URLSearchParams({ size: preferredSize })}` : ""}`;
+    const href = productDetailsHref(p.slug, preferredSize, returnTo);
     return (
         <article className="catalog-card">
             <Link
