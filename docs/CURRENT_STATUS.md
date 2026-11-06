@@ -1,4 +1,15 @@
-# Current Status — 2026-11-01
+# Current Status — 2026-11-06
+
+## PostgreSQL et compatibilité des images — 6 novembre 2026
+
+Le code cible PostgreSQL 16, avec migration SQL versionnée et identifiants de commerce conservés au format 24 caractères hexadécimaux. Contraintes uniques, transactions Serializable et reprises existantes protègent les commandes, le stock et les confirmations CRM. Les statistiques utilisent un modèle SQL avec insertions dédupliquées, agrégations par installation et purge des événements expirés ; une tâche horaire est prévue sur le VPS. Le kit produit des profils PostgreSQL et permet d’appliquer les migrations explicitement.
+
+Pour les processeurs qui ne peuvent pas exécuter Sharp précompilé, une compilation native contre libvips officiel 8.18.7 est disponible et vérifie PNG/JPEG/WebP. Les photographies existantes ne sont pas réencodées. Les images persistantes, le code, les secrets et les sauvegardes restent séparés. Le reverse proxy local est une option explicite, sans confiance accordée à des proxys arbitraires.
+
+Sur la nouvelle installation Namecheap, 102 tests PostgreSQL, la compilation de production et 15 tests du serveur hébergé sont réussis. Deux produits du relevé public du 23 octobre ont été récupérés, après accord, en brouillon avec les 15 variantes à stock nul et les huit photos originales vérifiées à l’octet. Aucune ancienne commande ni clé d’intégration n’a été retrouvée ou inventée. La connexion CRM, l’IA, le transporteur et le Pixel nécessitent une configuration vérifiée avant activation. Les règles commerciales récupérées et les stocks sont à revoir avant mise en vente. Une sauvegarde privée a été restaurée dans une base jetable pour contrôle ; une copie vérifiée se trouve sur DATA.
+
+Voir `POSTGRESQL_NAMECHEAP_2026-11-06.md` pour l’installation, les contraintes, les tests et les précautions de reprise. Les sections antérieures décrivent l’historique MongoDB/Hostinger.
+
 
 ## Recherche par taille disponible — candidat du 1er novembre 2026
 

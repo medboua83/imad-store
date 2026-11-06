@@ -14,8 +14,8 @@ function createProfile({companyId, name, origin, output}) {
     const secret = () => randomBytes(32).toString('hex');
     const vars = {
         NODE_ENV:'production', IMAD_HOSTING_MODE:'combined', PORT:'3000', STORE_INSTANCE_ID:storeId, CRM_COMPANY_ID:companyId,
-        STORE_DISPLAY_NAME:name, CORS_ORIGIN:origin, API_UPSTREAM_URL:'http://127.0.0.1:4000',
-        DATABASE_URL:`mongodb://127.0.0.1:27017/${database}?replicaSet=rs0`,
+        STORE_DISPLAY_NAME:name, SITE_URL:origin, CORS_ORIGIN:origin, API_UPSTREAM_URL:'http://127.0.0.1:4000',
+        DATABASE_URL:`postgresql://store:CHANGE_ME@127.0.0.1:5432/${database}`,
         JWT_SECRET:secret(), JWT_REFRESH_SECRET:secret(), DESKCOMM_ENCRYPTION_KEY:secret(),
         DESKCOMM_OUTBOX_WORKER_ENABLED:'false', DESKCOMM_HOSTED_DELIVERY_ENABLED:'false',
         DESKCOMM_OUTBOX_MIN_CREATED_AT:new Date().toISOString(),
@@ -33,8 +33,8 @@ Base vide dédiée : ${database}
 Ce dossier est privé. Ne jamais le publier dans Git, public/ ou uploads/. crm-registration.json contient la clé de signature à copier dans les deux administrations. Aucun compte, produit, client ou secret existant n'est repris.
 
 1. Cloner le dépôt imad-store dans un dossier neuf, utiliser Node 22 et npm ci --include=dev. Ne pas importer de .env existant.
-2. Adapter DATABASE_URL dans store.env à une base MongoDB VIDE en replica set avec un compte limité à cette base. Définir UPLOAD_DIR sur un stockage persistant dédié hors du code et hors des secrets. Configurer le domaine et HTTPS chez l'hébergeur.
-3. Depuis le code : npm run store:run -- /chemin/prive/store.env check
+2. Adapter DATABASE_URL dans store.env à une base PostgreSQL VIDE avec un compte limité à cette base. Définir UPLOAD_DIR sur un stockage persistant dédié hors du code et hors des secrets. Configurer le domaine et HTTPS chez l'hébergeur.
+3. Appliquer les migrations PostgreSQL avec le profil privé : npm run store:run -- /chemin/prive/store.env migrate. Depuis le code : npm run store:run -- /chemin/prive/store.env check
 4. Compiler : npm run store:run -- /chemin/prive/store.env build
 5. Définir temporairement BOOTSTRAP_ADMIN_EMAIL et BOOTSTRAP_ADMIN_PASSWORD (16 caractères minimum), lancer npm run store:run -- /chemin/prive/store.env admin puis retirer ces variables. Aucun compte prédéfini n'est créé.
 6. Démarrer : npm run store:run -- /chemin/prive/store.env start. Configurer un superviseur pour cette commande. Un seul port public (3000 par défaut), pas de deuxième backend sur 4000 en mode combiné.
@@ -43,7 +43,7 @@ Ce dossier est privé. Ne jamais le publier dans Git, public/ ou uploads/. crm-r
 9. Copier l'adresse source vers Administration > Intégration CRM de la boutique. Configurer le retour avec la même clé privée, le même pipeline et l'étape confirmée, champ pedido_id. Vérifier les identifiants avant activation.
 10. Activer l'envoi et le retour dans la boutique et la règle dans le CRM. Passer DESKCOMM_OUTBOX_WORKER_ENABLED et DESKCOMM_HOSTED_DELIVERY_ENABLED à true dans store.env puis redémarrer. Ne pas reculer la date limite CRM. Tester une commande fictive autorisée : un prospect puis une confirmation, sans doublon et sans changer le paiement. Vérifier l'activité CRM et la file de la boutique.
 
-check valide le fichier local, pas les accès MongoDB, DNS ou HTTPS. start refuse une base liée à une autre entreprise. Aucun envoi externe, source ou entreprise CRM n'est créé par le générateur.
+check valide le fichier local, pas les accès PostgreSQL, DNS ou HTTPS. start refuse une base liée à une autre entreprise. Aucun envoi externe, source ou entreprise CRM n'est créé par le générateur.
 `,{mode:0o600,flag:'wx'});
     return {storeId,companyId,database};
 }

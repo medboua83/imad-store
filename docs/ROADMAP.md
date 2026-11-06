@@ -1,5 +1,15 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Hébergement PostgreSQL — 6 novembre 2026
+
+- [x] Schéma PostgreSQL versionné, identifiants compatibles et contraintes anti-doublon.
+- [x] Statistiques SQL par installation, purge à 91 jours et tests sur bases jetables.
+- [x] Compilation native des images pour le VPS sans SSE4.2, photos originales préservées.
+- [x] Base et rôle applicatif dédiés, HTTPS et sauvegarde privée restaurée en recette.
+- [ ] Revoir les stocks et promotions des produits récupérés avant publication.
+- [ ] Renseigner et vérifier les connexions CRM/IA, transporteur et Pixel sur la nouvelle installation.
+
+
 ## Recherche par taille disponible — candidat du 1er novembre 2026
 
 Filtre de taille issu des variantes en stock des produits publics, limité à la catégorie choisie lorsque celle-ci est précisée. Agrégation de valeurs distinctes côté base, demandée uniquement par le catalogue ; les lectures ordinaires du panier ne chargent pas ces suggestions. Les brouillons, archives, fiches sans photo et variantes à tailles ambiguës restent exclus. Le filtre exige du stock sur la variante de cette taille, et non sur une autre taille du produit. Les liens, badges, couleurs et tailles des cartes suivent le choix ; la fiche présélectionne une variante disponible de cette taille. Si la taille a disparu du stock ou n’existe pas, la fiche propose explicitement de consulter les autres tailles avant d’afficher les commandes d’achat. Aucune autre taille n’est choisie automatiquement à l’ouverture. Suggestions facultatives avec saisie manuelle de repli, retrait individuel du filtre et pagination préservés. Canonique et cartes sociales restent ceux du produit. Photos, prix, promotions et intégrations conservés. Compilation backend et lint local réussis ; recette UI et base isolée à terminer, nouvelle publication à effectuer sur un hébergement actif.

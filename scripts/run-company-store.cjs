@@ -25,7 +25,7 @@ function loadProfile(file, root = path.resolve(__dirname, '..')) {
     if (vars.NODE_ENV !== 'production' || vars.IMAD_HOSTING_MODE !== 'combined') throw new Error('Mode combined de production requis.');
     const origin = new URL(vars.CORS_ORIGIN), db = new URL(vars.DATABASE_URL);
     if (origin.protocol !== 'https:' || origin.origin !== vars.CORS_ORIGIN || origin.username || origin.password) throw new Error('Origine HTTPS exacte requise.');
-    if (!['mongodb:', 'mongodb+srv:'].includes(db.protocol) || !/^\/[a-zA-Z0-9_-]+$/.test(db.pathname)) throw new Error('Base MongoDB dédiée requise.');
+    if (!['postgresql:', 'postgres:'].includes(db.protocol) || !/^\/[a-zA-Z0-9_-]+$/.test(db.pathname)) throw new Error('Base PostgreSQL dédiée requise.');
     const keys = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DESKCOMM_ENCRYPTION_KEY'].map(k => vars[k]);
     if (keys.some(v => !/^[a-f0-9]{64}$/i.test(v || '')) || new Set(keys).size !== 3) throw new Error('Trois clés privées distinctes requises.');
     if (!/^\d+$/.test(vars.PORT || '') || +vars.PORT < 1 || +vars.PORT > 65535) throw new Error('Port invalide.');
@@ -40,7 +40,7 @@ function loadProfile(file, root = path.resolve(__dirname, '..')) {
     return { vars, env: { ...env, ...vars, DOTENV_CONFIG_PATH: profile }, root };
 }
 function run(file, action) {
-    if (!['check', 'build', 'admin', 'start'].includes(action)) throw new Error('Action : check, build, admin ou start.');
+    if (!['check', 'migrate', 'build', 'admin', 'start'].includes(action)) throw new Error('Action : check, migrate, build, admin ou start.');
     const { env, vars, root } = loadProfile(file);
     if (action === 'check') return console.log(`Configuration locale valide. Boutique : ${vars.STORE_INSTANCE_ID}. Réseau non vérifié.`);
     if (action === 'admin') {
@@ -49,7 +49,7 @@ function run(file, action) {
         env.BOOTSTRAP_ADMIN_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD;
     }
     const command = action === 'build' ? (process.platform === 'win32' ? 'npm.cmd' : 'npm') : process.execPath;
-    const args = action === 'build' ? ['run', 'build'] : action === 'start' ? ['server.js'] : ['--import', 'tsx', 'backend/scripts/provision-company-admin.ts'];
+    const args = action === 'build' ? ['run', 'build'] : action === 'migrate' ? [require.resolve('prisma/build/index.js'), 'migrate', 'deploy', '--schema', 'backend/prisma/schema.prisma'] : action === 'start' ? ['server.js'] : ['--import', 'tsx', 'backend/scripts/provision-company-admin.ts'];
     const child = spawn(command, args, { cwd: root, env, stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => child.kill(signal));
     child.once('error', () => { console.error('Impossible de démarrer cette étape.'); process.exitCode = 1; });
@@ -58,7 +58,7 @@ function run(file, action) {
 module.exports = { loadProfile, run };
 if (require.main === module) {
     try {
-        if (process.argv.length !== 4) throw new Error('Usage : store:run <store.env> <check|build|admin|start>');
+        if (process.argv.length !== 4) throw new Error('Usage : store:run <store.env> <check|migrate|build|admin|start>');
         run(process.argv[2], process.argv[3]);
     } catch { console.error('Installation refusée : vérifiez le profil privé, ses identifiants, ses clés, le stockage et l’absence de .env hérité.'); process.exitCode = 1; }
 }

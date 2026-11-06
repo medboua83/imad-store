@@ -1,16 +1,16 @@
-// Imad Store — Prisma Schema for MongoDB Atlas (free tier)
+// Imad Store — PostgreSQL. Legacy 24-hex commerce identifiers remain stable.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
-// MongoDB supports Prisma enums natively
+// Database constraints are installed by versioned SQL migrations.
 
 enum UserRole {
   CUSTOMER
@@ -46,7 +46,7 @@ enum PaymentStatus {
 // ─── User ───────────────────────────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   email        String   @unique
   passwordHash String
   firstName    String
@@ -64,9 +64,9 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   token     String   @unique
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
@@ -77,8 +77,8 @@ model RefreshToken {
 // ─── Address ────────────────────────────────────────────────────────────────
 
 model Address {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String? @db.ObjectId
+  id         String  @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  userId     String?
   user       User?   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   fullName   String
   phone      String
@@ -94,11 +94,11 @@ model Address {
 }
 
 model AdminNotification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   type      String   // "new_order" | "low_stock" | etc.
   title     String
   message   String
-  orderId   String?  @db.ObjectId
+  orderId   String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -108,7 +108,7 @@ model AdminNotification {
 // ─── Category ───────────────────────────────────────────────────────────────
 
 model Category {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  id       String    @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   slug     String    @unique
   nameFr   String
   nameAr   String
@@ -122,7 +122,7 @@ model Category {
 // ─── Product ────────────────────────────────────────────────────────────────
 
 model Product {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  id             String           @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   slug           String           @unique
   nameFr         String
   nameAr         String
@@ -137,7 +137,7 @@ model Product {
   freeShipping   Boolean @default(false)
   images         String[]         // Native array — no JSON hack needed!
   status         ProductStatus    @default(DRAFT)
-  categoryId     String           @db.ObjectId
+  categoryId     String
   category       Category         @relation(fields: [categoryId], references: [id])
   variants       ProductVariant[]
   orderItems     OrderItem[]
@@ -150,8 +150,8 @@ model Product {
 }
 
 model ProductVariant {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  productId   String   @db.ObjectId
+  id          String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  productId   String
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   color       String
   colorNameFr String
@@ -181,14 +181,14 @@ model Order {
   aiServiceConsentAt    DateTime?
   inventoryReserved     Boolean?
   requestFingerprint    String?
-  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId                String?       @db.ObjectId
+  id                    String        @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  userId                String?
   user                  User?         @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   // Guest customer info (denormalized so admins can see the order without joining Address)
   customerName          String?
   customerPhone         String?
   customerEmail         String?
-  addressId             String?       @db.ObjectId
+  addressId             String?
   address               Address?      @relation(fields: [addressId], references: [id])
   // Delivery address snapshot (for guest orders where no Address row is required)
   fullName              String?
@@ -215,12 +215,12 @@ model Order {
 }
 
 model OrderItem {
-  id        String         @id @default(auto()) @map("_id") @db.ObjectId
-  orderId   String         @db.ObjectId
+  id        String         @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  orderId   String
   order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String         @db.ObjectId
+  productId String
   product   Product        @relation(fields: [productId], references: [id])
-  variantId String         @db.ObjectId
+  variantId String
   variant   ProductVariant @relation(fields: [variantId], references: [id])
   quantity  Int
   unitPrice Float
@@ -230,8 +230,8 @@ model OrderItem {
 
 // ─── Order Event (lightweight admin notification log) ────────────────────────
 model OrderEvent {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId   String   @db.ObjectId
+  id        String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   type      String   // "created" | "status_changed" | "payment_received" | etc.
   message   String
@@ -244,7 +244,7 @@ model OrderEvent {
 // ─── Store Settings ─────────────────────────────────────────────────────────
 
 model StoreSettings {
-  id              String  @id @map("_id")
+  id              String  @id
   whatsappPhone   String  @default("212XXXXXXXXX")
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
@@ -264,7 +264,7 @@ model StoreSettings {
 // When a customer starts a chat with the bot, we record their phone → chatId
 // so the bridge can DM them order acknowledgments automatically.
 model TelegramCustomer {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   phone     String   @unique
   chatId    String
   verifiedAt DateTime?
@@ -278,7 +278,7 @@ model TelegramCustomer {
 
 // Durable CRM delivery tracking; one row per source order.
 model DeskcommOutbox {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            String   @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
   orderId       String   @unique
   payload       Json
   status        String   @default("PENDING")
@@ -294,7 +294,7 @@ model DeskcommOutbox {
 }
 
 model DeskcommIntegration {
-  id                String   @id @map("_id")
+  id                String   @id
   enabled           Boolean  @default(false)
   orderAssistanceEnabled Boolean?
   webhookCiphertext String?
@@ -305,7 +305,7 @@ model DeskcommIntegration {
 
 // Explicit draft/publication history; public reads never expose a draft.
 model SiteContent {
-  id String @id @map("_id")
+  id String @id
   revision Int @default(0)
   draft Json
   published Json
@@ -317,8 +317,8 @@ model SiteContent {
 
 // One immutable receipt per signed CRM delivery; no customer payload retained.
 model DeskcommStatusReceipt {
-  id          String   @id @map("_id")
-  orderId     String   @db.ObjectId
+  id          String   @id
+  orderId     String
   leadId      String
   fingerprint String
   changed     Boolean
@@ -328,7 +328,7 @@ model DeskcommStatusReceipt {
 
 // Immutable deployment identity. Each company has its own database and secrets.
 model StoreInstallation {
-  id String @id @map("_id")
+  id String @id
   storeId String
   initialized Boolean @default(false)
   companyId String
@@ -338,7 +338,7 @@ model StoreInstallation {
 
 // Encrypted per-installation callback configuration; never returned with its secret.
 model DeskcommConnection {
-  id String @id @map("_id")
+  id String @id
   ciphertext String
   updatedAt DateTime @updatedAt
   @@map("deskcomm_connection")
@@ -346,7 +346,7 @@ model DeskcommConnection {
 
 // Opt-in carrier configuration. Credentials are encrypted; activation never backfills orders.
 model OlivraisonIntegration {
-  id String @id @map("_id")
+  id String @id
   enabled Boolean @default(false)
   credentials String?
   pickupAddress Json?
@@ -358,9 +358,9 @@ model OlivraisonIntegration {
   @@map("olivraison_integration")
 }
 
-// The source order ID is the MongoDB primary key: duplicate enqueue is impossible.
+// The source order ID is the database primary key: duplicate enqueue is impossible.
 model OlivraisonShipment {
-  id String @id @map("_id")
+  id String @id
   trackingId String?
   carrierStatus String?
   state String @default("QUEUED")
@@ -375,4 +375,24 @@ model OlivraisonShipment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("olivraison_shipments")
+}
+
+// First-party analytics; ephemeral and scoped to one installation, without customer PII.
+model StoreAnalytics {
+  id String @id
+  scope String
+  session String
+  kind String
+  page String?
+  test Boolean
+  at DateTime
+  productId String?
+  productName String?
+  stage String?
+  stageRank Int?
+  expiresAt DateTime
+  @@index([scope, test, at], map: "scope_period")
+  @@index([scope, session, kind], map: "scope_session")
+  @@index([expiresAt], map: "analytics_retention")
+  @@map("store_analytics")
 }

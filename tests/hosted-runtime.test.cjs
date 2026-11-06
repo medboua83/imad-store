@@ -1,18 +1,18 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { MongoClient } = require("mongodb");
+const { databaseUrl } = require("../scripts/test-postgres.cjs");
 const bcrypt = require("bcryptjs");
 const sharp = require("sharp");
 const { rm } = require("node:fs/promises");
 const name = process.env.TEST_DATABASE_NAME || "";
-if (!/^imad_ci_[a-f0-9]{16}$/.test(name) || process.env.DATABASE_URL !== `mongodb://127.0.0.1:27017/${name}?replicaSet=rs0`)
+if (!/^imad_ci_[a-f0-9]{16}$/.test(name) || process.env.DATABASE_URL !== databaseUrl(name))
   throw new Error("Run scripts/test-hosted-runtime.cjs with an isolated database");
 
 const mode = process.env.TEST_HOST_MODE;
 const passengerMode = mode === "passenger";
 test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`, { timeout: 120000 }, async () => {
   const { prisma } = require("../backend/dist/lib/prisma.js");
-  const mongo = new MongoClient(process.env.DATABASE_URL);
+
   let runtime;
   const { Server } = require("node:http");
   const originalListen = Server.prototype.listen;
@@ -37,7 +37,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     };
   }
   try {
-    await mongo.connect();
+
     await prisma.user.create({ data: { email: "hosted@example.invalid", passwordHash: await bcrypt.hash("isolated-hosted-test", 10), firstName: "Test", lastName: "Isolated", role: "ADMIN" } });
     const category = await prisma.category.create({ data: { slug: "hosted-test", nameFr: "Test", nameAr: "اختبار", nameEn: "Test" } });
     await prisma.storeSettings.create({ data: { id: "settings", deliveryMaxDays: 3, returnWindowDays: 3, returnFeePayer: "DELIVERY_TRY_ON" } });
@@ -131,7 +131,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     const photo = await get((await uploaded.json()).data.url);
     assert.equal(photo.status, 200); assert.match(photo.headers.get("content-type"), /image\/webp/);
     assert.equal(await prisma.order.count(), 0);
-    assert.equal(await mongo.db(name).collection("deskcomm_outbox").countDocuments(), 0);
+    assert.equal(await prisma.deskcommOutbox.count(), 0);
   } finally {
     Server.prototype.listen = originalListen;
     TcpServer.prototype.listen = originalTcpListen;
@@ -139,8 +139,7 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     delete global.LitespeedNodeJS;
     await runtime?.close();
     await prisma.$disconnect();
-    await mongo.db(name).dropDatabase();
-    await mongo.close();
+
     await rm(process.env.UPLOAD_DIR, { recursive: true, force: true });
   }
 });

@@ -114,8 +114,8 @@ async function list(queryInput: unknown, admin: boolean) {
         throw new AppError("Le prix minimum dépasse le maximum", 400);
     if (query.availability === "in-stock" || query.size)
         where.variants = { some: { stock: { gt: 0 },
-            // Prisma's MongoDB insensitive equality uses a regex: keep the size literal.
-            ...(query.size ? { size: { equals: query.size.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), mode: "insensitive" } } : {}),
+            // PostgreSQL case-insensitive matching uses ILIKE: escape wildcard characters.
+            ...(query.size ? { size: { equals: query.size.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } } : {}),
         } };
     if (query.minPrice !== undefined || query.maxPrice !== undefined)
         where.price = {
@@ -135,7 +135,7 @@ async function list(queryInput: unknown, admin: boolean) {
     if (query.category) where.category = { slug: query.category };
     if (query.search)
         where.OR = ["nameFr", "nameAr", "nameEn"].map((field) => ({
-            [field]: { contains: query.search, mode: "insensitive" },
+            [field]: { contains: query.search!.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" },
         }));
     const [products, total, sizes] = await Promise.all([
         prisma.product.findMany({

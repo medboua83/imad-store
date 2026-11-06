@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { createHmac, randomUUID, randomBytes } from "node:crypto";
 import { rm } from "node:fs/promises";
-import { MongoClient } from "mongodb";
+const { databaseUrl, createDatabase, dropDatabase } = require("../scripts/test-postgres.cjs");
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import sharp from "sharp";
@@ -11,7 +11,7 @@ import sharp from "sharp";
 const name = process.env.TEST_DATABASE_NAME || "";
 if (
     !/^imad_ci_[a-f0-9]{16}$/.test(name) ||
-    process.env.DATABASE_URL !== `mongodb://127.0.0.1:27017/${name}?replicaSet=rs0`
+    process.env.DATABASE_URL !== databaseUrl(name)
 )
     throw new Error("Use npm run test:integration: isolated database required");
 let prisma: any, app: any, product: any, category: any;
@@ -20,7 +20,7 @@ const token = jwt.sign(
     process.env.JWT_SECRET!,
 );
 const admin = () => ({ Authorization: `Bearer ${token}` });
-const mongo = new MongoClient(process.env.DATABASE_URL!);
+
 const receipts: { key?: string; body: string; signature?: string; contentType?: string }[] = [];
 let failDelivery = true;
 const crm = createServer((req, res) => {
@@ -74,18 +74,6 @@ const checkout = (quantity = 1) => ({
 });
 const key = () => randomBytes(16).toString("hex");
 before(async () => {
-    await mongo.connect();
-    const db = mongo.db(name);
-    await db
-        .collection("orders")
-        .createIndex(
-            { idempotencyKey: 1 },
-            { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } },
-        );
-    await db.collection("deskcomm_outbox").createIndex({ orderId: 1 }, { unique: true });
-    await db.collection("products").createIndex({ slug: 1 }, { unique: true });
-    await db.collection("product_variants").createIndex({ sku: 1 }, { unique: true });
-    await db.collection("telegram_customers").createIndex({ phone: 1 }, { unique: true });
     ({ prisma } = await import("../backend/src/lib/prisma"));
     ({ app } = await import("../backend/src/app"));
     category = await prisma.category.create({
@@ -101,8 +89,7 @@ before(async () => {
 });
 after(async () => {
     await prisma?.$disconnect();
-    if (/^imad_ci_[a-f0-9]{16}$/.test(name)) await mongo.db(name).dropDatabase();
-    await mongo.close();
+
     await new Promise<void>((resolve) => crm.close(() => resolve()));
     await rm(process.env.UPLOAD_DIR!, { recursive: true, force: true });
 });
@@ -483,13 +470,7 @@ test("Sheets follows the same stock rules; shipped and unverified historical ord
     await transitionOrderStatus(shipped.id, "SHIPPED");
     await assert.rejects(transitionOrderStatus(shipped.id, "CANCELLED"), /non autorisé/);
     const historical = await create();
-    await mongo
-        .db(name)
-        .collection("orders")
-        .updateOne(
-            { _id: new (await import("mongodb")).ObjectId(historical.id) },
-            { $unset: { inventoryReserved: "" } },
-        );
+    await prisma.order.update({ where: { id: historical.id }, data: { inventoryReserved: null } });
     await assert.rejects(
         transitionOrderStatus(historical.id, "CANCELLED"),
         /historique non vérifiée/,
@@ -706,11 +687,13 @@ test("Demo seeding refuses a live database and startup has no automatic fixture 
 test("An empty server startup does not publish demo data even with a legacy seed flag", async () => {
     const { spawn } = await import("node:child_process");
     const isolated = `imad_ci_${randomBytes(8).toString("hex")}`;
+    await createDatabase(isolated);
+    const isolatedClient = new (require("@prisma/client").PrismaClient)({datasources:{db:{url:databaseUrl(isolated)}}});
     const child = spawn(process.execPath, ["--import", "tsx", "backend/src/index.ts"], {
         cwd: process.cwd(),
         env: {
             ...process.env,
-            DATABASE_URL: `mongodb://127.0.0.1:27017/${isolated}?replicaSet=rs0`,
+            DATABASE_URL: databaseUrl(isolated),
             PORT: "0",
             IMAD_SEED_DEMO: "true",
             DESKCOMM_OUTBOX_WORKER_ENABLED: "false",
@@ -735,12 +718,13 @@ test("An empty server startup does not publish demo data even with a legacy seed
         const response = await fetch(`http://127.0.0.1:${port}/health`);
         assert.equal(response.status, 200);
         await new Promise((resolve) => setTimeout(resolve, 150));
-        assert.equal(await mongo.db(isolated).collection("products").countDocuments(), 0);
-        assert.equal(await mongo.db(isolated).collection("site_content").countDocuments(), 0);
+        assert.equal(await isolatedClient.product.count(), 0);
+        assert.equal(await isolatedClient.siteContent.count(), 0);
     } finally {
         child.kill("SIGTERM");
         await new Promise((resolve) => child.once("exit", resolve));
-        if (/^imad_ci_[a-f0-9]{16}$/.test(isolated)) await mongo.db(isolated).dropDatabase();
+        await isolatedClient.$disconnect();
+        await dropDatabase(isolated);
     }
 });
 
@@ -1217,8 +1201,7 @@ test("Published category counts exclude drafts and automatically follow newly pu
 });
 
 test("Visitor statistics validate events, deduplicate concurrent views and exclude test/admin/bot traffic", async () => {
-    const db = mongo.db(name),
-        events = db.collection("store_analytics");
+    const events = prisma.storeAnalytics;
     await events.deleteMany({});
     const endpoint = "/api/analytics/events",
         session = randomUUID();
@@ -1295,9 +1278,9 @@ test("Visitor statistics validate events, deduplicate concurrent views and exclu
     const funnel=(await request(app).get("/api/analytics/summary").set(admin())).body.data.funnel;
     assert.equal(funnel.cartVisits,1);
     assert.equal(funnel.checkoutVisits,1);
-    assert.equal(await events.countDocuments({kind:"cart"}),1);
-    const cart=await events.findOne({kind:"cart"});
-    assert.deepEqual(Object.keys(cart!).sort(),["_id","scope","session","kind","test","at","expiresAt"].sort());
+    assert.equal(await events.count({where:{kind:"cart"}}),1);
+    const cart=await events.findFirst({where: {kind:"cart"}});
+    assert.deepEqual(Object.keys(cart!).filter(k => cart[k] !== null).sort(),["id","scope","session","kind","test","at","expiresAt"].sort());
     assert.equal(summary.body.data.products[0].id, item.id);
     assert.equal(
         (await request(app).post(endpoint).send({ session, page: "/products/unpublished-missing" }))
@@ -1308,12 +1291,12 @@ test("Visitor statistics validate events, deduplicate concurrent views and exclu
         (await request(app).get("/api/analytics/summary?days=365").set(admin())).status,
         400,
     );
-    const saved = await events.findOne({ kind: "page", test: false });
+    const saved = await events.findFirst({where: { kind: "page", test: false } });
     assert.equal(saved?.session === session, false);
     assert.deepEqual(
-        Object.keys(saved!).sort(),
+        Object.keys(saved!).filter(k => saved[k] !== null).sort(),
         [
-            "_id",
+            "id",
             "scope",
             "session",
             "kind",
@@ -1326,15 +1309,12 @@ test("Visitor statistics validate events, deduplicate concurrent views and exclu
         ].sort(),
     );
     assert.ok(saved?.expiresAt instanceof Date);
-    assert.ok(
-        (await events.indexes()).some(
-            (index) => index.name === "analytics_retention" && index.expireAfterSeconds === 0,
-        ),
-    );
+    const indexes = await prisma.$queryRaw`SELECT indexname FROM pg_indexes WHERE tablename = 'store_analytics'`;
+    assert.ok(indexes.some((index: any) => index.indexname === "analytics_retention"));
 });
 
 test("Only real committed orders convert visits; retries and multiple orders cannot inflate the conversion rate", async () => {
-    await mongo.db(name).collection("store_analytics").deleteMany({});
+    await prisma.storeAnalytics.deleteMany({});
     const session = randomUUID(),
         other = randomUUID();
     for (const id of [session, other])
@@ -1387,8 +1367,9 @@ test("Only real committed orders convert visits; retries and multiple orders can
     assert.equal(stages.funnel.cancelledOrders,1);
     // A broken analytics write must never turn a committed order into a checkout failure.
     const { prisma: client } = await import("../backend/src/lib/prisma");
-    const original = client.$runCommandRaw.bind(client);
-    client.$runCommandRaw = (() => Promise.reject(new Error("isolated analytics failure"))) as any;
+    const original = client.storeAnalytics.findFirst.bind(client.storeAnalytics);
+    const originalInsert = client.storeAnalytics.createMany.bind(client.storeAnalytics);
+    client.storeAnalytics.findFirst = (() => Promise.reject(new Error("isolated analytics failure"))) as any;
     try {
         const created = await request(app)
             .post("/api/orders")
@@ -1401,18 +1382,17 @@ test("Only real committed orders convert visits; retries and multiple orders can
         assert.equal(result.order.status,"CONFIRMED");
         assert.equal((await prisma.order.findUnique({where:{id:created.body.data.id}})).status,"CONFIRMED");
     } finally {
-        client.$runCommandRaw = original;
+        client.storeAnalytics.findFirst = original;
+        client.storeAnalytics.createMany = originalInsert;
     }
     const { recordOrderConversion, recordPage } =
         await import("../backend/src/lib/store-analytics");
-    client.$runCommandRaw = ((command: any) =>
-        command.update === "store_analytics"
-            ? Promise.resolve({ writeErrors: [{ code: 121 }] })
-            : original(command)) as any;
+    client.storeAnalytics.createMany = (() => Promise.reject(new Error("Analytics write failed"))) as any;
     try {
         await assert.rejects(() => recordPage(randomUUID(), "/", false), /Analytics write failed/);
     } finally {
-        client.$runCommandRaw = original;
+        client.storeAnalytics.findFirst = original;
+        client.storeAnalytics.createMany = originalInsert;
     }
     await recordOrderConversion(randomUUID(), new Date(Date.now() - 86400_000), session, false);
     const again = (await request(app).get("/api/analytics/summary?days=7").set(admin())).body.data;
@@ -1421,30 +1401,30 @@ test("Only real committed orders convert visits; retries and multiple orders can
 
 test("Analytics scope comes from the installation, never from request inputs, and periods ignore old/test records", async () => {
     const { analyticsScope, readAnalytics } = await import("../backend/src/lib/store-analytics");
-    const collection = mongo.db(name).collection("store_analytics");
+    const collection = prisma.storeAnalytics;
     await collection.deleteMany({});
     const session = randomUUID();
     await request(app).post("/api/analytics/events").send({ session, page: "/" }).expect(202);
     const company = randomUUID(),
         store = randomUUID(),
         now = Date.now();
-    await collection.insertMany([
+    await collection.createMany({ data: [
         {
             scope: `${company}:${store}`,
             session: "other-company",
             kind: "page",
             test: false,
-            at: now,
+            at: new Date(now),
         },
         {
             scope: analyticsScope(),
             session: "too-old",
             kind: "page",
             test: false,
-            at: now - 10 * 86400_000,
+            at: new Date(now - 10 * 86400_000),
         },
-        { scope: analyticsScope(), session: "test-only", kind: "page", test: true, at: now },
-    ]);
+        { scope: analyticsScope(), session: "test-only", kind: "page", test: true, at: new Date(now) },
+    ].map(row => ({ ...row, id: randomUUID(), expiresAt: new Date(now + 86400_000) })) });
     assert.equal((await readAnalytics(7)).visits, 1);
     assert.equal((await readAnalytics(30)).visits, 2);
     assert.equal(
@@ -2070,7 +2050,7 @@ test("Size discovery matches positive stock on the same variant and keeps privat
         assert.equal((await request(app).get(`${base}&size=.%2A`)).body.total,0);
         assert.equal((await request(app).get(`${base}&size=4`)).body.total,0);
         assert.equal((await request(app).get(`${base}&size=%5B`)).body.total,0);
-        const literalSize = "M(L).+?^$[]{}|\\";
+        const literalSize = "M(L).+?^$[]{}|\\%_";
         const literal = await create("literal",[{size:literalSize,stock:1}]);
         const exactLiteral=await request(app).get(`${base}&size=${encodeURIComponent(literalSize.toLowerCase())}`);
         assert.equal(exactLiteral.status,200);
@@ -2087,4 +2067,17 @@ test("Size discovery matches positive stock on the same variant and keeps privat
         await prisma.productVariant.deleteMany({where:{productId:{in:ids}}});
         await prisma.product.deleteMany({where:{id:{in:ids}}});
     }
+});
+
+
+test("PostgreSQL analytics retention removes expired events without touching other retained events", async () => {
+    const { purgeExpiredAnalytics } = await import("../backend/src/lib/store-analytics");
+    const expired = randomUUID(), retained = randomUUID();
+    await prisma.storeAnalytics.createMany({ data: [
+        { id: expired, scope: "retention-test", session: "expired", kind: "page", test: true, at: new Date(Date.now()-92*86400_000), expiresAt: new Date(Date.now()-1000) },
+        { id: retained, scope: "retention-test", session: "retained", kind: "page", test: true, at: new Date(), expiresAt: new Date(Date.now()+86400_000) },
+    ] });
+    await purgeExpiredAnalytics();
+    assert.equal(await prisma.storeAnalytics.findUnique({where:{id:expired}}),null);
+    assert.ok(await prisma.storeAnalytics.findUnique({where:{id:retained}}));
 });
