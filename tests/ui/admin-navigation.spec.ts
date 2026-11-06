@@ -57,7 +57,8 @@ for (const width of [390, 1440]) {
 
 test("Unknown admin sections stay on overview and sync time follows Morocco rather than the device timezone", async ({ page }) => {
     await mockAdmin(page);
-    await page.clock.install({ time: new Date("2026-11-06T12:00:00Z") });
+    // Fixed historical date: the expected offset must not depend on future tzdb revisions.
+    await page.clock.install({ time: new Date("2025-11-06T12:00:00Z") });
     await page.goto("/admin?tab=https%3A%2F%2Fevil.example");
     await expect(page.locator(".admin-page-heading h1")).toHaveText("Vue d’ensemble");
     await expect(page.locator(".admin-sync")).toHaveText("À jour à 13:00");

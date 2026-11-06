@@ -29,8 +29,8 @@ test("Unavailable size recovery retains safe catalogue context and never changes
     const returnTo = "/shop?category=mens-clogs&size=40&page=2";
     await page.goto(`/products/fixture-sabot?size=99&returnTo=${encodeURIComponent(returnTo)}`);
     await page.getByRole("link", { name: "عرض المقاسات الأخرى", exact: true }).click();
+    await expect(page).toHaveURL(url => url.pathname === "/products/fixture-sabot" && !url.searchParams.has("size"));
     await expect(page.getByRole("link", { name: "العودة إلى النتائج", exact: true })).toHaveAttribute("href", returnTo + "#catalog-results");
-    expect(new URL(page.url()).searchParams.has("size")).toBe(false);
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeEnabled();
     await page.goto("/products/fixture-sabot?returnTo=https%3A%2F%2Fevil.example%2Fshop");
     await expect(page.getByRole("link", { name: "العودة إلى النتائج", exact: true })).toHaveCount(0);
