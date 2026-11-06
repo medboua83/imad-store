@@ -2,7 +2,7 @@
 
 ## Contexte des listes admin et miniatures — candidat du 6 novembre 2026
 
-La période statistiques, la recherche des commandes et ses filtres sont conservés en mémoire par la page admin pendant la session, sans les inscrire dans les URL ni dans le stockage du navigateur. Les dialogues de commande et requêtes statistiques continuent de se démonter en quittant leur section ; aucun dialogue modal ne reste caché au-dessus du tableau de bord. Une nouvelle connexion ou une fin de session remet les filtres à zéro. Les statistiques redemandent la période choisie au retour.
+La période statistiques, la recherche des commandes et ses filtres sont conservés en mémoire par la page admin pendant la session, sans les inscrire dans les URL ni dans le stockage du navigateur. Les écrans de commandes et de statistiques continuent de se démonter en quittant leur section ; aucun dialogue modal ne reste caché au-dessus du tableau de bord. Une nouvelle connexion ou une fin de session remet les filtres à zéro. Les statistiques redemandent la période choisie au retour.
 
 La galerie fait défiler uniquement la bande de miniatures pour garder la photo sélectionnée visible, y compris avec 12 images et en RTL. Le clavier sur les miniatures suit la sélection sans déplacer la page ; le focus des flèches et du zoom reste à sa place. Les fichiers et leur ordre sont conservés. Recette et publication de ce nouveau lot à consigner.
 
