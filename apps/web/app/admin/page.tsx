@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale, AdminLanguageSelect } from "./admin-locale";
+
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -40,27 +42,30 @@ import {
 } from "@/lib/api";
 import "./admin.css";
 import "./product-editor.css";
-const pendingView = () => (
-    <div className="admin-loading" role="status">
-        Chargement de votre espace…
-    </div>
-);
+function PendingView() {
+    const { t } = useAdminLocale();
+    return (
+        <div className="admin-loading" role="status">
+            {t("Chargement de votre espace…")}
+        </div>
+    );
+}
 const OverviewTab = dynamic(() => import("./tabs").then((m) => m.OverviewTab), {
-    loading: pendingView,
+    loading: PendingView,
 });
 const OrdersTab = dynamic(() => import("./tabs").then((m) => m.OrdersTab), {
-    loading: pendingView,
+    loading: PendingView,
 });
 const CategoriesTab = dynamic(() => import("./tabs").then((m) => m.CategoriesTab), {
-    loading: pendingView,
+    loading: PendingView,
 });
 const ProductsTab = dynamic(() => import("./products-tab").then((m) => m.ProductsTab), {
-    loading: pendingView,
+    loading: PendingView,
 });
-const CommerceTab = dynamic(() => import("./commerce-tab"), { loading: pendingView });
-const ContentTab = dynamic(() => import("./content-tab"), { loading: pendingView });
-const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: pendingView });
-const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: pendingView });
+const CommerceTab = dynamic(() => import("./commerce-tab"), { loading: PendingView });
+const ContentTab = dynamic(() => import("./content-tab"), { loading: PendingView });
+const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: PendingView });
+const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: PendingView });
 type Tab =
     | "overview"
     | "orders"
@@ -129,6 +134,7 @@ const sections = [
     },
 ];
 export default function AdminPage() {
+    const { t, locale } = useAdminLocale();
     const [token, setToken] = useState<string | null>(null),
         [sessionReady, setSessionReady] = useState(false);
     const [email, setEmail] = useState(""),
@@ -284,57 +290,69 @@ export default function AdminPage() {
     const current = sections.find((s) => s.id === activeTab)!;
     if (!sessionReady)
         return (
-            <div className="admin-app admin-session" dir="ltr" lang="fr" role="status">
-                Ouverture de l’administration…
+            <div
+                className="admin-app admin-session"
+                dir={locale === "ar" ? "rtl" : "ltr"}
+                lang={locale}
+                role="status"
+            >
+                {t("Ouverture de l’administration…")}
             </div>
         );
     if (!token)
         return (
-            <div className="admin-app admin-auth" dir="ltr" lang="fr">
+            <div
+                className="admin-app admin-auth"
+                dir={locale === "ar" ? "rtl" : "ltr"}
+                lang={locale}
+            >
                 <div className="admin-auth-story">
                     <Link href="/" className="brand-wordmark">
                         <BrandLogo />
                     </Link>
                     <div>
-                        <p className="admin-eyebrow">VOTRE ESPACE BOUTIQUE</p>
+                        <p className="admin-eyebrow">{t("VOTRE ESPACE BOUTIQUE")}</p>
                         <h1>
-                            Tout commence
+                            {t("Tout commence")}
                             <br />
-                            par les détails.
+                            {t("par les détails.")}
                         </h1>
                         <p>
-                            Votre collection, vos commandes et votre quotidien.
+                            {t("Votre collection, vos commandes et votre quotidien.")}
                             <br />
-                            Un espace pour tout garder en vue.
+                            {t("Un espace pour tout garder en vue.")}
                         </p>
                     </div>
-                    <span>IMAD Mode · Administration</span>
+                    <span>{t("IMAD Mode · Administration")}</span>
                 </div>
                 <main className="admin-auth-main">
+                    <AdminLanguageSelect />
                     <form onSubmit={handleLogin} className="admin-login-card">
-                        <p className="admin-eyebrow">HEUREUX DE VOUS RETROUVER</p>
-                        <h2>Connexion à votre espace</h2>
+                        <p className="admin-eyebrow">{t("HEUREUX DE VOUS RETROUVER")}</p>
+                        <h2>{t("Connexion à votre espace")}</h2>
                         <p className="admin-muted">
-                            Utilisez votre compte administrateur pour continuer.
+                            {t("Utilisez votre compte administrateur pour continuer.")}
                         </p>
                         {authError && (
                             <p className="admin-alert" role="alert">
-                                {authError}
+                                {t(authError)}
                             </p>
                         )}
-                        <label htmlFor="admin-email">Adresse e-mail</label>
+                        <label htmlFor="admin-email">{t("Adresse e-mail")}</label>
                         <input
+                            dir="auto"
                             id="admin-email"
                             type="email"
                             autoComplete="username"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="vous@exemple.ma"
+                            placeholder={t("vous@exemple.ma")}
                         />
-                        <label htmlFor="admin-password">Mot de passe</label>
+                        <label htmlFor="admin-password">{t("Mot de passe")}</label>
                         <div className="admin-password">
                             <input
+                                dir="auto"
                                 id="admin-password"
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
@@ -346,8 +364,8 @@ export default function AdminPage() {
                                 type="button"
                                 aria-label={
                                     showPassword
-                                        ? "Masquer le mot de passe"
-                                        : "Afficher le mot de passe"
+                                        ? t("Masquer le mot de passe")
+                                        : t("Afficher le mot de passe")
                                 }
                                 aria-pressed={showPassword}
                                 onClick={() => setShowPassword((v) => !v)}
@@ -356,26 +374,30 @@ export default function AdminPage() {
                             </button>
                         </div>
                         <button className="admin-button primary" disabled={authLoading}>
-                            {authLoading ? "Connexion en cours…" : "Se connecter"}
+                            {authLoading ? t("Connexion en cours…") : t("Se connecter")}
                             <ArrowUpRight size={18} aria-hidden="true" />
                         </button>
                         <Link href="/" className="admin-back-link">
-                            Retour à la boutique
+                            {t("Retour à la boutique")}
                         </Link>
                     </form>
                 </main>
             </div>
         );
     return (
-        <div className="admin-app admin-workspace" dir="ltr" lang="fr">
+        <div
+            className="admin-app admin-workspace"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+            lang={locale}
+        >
             <a className="skip-link" href="#admin-main">
-                Aller au contenu
+                {t("Aller au contenu")}
             </a>
             <aside className="admin-sidebar">
                 <Link href="/" className="brand-wordmark">
                     <BrandLogo />
                 </Link>
-                <p className="admin-sidebar-label">ESPACE ADMINISTRATION</p>
+                <p className="admin-sidebar-label">{t("ESPACE ADMINISTRATION")}</p>
                 <button
                     ref={menuButton}
                     className="admin-mobile-menu"
@@ -383,13 +405,14 @@ export default function AdminPage() {
                     aria-controls="admin-navigation"
                     onClick={() => setMobileMenu((v) => !v)}
                 >
-                    {mobileMenu ? <X size={20} /> : <Menu size={20} />}Navigation
+                    {mobileMenu ? <X size={20} /> : <Menu size={20} />}
+                    {t("Navigation")}
                 </button>
                 <nav
                     ref={nav}
                     id="admin-navigation"
                     className={mobileMenu ? "is-open" : ""}
-                    aria-label="Administration"
+                    aria-label={t("Administration")}
                 >
                     {sections.map(({ id, label, icon: Icon }) => (
                         <button
@@ -404,7 +427,7 @@ export default function AdminPage() {
                             aria-current={activeTab === id ? "page" : undefined}
                         >
                             <Icon size={19} aria-hidden="true" />
-                            <span>{label}</span>
+                            <span>{t(label)}</span>
                             {id === "notifications" && unread > 0 && (
                                 <span className="admin-count">{unread}</span>
                             )}
@@ -414,31 +437,38 @@ export default function AdminPage() {
                 <div className="admin-sidebar-bottom">
                     <Link href="/" target="_blank" rel="noreferrer">
                         <ArrowUpRight size={17} aria-hidden="true" />
-                        Voir la boutique
+                        {t("Voir la boutique")}
                     </Link>
                     <button onClick={logout}>
                         <LogOut size={17} aria-hidden="true" />
-                        Se déconnecter
+                        {t("Se déconnecter")}
                     </button>
                 </div>
             </aside>
             <div className="admin-body">
                 <header className="admin-topbar">
                     <p>
-                        Votre boutique <span>/ {current.label}</span>
+                        {t("Votre boutique ")}
+                        <span>/ {t(current.label)}</span>
                     </p>
                     <div className="admin-topbar-actions">
+                        <AdminLanguageSelect />
                         <span className={`admin-sync ${syncError ? "has-error" : ""}`}>
                             <i />
                             {syncing
-                                ? "Actualisation…"
+                                ? t("Actualisation…")
                                 : lastSync
-                                  ? `À jour à ${lastSync.toLocaleTimeString("fr-MA", { hour: "2-digit", minute: "2-digit" })}`
-                                  : "Chargement initial"}
+                                  ? t("À jour à {0}", {
+                                        "0": lastSync.toLocaleTimeString(
+                                            locale === "ar" ? "ar-MA" : "fr-MA",
+                                            { hour: "2-digit", minute: "2-digit" },
+                                        ),
+                                    })
+                                  : t("Chargement initial")}
                         </span>
                         <button
                             className="admin-icon-button"
-                            aria-label="Actualiser les données"
+                            aria-label={t("Actualiser les données")}
                             disabled={syncing}
                             onClick={() => window.dispatchEvent(new Event("imad:sync"))}
                         >
@@ -446,7 +476,7 @@ export default function AdminPage() {
                         </button>
                         <button
                             className="admin-icon-button"
-                            aria-label={`Notifications, ${unread} non lues`}
+                            aria-label={t("Notifications, {0} non lues", { "0": unread })}
                             onClick={() => selectTab("notifications")}
                         >
                             <Bell size={19} />
@@ -457,11 +487,11 @@ export default function AdminPage() {
                 <main id="admin-main" className="admin-main">
                     <div className="admin-page-heading">
                         <div>
-                            <p className="admin-eyebrow">IMAD · GESTION DE LA BOUTIQUE</p>
+                            <p className="admin-eyebrow">{t("IMAD · GESTION DE LA BOUTIQUE")}</p>
                             <h1 ref={mainTitle} tabIndex={-1}>
-                                {current.label}
+                                {t(current.label)}
                             </h1>
-                            <p>{current.description}</p>
+                            <p>{t(current.description)}</p>
                         </div>
                         {activeTab === "overview" && (
                             <button
@@ -469,26 +499,26 @@ export default function AdminPage() {
                                 onClick={() => selectTab("products")}
                             >
                                 <ShoppingBag size={17} />
-                                Gérer les produits
+                                {t("Gérer les produits")}
                             </button>
                         )}
                     </div>
                     {syncError && (
                         <div className="admin-alert" role="alert">
-                            {syncError}
+                            {t(syncError)}
                             <button onClick={() => window.dispatchEvent(new Event("imad:sync"))}>
-                                Réessayer
+                                {t("Réessayer")}
                             </button>
                         </div>
                     )}
                     {actionMessage && (
                         <p className="admin-feedback" role="status">
-                            {actionMessage}
+                            {t(actionMessage)}
                         </p>
                     )}
                     {!lastSync && syncing ? (
                         <div className="admin-loading" role="status">
-                            Chargement des données…
+                            {t("Chargement des données…")}
                         </div>
                     ) : (
                         <>
@@ -570,9 +600,11 @@ export default function AdminPage() {
                                 <section className="admin-panel">
                                     <div className="admin-panel-heading">
                                         <div>
-                                            <h2>Dernières notifications</h2>
+                                            <h2>{t("Dernières notifications")}</h2>
                                             <p>
-                                                {unread} non lue{unread !== 1 ? "s" : ""}
+                                                {unread}
+                                                {t(" non lue")}
+                                                {unread !== 1 ? t("s") : ""}
                                             </p>
                                         </div>
                                         <button
@@ -593,12 +625,12 @@ export default function AdminPage() {
                                             }}
                                         >
                                             <CheckCheck size={17} />
-                                            Tout marquer comme lu
+                                            {t("Tout marquer comme lu")}
                                         </button>
                                     </div>
                                     {!notifications.length ? (
                                         <p className="admin-empty">
-                                            Aucune notification pour le moment.
+                                            {t("Aucune notification pour le moment.")}
                                         </p>
                                     ) : (
                                         <div className="admin-notices">
@@ -632,7 +664,7 @@ export default function AdminPage() {
                                                     </span>
                                                     <time dateTime={n.createdAt}>
                                                         {new Date(n.createdAt).toLocaleDateString(
-                                                            "fr-MA",
+                                                            locale === "ar" ? "ar-MA" : "fr-MA",
                                                         )}
                                                     </time>
                                                 </button>
@@ -644,9 +676,10 @@ export default function AdminPage() {
                         </>
                     )}
                     <footer className="admin-page-footer">
-                        <span>IMAD Mode · Votre espace de gestion</span>
+                        <span>{t("IMAD Mode · Votre espace de gestion")}</span>
                         <Link href="/" target="_blank" rel="noreferrer">
-                            Ouvrir la boutique <ArrowUpRight size={14} />
+                            {t("Ouvrir la boutique ")}
+                            <ArrowUpRight size={14} />
                         </Link>
                     </footer>
                 </main>

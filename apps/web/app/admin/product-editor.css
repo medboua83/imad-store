@@ -115,7 +115,7 @@
     margin: 12px 0;
 }
 .product-editor-summary li > small {
-    margin-left: auto;
+    margin-inline-start: auto;
     font-size: 10px;
     color: #82745c;
 }

@@ -1,5 +1,15 @@
 # Current Status — 2026-11-06
 
+## Administration français / arabe — candidat du 6 novembre 2026
+
+Le sélecteur « Français / العربية » est proposé à la connexion et dans la barre de l’administration. Le choix est mémorisé uniquement dans ce navigateur, avec synchronisation entre onglets. Les menus, formulaires, états, messages, confirmations et aides utilisent une traduction explicite ; les paramètres de messages conservent références, quantités et noms. Les dates suivent la langue et le fuseau marocain. La disposition, les espacements, les icônes de recherche et les champs suivent le sens de lecture, avec direction propre pour les données saisies. Un changement de langue garde le formulaire produit en cours, les identifiants de session et les valeurs destinées à l’API. Aucun contenu commercial ni réglage d’intégration n’est traduit ou enregistré automatiquement. Le menu sélectionné conserve un contraste lisible immédiatement, sans transition de fond. Validation locale : 148 UI, 10 tests de traduction/prix, lint et compilation réussis ; les 17 scénarios concernés par les finitions ont été revalidés, dont le contraste et le bouton après trois pièces. Publication VPS et CI à vérifier.
+
+## Lisibilité de l’achat — candidat du 6 novembre 2026
+
+Les raccourcis de quantité présentent le total correspondant à chaque choix, avec une économie uniquement lorsqu’elle existe réellement. Ils reprennent le calcul partagé des lots répétés et des prix manuels prioritaires ; aucun tarif n’est créé ou enregistré par cette interface. Le bandeau d’achat rappelle couleur, taille et quantité, et demande de vérifier une saisie invalide au lieu de rappeler une ancienne sélection. Une indication répétée de quantité est retirée du résumé pour conserver le bouton dans la vue des petits écrans d’ordinateur, même après sélection d’une offre. Photos, variantes, stocks, frais de livraison et intégrations ne sont pas modifiés. Validation intégrée à la recette ci-dessus ; publication à effectuer.
+
+Le domaine principal actif est désormais `https://imadmode.com`, avec HTTPS root/www et renouvellement automatique vérifiés le 6 novembre. L’ancienne adresse reste disponible pour préserver les sessions en cours. Après la récupération initiale en brouillon, le propriétaire a publié les deux produits et renseigné leurs stocks ; ne pas réappliquer la restauration initiale ni ramener les stocks à zéro. Les réglages actuels doivent être relus avant toute intervention sur les intégrations.
+
 ## PostgreSQL et compatibilité des images — 6 novembre 2026
 
 Le code cible PostgreSQL 16, avec migration SQL versionnée et identifiants de commerce conservés au format 24 caractères hexadécimaux. Contraintes uniques, transactions Serializable et reprises existantes protègent les commandes, le stock et les confirmations CRM. Les statistiques utilisent un modèle SQL avec insertions dédupliquées, agrégations par installation et purge des événements expirés ; une tâche horaire est prévue sur le VPS. Le kit produit des profils PostgreSQL et permet d’appliquer les migrations explicitement.

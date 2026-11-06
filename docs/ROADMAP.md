@@ -1,5 +1,19 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Administration bilingue — 6 novembre 2026
+
+- [x] Ajouter le sélecteur français/arabe à la connexion et à l’administration, avec préférence mémorisée et lecture RTL.
+- [x] Traduire les libellés, formulaires, messages et confirmations sans modifier les données commerciales ni les contrats API.
+- [x] Valider les formulaires après bascule, la session, les vues mobiles et les régressions : 148 UI et 10 tests ciblés de traduction/prix réussis, avec revalidation des 17 scénarios concernés par les finitions.
+- [ ] Vérifier la CI puis publier sur le VPS avec sauvegarde et accès temporaire autorisé.
+
+## Prochain lot : lisibilité des quantités — 6 novembre 2026
+
+- [x] Afficher le total de chaque raccourci et l’économie réelle avec le calcul partagé existant.
+- [x] Rappeler couleur, taille et quantité près du bouton d’achat, avec message spécifique pour une saisie invalide.
+- [x] Valider la visibilité du bouton après sélection, les offres manuelles, les lots impairs et le panier sur mobile et ordinateur.
+- [ ] Publier le candidat sur `imadmode.com`.
+
 ## Hébergement PostgreSQL — 6 novembre 2026
 
 - [x] Schéma PostgreSQL versionné, identifiants compatibles et contraintes anti-doublon.

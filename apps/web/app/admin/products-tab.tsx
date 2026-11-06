@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useRef, useState } from "react";
 import { isAmbiguousSize } from "@imad-store/shared";
 import { QuantityOfferEditor, packOffers, type DraftQuantityOffer } from "./quantity-offer-editor";
@@ -30,7 +32,11 @@ const blank = {
     quantityDiscounts: [] as DraftQuantityOffer[],
     promotionEnabled: false,
     freeShipping: false,
-    recommendationSettings: { enabled: false, upsellProductIds: [] as string[], crossSellProductIds: [] as string[] },
+    recommendationSettings: {
+        enabled: false,
+        upsellProductIds: [] as string[],
+        crossSellProductIds: [] as string[],
+    },
     categoryId: "",
     status: "DRAFT",
 };
@@ -62,6 +68,7 @@ export function ProductsTab({
     onDelete,
     onRefresh,
 }: Props) {
+    const { t } = useAdminLocale();
     const [search, setSearch] = useState(""),
         [publication, setPublication] = useState("ALL"),
         [stock, setStock] = useState("ALL"),
@@ -114,7 +121,9 @@ export function ProductsTab({
         return () => window.removeEventListener("beforeunload", prevent);
     }, [dirty]);
     function discard() {
-        return !dirty || confirm("Abandonner les modifications non enregistrées de cette fiche ?");
+        return (
+            !dirty || confirm(t("Abandonner les modifications non enregistrées de cette fiche ?"))
+        );
     }
     function edit(p?: Product, force = false) {
         if (disabled || (!force && (lock.current || !discard()))) return;
@@ -135,7 +144,11 @@ export function ProductsTab({
                   })),
                   promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
                   freeShipping: Boolean(p.freeShipping),
-                  recommendationSettings: p.recommendationSettings ?? { enabled: false, upsellProductIds: [], crossSellProductIds: [] },
+                  recommendationSettings: p.recommendationSettings ?? {
+                      enabled: false,
+                      upsellProductIds: [],
+                      crossSellProductIds: [],
+                  },
                   categoryId: p.category.id,
                   status: p.status,
               }
@@ -281,17 +294,19 @@ export function ProductsTab({
             <div className="admin-panel-heading">
                 <div>
                     <h2 ref={listTitle} tabIndex={-1}>
-                        Produits et stocks
+                        {t("Produits et stocks")}
                     </h2>
                     <p>
-                        {products.length} fiches chargées sur {total}. Recherche, filtres et
-                        compteurs sur cette sélection (100 maximum).
+                        {products.length}
+                        {t(" fiches chargées sur ")}
+                        {total}
+                        {t(". Recherche, filtres et compteurs sur cette sélection (100 maximum).")}
                     </p>
                 </div>
                 <div className="product-heading-actions">
                     <button className="admin-button" disabled={disabled} onClick={() => refresh()}>
                         <RefreshCw size={16} />
-                        Actualiser
+                        {t("Actualiser")}
                     </button>
                     <button
                         className="admin-button primary"
@@ -299,32 +314,32 @@ export function ProductsTab({
                         onClick={() => edit()}
                     >
                         <Plus size={17} />
-                        Ajouter un produit
+                        {t("Ajouter un produit")}
                     </button>
                 </div>
             </div>
             <div className="product-stock-summary">
                 <div>
-                    <span>Produits en vente</span>
+                    <span>{t("Produits en vente")}</span>
                     <strong>{summary.active}</strong>
                 </div>
                 <div>
-                    <span>Unités en vente</span>
+                    <span>{t("Unités en vente")}</span>
                     <strong>{summary.units}</strong>
                 </div>
                 <div>
-                    <span>Variantes à 3 unités ou moins en vente</span>
+                    <span>{t("Variantes à 3 unités ou moins en vente")}</span>
                     <strong>{summary.low}</strong>
                 </div>
             </div>
             {success && (
                 <p className="admin-feedback" role="status">
-                    {success}
+                    {t(success)}
                 </p>
             )}
             {error && (
                 <p className="admin-alert" role="alert">
-                    {error}
+                    {t(error)}
                 </p>
             )}
             {open && (
@@ -336,42 +351,48 @@ export function ProductsTab({
                     <div className="product-editor-heading">
                         <div>
                             <p className="admin-eyebrow">
-                                FICHE PRODUIT · {id ? "MODIFICATION" : "CRÉATION"}
+                                {t("FICHE PRODUIT · ")}
+                                {id ? t("MODIFICATION") : t("CRÉATION")}
                             </p>
                             <h3 ref={title} tabIndex={-1}>
-                                {id ? "Modifier le produit" : "Nouveau produit"}
+                                {id ? t("Modifier le produit") : t("Nouveau produit")}
                             </h3>
                             <p className="admin-muted">
-                                Préparez en brouillon, puis mettez en vente lorsque tout est prêt.
+                                {t(
+                                    "Préparez en brouillon, puis mettez en vente lorsque tout est prêt.",
+                                )}
                             </p>
                         </div>
                         <span className="admin-tag">
-                            {dirty ? "Modifications non enregistrées" : "Fiche chargée"}
+                            {dirty ? t("Modifications non enregistrées") : t("Fiche chargée")}
                         </span>
                     </div>
-                    <nav className="product-editor-nav" aria-label="Sections de la fiche produit">
-                        <a href="#product-details">1 · Informations</a>
-                        <a href="#product-photos">2 · Photos</a>
-                        <a href="#product-pricing">3 · Prix et offres</a>
-                        <a href="#product-variants">4 · Stock</a>
-                        <a href="#product-recommendations">5 · Recommandations</a>
+                    <nav
+                        className="product-editor-nav"
+                        aria-label={t("Sections de la fiche produit")}
+                    >
+                        <a href="#product-details">{t("1 · Informations")}</a>
+                        <a href="#product-photos">{t("2 · Photos")}</a>
+                        <a href="#product-pricing">{t("3 · Prix et offres")}</a>
+                        <a href="#product-variants">{t("4 · Stock")}</a>
+                        <a href="#product-recommendations">{t("5 · Recommandations")}</a>
                     </nav>
-                    <aside className="product-editor-summary" aria-label="Résumé du produit">
-                        <span className="admin-eyebrow">APERÇU DE LA FICHE</span>
+                    <aside className="product-editor-summary" aria-label={t("Résumé du produit")}>
+                        <span className="admin-eyebrow">{t("APERÇU DE LA FICHE")}</span>
                         {images.length > 0 && (
                             <AdminProductPhoto
                                 images={images}
                                 name={form.nameFr || "Votre produit"}
                             />
                         )}
-                        <h4>{form.nameFr || "Votre nouveau produit"}</h4>
-                        <p dir="rtl">{form.nameAr || "Le nom arabe apparaîtra ici"}</p>
+                        <h4>{form.nameFr || t("Votre nouveau produit")}</h4>
+                        <p dir="rtl">{form.nameAr || t("Le nom arabe apparaîtra ici")}</p>
                         <strong>
                             {Number(form.price) > 0
                                 ? money(Number(form.price))
-                                : "Prix à renseigner"}
+                                : t("Prix à renseigner")}
                         </strong>
-                        <small>pour 1 pièce · hors livraison</small>
+                        <small>{t("pour 1 pièce · hors livraison")}</small>
                         <ul>
                             {[
                                 [
@@ -394,28 +415,33 @@ export function ProductsTab({
                             ].map(([label, ready]) => (
                                 <li key={String(label)}>
                                     <span aria-hidden="true">{ready ? "✓" : "○"}</span>
-                                    {label}
-                                    <small>{ready ? "Renseigné" : "À compléter"}</small>
+                                    {t(String(label))}
+                                    <small>{ready ? t("Renseigné") : t("À compléter")}</small>
                                 </li>
                             ))}
                         </ul>
                         <p>
                             {form.status === "ACTIVE"
-                                ? "En vente : une photo et une variante en stock sont nécessaires."
-                                : "Vous pouvez enregistrer un brouillon et terminer les photos et le stock plus tard."}
+                                ? t(
+                                      "En vente : une photo et une variante en stock sont nécessaires.",
+                                  )
+                                : t(
+                                      "Vous pouvez enregistrer un brouillon et terminer les photos et le stock plus tard.",
+                                  )}
                         </p>
                         <p>
-                            Le nom anglais et les noms de couleurs anglais reprennent le français
-                            lorsqu’ils sont laissés vides. Une référence est créée automatiquement
-                            pour chaque nouvelle variante sans SKU.
+                            {t(
+                                "Le nom anglais et les noms de couleurs anglais reprennent le français lorsqu’ils sont laissés vides. Une référence est créée automatiquement pour chaque nouvelle variante sans SKU.",
+                            )}
                         </p>
                     </aside>
                     <fieldset disabled={disabled} className="product-identity" id="product-details">
-                        <legend>1. Informations du produit</legend>
+                        <legend>{t("1. Informations du produit")}</legend>
                         <div className="grid gap-3 md:grid-cols-2">
                             <label>
-                                Nom français
+                                {t("Nom français")}
                                 <input
+                                    dir="auto"
                                     className={inputClass}
                                     required
                                     maxLength={200}
@@ -432,15 +458,16 @@ export function ProductsTab({
                                 />
                             </label>
                             <label>
-                                Adresse du produit
+                                {t("Adresse du produit")}
                                 <div className="product-slug-field">
                                     <input
+                                        dir="auto"
                                         className={inputClass}
                                         required
                                         maxLength={160}
                                         value={form.slug}
-                                        aria-label="Adresse du produit"
-                                        placeholder="exemple-sac-beige"
+                                        aria-label={t("Adresse du produit")}
+                                        placeholder={t("exemple-sac-beige")}
                                         onChange={(e) => {
                                             setSlugEdited(true);
                                             set("slug", e.target.value);
@@ -451,7 +478,7 @@ export function ProductsTab({
                                         className="admin-text-button"
                                         onClick={() => set("slug", productSlug(form.nameFr))}
                                     >
-                                        Suggérer
+                                        {t("Suggérer")}
                                     </button>
                                 </div>
                             </label>
@@ -462,7 +489,7 @@ export function ProductsTab({
                                 ] as const
                             ).map(([key, label]) => (
                                 <label key={key}>
-                                    {label}
+                                    {t(String(label))}
                                     <input
                                         className={inputClass}
                                         dir={key === "nameAr" ? "rtl" : undefined}
@@ -474,15 +501,15 @@ export function ProductsTab({
                                 </label>
                             ))}
                             <label>
-                                Catégorie
+                                {t("Catégorie")}
                                 <select
                                     className={inputClass}
                                     required
-                                    aria-label="Catégorie du produit"
+                                    aria-label={t("Catégorie du produit")}
                                     value={form.categoryId}
                                     onChange={(e) => set("categoryId", e.target.value)}
                                 >
-                                    <option value="">Choisir une catégorie</option>
+                                    <option value="">{t("Choisir une catégorie")}</option>
                                     {categories.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.nameFr}
@@ -491,23 +518,24 @@ export function ProductsTab({
                                 </select>
                             </label>
                             <label>
-                                Publication
+                                {t("Publication")}
                                 <select
                                     className={inputClass}
                                     value={form.status}
                                     onChange={(e) => set("status", e.target.value)}
                                 >
-                                    <option value="DRAFT">Brouillon</option>
-                                    <option value="ACTIVE">En vente</option>
-                                    <option value="ARCHIVED">Archivé</option>
+                                    <option value="DRAFT">{t("Brouillon")}</option>
+                                    <option value="ACTIVE">{t("En vente")}</option>
+                                    <option value="ARCHIVED">{t("Archivé")}</option>
                                 </select>
                             </label>
                         </div>
                         <details className="product-descriptions">
-                            <summary>Descriptions et détails supplémentaires</summary>
+                            <summary>{t("Descriptions et détails supplémentaires")}</summary>
                             {(["Fr", "Ar", "En"] as const).map((lang) => (
                                 <label key={lang}>
-                                    Description {lang}
+                                    {t("Description ")}
+                                    {lang}
                                     <textarea
                                         className={inputClass}
                                         maxLength={20000}
@@ -529,15 +557,17 @@ export function ProductsTab({
                         />
                     </div>
                     <fieldset disabled={disabled} className="product-pricing" id="product-pricing">
-                        <legend>3. Prix et offres</legend>
+                        <legend>{t("3. Prix et offres")}</legend>
                         <p className="admin-muted">
-                            Le prix d’une pièce est votre base. Les offres et la livraison sont
-                            facultatives.
+                            {t(
+                                "Le prix d’une pièce est votre base. Les offres et la livraison sont facultatives.",
+                            )}
                         </p>
                         <div className="grid gap-3 md:grid-cols-2">
                             <label>
-                                Prix de vente (MAD)
+                                {t("Prix de vente (MAD)")}
                                 <input
+                                    dir="auto"
                                     className={inputClass}
                                     required
                                     type="number"
@@ -550,6 +580,7 @@ export function ProductsTab({
                             </label>
                             <label className="admin-option-check">
                                 <input
+                                    dir="auto"
                                     type="checkbox"
                                     checked={form.promotionEnabled}
                                     onChange={(e) =>
@@ -559,21 +590,23 @@ export function ProductsTab({
                                         }))
                                     }
                                 />{" "}
-                                Produit en promotion
+                                {t("Produit en promotion")}
                             </label>
                             <label className="admin-option-check">
                                 <input
+                                    dir="auto"
                                     type="checkbox"
                                     checked={form.freeShipping}
                                     onChange={(e) =>
                                         setForm((v) => ({ ...v, freeShipping: e.target.checked }))
                                     }
                                 />{" "}
-                                Livraison offerte pour tout panier contenant ce produit
+                                {t("Livraison offerte pour tout panier contenant ce produit")}
                             </label>
                             <label>
-                                Prix initial barré (promotion)
+                                {t("Prix initial barré (promotion)")}
                                 <input
+                                    dir="auto"
                                     className={inputClass}
                                     type="number"
                                     min="0.01"
@@ -600,18 +633,20 @@ export function ProductsTab({
                         className="product-variants"
                         id="product-variants"
                     >
-                        <legend>4. Tailles, couleurs et stock</legend>
+                        <legend>{t("4. Tailles, couleurs et stock")}</legend>
                         <p className="admin-muted">
-                            Chaque variante possède une référence SKU unique. Le stock correspond
-                            aux unités disponibles, après les réservations des commandes.
+                            {t(
+                                "Chaque variante possède une référence SKU unique. Le stock correspond aux unités disponibles, après les réservations des commandes.",
+                            )}
                         </p>
                         <div className="product-size-builder">
                             <label>
-                                Créer plusieurs tailles
+                                {t("Créer plusieurs tailles")}
                                 <input
+                                    dir="auto"
                                     className={inputClass}
                                     value={sizes}
-                                    placeholder="S, M, L, XL"
+                                    placeholder={t("S, M, L, XL")}
                                     onChange={(e) => setSizes(e.target.value)}
                                 />
                             </label>
@@ -646,29 +681,30 @@ export function ProductsTab({
                                     }
                                 }}
                             >
-                                Créer les tailles
+                                {t("Créer les tailles")}
                             </button>
                             <p>
-                                Couleur de la dernière variante, ou noir si aucune. Les nouveaux
-                                stocks sont à zéro pour vous laisser les renseigner.
+                                {t(
+                                    "Couleur de la dernière variante, ou noir si aucune. Les nouveaux stocks sont à zéro pour vous laisser les renseigner.",
+                                )}
                             </p>
                         </div>
                         <p className="admin-scope">
-                            {variants.length}/100 variantes ·{" "}
+                            {variants.length}
+                            {t("/100 variantes ·")}{" "}
                             {variants.reduce(
                                 (sum, v) => sum + (/^\d+$/.test(v.stock) ? Number(v.stock) : 0),
                                 0,
                             )}{" "}
-                            unités saisies. Pour retirer une variante existante de la vente, mettez
-                            son stock à zéro.
+                            {t(
+                                "unités saisies. Pour retirer une variante existante de la vente, mettez son stock à zéro.",
+                            )}
                         </p>
                         {variants.some((v) => isAmbiguousSize(v.size)) && (
                             <p role="status" className="admin-scope">
-                                Une liste de pointures a été enregistrée comme une seule taille. Ces
-                                variantes sont exclues de la vente, sans effacer leur stock ni leur
-                                historique. Créez les pointures séparément et vérifiez le stock réel
-                                de chacune avant de le renseigner. Aucun stock n’est réparti
-                                automatiquement.
+                                {t(
+                                    "Une liste de pointures a été enregistrée comme une seule taille. Ces variantes sont exclues de la vente, sans effacer leur stock ni leur historique. Créez les pointures séparément et vérifiez le stock réel de chacune avant de le renseigner. Aucun stock n’est réparti automatiquement.",
+                                )}
                             </p>
                         )}
                         {variants.map((v, index) => (
@@ -677,23 +713,27 @@ export function ProductsTab({
                                 className="admin-variant-fields product-variant-card"
                             >
                                 <legend>
-                                    Variante {index + 1} · {v.size || "Sans taille"}
+                                    {t("Variante ")}
+                                    {index + 1} · {v.size || t("Sans taille")}
                                 </legend>
                                 {isAmbiguousSize(v.size) && (
                                     <p className="admin-muted">
-                                        À corriger : plusieurs tailles dans la même variante —
-                                        indisponible à la commande.
+                                        {t(
+                                            "À corriger : plusieurs tailles dans la même variante — indisponible à la commande.",
+                                        )}
                                     </p>
                                 )}
                                 <div className="product-variant-tools">
                                     <span className="admin-tag">
-                                        {v.id ? "Existante" : "Nouvelle"}
+                                        {v.id ? t("Existante") : t("Nouvelle")}
                                     </span>
                                     <button
                                         className="admin-text-button"
                                         type="button"
                                         disabled={variants.length >= 100}
-                                        aria-label={`Dupliquer la variante ${index + 1}`}
+                                        aria-label={t("Dupliquer la variante {0}", {
+                                            "0": index + 1,
+                                        })}
                                         onClick={() =>
                                             setVariants((old) => [
                                                 ...old,
@@ -709,13 +749,15 @@ export function ProductsTab({
                                         }
                                     >
                                         <Copy size={15} />
-                                        Dupliquer
+                                        {t("Dupliquer")}
                                     </button>
                                     {!v.id && (
                                         <button
                                             className="admin-text-button"
                                             type="button"
-                                            aria-label={`Retirer la variante ${index + 1}`}
+                                            aria-label={t("Retirer la variante {0}", {
+                                                "0": index + 1,
+                                            })}
                                             onClick={() =>
                                                 setVariants((old) =>
                                                     old.filter((item) => item.key !== v.key),
@@ -723,35 +765,38 @@ export function ProductsTab({
                                             }
                                         >
                                             <Trash2 size={15} />
-                                            Retirer
+                                            {t("Retirer")}
                                         </button>
                                     )}
                                 </div>
                                 <div className="grid gap-3 md:grid-cols-3">
                                     <label>
-                                        Référence SKU
+                                        {t("Référence SKU")}
                                         <input
+                                            dir="auto"
                                             className={inputClass}
                                             required={Boolean(v.id)}
-                                            placeholder="Générée automatiquement si vide"
+                                            placeholder={t("Générée automatiquement si vide")}
                                             maxLength={100}
                                             value={v.sku}
                                             onChange={(e) => variant(v.key, "sku", e.target.value)}
                                         />
                                     </label>
                                     <label>
-                                        Taille (facultative)
+                                        {t("Taille (facultative)")}
                                         <input
+                                            dir="auto"
                                             className={inputClass}
                                             maxLength={40}
-                                            placeholder="Une taille : M ou 38 ou Unique"
+                                            placeholder={t("Une taille : M ou 38 ou Unique")}
                                             value={v.size}
                                             onChange={(e) => variant(v.key, "size", e.target.value)}
                                         />
                                     </label>
                                     <label>
-                                        Stock disponible
+                                        {t("Stock disponible")}
                                         <input
+                                            dir="auto"
                                             className={inputClass}
                                             required
                                             type="number"
@@ -759,26 +804,34 @@ export function ProductsTab({
                                             max="1000000"
                                             step="1"
                                             value={v.stock}
-                                            aria-label={`Stock disponible de la variante ${index + 1}`}
+                                            aria-label={t("Stock disponible de la variante {0}", {
+                                                "0": index + 1,
+                                            })}
                                             onChange={(e) =>
                                                 variant(v.key, "stock", e.target.value)
                                             }
                                         />
                                         {v.expectedStock !== undefined && (
                                             <small>
-                                                Au chargement : {v.expectedStock} ·{" "}
+                                                {t("Au chargement : ")}
+                                                {v.expectedStock} ·{" "}
                                                 {Number(v.stock) - v.expectedStock >= 0 ? "+" : ""}
-                                                {Number(v.stock) - v.expectedStock} unité(s)
+                                                {Number(v.stock) - v.expectedStock}
+                                                {t(" unité(s)")}
                                             </small>
                                         )}
                                     </label>
                                     <label>
-                                        Couleur (code ou nom)
+                                        {t("Couleur (code ou nom)")}
                                         <div className="product-color-field">
                                             {/^#[a-f\d]{6}$/i.test(v.color) && (
                                                 <input
+                                                    dir="auto"
                                                     type="color"
-                                                    aria-label={`Choisir la couleur de la variante ${index + 1}`}
+                                                    aria-label={t(
+                                                        "Choisir la couleur de la variante {0}",
+                                                        { "0": index + 1 },
+                                                    )}
                                                     value={v.color}
                                                     onChange={(e) =>
                                                         variant(v.key, "color", e.target.value)
@@ -786,11 +839,14 @@ export function ProductsTab({
                                                 />
                                             )}
                                             <input
+                                                dir="auto"
                                                 className={inputClass}
                                                 required
                                                 maxLength={80}
                                                 value={v.color}
-                                                aria-label={`Code couleur de la variante ${index + 1}`}
+                                                aria-label={t("Code couleur de la variante {0}", {
+                                                    "0": index + 1,
+                                                })}
                                                 onChange={(e) =>
                                                     variant(v.key, "color", e.target.value)
                                                 }
@@ -805,7 +861,7 @@ export function ProductsTab({
                                         ] as const
                                     ).map(([key, label]) => (
                                         <label key={key}>
-                                            {label}
+                                            {t(String(label))}
                                             <input
                                                 className={inputClass}
                                                 required={key !== "colorNameEn"}
@@ -823,8 +879,9 @@ export function ProductsTab({
                         ))}
                         {!variants.length && (
                             <p className="admin-scope">
-                                Aucune variante : ajoutez-en une pour gérer le stock et mettre en
-                                vente.
+                                {t(
+                                    "Aucune variante : ajoutez-en une pour gérer le stock et mettre en vente.",
+                                )}
                             </p>
                         )}
                         <button
@@ -834,21 +891,31 @@ export function ProductsTab({
                             onClick={() => setVariants((old) => [...old, freshVariant()])}
                         >
                             <Plus size={16} />
-                            Ajouter une variante
+                            {t("Ajouter une variante")}
                         </button>
                     </fieldset>
-                    <ProductRecommendationEditor key={`recommendations-${session}`} currentId={id} value={form.recommendationSettings} products={products} disabled={disabled}
-                        onChange={recommendationSettings => setForm(old => ({ ...old, recommendationSettings }))} />
+                    <ProductRecommendationEditor
+                        key={`recommendations-${session}`}
+                        currentId={id}
+                        value={form.recommendationSettings}
+                        products={products}
+                        disabled={disabled}
+                        onChange={(recommendationSettings) =>
+                            setForm((old) => ({ ...old, recommendationSettings }))
+                        }
+                    />
                     <div className="product-editor-footer">
-                        {error && <p className="admin-alert">{error}</p>}
+                        {error && <p className="admin-alert">{t(error)}</p>}
                         <p>
                             {uploading
-                                ? "Envoi des photos… Attendez la fin avant d’enregistrer."
+                                ? t("Envoi des photos… Attendez la fin avant d’enregistrer.")
                                 : busy
-                                  ? "Enregistrement en cours…"
+                                  ? t("Enregistrement en cours…")
                                   : dirty
-                                    ? "Vos modifications seront appliquées ensemble à l’enregistrement."
-                                    : "Aucune modification en attente."}
+                                    ? t(
+                                          "Vos modifications seront appliquées ensemble à l’enregistrement.",
+                                      )
+                                    : t("Aucune modification en attente.")}
                         </p>
                         <div className="admin-editor-actions">
                             <button
@@ -856,7 +923,7 @@ export function ProductsTab({
                                 className="admin-button primary"
                                 disabled={disabled || uncertain}
                             >
-                                {busy ? "En cours…" : "Enregistrer le produit"}
+                                {busy ? t("En cours…") : t("Enregistrer le produit")}
                             </button>
                             <button
                                 type="button"
@@ -870,7 +937,7 @@ export function ProductsTab({
                                     }
                                 }}
                             >
-                                Fermer la fiche
+                                {t("Fermer la fiche")}
                             </button>
                             {id || uncertain ? (
                                 <button
@@ -879,7 +946,7 @@ export function ProductsTab({
                                     disabled={disabled}
                                     onClick={() => refresh(true)}
                                 >
-                                    Recharger cette fiche
+                                    {t("Recharger cette fiche")}
                                 </button>
                             ) : null}
                         </div>
@@ -889,46 +956,47 @@ export function ProductsTab({
             <section className="admin-panel">
                 <div className="admin-toolbar">
                     <label className="admin-search">
-                        <span>Rechercher un produit</span>
+                        <span>{t("Rechercher un produit")}</span>
                         <div>
                             <Search size={17} />
                             <input
+                                dir="auto"
                                 type="search"
                                 value={search}
-                                placeholder="Nom, adresse ou SKU"
+                                placeholder={t("Nom, adresse ou SKU")}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                     </label>
                     <label>
-                        Publication
+                        {t("Publication")}
                         <select
                             value={publication}
                             onChange={(e) => setPublication(e.target.value)}
                         >
-                            <option value="ALL">Tous les statuts</option>
-                            <option value="ACTIVE">En vente</option>
-                            <option value="DRAFT">Brouillons</option>
-                            <option value="ARCHIVED">Archivés</option>
+                            <option value="ALL">{t("Tous les statuts")}</option>
+                            <option value="ACTIVE">{t("En vente")}</option>
+                            <option value="DRAFT">{t("Brouillons")}</option>
+                            <option value="ARCHIVED">{t("Archivés")}</option>
                         </select>
                     </label>
                 </div>
                 <div className="product-list-filters">
                     <label>
-                        Stock
+                        {t("Stock")}
                         <select value={stock} onChange={(e) => setStock(e.target.value)}>
-                            <option value="ALL">Tous les stocks</option>
-                            <option value="LOW">Une variante à 3 unités ou moins</option>
-                            <option value="OUT">Toutes les variantes épuisées</option>
-                            <option value="NONE">Sans variante</option>
+                            <option value="ALL">{t("Tous les stocks")}</option>
+                            <option value="LOW">{t("Une variante à 3 unités ou moins")}</option>
+                            <option value="OUT">{t("Toutes les variantes épuisées")}</option>
+                            <option value="NONE">{t("Sans variante")}</option>
                         </select>
                     </label>
                     <label>
-                        Trier par
+                        {t("Trier par")}
                         <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                            <option value="recent">Ordre du catalogue</option>
-                            <option value="name">Nom A–Z</option>
-                            <option value="stock">Stock total croissant</option>
+                            <option value="recent">{t("Ordre du catalogue")}</option>
+                            <option value="name">{t("Nom A–Z")}</option>
+                            <option value="stock">{t("Stock total croissant")}</option>
                         </select>
                     </label>
                     <button
@@ -944,11 +1012,13 @@ export function ProductsTab({
                             setSort("recent");
                         }}
                     >
-                        Effacer les filtres
+                        {t("Effacer les filtres")}
                     </button>
                 </div>
                 <p className="admin-result-count" role="status">
-                    {visible.length} résultat{visible.length !== 1 ? "s" : ""}
+                    {visible.length}
+                    {t(" résultat")}
+                    {visible.length !== 1 ? t("s") : ""}
                 </p>
                 <div className="admin-product-list">
                     {visible.map((p) => (
@@ -966,46 +1036,50 @@ export function ProductsTab({
                             <div className="admin-product-numbers">
                                 <strong>{money(p.price)}</strong>
                                 <span>
-                                    {p.variants.reduce((sum, v) => sum + v.stock, 0)} unités ·{" "}
-                                    {p.variants.length} variante(s)
+                                    {p.variants.reduce((sum, v) => sum + v.stock, 0)}
+                                    {t(" unités ·")} {p.variants.length}
+                                    {t(" variante(s)")}
                                 </span>
                                 {p.variants.some((v) => v.stock <= 3) && (
                                     <span className="product-low-stock">
-                                        Vérifier les stocks par variante
+                                        {t("Vérifier les stocks par variante")}
                                     </span>
                                 )}
                                 {p.variants.some((v) => isAmbiguousSize(v.size)) && (
                                     <span className="product-low-stock">
-                                        Pointures regroupées à corriger · exclues de la vente
+                                        {t("Pointures regroupées à corriger · exclues de la vente")}
                                     </span>
                                 )}
                             </div>
                             <span className={`admin-status status-${p.status.toLowerCase()}`}>
                                 {p.status === "ACTIVE"
-                                    ? "En vente"
+                                    ? t("En vente")
                                     : p.status === "DRAFT"
-                                      ? "Brouillon"
-                                      : "Archivé"}
+                                      ? t("Brouillon")
+                                      : t("Archivé")}
                             </span>
                             <div className="admin-product-actions">
                                 <button
                                     className="admin-button"
                                     disabled={disabled}
-                                    aria-label={`Modifier ${p.nameFr}`}
+                                    aria-label={t("Modifier {0}", { "0": p.nameFr })}
                                     onClick={() => edit(p)}
                                 >
-                                    Modifier
+                                    {t("Modifier")}
                                 </button>
                                 <button
                                     className="admin-text-button"
                                     disabled={disabled || p.status === "ARCHIVED"}
-                                    aria-label={`Archiver ${p.nameFr}`}
+                                    aria-label={t("Archiver {0}", { "0": p.nameFr })}
                                     onClick={async () => {
                                         if (
                                             lock.current ||
                                             (id === p.id && !discard()) ||
                                             !confirm(
-                                                `Archiver « ${p.nameFr} » ? Le produit ne sera plus visible dans la boutique.`,
+                                                t(
+                                                    "Archiver « {name} » ? Le produit ne sera plus visible dans la boutique.",
+                                                    { name: p.nameFr },
+                                                ),
                                             )
                                         )
                                             return;
@@ -1028,7 +1102,7 @@ export function ProductsTab({
                                         }
                                     }}
                                 >
-                                    Archiver
+                                    {t("Archiver")}
                                 </button>
                             </div>
                         </article>
@@ -1037,8 +1111,8 @@ export function ProductsTab({
                 {!visible.length && (
                     <div className="admin-empty">
                         <Package size={28} />
-                        <h3>Aucun produit trouvé</h3>
-                        <p>Modifiez les filtres ou recherchez un autre nom.</p>
+                        <h3>{t("Aucun produit trouvé")}</h3>
+                        <p>{t("Modifiez les filtres ou recherchez un autre nom.")}</p>
                     </div>
                 )}
             </section>

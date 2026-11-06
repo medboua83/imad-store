@@ -42,6 +42,7 @@ const result = spawnSync(
         "tests/deskcomm-form.test.ts",
         "tests/checkout-assistance.test.ts",
         "tests/admin-summary.test.ts",
+        "tests/admin-locale.test.ts",
         "tests/admin-products.test.ts",
     ],
     { env, stdio: "inherit" },

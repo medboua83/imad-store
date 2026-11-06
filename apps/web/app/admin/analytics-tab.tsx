@@ -1,9 +1,12 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useRef, useState } from "react";
 import { Eye, MousePointer2, ShoppingBag, RefreshCw, ShieldCheck } from "lucide-react";
 import { getStoreAnalytics, type StoreAnalyticsSummary } from "@/lib/api";
 const count = (n: number) => n.toLocaleString("fr-MA");
 export default function AnalyticsTab() {
+    const { t, locale } = useAdminLocale();
     const [days, setDays] = useState(7),
         [data, setData] = useState<StoreAnalyticsSummary | null>(null);
     const [loading, setLoading] = useState(true),
@@ -40,24 +43,25 @@ export default function AnalyticsTab() {
         <div className="admin-analytics">
             <section className="admin-panel analytics-intro">
                 <div>
-                    <span className="analytics-eyebrow">L’activité de votre boutique</span>
-                    <h2>Des visites aux commandes</h2>
+                    <span className="analytics-eyebrow">{t("L’activité de votre boutique")}</span>
+                    <h2>{t("Des visites aux commandes")}</h2>
                     <p>
-                        Repérez les produits qui intéressent vos visiteurs et suivez les visites qui
-                        deviennent des commandes.
+                        {t(
+                            "Repérez les produits qui intéressent vos visiteurs et suivez les visites qui deviennent des commandes.",
+                        )}
                     </p>
                 </div>
                 <div className="analytics-toolbar">
                     <div className="analytics-period">
-                        <label htmlFor="analytics-period">Période</label>
+                        <label htmlFor="analytics-period">{t("Période")}</label>
                         <select
                             id="analytics-period"
                             value={days}
                             onChange={(e) => setDays(Number(e.target.value))}
                         >
-                            <option value={7}>7 derniers jours</option>
-                            <option value={30}>30 derniers jours</option>
-                            <option value={90}>90 derniers jours</option>
+                            <option value={7}>{t("7 derniers jours")}</option>
+                            <option value={30}>{t("30 derniers jours")}</option>
+                            <option value={90}>{t("90 derniers jours")}</option>
                         </select>
                     </div>
                     <button
@@ -66,21 +70,21 @@ export default function AnalyticsTab() {
                         onClick={() => setRefresh((v) => v + 1)}
                     >
                         <RefreshCw size={16} aria-hidden="true" />
-                        Actualiser
+                        {t("Actualiser")}
                     </button>
                 </div>
             </section>
             {error && (
                 <div className="admin-alert" role="alert">
-                    <p>{error}</p>
+                    <p>{t(error)}</p>
                     <button className="admin-button" onClick={() => setRefresh((v) => v + 1)}>
-                        Réessayer
+                        {t("Réessayer")}
                     </button>
                 </div>
             )}
             {loading && (
                 <div className="admin-loading" role="status">
-                    Chargement des statistiques…
+                    {t("Chargement des statistiques…")}
                 </div>
             )}
             {!loading && !error && data && (
@@ -88,27 +92,27 @@ export default function AnalyticsTab() {
                     <div className="admin-kpi-grid analytics-kpis">
                         <article className="admin-kpi">
                             <div>
-                                <p>Visites</p>
+                                <p>{t("Visites")}</p>
                                 <span>
                                     <MousePointer2 size={20} aria-hidden="true" />
                                 </span>
                             </div>
                             <strong>{count(data.visits)}</strong>
-                            <p>Une visite par onglet, pendant 30 minutes maximum</p>
+                            <p>{t("Une visite par onglet, pendant 30 minutes maximum")}</p>
                         </article>
                         <article className="admin-kpi">
                             <div>
-                                <p>Consultations de produits</p>
+                                <p>{t("Consultations de produits")}</p>
                                 <span>
                                     <Eye size={20} aria-hidden="true" />
                                 </span>
                             </div>
                             <strong>{count(data.productViews)}</strong>
-                            <p>Chaque produit est compté une fois par visite</p>
+                            <p>{t("Chaque produit est compté une fois par visite")}</p>
                         </article>
                         <article className="admin-kpi">
                             <div>
-                                <p>Taux de commande</p>
+                                <p>{t("Taux de commande")}</p>
                                 <span>
                                     <ShoppingBag size={20} aria-hidden="true" />
                                 </span>
@@ -119,15 +123,17 @@ export default function AnalyticsTab() {
                                     : `${data.orderRate.toLocaleString("fr-MA", { maximumFractionDigits: 2 })} %`}
                             </strong>
                             <p>
-                                {count(data.convertedVisits)} visite
-                                {data.convertedVisits !== 1 ? "s" : ""} avec au moins une commande
-                                sur {count(data.visits)}
+                                {count(data.convertedVisits)}
+                                {t(" visite")}
+                                {data.convertedVisits !== 1 ? t("s") : ""}
+                                {t(" avec au moins une commande sur ")}
+                                {count(data.visits)}
                             </p>
                         </article>
                     </div>
                     {data.funnel && (
-                        <section className="admin-panel" aria-label="Parcours de conversion">
-                            <h2>Où les visiteurs s’arrêtent-ils ?</h2>
+                        <section className="admin-panel" aria-label={t("Parcours de conversion")}>
+                            <h2>{t("Où les visiteurs s’arrêtent-ils ?")}</h2>
                             <ol className="analytics-funnel">
                                 {[
                                     ["Visites", data.visits],
@@ -136,63 +142,67 @@ export default function AnalyticsTab() {
                                     ["Avec commande créée", data.convertedVisits],
                                 ].map(([label, value]) => (
                                     <li key={label}>
-                                        <span>{label}</span>
+                                        <span>{t(String(label))}</span>
                                         <strong>{count(Number(value))}</strong>
                                     </li>
                                 ))}
                             </ol>
                             <p className="analytics-muted">
-                                Chaque étape compte une visite une seule fois. Un panier enregistré
-                                peut reprendre directement à la commande : ces compteurs ne
-                                décrivent pas forcément un parcours linéaire.
+                                {t(
+                                    "Chaque étape compte une visite une seule fois. Un panier enregistré peut reprendre directement à la commande : ces compteurs ne décrivent pas forcément un parcours linéaire.",
+                                )}
                             </p>
-                            <h3>État actuel des commandes attribuées à ces visites</h3>
+                            <h3>{t("État actuel des commandes attribuées à ces visites")}</h3>
                             <dl className="analytics-order-states">
                                 <div>
-                                    <dt>Confirmées, non annulées</dt>
+                                    <dt>{t("Confirmées, non annulées")}</dt>
                                     <dd>{count(data.funnel.confirmedOrders)}</dd>
                                 </div>
                                 <div>
-                                    <dt>Expédiées, livrées comprises</dt>
+                                    <dt>{t("Expédiées, livrées comprises")}</dt>
                                     <dd>{count(data.funnel.shippedOrders)}</dd>
                                 </div>
                                 <div>
-                                    <dt>Livrées</dt>
+                                    <dt>{t("Livrées")}</dt>
                                     <dd>{count(data.funnel.deliveredOrders)}</dd>
                                 </div>
                                 <div>
-                                    <dt>Annulées</dt>
+                                    <dt>{t("Annulées")}</dt>
                                     <dd>{count(data.funnel.cancelledOrders)}</dd>
                                 </div>
                             </dl>
                             <p className="analytics-muted">
-                                Les confirmées incluent les expédiées et livrées. Ce sont les états
-                                enregistrés sur la boutique, pas une preuve de paiement. Le suivi
-                                détaillé démarre à cette mise à jour ;{" "}
-                                {count(data.funnel.unknownOrders)} ancienne(s) commande(s) sans
-                                statut mesuré ne sont pas reconstituées.
+                                {t(
+                                    "Les confirmées incluent les expédiées et livrées. Ce sont les états enregistrés sur la boutique, pas une preuve de paiement. Le suivi détaillé démarre à cette mise à jour ;",
+                                )}{" "}
+                                {count(data.funnel.unknownOrders)}
+                                {t(
+                                    " ancienne(s) commande(s) sans statut mesuré ne sont pas reconstituées.",
+                                )}
                             </p>
                         </section>
                     )}
                     {!data.visits && (
                         <section className="admin-panel analytics-empty">
                             <Eye size={30} aria-hidden="true" />
-                            <h2>Les premières visites apparaîtront ici</h2>
+                            <h2>{t("Les premières visites apparaîtront ici")}</h2>
                             <p>
-                                Le suivi démarre à la mise en ligne de ce module. Vos visites
-                                d’administration et les tests sont exclus.
+                                {t(
+                                    "Le suivi démarre à la mise en ligne de ce module. Vos visites d’administration et les tests sont exclus.",
+                                )}
                             </p>
                         </section>
                     )}
                     <section className="admin-panel">
                         <div className="admin-panel-heading">
                             <div>
-                                <h2>Produits les plus consultés</h2>
-                                <p>Les 20 premiers produits sur la période sélectionnée.</p>
+                                <h2>{t("Produits les plus consultés")}</h2>
+                                <p>{t("Les 20 premiers produits sur la période sélectionnée.")}</p>
                             </div>
                             <span className="analytics-count">
-                                {count(data.productViews)} consultation
-                                {data.productViews !== 1 ? "s" : ""}
+                                {count(data.productViews)}
+                                {t(" consultation")}
+                                {data.productViews !== 1 ? t("s") : ""}
                             </span>
                         </div>
                         {data.products.length ? (
@@ -213,7 +223,8 @@ export default function AnalyticsTab() {
                                         <span className="analytics-product-count">
                                             {count(product.views)}
                                             <small>
-                                                consultation{product.views !== 1 ? "s" : ""}
+                                                {t("consultation")}
+                                                {product.views !== 1 ? t("s") : ""}
                                             </small>
                                         </span>
                                     </li>
@@ -221,37 +232,43 @@ export default function AnalyticsTab() {
                             </ol>
                         ) : (
                             <p className="analytics-muted">
-                                Aucune consultation de produit mesurée pendant cette période.
+                                {t("Aucune consultation de produit mesurée pendant cette période.")}
                             </p>
                         )}
                     </section>
                     <section className="admin-panel analytics-method">
                         <ShieldCheck size={22} aria-hidden="true" />
                         <div>
-                            <h2>Des chiffres expliqués, des données séparées</h2>
+                            <h2>{t("Des chiffres expliqués, des données séparées")}</h2>
                             <p>
-                                {count(data.pageViews)} consultations de pages ·{" "}
-                                {count(data.attributedOrders)} commandes créées et attribuées aux
-                                visites mesurées. Une commande créée peut encore être en attente,
-                                annulée ou non payée.
+                                {count(data.pageViews)}
+                                {t(" consultations de pages ·")} {count(data.attributedOrders)}
+                                {t(
+                                    " commandes créées et attribuées aux visites mesurées. Une commande créée peut encore être en attente, annulée ou non payée.",
+                                )}
                             </p>
                             <p>
-                                Le taux correspond aux visites ayant créé au moins une commande,
-                                divisées par les visites mesurées. Les commandes antérieures au
-                                suivi et les visites bloquées par les réglages de confidentialité ne
-                                sont pas attribuées.
+                                {t(
+                                    "Le taux correspond aux visites ayant créé au moins une commande, divisées par les visites mesurées. Les commandes antérieures au suivi et les visites bloquées par les réglages de confidentialité ne sont pas attribuées.",
+                                )}
                             </p>
                             <p>
-                                Ce tableau concerne uniquement cette installation et son entreprise.
-                                Aucun nom, téléphone ou adresse IP n’est enregistré dans ces
-                                statistiques. Les administrateurs connectés, les tests et les robots
-                                reconnus sont exclus.
+                                {t(
+                                    "Ce tableau concerne uniquement cette installation et son entreprise. Aucun nom, téléphone ou adresse IP n’est enregistré dans ces statistiques. Les administrateurs connectés, les tests et les robots reconnus sont exclus.",
+                                )}
                             </p>
                             <p>
                                 {data.trackingSince
-                                    ? `Historique disponible depuis le ${new Date(data.trackingSince).toLocaleString("fr-MA", { timeZone: "Africa/Casablanca" })}.`
-                                    : "Aucun historique reconstitué."}{" "}
-                                Période glissante de {days} jours. Conservation : 91 jours.
+                                    ? t("Historique disponible depuis le {0}.", {
+                                          "0": new Date(data.trackingSince).toLocaleString(
+                                              locale === "ar" ? "ar-MA" : "fr-MA",
+                                              { timeZone: "Africa/Casablanca" },
+                                          ),
+                                      })
+                                    : t("Aucun historique reconstitué.")}{" "}
+                                {t("Période glissante de ")}
+                                {days}
+                                {t(" jours. Conservation : 91 jours.")}
                             </p>
                         </div>
                     </section>

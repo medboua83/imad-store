@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +16,7 @@ export function AdminProductPhoto({
     width?: number;
     height?: number;
 }) {
+    const { t } = useAdminLocale();
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
     const src = images.find((image) => image && !failed.has(image));
     return src ? (
@@ -31,7 +34,7 @@ export function AdminProductPhoto({
             aria-label={`${name} — ${images.length ? "Photo indisponible" : "Sans photo"}`}
         >
             <ImageOff size={22} aria-hidden="true" />
-            <span>{images.length ? "Photo indisponible" : "Sans photo"}</span>
+            <span>{images.length ? t("Photo indisponible") : t("Sans photo")}</span>
         </span>
     );
 }

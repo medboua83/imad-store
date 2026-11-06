@@ -165,7 +165,7 @@
     font-weight: 600;
     text-decoration: underline;
     min-height: 44px;
-    margin-left: 12px;
+    margin-inline-start: 12px;
 }
 .admin-feedback {
     padding: 12px 16px;
@@ -213,7 +213,7 @@
     background: #bd8541;
     position: absolute;
     top: 9px;
-    right: 9px;
+    inset-inline-end: 9px;
 }
 /* Login */
 .admin-auth {
@@ -282,11 +282,11 @@
     position: relative;
 }
 .admin-password input {
-    padding-right: 54px !important;
+    padding-inline-end: 54px !important;
 }
 .admin-password button {
     position: absolute;
-    right: 4px;
+    inset-inline-end: 4px;
     top: 2px;
     display: grid;
     place-items: center;
@@ -339,7 +339,7 @@
     gap: 12px;
     min-height: 47px;
     padding: 11px 12px;
-    text-align: left;
+    text-align: start;
     border-radius: 8px;
     font-size: 12px;
     color: #d1cabd;
@@ -376,7 +376,7 @@
     gap: 12px;
     min-height: 44px;
     padding: 10px 12px;
-    text-align: left;
+    text-align: start;
     font-size: 12px;
     color: #ddd7cd;
 }
@@ -408,7 +408,7 @@
 .admin-topbar > p span {
     color: var(--admin-muted);
     font-weight: 400;
-    margin-left: 7px;
+    margin-inline-start: 7px;
 }
 .admin-topbar-actions {
     display: flex;
@@ -421,7 +421,7 @@
     gap: 7px;
     color: #796d58;
     font-size: 10px;
-    margin-right: 8px;
+    margin-inline-end: 8px;
 }
 .admin-sync i {
     width: 6px;
@@ -732,12 +732,12 @@
     margin-top: 7px;
 }
 .admin-search input {
-    padding-left: 40px !important;
+    padding-inline-start: 40px !important;
     margin: 0 !important;
 }
 .admin-search svg {
     position: absolute;
-    left: 13px;
+    inset-inline-start: 13px;
     top: 15px;
     color: #908168;
 }
@@ -862,7 +862,7 @@
 }
 .admin-product-name p {
     font-family: "Tajawal", sans-serif;
-    text-align: left;
+    text-align: start;
     font-size: 12px;
     color: #736854;
     margin-top: 3px;
@@ -1002,7 +1002,7 @@
 }
 .admin-category-list span {
     display: block;
-    text-align: left;
+    text-align: start;
     font-family: "Tajawal", sans-serif;
     font-size: 13px;
     color: #7c6f58;
@@ -1015,7 +1015,7 @@
 .admin-notices > button {
     display: flex;
     align-items: flex-start;
-    text-align: left;
+    text-align: start;
     width: 100%;
     gap: 14px;
     padding: 20px 8px;
@@ -1068,10 +1068,10 @@
         flex-wrap: wrap;
     }
     .admin-product-numbers {
-        margin-left: auto;
+        margin-inline-start: auto;
     }
     .admin-product-actions {
-        margin-left: auto;
+        margin-inline-start: auto;
     }
     .admin-product-name {
         min-width: 160px;
@@ -1147,7 +1147,7 @@
         gap: 12px;
     }
     .admin-product-actions {
-        margin-left: 0;
+        margin-inline-start: 0;
     }
     .admin-page-heading h1 {
         font-size: 29px;
@@ -1189,7 +1189,7 @@
     }
     .admin-sync {
         font-size: 10px;
-        margin-right: 3px;
+        margin-inline-end: 3px;
     }
     .admin-icon-button {
         min-width: 40px;
@@ -1262,10 +1262,10 @@
         min-width: 160px;
     }
     .admin-recent-list > div > strong:last-child {
-        margin-left: auto;
+        margin-inline-start: auto;
     }
     .admin-recent-list > div > .admin-status {
-        margin-left: 55px;
+        margin-inline-start: 55px;
     }
     .admin-order-grid,
     .admin-category-grid {
@@ -1299,11 +1299,11 @@
         height: 68px;
     }
     .admin-product-list > article > .admin-status {
-        margin-left: auto;
+        margin-inline-start: auto;
     }
     .admin-product-numbers {
         width: calc(100% - 70px);
-        margin-left: 70px;
+        margin-inline-start: 70px;
     }
     .admin-product-actions {
         width: 100%;
@@ -1341,7 +1341,7 @@
         width: 100%;
     }
     .admin-sync {
-        margin-right: auto;
+        margin-inline-end: auto;
     }
     .admin-recent-list > div > div {
         min-width: 130px;
@@ -1563,7 +1563,7 @@
 }
 .admin-app .order-totals dd {
   margin: 0;
-  text-align: right;
+  text-align: end;
 }
 .admin-app .order-grand-total {
   border-top: 1px solid #dcd7cd;
@@ -1684,7 +1684,7 @@
 .analytics-rank { color: #897b63; font-size: 14px; }
 .analytics-bar { height: 5px; border-radius: 8px; background: #f0ede7; margin-top: 12px; overflow: hidden; }
 .analytics-bar span { display: block; height: 100%; border-radius: inherit; background: #574b37; }
-.analytics-product-count { text-align: right; font-weight: 700; font-size: 19px; }
+.analytics-product-count { text-align: end; font-weight: 700; font-size: 19px; }
 .analytics-product-count small { display: block; font-size: 11px; font-weight: 400; color: #7a6e59; }
 .analytics-count { background: #f0ede7; border-radius: 20px; padding: 7px 12px; font-size: 12px; white-space: nowrap; }
 .analytics-method { display: flex; align-items: start; gap: 14px; }
@@ -1760,3 +1760,26 @@
 .analytics-funnel { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-block:20px; list-style:none; padding:0; }
 .analytics-funnel li { border:1px solid #e5ddcf; border-radius:12px; padding:16px; background:#faf7f0; }
 .analytics-funnel strong { display:block; margin-top:8px; font-size:24px; }
+
+/* Per-administrator language preference; customer content keeps its own direction. */
+.admin-app .admin-sidebar nav button { transition: none; }
+.admin-app .admin-sidebar nav button[aria-current="page"],
+.admin-app .admin-sidebar nav button[aria-current="page"]:hover {
+    background: #ecdbb5;
+    color: #463315;
+}
+.admin-app[lang="ar"], .admin-app[lang="ar"] h1, .admin-app[lang="ar"] h2,
+.admin-app[lang="ar"] h3, .admin-app[lang="ar"] h4 { font-family: "Tajawal", "DM Sans", sans-serif; letter-spacing: normal; }
+.admin-language-select { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.admin-language-select label { font-size: 11px; white-space: nowrap; }
+.admin-app .admin-language-select select { width: auto; min-height: 40px; padding: 6px 10px; font-size: 13px; }
+.admin-auth-main { position: relative; }
+.admin-auth-main > .admin-language-select { position: absolute; inset-block-start: 16px; inset-inline-end: 20px; }
+.admin-app[dir="rtl"] input[type="email"], .admin-app[dir="rtl"] input[type="url"],
+.admin-app[dir="rtl"] input[type="tel"], .admin-app[dir="rtl"] input[type="number"],
+.admin-app[dir="rtl"] input[type="date"] { direction: ltr; text-align: left; }
+@media (max-width: 767px) {
+ .admin-topbar-actions { flex-wrap: wrap; }
+ .admin-language-select label { display: none; }
+ .admin-auth-main { padding-top: 70px; }
+}

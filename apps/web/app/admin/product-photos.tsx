@@ -1,4 +1,6 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useRef, useState } from "react";
 import { ImagePlus, ArrowLeft, ArrowRight, Star, X } from "lucide-react";
 import { uploadProductImage } from "@/lib/api";
@@ -15,6 +17,7 @@ export function ProductPhotos({
     busy: boolean;
     onBusy: (value: boolean) => void;
 }) {
+    const { t } = useAdminLocale();
     const [progress, setProgress] = useState(""),
         [failures, setFailures] = useState<string[]>([]),
         [dragging, setDragging] = useState(false);
@@ -67,15 +70,16 @@ export function ProductPhotos({
     }
     return (
         <fieldset className="product-photos">
-            <legend>2. Photos du produit</legend>
+            <legend>{t("2. Photos du produit")}</legend>
             <p className="admin-muted">
-                La première photo est la couverture. Jusqu’à 12 photos · PNG, JPEG ou WebP · 5 Mo
-                par fichier.
+                {t(
+                    "La première photo est la couverture. Jusqu’à 12 photos · PNG, JPEG ou WebP · 5 Mo par fichier.",
+                )}
             </p>
             <div
                 className={`product-photo-drop ${dragging ? "dragging" : ""}`}
                 role="group"
-                aria-label="Zone d’ajout de photos"
+                aria-label={t("Zone d’ajout de photos")}
                 onDragOver={(e) => {
                     e.preventDefault();
                     if (!busy) setDragging(true);
@@ -88,11 +92,12 @@ export function ProductPhotos({
                 }}
             >
                 <ImagePlus size={28} aria-hidden="true" />
-                <strong>Déposez vos photos ici</strong>
-                <span>ou choisissez plusieurs fichiers sur votre appareil</span>
+                <strong>{t("Déposez vos photos ici")}</strong>
+                <span>{t("ou choisissez plusieurs fichiers sur votre appareil")}</span>
                 <label>
-                    Choisir des photos
+                    {t("Choisir des photos")}
                     <input
+                        dir="auto"
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         multiple
@@ -107,15 +112,15 @@ export function ProductPhotos({
             </div>
             {progress && (
                 <p className="admin-feedback" role="status">
-                    {progress}
+                    {t(progress)}
                 </p>
             )}
             {failures.length > 0 && (
                 <div className="admin-alert" role="alert">
-                    <p>Les autres photos ajoutées sont conservées.</p>
+                    <p>{t("Les autres photos ajoutées sont conservées.")}</p>
                     <ul>
                         {failures.map((message, i) => (
-                            <li key={i}>{message}</li>
+                            <li key={i}>{t(message)}</li>
                         ))}
                     </ul>
                 </div>
@@ -123,15 +128,22 @@ export function ProductPhotos({
             <div className="product-photo-grid">
                 {images.map((url, i) => (
                     <div key={`${url}-${i}`} className="product-photo-card">
-                        <AdminProductPhoto images={[url]} name={`Vue ${i + 1} du produit`} width={160} height={160} />
+                        <AdminProductPhoto
+                            images={[url]}
+                            name={t("Vue {number} du produit", { number: i + 1 })}
+                            width={160}
+                            height={160}
+                        />
                         <span className="product-photo-position">
-                            {i === 0 ? "Couverture" : `Photo ${i + 1}`}
+                            {i === 0 ? t("Couverture") : t("Photo {0}", { "0": i + 1 })}
                         </span>
                         <div className="product-photo-actions">
                             <button
                                 type="button"
                                 disabled={busy || i === 0}
-                                aria-label={`Déplacer la photo ${i + 1} vers la gauche`}
+                                aria-label={t("Déplacer la photo {0} vers la gauche", {
+                                    "0": i + 1,
+                                })}
                                 onClick={() => move(i, i - 1)}
                             >
                                 <ArrowLeft size={16} />
@@ -139,7 +151,9 @@ export function ProductPhotos({
                             <button
                                 type="button"
                                 disabled={busy || i === images.length - 1}
-                                aria-label={`Déplacer la photo ${i + 1} vers la droite`}
+                                aria-label={t("Déplacer la photo {0} vers la droite", {
+                                    "0": i + 1,
+                                })}
                                 onClick={() => move(i, i + 1)}
                             >
                                 <ArrowRight size={16} />
@@ -147,7 +161,9 @@ export function ProductPhotos({
                             <button
                                 type="button"
                                 disabled={busy || i === 0}
-                                aria-label={`Utiliser la photo ${i + 1} comme couverture`}
+                                aria-label={t("Utiliser la photo {0} comme couverture", {
+                                    "0": i + 1,
+                                })}
                                 onClick={() => move(i, 0)}
                             >
                                 <Star size={16} />
@@ -155,7 +171,7 @@ export function ProductPhotos({
                             <button
                                 type="button"
                                 disabled={busy}
-                                aria-label={`Retirer la photo ${i + 1}`}
+                                aria-label={t("Retirer la photo {0}", { "0": i + 1 })}
                                 onClick={() => onChange(images.filter((_, index) => index !== i))}
                             >
                                 <X size={16} />
@@ -166,12 +182,13 @@ export function ProductPhotos({
             </div>
             {!images.length && (
                 <p className="admin-scope">
-                    Aucune photo ajoutée. Vous pouvez préparer le produit en brouillon.
+                    {t("Aucune photo ajoutée. Vous pouvez préparer le produit en brouillon.")}
                 </p>
             )}
             <p className="admin-scope">
-                L’ordre et les retraits sont appliqués à la fiche lors de l’enregistrement. Retirer
-                une photo ne supprime pas son fichier du serveur.
+                {t(
+                    "L’ordre et les retraits sont appliqués à la fiche lors de l’enregistrement. Retirer une photo ne supprime pas son fichier du serveur.",
+                )}
             </p>
         </fieldset>
     );

@@ -1,12 +1,8 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useMemo, useState } from "react";
-import {
-    ArrowUpRight,
-    Package,
-    RefreshCw,
-    ShoppingBag,
-    Truck,
-} from "lucide-react";
+import { ArrowUpRight, Package, RefreshCw, ShoppingBag, Truck } from "lucide-react";
 import type { Product, Category } from "@/lib/api";
 import { money, statusLabels, summarize } from "./admin-utils";
 type Order = {
@@ -33,9 +29,11 @@ export function OverviewTab({
     productTotal: number;
     onNavigate: (tab: "orders" | "products") => void;
 }) {
+    const { t, locale } = useAdminLocale();
+    const dateLocale = locale === "ar" ? "ar-MA" : "fr-MA";
     const summary = summarize(orders, products);
     const days = useMemo(() => {
-        const fmt = new Intl.DateTimeFormat("fr-MA", {
+        const fmt = new Intl.DateTimeFormat(dateLocale, {
             timeZone: "Africa/Casablanca",
             day: "2-digit",
             month: "2-digit",
@@ -48,20 +46,20 @@ export function OverviewTab({
             const key = fmt.format(d);
             return {
                 date: key,
-                label: d.toLocaleDateString("fr-MA", {
+                label: d.toLocaleDateString(dateLocale, {
                     timeZone: "Africa/Casablanca",
                     weekday: "short",
                 }),
                 count: orders.filter((o) => fmt.format(new Date(o.createdAt)) === key).length,
             };
         });
-    }, [orders]);
+    }, [orders, dateLocale]);
     const max = Math.max(1, ...days.map((d) => d.count));
     const cards = [
         {
             label: "Commandes au total",
             value: String(orderTotal),
-            sub: `${orders.length} dernières analysées`,
+            sub: t("{count} dernières analysées", { count: orders.length }),
             icon: Package,
         },
         {
@@ -79,7 +77,10 @@ export function OverviewTab({
         {
             label: "Produits en vente",
             value: String(summary.activeProducts),
-            sub: `Sur ${products.length} fiches chargées (${productTotal} au total)`,
+            sub: t("Sur {count} fiches chargées ({total} au total)", {
+                count: products.length,
+                total: productTotal,
+            }),
             icon: ShoppingBag,
         },
     ];
@@ -89,13 +90,13 @@ export function OverviewTab({
                 {cards.map(({ label, value, sub, icon: Icon }) => (
                     <section className="admin-kpi" key={label}>
                         <div>
-                            <p>{label}</p>
+                            <p>{t(label)}</p>
                             <span>
                                 <Icon size={19} aria-hidden="true" />
                             </span>
                         </div>
                         <strong>{value}</strong>
-                        <p>{sub}</p>
+                        <p>{t(sub)}</p>
                     </section>
                 ))}
             </div>
@@ -103,17 +104,20 @@ export function OverviewTab({
                 <section className="admin-panel">
                     <div className="admin-panel-heading">
                         <div>
-                            <h2>L’activité de votre boutique</h2>
-                            <p>Commandes reçues · 7 derniers jours · heure du Maroc</p>
+                            <h2>{t("L’activité de votre boutique")}</h2>
+                            <p>{t("Commandes reçues · 7 derniers jours · heure du Maroc")}</p>
                         </div>
                         <span className="admin-tag">
-                            {days.reduce((s, d) => s + d.count, 0)} commandes
+                            {days.reduce((s, d) => s + d.count, 0)}
+                            {t(" commandes")}
                         </span>
                     </div>
                     <div
                         className="admin-activity-chart"
                         role="img"
-                        aria-label={days.map((d) => `${d.date} : ${d.count} commandes`).join(" ; ")}
+                        aria-label={days
+                            .map((d) => t("{0} : {1} commandes", { "0": d.date, "1": d.count }))
+                            .join(" ; ")}
                     >
                         {days.map((d) => (
                             <div key={d.date}>
@@ -128,47 +132,52 @@ export function OverviewTab({
                         ))}
                     </div>
                     <p className="admin-scope">
-                        Calculé sur les {orders.length} commandes chargées, toutes situations
-                        confondues. Les annulations restent dans l’activité; elles sont exclues du
-                        montant livré.
+                        {t("Calculé sur les ")}
+                        {orders.length}
+                        {t(
+                            " commandes chargées, toutes situations confondues. Les annulations restent dans l’activité; elles sont exclues du montant livré.",
+                        )}
                     </p>
                 </section>
                 <section className="admin-attention">
-                    <p className="admin-eyebrow">VOTRE PROCHAINE ÉTAPE</p>
+                    <p className="admin-eyebrow">{t("VOTRE PROCHAINE ÉTAPE")}</p>
                     <h2>
-                        Une boutique
+                        {t("Une boutique")}
                         <br />
-                        bien suivie.
+                        {t("bien suivie.")}
                     </h2>
                     <p>
                         {summary.pending
-                            ? `${summary.pending} commande(s) en attente de confirmation.`
-                            : "Aucune commande à confirmer dans la sélection."}
+                            ? t("{0} commande(s) en attente de confirmation.", {
+                                  "0": summary.pending,
+                              })
+                            : t("Aucune commande à confirmer dans la sélection.")}
                     </p>
                     <button className="admin-button" onClick={() => onNavigate("orders")}>
-                        Voir les commandes
+                        {t("Voir les commandes")}
                         <ArrowUpRight size={17} />
                     </button>
                     <div className="admin-attention-stock">
                         <ShoppingBag size={18} />
                         <span>
-                            {summary.lowStock} produit(s) en vente avec une variante à 3 unités ou
-                            moins.
+                            {summary.lowStock}
+                            {t(" produit(s) en vente avec une variante à 3 unités ou moins.")}
                         </span>
                     </div>
                     <button className="admin-text-button" onClick={() => onNavigate("products")}>
-                        Vérifier les stocks <ArrowUpRight size={15} />
+                        {t("Vérifier les stocks ")}
+                        <ArrowUpRight size={15} />
                     </button>
                 </section>
             </div>
             <section className="admin-panel">
                 <div className="admin-panel-heading">
                     <div>
-                        <h2>Dernières commandes</h2>
-                        <p>Les cinq dernières demandes reçues.</p>
+                        <h2>{t("Dernières commandes")}</h2>
+                        <p>{t("Les cinq dernières demandes reçues.")}</p>
                     </div>
                     <button className="admin-text-button" onClick={() => onNavigate("orders")}>
-                        Tout consulter
+                        {t("Tout consulter")}
                         <ArrowUpRight size={16} />
                     </button>
                 </div>
@@ -182,19 +191,19 @@ export function OverviewTab({
                                 <div>
                                     <strong>#{o.id.slice(-8).toUpperCase()}</strong>
                                     <span>
-                                        {o.customerName || "Client invité"} ·{" "}
-                                        {o.city || "Ville non renseignée"}
+                                        {o.customerName || t("Client invité")} ·{" "}
+                                        {o.city || t("Ville non renseignée")}
                                     </span>
                                 </div>
                                 <span className={`admin-status status-${o.status.toLowerCase()}`}>
-                                    {statusLabels[o.status] || o.status}
+                                    {t(statusLabels[o.status] || o.status)}
                                 </span>
                                 <strong>{money(o.totalAmount)}</strong>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="admin-empty">Votre première commande apparaîtra ici.</p>
+                    <p className="admin-empty">{t("Votre première commande apparaîtra ici.")}</p>
                 )}
             </section>
         </div>
@@ -210,15 +219,16 @@ export function CategoriesTab({
     onCreate: (d: Record<string, unknown>) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
 }) {
+    const { t } = useAdminLocale();
     const [form, setForm] = useState({ slug: "", nameFr: "", nameAr: "", nameEn: "" }),
         [busy, setBusy] = useState(false),
         [message, setMessage] = useState("");
     return (
         <div className="admin-category-grid">
             <section className="admin-panel">
-                <h2>Ajouter une catégorie</h2>
+                <h2>{t("Ajouter une catégorie")}</h2>
                 <p className="admin-muted">
-                    Renseignez les trois langues utilisées dans le catalogue.
+                    {t("Renseignez les trois langues utilisées dans le catalogue.")}
                 </p>
                 <form
                     className="admin-category-form"
@@ -248,32 +258,35 @@ export function CategoriesTab({
                         ] as const
                     ).map(([key, label]) => (
                         <label key={key}>
-                            {label}
+                            {t(label)}
                             <input
                                 required
                                 dir={key === "nameAr" ? "rtl" : "ltr"}
                                 value={form[key]}
                                 pattern={key === "slug" ? "[a-z0-9]+(-[a-z0-9]+)*" : undefined}
-                                placeholder={key === "slug" ? "exemple-categorie" : undefined}
+                                placeholder={key === "slug" ? t("exemple-categorie") : undefined}
                                 onChange={(e) => setForm((v) => ({ ...v, [key]: e.target.value }))}
                             />
                         </label>
                     ))}
                     <button className="admin-button primary" disabled={busy}>
-                        {busy ? "Enregistrement…" : "Créer la catégorie"}
+                        {busy ? t("Enregistrement…") : t("Créer la catégorie")}
                     </button>
                 </form>
                 {message && (
                     <p className="admin-feedback" role="status">
-                        {message}
+                        {t(message)}
                     </p>
                 )}
             </section>
             <section className="admin-panel">
                 <div className="admin-panel-heading">
                     <div>
-                        <h2>Vos catégories</h2>
-                        <p>{categories.length} catégorie(s)</p>
+                        <h2>{t("Vos catégories")}</h2>
+                        <p>
+                            {categories.length}
+                            {t(" catégorie(s)")}
+                        </p>
                     </div>
                 </div>
                 <div className="admin-category-list">
@@ -287,9 +300,15 @@ export function CategoriesTab({
                             <button
                                 className="admin-button danger"
                                 disabled={busy}
-                                aria-label={`Supprimer ${c.nameFr}`}
+                                aria-label={t("Supprimer {0}", { "0": c.nameFr })}
                                 onClick={async () => {
-                                    if (!confirm(`Supprimer la catégorie « ${c.nameFr} » ?`))
+                                    if (
+                                        !confirm(
+                                            t("Supprimer la catégorie « {name} » ?", {
+                                                name: c.nameFr,
+                                            }),
+                                        )
+                                    )
                                         return;
                                     setBusy(true);
                                     try {
@@ -304,7 +323,7 @@ export function CategoriesTab({
                                     }
                                 }}
                             >
-                                Supprimer
+                                {t("Supprimer")}
                             </button>
                         </div>
                     ))}

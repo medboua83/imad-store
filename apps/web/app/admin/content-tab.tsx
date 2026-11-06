@@ -1,9 +1,12 @@
 "use client";
+import { useAdminLocale } from "./admin-locale";
+
 import { useEffect, useState } from "react";
 import { defaultSiteContent, type SiteContent } from "@imad-store/shared";
 import { getContentAdmin, saveContent, uploadProductImage } from "@/lib/api";
 import { HomeView } from "@/components/store/HomeView";
 export default function ContentTab() {
+    const { t, locale } = useAdminLocale();
     const [content, setContent] = useState<SiteContent>(defaultSiteContent);
     const [revision, setRevision] = useState(0);
     const [ready, setReady] = useState(false);
@@ -62,29 +65,33 @@ export default function ContentTab() {
     }
     const input = "admin-field mt-2";
     return (
-        <div className="admin-panel admin-content-panel space-y-5" dir="ltr">
-            <h2 className="text-2xl">Accueil et informations du magasin</h2>
+        <div
+            className="admin-panel admin-content-panel space-y-5"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+        >
+            <h2 className="text-2xl">{t("Accueil et informations du magasin")}</h2>
             <p>
-                Révision {revision}. Enregistrez le brouillon, vérifiez l’aperçu, puis publiez
-                volontairement.
+                {t("Révision ")}
+                {revision}
+                {t(". Enregistrez le brouillon, vérifiez l’aperçu, puis publiez volontairement.")}
             </p>
-            <p role="status">{message}</p>
+            <p role="status">{t(message)}</p>
             <button
                 className="action underline"
                 disabled={busy}
                 onClick={() => {
                     if (
                         !dirty ||
-                        confirm("Recharger et abandonner les modifications non enregistrées ?")
+                        confirm(t("Recharger et abandonner les modifications non enregistrées ?"))
                     )
                         void load();
                 }}
             >
-                Recharger la configuration
+                {t("Recharger la configuration")}
             </button>
             {!ready ? (
                 <button className="action underline" onClick={load}>
-                    Réessayer le chargement
+                    {t("Réessayer le chargement")}
                 </button>
             ) : (
                 <>
@@ -99,8 +106,9 @@ export default function ContentTab() {
                             ] as const
                         ).map(([key, label]) => (
                             <label key={key}>
-                                {label}
+                                {t(label)}
                                 <input
+                                    dir="auto"
                                     className={input}
                                     value={content[key]}
                                     maxLength={key === "heroTitle" ? 160 : 5000}
@@ -109,8 +117,9 @@ export default function ContentTab() {
                             </label>
                         ))}
                         <label>
-                            Photo d’accueil
+                            {t("Photo d’accueil")}
                             <input
+                                dir="auto"
                                 className="block mt-2"
                                 type="file"
                                 accept="image/png,image/jpeg,image/webp"
@@ -133,12 +142,13 @@ export default function ContentTab() {
                         </label>
                     </div>
                     <fieldset className="border border-white/20 p-4 space-y-4">
-                        <legend>Bannières (3 maximum)</legend>
+                        <legend>{t("Bannières (3 maximum)")}</legend>
                         {content.banners.map((banner, index) => (
                             <div key={index} className="grid md:grid-cols-3 gap-3">
                                 <label>
-                                    Titre
+                                    {t("Titre")}
                                     <input
+                                        dir="auto"
                                         className={input}
                                         value={banner.title}
                                         onChange={(e) =>
@@ -154,8 +164,9 @@ export default function ContentTab() {
                                     />
                                 </label>
                                 <label>
-                                    Lien interne
+                                    {t("Lien interne")}
                                     <input
+                                        dir="auto"
                                         className={input}
                                         value={banner.href}
                                         onChange={(e) =>
@@ -171,8 +182,9 @@ export default function ContentTab() {
                                     />
                                 </label>
                                 <label>
-                                    Photo
+                                    {t("Photo")}
                                     <input
+                                        dir="auto"
                                         className="block mt-3"
                                         type="file"
                                         accept="image/png,image/jpeg,image/webp"
@@ -206,7 +218,8 @@ export default function ContentTab() {
                                         )
                                     }
                                 >
-                                    Retirer la bannière {index + 1}
+                                    {t("Retirer la bannière ")}
+                                    {index + 1}
                                 </button>
                             </div>
                         ))}
@@ -224,7 +237,7 @@ export default function ContentTab() {
                                 ])
                             }
                         >
-                            Ajouter une bannière
+                            {t("Ajouter une bannière")}
                         </button>
                     </fieldset>
                     {(
@@ -235,12 +248,25 @@ export default function ContentTab() {
                         ] as const
                     ).map(([key, label]) => (
                         <label className="block" key={key}>
-                            {label}
+                            {t(label)}
                             <textarea
+                                dir="auto"
                                 rows={4}
                                 className={input}
                                 value={content[key]}
-                                placeholder={key === "deliveryText" ? "Villes desservies, délai de préparation et délai de transport, jours ouvrés, exceptions. Les frais affichés sont calculés depuis les réglages Commerce." : key === "returnsText" ? "Délai pour demander un retour, état du produit, exclusions, frais et responsabilité du retour, procédure et traitement du remboursement." : "À renseigner avec les informations exactes du magasin"}
+                                placeholder={
+                                    key === "deliveryText"
+                                        ? t(
+                                              "Villes desservies, délai de préparation et délai de transport, jours ouvrés, exceptions. Les frais affichés sont calculés depuis les réglages Commerce.",
+                                          )
+                                        : key === "returnsText"
+                                          ? t(
+                                                "Délai pour demander un retour, état du produit, exclusions, frais et responsabilité du retour, procédure et traitement du remboursement.",
+                                            )
+                                          : t(
+                                                "À renseigner avec les informations exactes du magasin",
+                                            )
+                                }
                                 onChange={(e) => {
                                     change(key, e.target.value);
                                     change("policiesVerified", false);
@@ -248,15 +274,21 @@ export default function ContentTab() {
                             />
                         </label>
                     ))}
-                    <p className="admin-muted">Complétez les délais et les conditions réelles avant de les publier. Sans texte validé, le site indique les informations manquantes et propose de contacter le magasin. Les frais de livraison restent reliés aux réglages Commerce.</p>
+                    <p className="admin-muted">
+                        {t(
+                            "Complétez les délais et les conditions réelles avant de les publier. Sans texte validé, le site indique les informations manquantes et propose de contacter le magasin. Les frais de livraison restent reliés aux réglages Commerce.",
+                        )}
+                    </p>
                     <label className="flex gap-3">
                         <input
+                            dir="auto"
                             type="checkbox"
                             checked={content.policiesVerified}
                             onChange={(e) => change("policiesVerified", e.target.checked)}
                         />
-                        Je confirme avoir vérifié l’exactitude des informations commerciales à
-                        publier.
+                        {t(
+                            "Je confirme avoir vérifié l’exactitude des informations commerciales à publier.",
+                        )}
                     </label>
                     <div className="flex flex-wrap gap-3">
                         <button
@@ -264,27 +296,29 @@ export default function ContentTab() {
                             disabled={busy}
                             onClick={() => perform("draft")}
                         >
-                            Enregistrer le brouillon
+                            {t("Enregistrer le brouillon")}
                         </button>
                         <button className="admin-button" onClick={() => setPreview(!preview)}>
-                            Aperçu du brouillon
+                            {t("Aperçu du brouillon")}
                         </button>
                         <button
                             className="admin-button"
                             disabled={busy || dirty}
                             onClick={() => perform("publish")}
                         >
-                            Publier
+                            {t("Publier")}
                         </button>
                         <button
                             className="admin-button"
                             disabled={busy || !rollback || dirty}
                             onClick={() => perform("rollback")}
                         >
-                            Restaurer la version publique précédente
+                            {t("Restaurer la version publique précédente")}
                         </button>
                     </div>
-                    {dirty && <p>Modifications non enregistrées : enregistrez avant de publier.</p>}
+                    {dirty && (
+                        <p>{t("Modifications non enregistrées : enregistrez avant de publier.")}</p>
+                    )}
                     {preview && (
                         <section
                             className="rounded bg-[#FDFAF6] text-[#1A1A2E] overflow-hidden"
