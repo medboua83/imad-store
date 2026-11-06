@@ -4,7 +4,7 @@ Ce kit utilise le code commun et une installation indépendante par boutique. Il
 
 ## Livrer le code
 
-Prérequis : Node.js 22, npm, MongoDB en replica set, un domaine HTTPS, un compte MongoDB restreint à une seule base et un stockage d’images persistant distinct. L’ancien `docker-compose.yml` à Postgres n’est pas le moyen d’installer cette boutique MongoDB.
+Prérequis : Node.js 22, npm, PostgreSQL 16, un domaine HTTPS, un compte PostgreSQL restreint à une seule base et un stockage d’images persistant distinct. Le fichier `docker-compose.yml` sert au développement local : mot de passe explicite, ports limités à la boucle locale. Pour Namecheap sans SSE4.2, suivre aussi [le guide PostgreSQL/images](POSTGRESQL_NAMECHEAP_2026-11-06.md).
 
 À partir du dépôt à jour et propre :
 
@@ -32,16 +32,17 @@ Le dossier neuf est privé (700) et les trois fichiers sont privés (600) :
 
 Ne pas les placer dans le code, `public/`, les images ou Git. Ne pas exécuter `source store.env` : les valeurs sont des données, chargées par l’outil ci-dessous. Ne pas reprendre un profil pour créer une autre boutique.
 
-Adapter `DATABASE_URL` à une base **vide**, avec son utilisateur dédié. Adapter `UPLOAD_DIR` au stockage persistant de cette seule boutique, hors du code et hors des secrets. Le domaine, les droits MongoDB, les sauvegardes et HTTPS sont à provisionner chez l’hébergeur ; le générateur ne les crée pas.
+Adapter `DATABASE_URL` à une base PostgreSQL **vide**, avec son utilisateur dédié. Appliquer les migrations avec un propriétaire de schéma réservé à cette opération, puis configurer un rôle applicatif limité pour le démarrage ; les deux connexions doivent viser la même base. Ne pas utiliser le rôle de test avec CREATEDB pour le service. Adapter `UPLOAD_DIR` au stockage persistant de cette seule boutique, hors du code et hors des secrets. Le domaine, les droits PostgreSQL, les sauvegardes et HTTPS sont à provisionner chez l’hébergeur ; le générateur ne les crée pas.
 
 ## Vérifier, compiler et démarrer
 
 ```sh
 npm run store:run -- /chemin/prive/nouveau-profil/store.env check
+npm run store:run -- /chemin/prive/nouveau-profil/store.env migrate
 npm run store:run -- /chemin/prive/nouveau-profil/store.env build
 ```
 
-`check` ne se connecte à aucun service : il vérifie identités, mode combiné, HTTPS déclaré, format des clés, port, date limite et séparation des chemins. Il refuse aussi les fichiers `.env` hérités dans le code. Il ne prouve pas DNS, certificat, autorisations MongoDB ou disponibilité du stockage.
+`check` ne se connecte à aucun service : il vérifie identités, mode combiné, HTTPS déclaré, format des clés, port, date limite et séparation des chemins. Il refuse aussi les fichiers `.env` hérités dans le code. Il ne prouve pas DNS, certificat, autorisations PostgreSQL ou disponibilité du stockage.
 
 Définir temporairement `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (minimum 16 caractères), sans les enregistrer dans Git, puis :
 
@@ -55,7 +56,7 @@ Retirer ces deux variables après création. Ce programme refuse de réinitialis
 npm run store:run -- /chemin/prive/nouveau-profil/store.env start
 ```
 
-Configurer le superviseur de l’hébergeur pour relancer cette commande. Un seul port public, 3000 par défaut ; pas de deuxième processus sur 4000 en mode combiné. Le premier accès réserve l’identité de la base et crée les index uniques ; une base non vide sans identité ou liée à une autre boutique est refusée. Ne pas utiliser `prisma db push` sur une base active.
+Configurer le superviseur de l’hébergeur pour relancer cette commande. Un seul port public, 3000 par défaut ; pas de deuxième processus sur 4000 en mode combiné. Les migrations appliquent les contraintes uniques et les relations avant le démarrage ; le premier accès réserve l’identité de la base ; une base non vide sans identité ou liée à une autre boutique est refusée. Ne pas utiliser `prisma db push` sur une base active.
 
 ## Remplir le module CRM
 
