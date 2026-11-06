@@ -30,7 +30,8 @@ for (const width of [320, 390, 1440]) {
       expect(price!.y + price!.height).toBeLessThan(900);
     }
     await page.getByRole("link", { name: "عرض تفاصيل صابو تجريبي", exact: true }).click();
-    await expect(page).toHaveURL(/\/products\/fixture-sabot$/);
+    await expect(page).toHaveURL(url => url.pathname === "/products/fixture-sabot" &&
+      url.searchParams.get("returnTo") === "/shop#catalog-results");
     await expect
       .poll(async () =>
         page.evaluate(() => {
@@ -44,8 +45,8 @@ for (const width of [320, 390, 1440]) {
       true,
     );
     await page.screenshot({ path: info.outputPath(`product-title-${width}.png`) });
-    await page.getByRole("link", { name: "المتجر", exact: true }).first().click();
-    await expect(page).toHaveURL(/\/shop$/);
+    await page.getByRole("link", { name: "العودة إلى النتائج", exact: true }).click();
+    await expect(page).toHaveURL(url => url.pathname === "/shop" && url.hash === "#catalog-results");
     await page.goBack();
     await expect(page.getByRole("heading", { name: "صابو تجريبي", exact: true })).toBeVisible();
   });
