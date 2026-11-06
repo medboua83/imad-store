@@ -22,6 +22,8 @@ test('Two installations use independent identities, database names and private k
     const b = createProfile({companyId:randomUUID(),name:'B',origin:'https://b.example',output:path.join(dir,'b')});
     const second = loadProfile(path.join(dir,'b/store.env'));
     assert.equal(a.vars.STORE_INSTANCE_ID,identity.storeId);
+    assert.equal(a.vars.SITE_URL, 'https://boutique.example');
+    assert.match(a.vars.DATABASE_URL, /^postgresql:\/\//);
     assert.equal(crm.company_id,identity.companyId); assert.equal(crm.store_id,identity.storeId);
     assert.equal(crm.version,1); assert.match(crm.secret,/^[a-f0-9]{64}$/);
     assert.notEqual(crm.secret,a.vars.DESKCOMM_ENCRYPTION_KEY);

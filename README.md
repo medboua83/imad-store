@@ -1,5 +1,9 @@
 # 🌙 Imad Store — عماد ستور
 
+> **Installation maintenue — novembre 2026** : Node.js 22, npm, Next.js 16, PostgreSQL 16 et stockage d’images persistant. Suivre le [kit par entreprise](docs/STORE_INSTALLATION_KIT.md) et le [guide PostgreSQL/Namecheap](docs/POSTGRESQL_NAMECHEAP_2026-11-06.md). Les descriptions et commandes historiques ci-dessous ne constituent pas la procédure de production actuelle. Les migrations se font avec `prisma migrate deploy` ; ne jamais réinitialiser ou remplir automatiquement une base active.
+
+
+
 ## Project Overview & Features
 
 **Imad Store** is a full-stack, luxury e-commerce platform built for Moroccan women shopping for hijabs, niqabs, abayas, and modest fashion accessories.

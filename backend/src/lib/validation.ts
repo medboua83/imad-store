@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../middleware/error.middleware";
 
-export const objectIdSchema = z.string().regex(/^[a-fA-F0-9]{24}$/, "Identifiant invalide");
+export const objectIdSchema = z.string().regex(/^[a-fA-F0-9]{24}$/, "Identifiant invalide").transform(value => value.toLowerCase());
 export const statusSchema = z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]);
 export const paginationSchema = z.object({
     page: z.coerce.number().int().min(1).max(100000).default(1),
@@ -11,6 +11,7 @@ export const paginationSchema = z.object({
 export function validateObjectId(_req: Request, _res: Response, next: NextFunction, id: string) {
     if (!objectIdSchema.safeParse(id).success)
         return next(new AppError("Identifiant invalide", 400));
+    _req.params.id = id.toLowerCase();
     next();
 }
 export function isPublishableImage(value: string): boolean {

@@ -77,6 +77,16 @@ createServer((req, res) => {
       res.writeHead(400);
       return res.end(JSON.stringify({ success: false }));
     }
+    if (search === "size-race") {
+      return res.end(JSON.stringify({success:true,data:[{...product,slug:"fixture-sold-size"}],total:1,page:1,totalPages:1,filterOptions:{sizes:["40","44"]}}));
+    }
+    if (search === "size-fixture" || search === "size-no-options") {
+      const size = url.searchParams.get("size");
+      const catalog = [product, premium].filter(p => !size || p.variants.some(v => v.size?.toLowerCase() === size.toLowerCase() && v.stock > 0));
+      return res.end(JSON.stringify({ success:true, data:catalog, total:catalog.length, page:1, totalPages:catalog.length ? 1 : 0,
+        ...(search === "size-fixture" && url.searchParams.get("includeFilters") === "1" ? {filterOptions:{sizes:["40","44","M"]}} : {}),
+      }));
+    }
     if (search === "outage-fixture") {
       res.writeHead(503);
       return res.end(JSON.stringify({ success: false }));
@@ -103,6 +113,7 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-recommendations/recommendations") data = {upsell:[premium],crossSell:[accessory]};
   else if (pathname === "/api/products/fixture-second-source/recommendations") data = {upsell:[],crossSell:[accessory,premium,product]};
   else if (pathname.endsWith("/recommendations")) data = {upsell:[],crossSell:[]};
+  else if (pathname === "/api/products/fixture-sold-size") data = {...product,slug:"fixture-sold-size",variants:product.variants.map(v => v.size === "40" ? {...v,stock:0} : v)};
   else if (pathname === "/api/products/fixture-sabot") data = product;
   else if (pathname === "/api/products/fixture-gallery") data = {
     ...product, slug: "fixture-gallery", images: [

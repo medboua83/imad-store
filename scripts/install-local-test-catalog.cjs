@@ -24,11 +24,11 @@ async function main() {
   if (!process.argv.includes('--apply-local-test')) {
     console.log('Validated 3 synthetic products, 5 variants, 3 images. Dry run: no database connection.'); return;
   }
-  const url = new URL(process.env.DATABASE_URL || 'mongodb://invalid');
+  const url = new URL(process.env.DATABASE_URL || 'postgresql://invalid');
   assert(process.env.NODE_ENV !== 'production');
-  assert(['localhost','127.0.0.1'].includes(url.hostname) && url.port === '27017');
+  assert(['localhost','127.0.0.1'].includes(url.hostname) && url.port === '5432' && ['postgres:', 'postgresql:'].includes(url.protocol));
   assert.equal(url.pathname, '/imad_store_test');
-  assert(!url.username && !url.password);
+  assert(url.username, 'Dedicated local PostgreSQL user required');
   assert.equal(process.env.ALLOW_LOCAL_TEST_CATALOG, 'explicitly-authorized');
   const reportArg = process.argv.find(a => a.startsWith('--report='));
   assert(reportArg, 'An absolute, non-repository report path is required');

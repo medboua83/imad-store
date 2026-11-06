@@ -1,5 +1,8 @@
 # Modèle de boutique par entreprise CRM
 
+> Mise à jour du 6 novembre 2026 : le moteur actuel est PostgreSQL et les contraintes sont installées par migrations avant démarrage. La description MongoDB ci-dessous est historique. Utiliser le [kit maintenu](STORE_INSTALLATION_KIT.md) et le [guide PostgreSQL/images](POSTGRESQL_NAMECHEAP_2026-11-06.md).
+
+
 ## Architecture retenue
 
 Une entreprise utilise un déploiement indépendant, son domaine, sa base MongoDB avec des identifiants limités à cette base, ses secrets et son stockage d’images. Le code reste commun. Ce n’est pas une base partagée avec un filtre tenant envoyé par le navigateur. STORE_INSTANCE_ID et CRM_COMPANY_ID sont des UUID fournis exclusivement par l’environnement serveur.

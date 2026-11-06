@@ -1,4 +1,6 @@
 /* Product purchase essentials stay together. Original photos and prices are unchanged. */
+.product-size-unavailable { border: 1px solid #d8c29a; border-radius: 12px; padding: 16px; background: #fcf8f0; color: #725321; font-size: 14px; line-height: 1.9; }
+.product-size-unavailable a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-decoration: underline; text-underline-offset: 4px; }
 .compact-product-shell .refined-header .nav-inner {
     min-height: 72px;
     padding-block: 8px;

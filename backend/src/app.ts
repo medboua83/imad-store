@@ -25,6 +25,9 @@ import { telegramRoutes } from "./routes/telegram.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 
 export const app: Application = express();
+// Only opt in behind a local reverse proxy that overwrites X-Forwarded-For.
+// Never trust arbitrary internet proxies; direct deployments retain the default.
+if (process.env.IMAD_TRUST_LOOPBACK_PROXY === "true") app.set("trust proxy", "loopback");
 
 // ─── Global Middleware ───────────────────────────────────────────────────────
 app.use(helmet());

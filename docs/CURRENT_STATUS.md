@@ -1,4 +1,21 @@
-# Current Status — 2026-11-01
+# Current Status — 2026-11-06
+
+## PostgreSQL et compatibilité des images — 6 novembre 2026
+
+Le code cible PostgreSQL 16, avec migration SQL versionnée et identifiants de commerce conservés au format 24 caractères hexadécimaux. Contraintes uniques, transactions Serializable et reprises existantes protègent les commandes, le stock et les confirmations CRM. Les statistiques utilisent un modèle SQL avec insertions dédupliquées, agrégations par installation et purge des événements expirés ; une tâche horaire est prévue sur le VPS. Le kit produit des profils PostgreSQL et permet d’appliquer les migrations explicitement.
+
+Pour les processeurs qui ne peuvent pas exécuter Sharp précompilé, une compilation native contre libvips officiel 8.18.7 est disponible et vérifie PNG/JPEG/WebP. Les photographies existantes ne sont pas réencodées. Les images persistantes, le code, les secrets et les sauvegardes restent séparés. Le reverse proxy local est une option explicite, sans confiance accordée à des proxys arbitraires.
+
+Sur la nouvelle installation Namecheap, 102 tests PostgreSQL, la compilation de production et 15 tests du serveur hébergé sont réussis. Deux produits du relevé public du 23 octobre ont été récupérés, après accord, en brouillon avec les 15 variantes à stock nul et les huit photos originales vérifiées à l’octet. Aucune ancienne commande ni clé d’intégration n’a été retrouvée ou inventée. La connexion CRM, l’IA, le transporteur et le Pixel nécessitent une configuration vérifiée avant activation. Les règles commerciales récupérées et les stocks sont à revoir avant mise en vente. Une sauvegarde privée a été restaurée dans une base jetable pour contrôle ; une copie vérifiée se trouve sur DATA.
+
+Voir `POSTGRESQL_NAMECHEAP_2026-11-06.md` pour l’installation, les contraintes, les tests et les précautions de reprise. Les sections antérieures décrivent l’historique MongoDB/Hostinger.
+
+
+## Recherche par taille disponible — candidat du 1er novembre 2026
+
+Filtre de taille issu des variantes en stock des produits publics, limité à la catégorie choisie lorsque celle-ci est précisée. Agrégation de valeurs distinctes côté base, demandée uniquement par le catalogue ; les lectures ordinaires du panier ne chargent pas ces suggestions. Les brouillons, archives, fiches sans photo et variantes à tailles ambiguës restent exclus. Le filtre exige du stock sur la variante de cette taille, et non sur une autre taille du produit. Les liens, badges, couleurs et tailles des cartes suivent le choix ; la fiche présélectionne une variante disponible de cette taille. Si la taille a disparu du stock ou n’existe pas, la fiche propose explicitement de consulter les autres tailles avant d’afficher les commandes d’achat. Aucune autre taille n’est choisie automatiquement à l’ouverture. Suggestions facultatives avec saisie manuelle de repli, retrait individuel du filtre et pagination préservés. Canonique et cartes sociales restent ceux du produit. Photos, prix, promotions et intégrations conservés. Compilation backend et lint local réussis ; recette UI et base isolée à terminer, nouvelle publication à effectuer sur un hébergement actif.
+
+La PR 90 avait été publiée sur Master cf8c1480 : 134 UI et 100 intégration réussis, partage des deux produits et panier 2 pièces / 400 MAD vérifiés sur mobile et ordinateur. Les fichiers de travail sont désormais sur le disque externe ; les anciennes références iCloud non récupérées sont conservées séparément. La prochaine publication dépend de la remise en ligne de l’hébergement.
 
 ## Partage des fiches produits — candidat du 1er novembre 2026
 

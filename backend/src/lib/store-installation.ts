@@ -43,12 +43,12 @@ export async function assertStoreInstallation() {
             prisma.siteContent,
             prisma.deskcommStatusReceipt,
             prisma.deskcommConnection,
+            prisma.olivraisonIntegration,
+            prisma.olivraisonShipment,
         ];
-        const analytics = (await prisma.$runCommandRaw({ count: "store_analytics" })) as {
-            n?: number;
-        };
+        const analytics = await prisma.storeAnalytics.count();
         if (
-            analytics.n ||
+            analytics ||
             (
                 await Promise.all(
                     delegates.map((model) =>
@@ -70,38 +70,15 @@ export async function assertStoreInstallation() {
     if (!saved || saved.storeId !== identity.storeId || saved.companyId !== identity.companyId)
         throw new AppError("Cette base appartient à une autre installation", 503);
     if (!saved.initialized) {
-        await initializeIndexes();
+        // Unique indexes and foreign keys are applied by prisma migrate deploy.
+        // Do not mark a profile ready against a schema without its idempotency constraint.
+        const indexes = await prisma.$queryRaw<Array<{ indexname: string }>>`
+            SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()
+            AND tablename = 'orders' AND indexname = 'orders_idempotencyKey_key'`;
+        if (indexes.length !== 1) throw new AppError("Les migrations de la boutique sont requises", 503);
         await prisma.storeInstallation.update({
             where: { id: "installation" },
             data: { initialized: true },
-        });
-    }
-}
-
-async function initializeIndexes() {
-    const indexes = [
-        ["users", "email"],
-        ["refresh_tokens", "token"],
-        ["categories", "slug"],
-        ["products", "slug"],
-        ["product_variants", "sku"],
-        ["telegram_customers", "phone"],
-        ["deskcomm_outbox", "orderId"],
-        ["orders", "idempotencyKey"],
-    ];
-    for (const [collection, field] of indexes) {
-        await prisma.$runCommandRaw({
-            createIndexes: collection,
-            indexes: [
-                {
-                    key: { [field]: 1 },
-                    name: `${field}_1`,
-                    unique: true,
-                    ...(field === "idempotencyKey"
-                        ? { partialFilterExpression: { idempotencyKey: { $type: "string" } } }
-                        : {}),
-                },
-            ],
         });
     }
 }

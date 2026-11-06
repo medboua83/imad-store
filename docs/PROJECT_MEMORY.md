@@ -1,5 +1,18 @@
 # Imad Store — Persistent Project Memory
 
+## Base PostgreSQL et images sur processeur générique — 6 novembre 2026
+
+Le propriétaire autorise PostgreSQL, la correction des images et la mise en ligne sur Namecheap. Schéma et tests ciblent désormais PostgreSQL 16, sans mise à niveau majeure de Prisma. Garder les identifiants existants et ne jamais convertir une base active en place. Les imports de catalogue public ne constituent pas une sauvegarde des commandes, secrets ou stocks actuels. Le propriétaire a autorisé uniquement la reprise des deux produits retrouvés en brouillon avec stock nul ; les huit originaux sont conservés. Les anciennes connexions ne sont pas relancées.
+
+Sharp reste à sa version supportée ; sur le VPS sans SSE4.2, utiliser le libvips officiel compilé pour x86-64 générique et `build:images:native` après chaque installation neuve des dépendances. Aucun remplacement de photo ni émulation CPU. PostgreSQL et le serveur combiné restent privés derrière nginx HTTPS. Secrets et sauvegardes hors du dépôt, sources et sorties locales sur DATA. Guide : `POSTGRESQL_NAMECHEAP_2026-11-06.md`.
+
+
+## Recherche par taille disponible — candidat du 1er novembre 2026
+
+Filtre de taille issu des variantes en stock des produits publics, limité à la catégorie choisie lorsque celle-ci est précisée. Agrégation de valeurs distinctes côté base, demandée uniquement par le catalogue ; les lectures ordinaires du panier ne chargent pas ces suggestions. Les brouillons, archives, fiches sans photo et variantes à tailles ambiguës restent exclus. Le filtre exige du stock sur la variante de cette taille, et non sur une autre taille du produit. Les liens, badges, couleurs et tailles des cartes suivent le choix ; la fiche présélectionne une variante disponible de cette taille. Si la taille a disparu du stock ou n’existe pas, la fiche propose explicitement de consulter les autres tailles avant d’afficher les commandes d’achat. Aucune autre taille n’est choisie automatiquement à l’ouverture. Suggestions facultatives avec saisie manuelle de repli, retrait individuel du filtre et pagination préservés. Canonique et cartes sociales restent ceux du produit. Photos, prix, promotions et intégrations conservés. Compilation backend et lint local réussis ; recette UI et base isolée à terminer, nouvelle publication à effectuer sur un hébergement actif.
+
+La PR 90 avait été publiée sur Master cf8c1480 : 134 UI et 100 intégration réussis, partage des deux produits et panier 2 pièces / 400 MAD vérifiés sur mobile et ordinateur. Les fichiers de travail sont désormais sur le disque externe ; les anciennes références iCloud non récupérées sont conservées séparément. La prochaine publication dépend de la remise en ligne de l’hébergement.
+
 ## Partage des fiches produits — candidat du 1er novembre 2026
 
 Bouton de partage doré à côté de la catégorie, sans modifier les photos ni les données commerciales. Il transmet uniquement le nom et l’URL canonique du produit, construite avec l’origine de cette installation, sans paramètres ni fragment. Partage natif sur les navigateurs compatibles ; sinon copie explicite du lien. Annuler n’entraîne aucune copie. Un refus de partage propose le lien et un bouton de copie ; un refus de copie affiche une aide à la sélection manuelle. Les messages ne confirment jamais la réception par un destinataire. Protection contre les clics répétés, état de chargement accessible et champ en lecture seule sélectionnable. Métadonnées produit, prix, quantités, panier et intégrations conservés. Neuf tests ciblés et lint local réussis : copie et conservation des prix à 320/390/1440 px, annulation, attente, refus et copie manuelle, plus les trois formats de fiche compacte. Suite complète et publication à consigner.

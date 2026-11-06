@@ -442,7 +442,7 @@ export async function listOrders(req: Request, res: Response) {
         ...(trash
             ? { deletedAt: { not: null } }
             : {
-                  OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+                  deletedAt: null,
               }),
     };
     const skip = (page - 1) * limit;
@@ -546,7 +546,7 @@ export async function moveOrdersToTrash(req: Request, res: Response) {
                 OR: [
                     { inventoryReserved: false },
                     { inventoryReserved: null },
-                    { inventoryReserved: { isSet: false } },
+
                 ],
             },
             data: { deletedAt: restore ? null : new Date() },

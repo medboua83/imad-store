@@ -6,12 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
 import jwt from "jsonwebtoken";
-import { MongoClient } from "mongodb";
+const { databaseUrl, createDatabase, dropDatabase } = require("../scripts/test-postgres.cjs");
 import { createProfile } from "../scripts/create-company-store.cjs";
 const name = `imad_ci_${randomBytes(8).toString("hex")}`;
 if (!/^imad_ci_[a-f0-9]{16}$/.test(process.env.TEST_DATABASE_NAME || ""))
     throw new Error("Isolated runner required");
-process.env.DATABASE_URL = `mongodb://127.0.0.1:27017/${name}?replicaSet=rs0`;
+process.env.DATABASE_URL = databaseUrl(name);
 const storeId = randomUUID(),
     companyId = randomUUID(),
     pipeline = randomUUID(),
@@ -19,19 +19,18 @@ const storeId = randomUUID(),
 process.env.STORE_INSTANCE_ID = storeId;
 process.env.CRM_COMPANY_ID = companyId;
 let app: any, prisma: any;
-const mongo = new MongoClient(process.env.DATABASE_URL);
+
 const admin = () => ({
     Authorization: `Bearer ${jwt.sign({ id: "123456789012345678901234", role: "ADMIN" }, process.env.JWT_SECRET!)}`,
 });
 before(async () => {
-    await mongo.connect();
+    await createDatabase(name);
     ({ app } = await import("../backend/src/app"));
     ({ prisma } = await import("../backend/src/lib/prisma"));
 });
 after(async () => {
     await prisma?.$disconnect();
-    await mongo.db(name).dropDatabase();
-    await mongo.close();
+    await dropDatabase(name);
 });
 test("Fresh profiles never copy secrets, identities, clients or products and never overwrite a destination", async () => {
     const root = await mkdtemp(join(tmpdir(), "imad-profile-"));
@@ -85,8 +84,8 @@ test("Database binds one store/company and initializes unique order indexes befo
     assert.equal(installation.storeId, storeId);
     assert.equal(installation.companyId, companyId);
     assert.equal(installation.initialized, true);
-    const indexes = await mongo.db(name).collection("orders").indexes();
-    assert.equal(indexes.find((i) => i.name === "idempotencyKey_1")?.unique, true);
+    const indexes = await prisma.$queryRaw`SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'orders'`;
+    assert.match(indexes.find((i: any) => i.indexname === "orders_idempotencyKey_key")?.indexdef, /UNIQUE/);
     process.env.CRM_COMPANY_ID = randomUUID();
     const { readPublicStore } = await import("../backend/src/lib/public-store");
     assert.equal((await readPublicStore("/products")).status, 503);

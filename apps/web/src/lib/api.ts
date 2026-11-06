@@ -176,6 +176,7 @@ export interface ProductsResponse {
     total: number;
     page: number;
     totalPages: number;
+    filterOptions?: { sizes: string[] };
 }
 
 // Guest-only checkout — no user account required

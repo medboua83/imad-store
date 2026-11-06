@@ -127,8 +127,9 @@ async function ensureStoreSettings(): Promise<void> {
 
 /** Explicit fixture seeding for an isolated test database only. */
 export async function ensureProductionData(clean = false): Promise<void> {
-    const url = new URL(process.env.DATABASE_URL || "mongodb://invalid");
+    const url = new URL(process.env.DATABASE_URL || "postgresql://invalid");
     if (
+        !["postgres:", "postgresql:"].includes(url.protocol) ||
         process.env.NODE_ENV !== "test" ||
         !["localhost", "127.0.0.1"].includes(url.hostname) ||
         !/^\/imad_ci_[a-f0-9]{16}$/.test(url.pathname) ||

@@ -8,9 +8,11 @@ import type { Product } from "@/lib/api";
 import { isAmbiguousSize, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
 import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
-export function ProductOptions({ product }: { product: Product }) {
+export function ProductOptions({ product, preferredSize }: { product: Product; preferredSize?: string }) {
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
-    const [id, setId] = useState(variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "");
+    const [id, setId] = useState(() => preferredSize
+        ? variants.find(v => v.stock > 0 && (v.size || "").toLowerCase() === preferredSize.toLowerCase())?.id || ""
+        : variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "");
     const [quantity, setQuantity] = useState(1);
     const [quantityDraft, setQuantityDraft] = useState<string | null>(null);
     const cart = useCartStore((state) => state.items);

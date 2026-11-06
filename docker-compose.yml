@@ -1,25 +1,24 @@
-version: "3.8"
-
+# Local development only. Production uses a dedicated restricted runtime role.
+# Set POSTGRES_PASSWORD explicitly before starting; no default credential is shipped.
 services:
   db:
     image: postgres:16-alpine
-    container_name: imad-store-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: imad_store
+      POSTGRES_USER: ${POSTGRES_USER:-imad_store}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a unique local database password}
+      POSTGRES_DB: ${POSTGRES_DB:-imad_store}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   adminer:
     image: adminer
-    container_name: imad-store-adminer
+    profiles: [tools]
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${ADMINER_PORT:-8080}:8080"
     depends_on:
       - db
 
