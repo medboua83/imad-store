@@ -3,21 +3,21 @@
 ## Identité des onglets — 6 novembre 2026
 
 - [x] Préparer une favicon IM dorée, un ICO multi-résolution et une icône Apple avec génération reproductible.
-- [ ] Vérifier la CI puis publier avec le lot administration arabe et quantités, après l’accès VPS autorisé.
+- [x] CI réussie ; favicon publiée avec l’administration arabe et les quantités. Trois formats vérifiés sur accueil, boutique, connexion admin et fiche produit.
 
 ## Administration bilingue — 6 novembre 2026
 
 - [x] Ajouter le sélecteur français/arabe à la connexion et à l’administration, avec préférence mémorisée et lecture RTL.
 - [x] Traduire les libellés, formulaires, messages et confirmations sans modifier les données commerciales ni les contrats API.
 - [x] Valider les formulaires après bascule, la session, les vues mobiles et les régressions : 148 UI et 10 tests ciblés de traduction/prix réussis, avec revalidation des 17 scénarios concernés par les finitions.
-- [ ] Vérifier la CI puis publier sur le VPS avec sauvegarde et accès temporaire autorisé.
+- [x] CI réussie ; publication VPS avec sauvegarde vérifiée, contrôle des données conservées et vérification mobile/ordinateur de l’administration arabe.
 
 ## Prochain lot : lisibilité des quantités — 6 novembre 2026
 
 - [x] Afficher le total de chaque raccourci et l’économie réelle avec le calcul partagé existant.
 - [x] Rappeler couleur, taille et quantité près du bouton d’achat, avec message spécifique pour une saisie invalide.
 - [x] Valider la visibilité du bouton après sélection, les offres manuelles, les lots impairs et le panier sur mobile et ordinateur.
-- [ ] Publier le candidat sur `imadmode.com`.
+- [x] Publier sur `imadmode.com` et vérifier les quantités et totaux avec les tarifs actuellement enregistrés, sans nouvelle commande.
 
 ## Hébergement PostgreSQL — 6 novembre 2026
 

@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Production publiée — 6 novembre 2026
+
+L’administration français/arabe, les totaux des raccourcis de quantité et la favicon IM dorée sont publiés sur `imadmode.com` (PR 93 et 94). Référence effective du code VPS : `c2e3cc6aa05b9be96c91aba7ad1203a3b4e389dd`, version `admin-arabic-c2e3cc6aa05b`, arbre identique au Master de fusion `257e97a7`. Les futurs changements de documentation ne modifient pas cette référence déployée. Les empreintes de préservation après publication sont identiques à celles prises avant intervention ; ne pas réimporter le catalogue ni réinitialiser les stocks. Sauvegarde vérifiée copiée sur DATA. Accès temporaire expiré et connexion neuve refusée, clé privée locale supprimée. Toute future intervention serveur nécessite un accès à nouveau autorisé. Voir `DEPLOYMENT_ADMIN_FAVICON_2026-11-06.md` ; les notes de préparation ci-dessous sont historiques.
+
 ## Favicon IM — 6 novembre 2026
 
 Le propriétaire demande une favicon. Monogramme vectoriel IM avec la palette dorée existante ; ICO et Apple PNG dérivés par `npm run icons:build`, sans police ni image distante. Garder le logo du header et les photos originales. La PR 93 (administration arabe et quantités) est fusionnée avec CI réussie, mais pas encore publiée : l’accès SSH temporaire demandé reste sans réponse. Ajouter la favicon au même paquet de publication, en conservant le manifeste de référence de la production antérieure (`f9a6c4ef`), et ne pas confondre Master fusionné avec la version réellement sur le VPS.

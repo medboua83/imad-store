@@ -1,5 +1,11 @@
 # Current Status — 2026-11-06
 
+## Publication effective — administration arabe, quantités et favicon
+
+Les PR 93 et 94 sont fusionnées et publiées sur `https://imadmode.com`. Le VPS exécute le candidat `c2e3cc6aa05b9be96c91aba7ad1203a3b4e389dd`, dont l’arbre correspond au Master de fusion `257e97a7`. Le nouveau répertoire de version est `admin-arabic-c2e3cc6aa05b` ; ne plus utiliser `f9a6c4ef` comme référence de la production courante. La compilation VPS, les contrôles HTTPS et les trois formats de favicon sont vérifiés. L’administration arabe, la bascule français/arabe, la session, la préférence après rechargement et les photos produits sont vérifiées en ligne sur mobile et ordinateur. Les raccourcis de quantité reprennent les tarifs actuellement enregistrés.
+
+La sauvegarde privée a été vérifiée sur le VPS puis copiée avec contrôle d’intégrité sur DATA. Les empreintes avant/après des données commerciales, intégrations, fichiers d’environnement et originaux des photos sont identiques. Aucune migration ni commande de test n’a été exécutée pour cette publication. L’accès temporaire a expiré, une connexion neuve est refusée et sa clé privée locale a été supprimée. Détails : `DEPLOYMENT_ADMIN_FAVICON_2026-11-06.md`. Les sections « candidat » suivantes conservent l’historique de préparation.
+
 ## Favicon dorée — candidat du 6 novembre 2026
 
 Le triangle générique encore servi sur le domaine est remplacé par un monogramme IM doré sur fond sombre, assorti à la charte. Source vectorielle autonome `app/icon.svg`, ICO de repli à 16/32/48/256 px et icône Apple de 180 px. Les conventions de fichiers Next ajoutent les liens sur toutes les pages et une URL versionnée pour les icônes SVG/Apple. Pas de police distante, génération à la requête ou changement des photos et aperçus produits. `npm run icons:build` reproduit les dérivés depuis le SVG. Formats, dimensions et reproduction identique vérifiés localement ; CI et publication à consigner.
