@@ -1,5 +1,10 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Identité des onglets — 6 novembre 2026
+
+- [x] Préparer une favicon IM dorée, un ICO multi-résolution et une icône Apple avec génération reproductible.
+- [ ] Vérifier la CI puis publier avec le lot administration arabe et quantités, après l’accès VPS autorisé.
+
 ## Administration bilingue — 6 novembre 2026
 
 - [x] Ajouter le sélecteur français/arabe à la connexion et à l’administration, avec préférence mémorisée et lecture RTL.
