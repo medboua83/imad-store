@@ -1,5 +1,11 @@
 # Current Status — 2026-11-06
 
+## Favicon dorée — candidat du 6 novembre 2026
+
+Le triangle générique encore servi sur le domaine est remplacé par un monogramme IM doré sur fond sombre, assorti à la charte. Source vectorielle autonome `app/icon.svg`, ICO de repli à 16/32/48/256 px et icône Apple de 180 px. Les conventions de fichiers Next ajoutent les liens sur toutes les pages et une URL versionnée pour les icônes SVG/Apple. Pas de police distante, génération à la requête ou changement des photos et aperçus produits. `npm run icons:build` reproduit les dérivés depuis le SVG. Formats, dimensions et reproduction identique vérifiés localement ; CI et publication à consigner.
+
+La PR 93 est fusionnée dans Master `86972af7` ; sa CI est réussie (148 UI, 106 tests PostgreSQL/unitaires). L’administration arabe et les quantités restent en attente de publication sur le VPS. L’accès temporaire préparé n’a pas été confirmé ; ne pas présumer son activation.
+
 ## Administration français / arabe — candidat du 6 novembre 2026
 
 Le sélecteur « Français / العربية » est proposé à la connexion et dans la barre de l’administration. Le choix est mémorisé uniquement dans ce navigateur, avec synchronisation entre onglets. Les menus, formulaires, états, messages, confirmations et aides utilisent une traduction explicite ; les paramètres de messages conservent références, quantités et noms. Les dates suivent la langue et le fuseau marocain. La disposition, les espacements, les icônes de recherche et les champs suivent le sens de lecture, avec direction propre pour les données saisies. Un changement de langue garde le formulaire produit en cours, les identifiants de session et les valeurs destinées à l’API. Aucun contenu commercial ni réglage d’intégration n’est traduit ou enregistré automatiquement. Le menu sélectionné conserve un contraste lisible immédiatement, sans transition de fond. Validation locale : 148 UI, 10 tests de traduction/prix, lint et compilation réussis ; les 17 scénarios concernés par les finitions ont été revalidés, dont le contraste et le bouton après trois pièces. Publication VPS et CI à vérifier.

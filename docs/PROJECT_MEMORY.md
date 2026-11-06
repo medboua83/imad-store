@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Favicon IM — 6 novembre 2026
+
+Le propriétaire demande une favicon. Monogramme vectoriel IM avec la palette dorée existante ; ICO et Apple PNG dérivés par `npm run icons:build`, sans police ni image distante. Garder le logo du header et les photos originales. La PR 93 (administration arabe et quantités) est fusionnée avec CI réussie, mais pas encore publiée : l’accès SSH temporaire demandé reste sans réponse. Ajouter la favicon au même paquet de publication, en conservant le manifeste de référence de la production antérieure (`f9a6c4ef`), et ne pas confondre Master fusionné avec la version réellement sur le VPS.
+
 ## Demande explicite d’une administration arabe — 6 novembre 2026
 
 Le propriétaire confirme qu’il cherche l’interface du tableau de bord en arabe. Une préférence français/arabe locale au navigateur est préparée dans le layout privé ; la boutique publique garde sa langue et ses contenus existants. Utiliser le dictionnaire explicite et `useAdminLocale()` pour les futurs textes d’interface, sans traduire les clés d’API, enums, références ni données saisies. Les messages paramétrés gardent leurs valeurs. Les libellés connus du backend peuvent être traduits à l’affichage ; les diagnostics ou notifications libres restent des données. La bascule de langue ne doit pas remonter le formulaire en cours. Recette et publication à consigner.

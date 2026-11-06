@@ -24,7 +24,8 @@
     "store:bundle": "node scripts/bundle-company-store.cjs",
     "test:ui": "playwright test",
     "test:storefront": "node --import tsx --test tests/cart-recovery.test.ts",
-    "build:images:native": "node scripts/build-native-images.cjs"
+    "build:images:native": "node scripts/build-native-images.cjs",
+    "icons:build": "node scripts/generate-brand-icons.cjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
