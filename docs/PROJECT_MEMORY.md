@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Suite de l’audit visuel et logique — 6 novembre 2026
+
+Le propriétaire autorise corrections boutique/admin, tests mobiles/ordinateur, publication imadmode.com et mise à jour du dépôt. Conserver photos, prix, stocks et intégrations. La production courante est `50da23af3ee90c2a5b29eb36cdf56db0798f93c5` (`navigation-50da23af3ee9`, PR 96 fusionnée, 155 UI et 109 PostgreSQL/unitaires réussis), et non c2e3cc6 cité historiquement ci-dessous. Sauvegarde DATA vérifiée et ancien accès SSH fermé. Nouveau candidat : achat compact sur petits ordinateurs, brouillons des sections catégories/commerce/CRM conservés en mémoire, absence de soumission par Entrée dans le filtre de ville. Les brouillons ne survivent pas à un rechargement et ne sont jamais sauvegardés automatiquement. Recette et nouvelle publication à consigner.
+
 ## Amélioration de la navigation — candidat du 6 novembre 2026
 
 Le propriétaire demande de poursuivre les améliorations boutique/admin, de tester sur mobile/ordinateur et de publier sur imadmode.com. Deux pertes de contexte sont reproduites en ligne : retour produit vers catalogue sans filtres ; rechargement admin vers la vue d’ensemble. Le candidat limite le retour produit à `/shop` et à ses paramètres publics connus, conserve la page/taille et garde les URL sociales canoniques. Les sections admin utilisent uniquement des identifiants de menu connus dans `tab`, avec historique natif sans démonter les fiches déjà ouvertes. Ne pas exposer de données ou clés dans ces URL. L’heure de synchronisation suit Africa/Casablanca. Aucun changement de photos, tarifs, stocks ou intégrations. Recette et publication à consigner ; la référence VPS reste `c2e3cc6` tant que le nouveau lot n’est pas appliqué.

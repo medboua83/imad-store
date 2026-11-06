@@ -1,5 +1,16 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Fiabilité de la saisie et petits ordinateurs — 6 novembre 2026
+
+- [x] Reproduire six scénarios avant correction : perte de brouillon, Entrée dans le filtre de ville, achat hors écran avec retour catalogue.
+- [x] Préparer la conservation en mémoire des formulaires admin ouverts et suspendre la lecture périodique des colis hors section visible.
+- [x] Préparer le regroupement quantité/achat et le passage explicite de la recherche de ville à la sélection.
+- [ ] Valider le candidat et publier avec sauvegarde et contrôle des données.
+
+## Navigation PR 96 effectivement publiée
+
+- [x] CI 155 UI / 109 PostgreSQL-unitaires ; navigation, historique admin et retour filtré vérifiés à 390/1440 px sur imadmode.com. Code VPS 50da23af3ee9, sauvegarde vérifiée sur DATA et accès temporaire fermé.
+
 ## Navigation sans perte de contexte — 6 novembre 2026
 
 - [x] Préparer le retour d’une fiche vers les résultats filtrés, avec taille/page conservées et URL internes limitées au catalogue.

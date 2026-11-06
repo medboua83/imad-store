@@ -1,5 +1,13 @@
 # Current Status — 2026-11-06
 
+## Fiabilité de la saisie et affichage compact — candidat du 6 novembre 2026
+
+Trois anomalies reproduites avant correction : achat hors écran après retour catalogue sur ordinateur peu haut, perte des brouillons catégories/réglages/CRM lors d’un changement de section, soumission implicite du checkout par Entrée dans la recherche de ville. Le candidat regroupe quantité et achat sur une ligne à partir de 1100 px lorsque la fenêtre ne dépasse pas 800 px de haut ; tous les montants et choix restent affichés. Les formulaires déjà ouverts restent montés uniquement pendant cette session admin ; aucun brouillon ni secret n’est ajouté au stockage du navigateur. La lecture périodique des colis est suspendue hors de la section Paramètres et lorsque le document est masqué. Entrée dans la recherche de ville conduit à la liste si des résultats existent, sans choix automatique ni soumission. Validation et publication du nouveau lot à terminer.
+
+## Production vérifiée — navigation PR 96
+
+La PR 96 est fusionnée (Master `6a1eafc508c7760898d1cd90585ade0e0ef0c18e`) et le candidat `50da23af3ee90c2a5b29eb36cdf56db0798f93c5` est publié sur imadmode.com, version VPS `navigation-50da23af3ee9`. CI réussie : 155 UI, 109 tests PostgreSQL/unitaires ; vérification en production à 390 et 1440 px du retour filtré, des sections admin et des photos chargées. Sauvegarde contrôlée sur le VPS puis sur DATA ; empreintes des données, réglages et 13 originaux identiques avant/après. Aucune commande créée. Accès temporaire retiré, nouvelle connexion refusée, clé locale supprimée. Les références c2e3cc6 et les mentions de préparation ci-dessous sont historiques.
+
 ## Navigation boutique et administration — candidat du 6 novembre 2026
 
 Le catalogue transmet aux fiches un retour interne conservant recherche, catégorie, tri, budget, disponibilité, taille et page. Le bouton doré « العودة إلى النتائج » ramène aux résultats avec un décalage adapté au header fixe. Les liens directs sans contexte gardent leur fil de navigation habituel ; le changement de taille après indisponibilité conserve le retour. Les cartes sociales et liens partagés restent canoniques. Seuls les paramètres publics du catalogue sont repris : aucun domaine externe, page admin, paramètre privé ou diagnostic n’est utilisé comme destination.

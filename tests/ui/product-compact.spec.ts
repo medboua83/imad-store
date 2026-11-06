@@ -19,12 +19,16 @@ for (const viewport of [
             for (const selector of [
                 ".product-variant-grid",
                 ".quantity-choice-grid",
-                ".product-quantity-row",
             ]) {
                 const rect = await page.locator(selector).boundingBox();
                 expect(rect!.y).toBeGreaterThan(0);
                 expect(rect!.y + rect!.height).toBeLessThan(box!.y);
             }
+            const quantity = await page.locator(".product-quantity-row").boundingBox();
+            expect(quantity!.y).toBeGreaterThan(0);
+            expect(quantity!.y + quantity!.height).toBeLessThanOrEqual(viewport.height);
+            // On short desktops the quantity and purchase button share one row.
+            expect(quantity!.x >= box!.x + box!.width || quantity!.x + quantity!.width <= box!.x).toBe(true);
         }
         await page.screenshot({ path: info.outputPath(`compact-initial-${viewport.width}.png`) });
         await page.getByRole("button", { name: "بني", exact: true }).click();
