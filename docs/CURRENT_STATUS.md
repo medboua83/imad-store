@@ -1,5 +1,15 @@
 # Current Status — 2026-11-06
 
+## Contexte des listes admin et miniatures — candidat du 6 novembre 2026
+
+La période statistiques, la recherche des commandes et ses filtres sont conservés en mémoire par la page admin pendant la session, sans les inscrire dans les URL ni dans le stockage du navigateur. Les écrans de commandes et de statistiques continuent de se démonter en quittant leur section ; aucun dialogue modal ne reste caché au-dessus du tableau de bord. Une nouvelle connexion ou une fin de session remet les filtres à zéro. Les statistiques redemandent la période choisie au retour.
+
+La galerie fait défiler uniquement la bande de miniatures pour garder la photo sélectionnée visible, y compris avec 12 images et en RTL. Le clavier sur les miniatures suit la sélection sans déplacer la page ; le focus des flèches et du zoom reste à sa place. Les fichiers et leur ordre sont conservés. Recette et publication de ce nouveau lot à consigner.
+
+## Publication vérifiée — PR 97
+
+La version `display-a7890e8ad6d7` est publiée sur imadmode.com (code `a7890e8ad6d78f37ebfc00fcd688bc2e486f8dc4`, Master de fusion `7b4c9461720e8887e475509a787c150cb2fb1241`). CI : 161 UI et 109 PostgreSQL/unitaires réussis ; contrôle en ligne à 1280×720 et 390×844 du bouton, des photos et des brouillons abandonnés sans sauvegarde. Empreintes des données, intégrations, environnements et 13 originaux identiques après publication et recette. Sauvegarde VPS et DATA vérifiée ; accès temporaire retiré, connexion neuve refusée, clé locale supprimée. Les notes de préparation ci-dessous sont historiques.
+
 ## Fiabilité de la saisie et affichage compact — candidat du 6 novembre 2026
 
 Trois anomalies reproduites avant correction : achat hors écran après retour catalogue sur ordinateur peu haut, perte des brouillons catégories/réglages/CRM lors d’un changement de section, soumission implicite du checkout par Entrée dans la recherche de ville. Le candidat regroupe quantité et achat sur une ligne à partir de 1100 px lorsque la fenêtre ne dépasse pas 800 px de haut ; tous les montants et choix restent affichés. Les formulaires déjà ouverts restent montés uniquement pendant cette session admin ; aucun brouillon ni secret n’est ajouté au stockage du navigateur. La lecture périodique des colis est suspendue hors de la section Paramètres et lorsque le document est masqué. Entrée dans la recherche de ville conduit à la liste si des résultats existent, sans choix automatique ni soumission. Validation et publication du nouveau lot à terminer.

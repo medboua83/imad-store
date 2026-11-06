@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Galerie et contexte des listes — 6 novembre 2026
+
+Poursuite de l’audit boutique/admin autorisée, avec tests et publication sur imadmode.com. La production est désormais `a7890e8ad6d78f37ebfc00fcd688bc2e486f8dc4` (`display-a7890e8ad6d7`, PR 97 fusionnée, CI 161 UI / 109 tests SQL-unitaires réussie), et non 50da cité historiquement. Les contrôles de préservation et la sauvegarde DATA sont vérifiés ; l’accès temporaire a été retiré et sa clé supprimée. Nouveau lot : filtres commandes et période statistiques gardés uniquement pendant la session ; miniatures sélectionnées visibles dans leur propre bande, sans saut du document ni modification de photos. Ne pas conserver de dialogue modal monté derrière une section masquée. La déconnexion efface la recherche admin en mémoire. Résultats finaux et nouvelle publication à consigner.
+
 ## Suite de l’audit visuel et logique — 6 novembre 2026
 
 Le propriétaire autorise corrections boutique/admin, tests mobiles/ordinateur, publication imadmode.com et mise à jour du dépôt. Conserver photos, prix, stocks et intégrations. La production courante est `50da23af3ee90c2a5b29eb36cdf56db0798f93c5` (`navigation-50da23af3ee9`, PR 96 fusionnée, 155 UI et 109 PostgreSQL/unitaires réussis), et non c2e3cc6 cité historiquement ci-dessous. Sauvegarde DATA vérifiée et ancien accès SSH fermé. Nouveau candidat : achat compact sur petits ordinateurs, brouillons des sections catégories/commerce/CRM conservés en mémoire, absence de soumission par Entrée dans le filtre de ville. Les brouillons ne survivent pas à un rechargement et ne sont jamais sauvegardés automatiquement. Recette et nouvelle publication à consigner.
