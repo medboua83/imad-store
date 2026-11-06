@@ -1,7 +1,14 @@
 "use client";
 import Image from "next/image";
 import { Expand, X, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
-import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from "react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type KeyboardEvent,
+    type TouchEvent,
+} from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
     const [selected, setSelected] = useState(images[0]);
@@ -15,19 +22,58 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
     const zoom = useRef<HTMLDialogElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
     const swipe = useRef<{ x: number; y: number } | null>(null);
+    const thumbnails = useRef<HTMLDivElement>(null);
     const src = available[active];
+    const revealThumbnail = useCallback((focus = false) => {
+        const strip = thumbnails.current;
+        const selected = strip?.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+        if (!strip || !selected) return;
+        if (focus) selected.focus({ preventScroll: true });
+        const viewport = strip.getBoundingClientRect(),
+            item = selected.getBoundingClientRect();
+        const left =
+            item.left < viewport.left
+                ? item.left - viewport.left
+                : item.right > viewport.right
+                  ? item.right - viewport.right
+                  : 0;
+        // Scroll this strip only, including in RTL; never jump the document or the zoom dialog.
+        if (left) strip.scrollBy({ left, behavior: "instant" });
+    }, []);
+    useEffect(() => {
+        revealThumbnail();
+        const strip = thumbnails.current;
+        if (!strip) return;
+        if (typeof ResizeObserver === "undefined") {
+            const resized = () => revealThumbnail();
+            window.addEventListener("resize", resized);
+            return () => window.removeEventListener("resize", resized);
+        }
+        const observer = new ResizeObserver(() => revealThumbnail());
+        observer.observe(strip);
+        return () => observer.disconnect();
+    }, [src, active, available.length, revealThumbnail]);
     function move(offset: number) {
         if (available.length > 1)
             setSelected(available[(active + offset + available.length) % available.length]);
     }
     function navigate(event: KeyboardEvent<HTMLElement>) {
-        if (available.length < 2 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (
+            available.length < 2 ||
+            event.altKey ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey
+        )
+            return;
         if (event.key === "ArrowRight") move(1);
         else if (event.key === "ArrowLeft") move(-1);
         else if (event.key === "Home") setSelected(available[0]);
         else if (event.key === "End") setSelected(available[available.length - 1]);
         else return;
         event.preventDefault();
+        if (thumbnails.current?.contains(event.currentTarget))
+            requestAnimationFrame(() => revealThumbnail(true));
     }
     const touchNavigation = {
         onTouchStart(event: TouchEvent<HTMLDivElement>) {
@@ -151,7 +197,12 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                 {controls()}
             </div>
             {available.length > 1 && (
-                <div className="gallery-thumbnails" role="group" aria-label="صور المنتج">
+                <div
+                    ref={thumbnails}
+                    className="gallery-thumbnails"
+                    role="group"
+                    aria-label="صور المنتج"
+                >
                     {available.map((image, i) => (
                         <button
                             key={`${image}-${i}`}

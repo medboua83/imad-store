@@ -5,10 +5,15 @@ import { useEffect, useRef, useState } from "react";
 import { Eye, MousePointer2, ShoppingBag, RefreshCw, ShieldCheck } from "lucide-react";
 import { getStoreAnalytics, type StoreAnalyticsSummary } from "@/lib/api";
 const count = (n: number) => n.toLocaleString("fr-MA");
-export default function AnalyticsTab() {
+export default function AnalyticsTab({
+    days,
+    setDays,
+}: {
+    days: number;
+    setDays: (days: number) => void;
+}) {
     const { t, locale } = useAdminLocale();
-    const [days, setDays] = useState(7),
-        [data, setData] = useState<StoreAnalyticsSummary | null>(null);
+    const [data, setData] = useState<StoreAnalyticsSummary | null>(null);
     const [loading, setLoading] = useState(true),
         [error, setError] = useState("");
     const [refresh, setRefresh] = useState(0);

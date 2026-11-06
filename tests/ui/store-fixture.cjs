@@ -115,6 +115,10 @@ createServer((req, res) => {
   else if (pathname.endsWith("/recommendations")) data = {upsell:[],crossSell:[]};
   else if (pathname === "/api/products/fixture-sold-size") data = {...product,slug:"fixture-sold-size",variants:product.variants.map(v => v.size === "40" ? {...v,stock:0} : v)};
   else if (pathname === "/api/products/fixture-sabot") data = product;
+  else if (pathname === "/api/products/fixture-gallery-long") data = {
+    ...product, slug: "fixture-gallery-long",
+    images: Array.from({length:12}, (_,i) => `/images/catalogue-test/sac.webp?gallery=${i+1}`),
+  };
   else if (pathname === "/api/products/fixture-gallery") data = {
     ...product, slug: "fixture-gallery", images: [
       "/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp", "/images/catalogue-test/chale.webp",

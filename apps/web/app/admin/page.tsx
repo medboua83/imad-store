@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
+import { initialOrderListFilters } from "./order-list-context";
 import {
     ArrowUpRight,
     ChartNoAxesCombined,
@@ -162,6 +163,8 @@ export default function AdminPage() {
         [syncing, setSyncing] = useState(false),
         [lastSync, setLastSync] = useState<Date | null>(null);
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
+    const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
+    const [analyticsDays, setAnalyticsDays] = useState(7);
     const mainTitle = useRef<HTMLHeadingElement>(null);
     const menuButton = useRef<HTMLButtonElement>(null),
         nav = useRef<HTMLElement>(null);
@@ -190,6 +193,8 @@ export default function AdminPage() {
     }, []);
     useEffect(() => {
         const expire = (event?: Event) => {
+            setOrderFilters(initialOrderListFilters);
+            setAnalyticsDays(7);
             setToken(null);
             setOrders([]);
             setProducts([]);
@@ -293,6 +298,8 @@ export default function AdminPage() {
             localStorage.setItem("adminToken", r.data.accessToken);
             localStorage.setItem("adminRefresh", r.data.refreshToken);
             setPassword("");
+            setOrderFilters(initialOrderListFilters);
+            setAnalyticsDays(7);
             setToken(r.data.accessToken);
         } catch {
             setAuthError("Connexion impossible. Vérifiez vos identifiants et votre connexion.");
@@ -572,6 +579,8 @@ export default function AdminPage() {
                                     orders={orders}
                                     total={orderTotal}
                                     onRefresh={refreshOrders}
+                                    filters={orderFilters}
+                                    setFilters={setOrderFilters}
                                 />
                             )}
                             {openedTabs.includes("products") && (
@@ -631,7 +640,9 @@ export default function AdminPage() {
                                     <ContentTab />
                                 </div>
                             )}
-                            {activeTab === "analytics" && <AnalyticsTab />}
+                            {activeTab === "analytics" && (
+                                <AnalyticsTab days={analyticsDays} setDays={setAnalyticsDays} />
+                            )}
                             {openedTabs.includes("commerce") && (
                                 <div hidden={activeTab !== "commerce"}>
                                     <CommerceTab active={activeTab === "commerce"} />

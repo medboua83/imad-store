@@ -1,7 +1,8 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
 import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
 import { OrderTrash } from "./order-trash";
@@ -18,19 +19,20 @@ export function OrdersTab({
     orders,
     total,
     onRefresh,
+    filters,
+    setFilters,
 }: {
     orders: AdminOrder[];
     total: number;
     onRefresh: () => Promise<void>;
+    filters: OrderListFilters;
+    setFilters: Dispatch<SetStateAction<OrderListFilters>>;
 }) {
     const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
-    const [search, setSearch] = useState(""),
-        [status, setStatus] = useState("ALL"),
-        [payment, setPayment] = useState("ALL"),
-        [from, setFrom] = useState(""),
-        [to, setTo] = useState(""),
-        [sort, setSort] = useState("newest");
+    const { search, status, payment, from, to, sort } = filters;
+    const setFilter = (key: keyof OrderListFilters, value: string) =>
+        setFilters((previous) => ({ ...previous, [key]: value }));
     const [selected, setSelected] = useState<string | null>(null),
         [busy, setBusy] = useState(false),
         [message, setMessage] = useState(""),
@@ -196,7 +198,7 @@ export function OrdersTab({
                         key={key}
                         className="order-filter"
                         aria-pressed={status === key}
-                        onClick={() => setStatus(key)}
+                        onClick={() => setFilter("status", key)}
                     >
                         {t(label)}
                         <span>
@@ -217,13 +219,13 @@ export function OrdersTab({
                             type="search"
                             placeholder={t("Nom, téléphone, ville ou référence")}
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => setFilter("search", e.target.value)}
                         />
                     </div>
                 </label>
                 <label>
                     {t("Trier par")}
-                    <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                    <select value={sort} onChange={(e) => setFilter("sort", e.target.value)}>
                         <option value="newest">{t("Plus récentes")}</option>
                         <option value="oldest">{t("Plus anciennes")}</option>
                         <option value="amount">{t("Montant décroissant")}</option>
@@ -242,7 +244,7 @@ export function OrdersTab({
                             dir="auto"
                             type="date"
                             value={from}
-                            onInput={(e) => setFrom(e.currentTarget.value)}
+                            onInput={(e) => setFilter("from", e.currentTarget.value)}
                         />
                     </label>
                     <label>
@@ -251,12 +253,15 @@ export function OrdersTab({
                             dir="auto"
                             type="date"
                             value={to}
-                            onInput={(e) => setTo(e.currentTarget.value)}
+                            onInput={(e) => setFilter("to", e.currentTarget.value)}
                         />
                     </label>
                     <label>
                         {t("Paiement")}
-                        <select value={payment} onChange={(e) => setPayment(e.target.value)}>
+                        <select
+                            value={payment}
+                            onChange={(e) => setFilter("payment", e.target.value)}
+                        >
                             <option value="ALL">{t("Tous les paiements")}</option>
                             {Object.entries(paymentLabels).map(([key, label]) => (
                                 <option key={key} value={key}>
@@ -284,14 +289,7 @@ export function OrdersTab({
                         !to &&
                         sort === "newest"
                     }
-                    onClick={() => {
-                        setSearch("");
-                        setStatus("ALL");
-                        setPayment("ALL");
-                        setFrom("");
-                        setTo("");
-                        setSort("newest");
-                    }}
+                    onClick={() => setFilters(initialOrderListFilters)}
                 >
                     {t("Réinitialiser les filtres")}
                 </button>

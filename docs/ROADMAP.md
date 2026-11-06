@@ -1,5 +1,15 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Contexte admin et galeries longues — 6 novembre 2026
+
+- [x] Préparer la conservation en mémoire des filtres commandes et de la période statistiques entre sections, avec remise à zéro à la fin de session.
+- [x] Préparer le défilement de la seule bande de miniatures, avec focus clavier cohérent et prise en charge du RTL.
+- [ ] Valider les galeries de 12 images, les vues mobile/ordinateur et la navigation admin ; publier avec sauvegarde et contrôle des données.
+
+## PR 97 publiée et vérifiée
+
+- [x] 161 UI et 109 SQL/unitaires réussis ; achat et brouillons vérifiés en ligne à 1280×720 et 390×844. Version `display-a7890e8ad6d7`, données conservées, sauvegarde DATA contrôlée et accès temporaire fermé.
+
 ## Fiabilité de la saisie et petits ordinateurs — 6 novembre 2026
 
 - [x] Reproduire six scénarios avant correction : perte de brouillon, Entrée dans le filtre de ville, achat hors écran avec retour catalogue.
