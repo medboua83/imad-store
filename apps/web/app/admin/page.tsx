@@ -161,6 +161,7 @@ export default function AdminPage() {
         [syncError, setSyncError] = useState(""),
         [actionMessage, setActionMessage] = useState(""),
         [syncing, setSyncing] = useState(false),
+        [initialSyncReady, setInitialSyncReady] = useState(false),
         [lastSync, setLastSync] = useState<Date | null>(null);
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
@@ -202,6 +203,9 @@ export default function AdminPage() {
             setNotifications([]);
             setUnread(0);
             setLastSync(null);
+            setInitialSyncReady(false);
+            setSyncing(false);
+            setSyncError("");
             setAuthError(
                 event instanceof CustomEvent && event.detail === "logout"
                     ? "Vous êtes déconnecté."
@@ -254,6 +258,7 @@ export default function AdminPage() {
                         : "",
                 );
                 if (!failed) setLastSync(new Date());
+                setInitialSyncReady(true);
                 setSyncing(false);
             }
             busy = false;
@@ -300,6 +305,8 @@ export default function AdminPage() {
             setPassword("");
             setOrderFilters(initialOrderListFilters);
             setAnalyticsDays(7);
+            setInitialSyncReady(false);
+            setSyncError("");
             setToken(r.data.accessToken);
         } catch {
             setAuthError("Connexion impossible. Vérifiez vos identifiants et votre connexion.");
@@ -496,18 +503,20 @@ export default function AdminPage() {
                             <i />
                             {syncing
                                 ? t("Actualisation…")
-                                : lastSync
-                                  ? t("À jour à {0}", {
-                                        "0": lastSync.toLocaleTimeString(
-                                            locale === "ar" ? "ar-MA" : "fr-MA",
-                                            {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                                timeZone: "Africa/Casablanca",
-                                            },
-                                        ),
-                                    })
-                                  : t("Chargement initial")}
+                                : syncError
+                                  ? t("Actualisation incomplète")
+                                  : lastSync
+                                    ? t("À jour à {0}", {
+                                          "0": lastSync.toLocaleTimeString(
+                                              locale === "ar" ? "ar-MA" : "fr-MA",
+                                              {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                  timeZone: "Africa/Casablanca",
+                                              },
+                                          ),
+                                      })
+                                    : t("Chargement initial")}
                         </span>
                         <button
                             className="admin-icon-button"
@@ -559,7 +568,7 @@ export default function AdminPage() {
                             {t(actionMessage)}
                         </p>
                     )}
-                    {!lastSync && syncing ? (
+                    {!initialSyncReady ? (
                         <div className="admin-loading" role="status">
                             {t("Chargement des données…")}
                         </div>

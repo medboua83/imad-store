@@ -1,4 +1,5 @@
 export const adminArabic: Record<string, string> = {
+    "Actualisation incomplète": "التحديث غير مكتمل",
     "Aperçu privé du brouillon": "معاينة خاصة للمسودة",
     "Aperçu privé : vos textes ne sont pas publiés. Les liens vers la boutique s’ouvrent dans un nouvel onglet pour conserver votre saisie.":
         "معاينة خاصة: نصوصكم غير منشورة. تفتح روابط المتجر في علامة تبويب جديدة للحفاظ على تعديلاتكم.",

@@ -1,5 +1,15 @@
 # Imad Store — Persistent Project Memory
 
+## Synchronisation partielle sans perte de saisie — candidat du 7 novembre 2026
+
+Une erreur au chargement initial empêchait lastSync d’être renseigné ; les essais suivants démontaient alors tous les écrans, faisant perdre une fiche en cours, un réglage non enregistré ou des détails de commande ouverts. Le candidat distingue la fin du premier chargement de la date de dernière réussite complète. Les essais suivants gardent les écrans montés ; une nouvelle session repart d’un chargement initial. Le statut d’erreur partielle est explicite en français et en arabe. Régression à tester avec réponses retardées, échecs répétés, détails ouverts et nouvelle connexion.
+
+La page Contact invite à joindre le nom du produit ou la référence de commande, à la place d’horaires inscrits en dur sans réglage correspondant. Photos, prix, stock, intégrations et lien WhatsApp conservés. Recette et publication du candidat à consigner.
+
+## Production vérifiée — PR 99, 7 novembre 2026
+
+La production exécute 1996800be5fd63c318bbc2447a9c62410bb3c18e, version content-1996800be5fd, arbre identique à Master e66145a771a946c7971fbc4f7b57539c9d8c5cc6. CI réussie : 176 UI et 109 PostgreSQL/unitaires. Aperçu réel vérifié en arabe à 390 et 1440 px, données/réglages et treize originaux identiques avant/après et en contrôle final. Sauvegarde VPS/DATA vérifiée ; accès temporaire retiré, nouvelle connexion refusée et paire locale supprimée. Les mentions de préparation et de production antérieures ci-dessous sont historiques.
+
 ## Éditeur de contenu et aperçu fidèle — candidat du 6 novembre 2026
 
 L’aperçu utilise le catalogue public et les styles dorés de la boutique, avec les textes privés en cours de saisie. Les liens vers la boutique s’ouvrent dans un autre onglet ; l’ancre des collections reste locale. Les liens des pages publiques gardent leur comportement habituel. Aucun produit, prix, stock ou original d’image n’est modifié.
