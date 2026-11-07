@@ -79,9 +79,9 @@ for (const width of [390, 1440]) {
         const writes = await settingsFixture(page, true);
         await page.getByLabel("Frais de livraison (DH)", { exact: true }).fill("37");
         await page.getByRole("button", { name: "Enregistrer les réglages", exact: true }).click();
-        await expect(page.locator(".commerce-settings").getByRole("alert")).toContainText(
-            "Enregistrement impossible",
-        );
+        await expect(
+            page.getByRole("alert").filter({ hasText: "Enregistrement impossible" }),
+        ).toBeVisible();
         expect(await reloadProtected(page)).toBe(true);
         await expect(page.getByLabel("Frais de livraison (DH)", { exact: true })).toHaveValue("37");
         expect(writes).toEqual(["PUT /api/settings"]);
