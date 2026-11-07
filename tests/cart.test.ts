@@ -152,3 +152,166 @@ test("Cart caps repeated additions and edits, refreshes stale prices/stock and p
     store().clearCart();
     assert.equal(store().items.length, 0);
 });
+
+for (const unavailable of [false, true]) {
+    test(`A late cart response cannot undo a newer ${unavailable ? "unavailable variant" : "price and stock"} snapshot`, async () => {
+        const { useCartStore } = await import("../apps/web/src/store/cart.store");
+        const { default: api } = await import("../apps/web/src/lib/api");
+        const previous = api.defaults.adapter;
+        const store = () => useCartStore.getState();
+        store().clearCart();
+        store().addItem(product, product.variants[0]);
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        let calls = 0;
+        api.defaults.adapter = async (config) => {
+            const first = ++calls === 1;
+            if (first) await gate;
+            return {
+                data: {
+                    data: first
+                        ? product
+                        : {
+                              ...product,
+                              price: 140,
+                              variants: unavailable ? [] : [{ ...product.variants[0], stock: 2 }],
+                          },
+                },
+                status: 200,
+                statusText: "OK",
+                headers: {},
+                config,
+            };
+        };
+        try {
+            const old = store().refreshCart();
+            while (!calls) await new Promise((resolve) => setTimeout(resolve, 0));
+            await store().refreshCart();
+            assert.equal(store().items[0].stock, unavailable ? 0 : 2);
+            release();
+            await old;
+            assert.equal(store().items[0].stock, unavailable ? 0 : 2);
+            assert.equal(store().items[0].price, 140);
+        } finally {
+            release();
+            api.defaults.adapter = previous;
+            store().clearCart();
+        }
+    });
+}
+
+test("Removing and readding a variant cannot inherit an old pending cart snapshot", async () => {
+    const { useCartStore } = await import("../apps/web/src/store/cart.store");
+    const { default: api } = await import("../apps/web/src/lib/api");
+    const previous = api.defaults.adapter;
+    const store = () => useCartStore.getState();
+    store().clearCart();
+    store().addItem(product, product.variants[0]);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    let started = false;
+    api.defaults.adapter = async (config) => {
+        started = true;
+        await gate;
+        return { data: { data: product }, status: 200, statusText: "OK", headers: {}, config };
+    };
+    try {
+        const old = store().refreshCart();
+        while (!started) await new Promise((resolve) => setTimeout(resolve, 0));
+        store().removeItem(product.variants[0].id);
+        const fresh = { ...product, price: 160, variants: [{ ...product.variants[0], stock: 5 }] };
+        store().addItem(fresh, fresh.variants[0], 2);
+        release();
+        await old;
+        assert.equal(store().items[0].price, 160);
+        assert.equal(store().items[0].stock, 5);
+        assert.equal(store().items[0].quantity, 2);
+    } finally {
+        release();
+        api.defaults.adapter = previous;
+        store().clearCart();
+    }
+});
+
+test("A pending cart refresh keeps quantity edits and removed lines", async () => {
+    const { useCartStore } = await import("../apps/web/src/store/cart.store");
+    const { default: api } = await import("../apps/web/src/lib/api");
+    const previous = api.defaults.adapter,
+        store = () => useCartStore.getState();
+    store().clearCart();
+    store().addItem(product, product.variants[0]);
+    const extra = { ...product.variants[0], id: "123456789012345678901239" };
+    store().addItem({ ...product, variants: [extra] }, extra);
+    let release!: () => void,
+        started = false;
+    const gate = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    api.defaults.adapter = async (config) => {
+        started = true;
+        await gate;
+        return {
+            data: { data: { ...product, price: 130 } },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    try {
+        const pending = store().refreshCart();
+        while (!started) await new Promise((resolve) => setTimeout(resolve, 0));
+        store().updateQty(product.variants[0].id, 2);
+        store().removeItem(extra.id);
+        release();
+        await pending;
+        assert.equal(store().items.length, 1);
+        assert.equal(store().items[0].quantity, 2);
+        assert.equal(store().total(), 260);
+    } finally {
+        release();
+        api.defaults.adapter = previous;
+        store().clearCart();
+    }
+});
+
+test("A newer failed lookup does not discard an older successful cart lookup", async () => {
+    const { useCartStore } = await import("../apps/web/src/store/cart.store");
+    const { default: api } = await import("../apps/web/src/lib/api");
+    const previous = api.defaults.adapter,
+        store = () => useCartStore.getState();
+    store().clearCart();
+    store().addItem(product, product.variants[0]);
+    let release!: () => void,
+        calls = 0;
+    const gate = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    api.defaults.adapter = async (config) => {
+        if (++calls > 1) throw new Error("Newer lookup offline");
+        await gate;
+        return {
+            data: { data: { ...product, price: 150 } },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    try {
+        const older = store().refreshCart();
+        while (!calls) await new Promise((resolve) => setTimeout(resolve, 0));
+        await assert.rejects(store().refreshCart(), /Newer lookup offline/);
+        release();
+        await older;
+        assert.equal(store().total(), 150);
+    } finally {
+        release();
+        api.defaults.adapter = previous;
+        store().clearCart();
+    }
+});

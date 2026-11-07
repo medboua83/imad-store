@@ -3,7 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { OlivraisonSettings } from "./olivraison-settings";
 import { OrderSettings } from "./order-settings";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings, type StoreSettings } from "@/lib/api";
 
@@ -24,11 +24,23 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
         [busy, setBusy] = useState(false),
         [error, setError] = useState(""),
         [saved, setSaved] = useState(false);
+    const [baseline, setBaseline] = useState<string | null>(null);
+    const dirty = baseline !== null && JSON.stringify(form) !== baseline;
+    const lock = useRef(false);
+    useEffect(() => {
+        if (!dirty && !busy) return;
+        const protect = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+        window.addEventListener("beforeunload", protect);
+        return () => window.removeEventListener("beforeunload", protect);
+    }, [dirty, busy]);
     async function load() {
         setError("");
         try {
             const settings = await getSettings();
-            setForm({
+            const nextForm: typeof form = {
                 shippingCost: String(settings.shippingCost),
                 freeShippingMin: String(settings.freeShippingMin),
                 deliveryMaxDays: settings.deliveryMaxDays ? String(settings.deliveryMaxDays) : "",
@@ -41,7 +53,9 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                 metaPixelMadPerUsd: settings.metaPixelMadPerUsd
                     ? String(settings.metaPixelMadPerUsd)
                     : "",
-            });
+            };
+            setForm(nextForm);
+            setBaseline(JSON.stringify(nextForm));
             setReady(true);
         } catch {
             setError("Impossible de charger les réglages. Réessayez avant de modifier.");
@@ -77,6 +91,8 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                     onChange={() => setSaved(false)}
                     onSubmit={async (e) => {
                         e.preventDefault();
+                        if (lock.current) return;
+                        lock.current = true;
                         setError("");
                         setSaved(false);
                         setBusy(true);
@@ -98,16 +114,23 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                                     : null,
                             });
                             await cache.invalidateQueries({ queryKey: ["store-settings"] });
+                            setBaseline(JSON.stringify(form));
                             setSaved(true);
                         } catch {
                             setError(
                                 "Enregistrement impossible. Vérifiez les montants, les délais et l’identifiant du pixel.",
                             );
                         } finally {
+                            lock.current = false;
                             setBusy(false);
                         }
                     }}
                 >
+                    {dirty && (
+                        <p className="commerce-draft-note" role="status">
+                            {t("Modifications non enregistrées")}
+                        </p>
+                    )}
                     <fieldset disabled={busy}>
                         <legend>{t("Règles de livraison")}</legend>
                         <label>

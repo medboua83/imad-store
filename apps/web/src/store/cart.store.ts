@@ -43,151 +43,173 @@ interface CartStore {
 
 export const useCartStore = create<CartStore>()(
     persist(
-        (set, get) => ({
-            items: [],
-            cartRecovered: false,
-            dismissRecovery: () => set({ cartRecovered: false }),
-            isOpen: false,
-            openCart: () => set({ isOpen: true }),
-            closeCart: () => set({ isOpen: false }),
+        (set, get) => {
+            let sequence = 0;
+            const applied = new Map<string, number>();
+            return {
+                items: [],
+                cartRecovered: false,
+                dismissRecovery: () => set({ cartRecovered: false }),
+                isOpen: false,
+                openCart: () => set({ isOpen: true }),
+                closeCart: () => set({ isOpen: false }),
 
-            addItem: (product, variant, quantity = 1) => {
-                if (!Number.isFinite(quantity) || quantity < 1 || variant.stock < 1 || isAmbiguousSize(variant.size)) return;
-                set((state) => {
-                    const existing = state.items.find((i) => i.variantId === variant.id);
-                    if (existing) {
-                        return {
-                            items: state.items.map((i) =>
-                                i.variantId === variant.id
-                                    ? {
-                                          ...i,
-                                          stock: variant.stock,
-                                          price: product.price,
-                                          quantityDiscounts: product.quantityDiscounts ?? [],
-                                          freeShipping: Boolean(product.freeShipping),
-                                          image: product.images[0] ?? "",
-                                          images: [...product.images],
-                                          quantity: Math.min(
-                                              variant.stock,
-                                              i.quantity + Math.floor(quantity),
-                                          ),
-                                      }
-                                    : i,
-                            ),
-                            isOpen: true,
+                addItem: (product, variant, quantity = 1) => {
+                    if (
+                        !Number.isFinite(quantity) ||
+                        quantity < 1 ||
+                        variant.stock < 1 ||
+                        isAmbiguousSize(variant.size)
+                    )
+                        return;
+                    applied.set(variant.id, ++sequence);
+                    set((state) => {
+                        const existing = state.items.find((i) => i.variantId === variant.id);
+                        if (existing) {
+                            return {
+                                items: state.items.map((i) =>
+                                    i.variantId === variant.id
+                                        ? {
+                                              ...i,
+                                              stock: variant.stock,
+                                              price: product.price,
+                                              quantityDiscounts: product.quantityDiscounts ?? [],
+                                              freeShipping: Boolean(product.freeShipping),
+                                              image: product.images[0] ?? "",
+                                              images: [...product.images],
+                                              quantity: Math.min(
+                                                  variant.stock,
+                                                  i.quantity + Math.floor(quantity),
+                                              ),
+                                          }
+                                        : i,
+                                ),
+                                isOpen: true,
+                            };
+                        }
+                        const newItem: CartItem = {
+                            variantId: variant.id,
+                            productId: product.id,
+                            productSlug: product.slug,
+                            nameFr: product.nameFr,
+                            nameAr: product.nameAr,
+                            nameEn: product.nameEn,
+                            image: product.images[0] ?? "",
+                            images: [...product.images],
+                            colorNameFr: variant.colorNameFr,
+                            colorNameAr: variant.colorNameAr,
+                            colorNameEn: variant.colorNameEn,
+                            size: variant.size,
+                            price: product.price,
+                            quantityDiscounts: product.quantityDiscounts ?? [],
+                            freeShipping: Boolean(product.freeShipping),
+                            quantity: Math.min(variant.stock, Math.floor(quantity)),
+                            stock: variant.stock,
                         };
+                        return { items: [...state.items, newItem], isOpen: true };
+                    });
+                    trackCart(product.slug);
+                },
+
+                removeItem: (variantId) => {
+                    applied.delete(variantId);
+                    set((state) => ({
+                        items: state.items.filter((i) => i.variantId !== variantId),
+                    }));
+                },
+
+                updateQty: (variantId, quantity) => {
+                    if (!Number.isFinite(quantity)) return;
+                    if (quantity <= 0) {
+                        get().removeItem(variantId);
+                        return;
                     }
-                    const newItem: CartItem = {
-                        variantId: variant.id,
-                        productId: product.id,
-                        productSlug: product.slug,
-                        nameFr: product.nameFr,
-                        nameAr: product.nameAr,
-                        nameEn: product.nameEn,
-                        image: product.images[0] ?? "",
-                        images: [...product.images],
-                        colorNameFr: variant.colorNameFr,
-                        colorNameAr: variant.colorNameAr,
-                        colorNameEn: variant.colorNameEn,
-                        size: variant.size,
-                        price: product.price,
-                        quantityDiscounts: product.quantityDiscounts ?? [],
-                        freeShipping: Boolean(product.freeShipping),
-                        quantity: Math.min(variant.stock, Math.floor(quantity)),
-                        stock: variant.stock,
-                    };
-                    return { items: [...state.items, newItem], isOpen: true };
-                });
-                trackCart(product.slug);
-            },
+                    set((state) => ({
+                        items: state.items.map((i) =>
+                            i.variantId === variantId
+                                ? { ...i, quantity: Math.min(i.stock || 0, Math.floor(quantity)) }
+                                : i,
+                        ),
+                    }));
+                },
 
-            removeItem: (variantId) =>
-                set((state) => ({
-                    items: state.items.filter((i) => i.variantId !== variantId),
-                })),
-
-            updateQty: (variantId, quantity) => {
-                if (!Number.isFinite(quantity)) return;
-                if (quantity <= 0) {
-                    get().removeItem(variantId);
-                    return;
-                }
-                set((state) => ({
-                    items: state.items.map((i) =>
-                        i.variantId === variantId
-                            ? { ...i, quantity: Math.min(i.stock || 0, Math.floor(quantity)) }
-                            : i,
-                    ),
-                }));
-            },
-
-            refreshCart: async () => {
-                const before = get().items;
-                const products = new Map(
-                    await Promise.all(
-                        [...new Set(before.map((i) => i.productSlug))].map(async (slug) => {
-                            try {
-                                return [slug, await getProduct(slug)] as const;
-                            } catch (error) {
-                                if (
-                                    (error as { response?: { status: number } }).response
-                                        ?.status === 404
-                                )
-                                    return [slug, null] as const;
-                                throw error;
-                            }
+                refreshCart: async () => {
+                    const request = ++sequence;
+                    const before = get().items;
+                    const products = new Map(
+                        await Promise.all(
+                            [...new Set(before.map((i) => i.productSlug))].map(async (slug) => {
+                                try {
+                                    return [slug, await getProduct(slug)] as const;
+                                } catch (error) {
+                                    if (
+                                        (error as { response?: { status: number } }).response
+                                            ?.status === 404
+                                    )
+                                        return [slug, null] as const;
+                                    throw error;
+                                }
+                            }),
+                        ),
+                    );
+                    let changed = false;
+                    set((state) => ({
+                        items: state.items.map((item) => {
+                            if (!products.has(item.productSlug)) return item;
+                            // New successful reads and explicit re-additions supersede this snapshot.
+                            if (request < (applied.get(item.variantId) ?? 0)) return item;
+                            applied.set(item.variantId, request);
+                            const product = products.get(item.productSlug),
+                                variant = product?.variants.find((v) => v.id === item.variantId);
+                            const stock =
+                                    variant && !isAmbiguousSize(variant.size) ? variant.stock : 0,
+                                price = product?.price ?? item.price;
+                            const quantity = Math.min(item.quantity, stock);
+                            if (
+                                price !== item.price ||
+                                JSON.stringify(product?.quantityDiscounts ?? []) !==
+                                    JSON.stringify(item.quantityDiscounts ?? []) ||
+                                quantity !== item.quantity ||
+                                stock === 0 ||
+                                (product?.nameFr ?? item.nameFr) !== item.nameFr ||
+                                (product?.nameAr ?? item.nameAr) !== item.nameAr ||
+                                (product?.nameEn ?? item.nameEn) !== item.nameEn ||
+                                (variant?.size ?? "") !== (item.size ?? "") ||
+                                (variant?.colorNameFr ?? item.colorNameFr) !== item.colorNameFr ||
+                                (variant?.colorNameAr ?? item.colorNameAr) !== item.colorNameAr ||
+                                (variant?.colorNameEn ?? item.colorNameEn) !== item.colorNameEn ||
+                                Boolean(product?.freeShipping) !== Boolean(item.freeShipping)
+                            )
+                                changed = true;
+                            return {
+                                ...item,
+                                nameFr: product?.nameFr ?? item.nameFr,
+                                nameAr: product?.nameAr ?? item.nameAr,
+                                nameEn: product?.nameEn ?? item.nameEn,
+                                price,
+                                quantityDiscounts: product?.quantityDiscounts ?? [],
+                                stock,
+                                quantity,
+                                size: variant?.size ?? item.size,
+                                colorNameFr: variant?.colorNameFr ?? item.colorNameFr,
+                                colorNameAr: variant?.colorNameAr ?? item.colorNameAr,
+                                colorNameEn: variant?.colorNameEn ?? item.colorNameEn,
+                                freeShipping: Boolean(product?.freeShipping),
+                                image: product ? (product.images[0] ?? "") : item.image,
+                                images: product ? [...product.images] : item.images,
+                            };
                         }),
-                    ),
-                );
-                let changed = false;
-                set((state) => ({
-                    items: state.items.map((item) => {
-                        if (!products.has(item.productSlug)) return item;
-                        const product = products.get(item.productSlug),
-                            variant = product?.variants.find((v) => v.id === item.variantId);
-                        const stock = variant && !isAmbiguousSize(variant.size) ? variant.stock : 0,
-                            price = product?.price ?? item.price;
-                        const quantity = Math.min(item.quantity, stock);
-                        if (
-                            price !== item.price ||
-                            JSON.stringify(product?.quantityDiscounts ?? []) !== JSON.stringify(item.quantityDiscounts ?? []) ||
-                            quantity !== item.quantity ||
-                            stock === 0 ||
-                            (product?.nameFr ?? item.nameFr) !== item.nameFr ||
-                            (product?.nameAr ?? item.nameAr) !== item.nameAr ||
-                            (product?.nameEn ?? item.nameEn) !== item.nameEn ||
-                            (variant?.size ?? "") !== (item.size ?? "") ||
-                            (variant?.colorNameFr ?? item.colorNameFr) !== item.colorNameFr ||
-                            (variant?.colorNameAr ?? item.colorNameAr) !== item.colorNameAr ||
-                            (variant?.colorNameEn ?? item.colorNameEn) !== item.colorNameEn ||
-                            Boolean(product?.freeShipping) !== Boolean(item.freeShipping)
-                        )
-                            changed = true;
-                        return {
-                            ...item,
-                            nameFr: product?.nameFr ?? item.nameFr,
-                            nameAr: product?.nameAr ?? item.nameAr,
-                            nameEn: product?.nameEn ?? item.nameEn,
-                            price,
-                            quantityDiscounts: product?.quantityDiscounts ?? [],
-                            stock,
-                            quantity,
-                            size: variant?.size ?? item.size,
-                            colorNameFr: variant?.colorNameFr ?? item.colorNameFr,
-                            colorNameAr: variant?.colorNameAr ?? item.colorNameAr,
-                            colorNameEn: variant?.colorNameEn ?? item.colorNameEn,
-                            freeShipping: Boolean(product?.freeShipping),
-                            image: product ? product.images[0] ?? "" : item.image,
-                            images: product ? [...product.images] : item.images,
-                        };
-                    }),
-                }));
-                return changed;
-            },
-            clearCart: () => set({ items: [], isOpen: false }),
-            total: () => priceCart(get().items).subtotal,
-            itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
-        }),
+                    }));
+                    return changed;
+                },
+                clearCart: () => {
+                    applied.clear();
+                    set({ items: [], isOpen: false });
+                },
+                total: () => priceCart(get().items).subtotal,
+                itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
+            };
+        },
         {
             name: "imad-store-cart",
             storage: createJSONStorage(() => cartStorage),
