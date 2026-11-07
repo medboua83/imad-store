@@ -261,6 +261,7 @@ export function CategoriesTab({
                             {t(label)}
                             <input
                                 required
+                                disabled={busy}
                                 dir={key === "nameAr" ? "rtl" : "ltr"}
                                 value={form[key]}
                                 pattern={key === "slug" ? "[a-z0-9]+(-[a-z0-9]+)*" : undefined}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { initialOrderListFilters } from "./order-list-context";
+import { acceptAdminRead, startAdminRead, type AdminReadState } from "./read-version";
 import {
     ArrowUpRight,
     ChartNoAxesCombined,
@@ -166,6 +167,12 @@ export default function AdminPage() {
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
     const [analyticsDays, setAnalyticsDays] = useState(7);
+    const readState = useRef<AdminReadState>({
+        session: 0,
+        sequence: 0,
+        applied: { orders: 0, products: 0, categories: 0, notifications: 0 },
+    });
+    const productSnapshot = useRef<Product[]>([]);
     const mainTitle = useRef<HTMLHeadingElement>(null);
     const menuButton = useRef<HTMLButtonElement>(null),
         nav = useRef<HTMLElement>(null);
@@ -194,6 +201,8 @@ export default function AdminPage() {
     }, []);
     useEffect(() => {
         const expire = (event?: Event) => {
+            readState.current.session++;
+            productSnapshot.current = [];
             setOrderFilters(initialOrderListFilters);
             setAnalyticsDays(7);
             setToken(null);
@@ -230,24 +239,39 @@ export default function AdminPage() {
             if (busy || document.hidden) return;
             busy = true;
             setSyncing(true);
+            const request = startAdminRead(readState.current);
             const results = await Promise.allSettled([
                 getAllOrders({ limit: 100 }),
                 getAdminProducts({ limit: 100 }),
                 getCategories(),
                 getAdminNotifications(),
             ]);
-            if (alive) {
+            if (alive && request.session === readState.current.session) {
                 const [o, p, c, n] = results;
-                if (o.status === "fulfilled") {
+                if (
+                    o.status === "fulfilled" &&
+                    acceptAdminRead(readState.current, "orders", request)
+                ) {
                     setOrders(o.value.data);
                     setOrderTotal(o.value.total);
                 }
-                if (p.status === "fulfilled") {
+                if (
+                    p.status === "fulfilled" &&
+                    acceptAdminRead(readState.current, "products", request)
+                ) {
+                    productSnapshot.current = p.value.data;
                     setProducts(p.value.data);
                     setProductTotal(p.value.total);
                 }
-                if (c.status === "fulfilled") setCategories(c.value);
-                if (n.status === "fulfilled") {
+                if (
+                    c.status === "fulfilled" &&
+                    acceptAdminRead(readState.current, "categories", request)
+                )
+                    setCategories(c.value);
+                if (
+                    n.status === "fulfilled" &&
+                    acceptAdminRead(readState.current, "notifications", request)
+                ) {
                     setNotifications(n.value.data);
                     setUnread(n.value.unread);
                 }
@@ -300,6 +324,8 @@ export default function AdminPage() {
         setAuthError("");
         try {
             const r = await adminLogin(email, password);
+            readState.current.session++;
+            productSnapshot.current = [];
             localStorage.setItem("adminToken", r.data.accessToken);
             localStorage.setItem("adminRefresh", r.data.refreshToken);
             setPassword("");
@@ -323,15 +349,28 @@ export default function AdminPage() {
         }
     }
     async function refreshProducts() {
+        const request = startAdminRead(readState.current);
         const r = await getAdminProducts({ limit: 100 });
-        setProducts(r.data);
-        setProductTotal(r.total);
-        return r.data;
+        if (request.session !== readState.current.session) return [];
+        if (acceptAdminRead(readState.current, "products", request)) {
+            productSnapshot.current = r.data;
+            setProducts(r.data);
+            setProductTotal(r.total);
+        }
+        return productSnapshot.current;
     }
     async function refreshOrders() {
+        const request = startAdminRead(readState.current);
         const r = await getAllOrders({ limit: 100 });
-        setOrders(r.data);
-        setOrderTotal(r.total);
+        if (acceptAdminRead(readState.current, "orders", request)) {
+            setOrders(r.data);
+            setOrderTotal(r.total);
+        }
+    }
+    async function refreshCategories() {
+        const request = startAdminRead(readState.current);
+        const r = await getCategories();
+        if (acceptAdminRead(readState.current, "categories", request)) setCategories(r);
     }
     const current = sections.find((s) => s.id === activeTab)!;
     if (!sessionReady)
@@ -600,7 +639,9 @@ export default function AdminPage() {
                                         total={productTotal}
                                         onRefresh={refreshProducts}
                                         onCreate={async (d) => {
+                                            const session = readState.current.session;
                                             await createProduct(d);
+                                            if (session !== readState.current.session) return false;
                                             try {
                                                 await refreshProducts();
                                                 return true;
@@ -609,7 +650,9 @@ export default function AdminPage() {
                                             }
                                         }}
                                         onUpdate={async (id, d) => {
+                                            const session = readState.current.session;
                                             await updateProduct(id, d);
+                                            if (session !== readState.current.session) return false;
                                             try {
                                                 await refreshProducts();
                                                 return true;
@@ -618,7 +661,9 @@ export default function AdminPage() {
                                             }
                                         }}
                                         onDelete={async (id) => {
+                                            const session = readState.current.session;
                                             await deleteProduct(id);
+                                            if (session !== readState.current.session) return false;
                                             try {
                                                 await refreshProducts();
                                                 return true;
@@ -634,12 +679,16 @@ export default function AdminPage() {
                                     <CategoriesTab
                                         categories={categories}
                                         onCreate={async (d) => {
+                                            const session = readState.current.session;
                                             await createCategory(d);
-                                            setCategories(await getCategories());
+                                            if (session === readState.current.session)
+                                                await refreshCategories();
                                         }}
                                         onDelete={async (id) => {
+                                            const session = readState.current.session;
                                             await deleteCategory(id);
-                                            setCategories(await getCategories());
+                                            if (session === readState.current.session)
+                                                await refreshCategories();
                                         }}
                                     />
                                 </div>
@@ -677,13 +726,23 @@ export default function AdminPage() {
                                             className="admin-button"
                                             disabled={!unread}
                                             onClick={async () => {
+                                                const session = readState.current.session;
                                                 try {
                                                     await markAllNotificationsRead();
+                                                    if (session !== readState.current.session)
+                                                        return;
+                                                    acceptAdminRead(
+                                                        readState.current,
+                                                        "notifications",
+                                                        startAdminRead(readState.current),
+                                                    );
                                                     setNotifications((v) =>
                                                         v.map((n) => ({ ...n, read: true })),
                                                     );
                                                     setUnread(0);
                                                 } catch {
+                                                    if (session !== readState.current.session)
+                                                        return;
                                                     setActionMessage(
                                                         "Impossible de mettre à jour les notifications. Réessayez.",
                                                     );
@@ -706,8 +765,19 @@ export default function AdminPage() {
                                                     className={n.read ? "" : "unread"}
                                                     disabled={n.read}
                                                     onClick={async () => {
+                                                        const session = readState.current.session;
                                                         try {
                                                             await markNotificationRead(n.id);
+                                                            if (
+                                                                session !==
+                                                                readState.current.session
+                                                            )
+                                                                return;
+                                                            acceptAdminRead(
+                                                                readState.current,
+                                                                "notifications",
+                                                                startAdminRead(readState.current),
+                                                            );
                                                             setNotifications((v) =>
                                                                 v.map((x) =>
                                                                     x.id === n.id
@@ -717,6 +787,11 @@ export default function AdminPage() {
                                                             );
                                                             setUnread((v) => Math.max(0, v - 1));
                                                         } catch {
+                                                            if (
+                                                                session !==
+                                                                readState.current.session
+                                                            )
+                                                                return;
                                                             setActionMessage(
                                                                 "Impossible de marquer cette notification comme lue.",
                                                             );
