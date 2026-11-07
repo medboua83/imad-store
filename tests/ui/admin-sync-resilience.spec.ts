@@ -199,7 +199,7 @@ for (const width of [390, 1440]) {
         await expect(page.locator(".order-detail-dialog")).toBeVisible();
         await page.keyboard.press("Escape");
         await expect(page.locator(".order-detail-dialog")).not.toBeVisible();
-        expect(await page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+            await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
         expect(mock.writes).toEqual([]);
     });
 }
