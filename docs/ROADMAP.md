@@ -1,5 +1,13 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Données récentes du dashboard — candidat du 7 novembre 2026
+
+Les réponses de synchronisation sont classées par ressource et par session : une ancienne réponse ne peut plus rétablir un ancien produit, une catégorie supprimée de l’affichage, une commande à confirmer ou une notification non lue après une action réussie. Le rechargement d’une fiche utilise aussi le dernier catalogue appliqué. Les champs de catégorie sont verrouillés pendant leur enregistrement. Recette isolée avec réponses retardées à 390/1440 px ; résultats finaux et publication à consigner. Aucun changement de photos, prix, stocks, intégrations, dépendances ou schéma de base.
+
+## Production vérifiée — PR 100, 7 novembre 2026
+
+La production exécute cdbbd2c914c4da72d46fd121b12de1becb452a1c, version sync-cdbbd2c914c4, arbre identique à Master 90ab7042d36b774c14192298f62f30077f5ccad3. CI réussie : 183 UI et 109 PostgreSQL/unitaires. Synchronisation partielle et page Contact vérifiées en arabe à 390/1440 px ; tables métier, réglages et treize originaux identiques avant/après et en contrôle final. Sauvegarde VPS/DATA vérifiée ; accès temporaire retiré, nouvelle connexion refusée et paire locale supprimée. Les états candidats antérieurs ci-dessous sont historiques.
+
 ## Chargements partiels du dashboard — 7 novembre 2026
 
 - [x] Relever le démontage des écrans après échec du premier chargement.
