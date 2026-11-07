@@ -1,5 +1,15 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Panier et brouillons de réglages — candidat du 7 novembre 2026
+
+Une réponse tardive de vérification du panier pouvait rétablir un ancien prix/stock ou marquer disponible une variante devenue indisponible. Chaque ligne conserve la version de sa dernière relecture réussie ou de son ajout explicite, sans persister ce suivi ; les quantités modifiées et lignes retirées pendant l’attente sont respectées. Les échecs de lecture ne remplacent pas les données. Régressions isolées avant/après à consigner.
+
+Les réglages livraison/retours/Pixel affichent un état de modifications non enregistrées et avertissent avant rechargement ou fermeture pendant une saisie ou un enregistrement. Le retour aux valeurs chargées ou un enregistrement réussi retire l’avertissement. Les brouillons restent seulement en mémoire ; aucun réglage n’est enregistré automatiquement. Les intégrations, données, photos, prix et stocks sont conservés. Recette et publication à consigner.
+
+## Production vérifiée — PR 102, 7 novembre 2026
+
+La production exécute 76e7e4779986d571bfb4b10d10fbf34782706be9, version checkout-76e7e4779986, arbre identique à Master 183184857888288db3fcc3744b41b3fa6d857a16. CI réussie : 206 UI et 109 PostgreSQL/unitaires. Formulaire publié vérifié à 390/1440 px et hauteur 450 : ville unique arabe/français, sélection clavier, téléphone lisible, erreurs corrigibles et aucun débordement. Aucun ordre créé ; panier de vérification remis à zéro. Onze tables métier, deux fichiers de réglages et treize originaux identiques avant/après/final ; sauvegarde privée vérifiée sur VPS et DATA. Accès temporaire retiré, nouvelle connexion refusée et paire locale supprimée. Les anciens états ci-dessous sont historiques.
+
 ## Saisie de commande simplifiée — candidat du 7 novembre 2026
 
 Un seul champ de ville remplace la recherche et la liste séparées : suggestions en arabe/français, sélection au toucher ou au clavier, liste défilante adaptée à la hauteur disponible (au-dessus ou au-dessous) et message sans résultat. Les noms sont toujours convertis en identifiants officiels du transporteur avant envoi ; une saisie inconnue ne conserve pas une ancienne ville cachée. Le téléphone accepte les chiffres arabes/persans et 00212, se présente avec des espaces après saisie et conserve un format compatible avec le serveur à l’envoi. Les erreurs apparaissent à la sortie d’un champ puis se corrigent pendant la saisie. Quatre champs, autofill et protections de confirmation/prix/idempotence conservés ; mise en page mobile dorée plus compacte, sans stockage supplémentaire de coordonnées. Recette et publication du candidat à consigner.

@@ -1804,3 +1804,13 @@
  .admin-language-select label { display: none; }
  .admin-auth-main { padding-top: 70px; }
 }
+
+.admin-app .commerce-settings .commerce-draft-note {
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid #dfc58f;
+    border-radius: 10px;
+    background: #fcf5e6;
+    color: #79531b;
+    font-weight: 600;
+}
