@@ -28,10 +28,14 @@ async function seed(page: Page) {
     );
 }
 async function fill(page: Page) {
-    await page.getByRole("textbox", { name: "الاسم الكامل", exact: true }).fill("اختبار واجهة — لا شحن");
+    await page
+        .getByRole("textbox", { name: "الاسم الكامل", exact: true })
+        .fill("اختبار واجهة — لا شحن");
     await page.getByRole("textbox", { name: "رقم الهاتف", exact: true }).fill("0600000099");
-    await page.locator("#checkout-city").selectOption("tangier");
-    await page.getByRole("textbox", { name: "عنوان التوصيل", exact: true }).fill("Adresse fictive de test 1");
+    await page.locator("#checkout-city").fill("Tanger");
+    await page
+        .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
+        .fill("Adresse fictive de test 1");
 }
 
 for (const width of [390, 1440]) {
@@ -67,8 +71,10 @@ for (const width of [390, 1440]) {
         await expect(page.getByRole("textbox", { name: "الاسم الكامل", exact: true })).toHaveValue(
             "اختبار واجهة — لا شحن",
         );
-        await expect(page.getByRole("textbox", { name: "رقم الهاتف", exact: true })).toHaveValue("0600000099");
-        await expect(page.locator("#checkout-city")).toHaveValue("tangier");
+        await expect(page.getByRole("textbox", { name: "رقم الهاتف", exact: true })).toHaveValue(
+            "06 00 00 00 99",
+        );
+        await expect(page.locator("#checkout-city")).toHaveValue("طنجة");
         await expect(page.getByRole("textbox", { name: "عنوان التوصيل", exact: true })).toHaveValue(
             "Adresse fictive de test 1",
         );

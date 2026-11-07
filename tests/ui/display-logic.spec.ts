@@ -83,7 +83,7 @@ for (const width of [390, 1440]) {
         expect(writes).toEqual([]);
     });
 
-    test(`Enter in city search only moves to city selection and never submits checkout at ${width}px`, async ({
+    test(`Enter selects a suggested city and never submits checkout at ${width}px`, async ({
         page,
     }) => {
         await page.setViewportSize({ width, height: 844 });
@@ -129,23 +129,21 @@ for (const width of [390, 1440]) {
         await page
             .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
             .fill("Adresse fictive de test 1");
-        const city = page.locator("#checkout-city"),
-            search = page.locator("#checkout-city-search");
-        await city.selectOption("tangier");
+        const city = page.locator("#checkout-city");
+        await city.fill("Tanger");
         await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeEnabled();
-        await search.fill("Rabat");
-        await search.press("Enter");
+        await city.fill("Rabat");
+        await city.press("Enter");
         await expect(city).toBeFocused();
-        await expect(city).toHaveValue("tangier");
+        await expect(city).toHaveValue("الرباط");
         await expect(page.locator(".checkout-submission-error")).toHaveCount(0);
         expect(orders).toBe(0);
-        await city.selectOption("rabat");
-        await search.fill("ville introuvable");
-        await search.press("Enter");
-        await expect(search).toBeFocused();
+        await city.fill("ville introuvable");
+        await city.press("Enter");
+        await expect(city).toBeFocused();
         expect(orders).toBe(0);
-        await search.fill("");
-        await search.press("Enter");
+        await city.fill("Tanger");
+        await city.press("Enter");
         await expect(city).toBeFocused();
         await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
         await expect.poll(() => orders).toBe(1);

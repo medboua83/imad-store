@@ -1,5 +1,13 @@
 # Imad Store — Persistent Project Memory
 
+## Saisie de commande simplifiée — candidat du 7 novembre 2026
+
+Un seul champ de ville remplace la recherche et la liste séparées : suggestions en arabe/français, sélection au toucher ou au clavier, liste défilante adaptée à la hauteur disponible (au-dessus ou au-dessous) et message sans résultat. Les noms sont toujours convertis en identifiants officiels du transporteur avant envoi ; une saisie inconnue ne conserve pas une ancienne ville cachée. Le téléphone accepte les chiffres arabes/persans et 00212, se présente avec des espaces après saisie et conserve un format compatible avec le serveur à l’envoi. Les erreurs apparaissent à la sortie d’un champ puis se corrigent pendant la saisie. Quatre champs, autofill et protections de confirmation/prix/idempotence conservés ; mise en page mobile dorée plus compacte, sans stockage supplémentaire de coordonnées. Recette et publication du candidat à consigner.
+
+## Production vérifiée — PR 101, 7 novembre 2026
+
+La production exécute 15a3a0eb79264e8eea24b95c02ef6b40c6f29aea, version fresh-15a3a0eb7926, arbre identique à Master 4e44acf4cdb8248bb05bbe76ef8c2602f7399e8a. CI réussie : 195 UI et 109 PostgreSQL/unitaires. Dashboard et catalogue vérifiés en arabe à 390/1440 px ; saisie conservée après actualisation, photos chargées et pointure conservée entre catalogue et fiche. Onze tables métier, deux fichiers de réglages et treize originaux identiques avant/après/final ; sauvegarde privée vérifiée sur VPS et DATA. Accès temporaire retiré, connexion suivante refusée et paire locale supprimée. Les anciens états ci-dessous sont historiques.
+
 ## Données récentes du dashboard — candidat du 7 novembre 2026
 
 Les réponses de synchronisation sont classées par ressource et par session : une ancienne réponse ne peut plus rétablir un ancien produit, une catégorie supprimée de l’affichage, une commande à confirmer ou une notification non lue après une action réussie. Le rechargement d’une fiche utilise aussi le dernier catalogue appliqué. Les champs de catégorie sont verrouillés pendant leur enregistrement. Recette isolée avec réponses retardées à 390/1440 px ; résultats finaux et publication à consigner. Aucun changement de photos, prix, stocks, intégrations, dépendances ou schéma de base.
