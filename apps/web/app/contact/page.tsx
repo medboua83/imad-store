@@ -22,7 +22,7 @@ export default function ContactPage() {
           تواصلوا عبر واتساب
           <ArrowUpLeft size={18} aria-hidden="true" />
         </a>
-        <p className="contact-hours">من الإثنين إلى السبت، من 10:00 صباحاً إلى 8:00 مساءً.</p>
+        <p className="contact-service-note">لتسهيل المساعدة، أرسلوا اسم المنتج أو مرجع الطلب مع رسالتكم.</p>
       </div>
       <nav className="contact-shortcuts" aria-label="مساعدة سريعة">
         <Link href="/delivery">
