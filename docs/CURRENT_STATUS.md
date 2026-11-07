@@ -1,5 +1,15 @@
 # Current Status — 2026-11-06
 
+## Éditeur de contenu et aperçu fidèle — candidat du 6 novembre 2026
+
+L’aperçu utilise le catalogue public et les styles dorés de la boutique, avec les textes privés en cours de saisie. Les liens vers la boutique s’ouvrent dans un autre onglet ; l’ancre des collections reste locale. Les liens des pages publiques gardent leur comportement habituel. Aucun produit, prix, stock ou original d’image n’est modifié.
+
+Les champs sont verrouillés pendant la sauvegarde et sa relecture, les actions concurrentes sont refusées et un brouillon non enregistré est protégé au rechargement. Si l’écriture réussit mais que la relecture échoue, un message distinct demande une relecture avant toute nouvelle publication. Une panne du catalogue de l’aperçu propose un nouvel essai sans annoncer une collection vide. Recette et publication de ce candidat à consigner.
+
+## PR 98 publiée et vérifiée — 6 novembre 2026
+
+La production exécute b243035465d7af9f07662a6e79657063d450225d, version gallery-b243035465d7 (Master de fusion 7a5f5227dc3498e2a7eb2e4f510ff4b045fe9436). CI réussie : 169 UI et 109 PostgreSQL/unitaires. Filtres commandes, période statistiques et navigation clavier des galeries vérifiés à 390 et 1280 px. Tables métier, réglages et treize originaux préservés ; sauvegarde vérifiée sur VPS et DATA. Accès temporaire retiré, nouvelle connexion refusée, paire locale supprimée. Les anciennes références de production ci-dessous sont historiques.
+
 ## Contexte des listes admin et miniatures — candidat du 6 novembre 2026
 
 La période statistiques, la recherche des commandes et ses filtres sont conservés en mémoire par la page admin pendant la session, sans les inscrire dans les URL ni dans le stockage du navigateur. Les écrans de commandes et de statistiques continuent de se démonter en quittant leur section ; aucun dialogue modal ne reste caché au-dessus du tableau de bord. Une nouvelle connexion ou une fin de session remet les filtres à zéro. Les statistiques redemandent la période choisie au retour.

@@ -964,7 +964,7 @@
     padding: 8px 10px;
     color: #65553a;
 }
-.admin-content-panel > .grid label {
+.admin-content-panel .content-edit-fields > .grid label {
     align-self: start;
 }
 .admin-crm p {
@@ -1358,6 +1358,27 @@
 }
 .admin-content-panel .storefront-home .section-heading h2 {
     font-size: clamp(30px, 3vw, 42px);
+}
+.admin-content-panel .content-edit-fields {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-inline-size: 0;
+    display: grid;
+    gap: 20px;
+}
+.admin-content-panel .admin-draft-preview {
+    border: 1px solid #d8c291;
+    border-radius: 18px;
+    overflow: hidden;
+    min-width: 0;
+}
+.admin-draft-preview .draft-preview-notice {
+    background: #f5ede0;
+    color: #65502d;
+    padding: 16px;
+    margin: 0;
+    line-height: 1.8;
 }
 
 /* Order workspace: native modal keeps focus contained and supports Escape. */

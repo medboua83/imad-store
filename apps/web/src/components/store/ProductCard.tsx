@@ -11,24 +11,30 @@ export function ProductCard({
     eagerImage = false,
     preferredSize,
     returnTo,
+    openInNewTab = false,
 }: {
     product: Product;
     headingLevel?: 2 | 3;
     eagerImage?: boolean;
     preferredSize?: string;
     returnTo?: string;
+    openInNewTab?: boolean;
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
-    const variants = sellableVariants(p.variants).filter(v => !preferredSize || (v.size || "").toLowerCase() === preferredSize.toLowerCase());
+    const variants = sellableVariants(p.variants).filter(
+        (v) => !preferredSize || (v.size || "").toLowerCase() === preferredSize.toLowerCase(),
+    );
     const available = variants.some((v) => v.stock > 0);
     const offered = available ? variants.filter((v) => v.stock > 0) : variants;
     const colors = [...new Map(offered.map((v) => [v.color, v])).values()];
     const sizes = orderedSizes(offered).filter(Boolean);
     const href = productDetailsHref(p.slug, preferredSize, returnTo);
+    const linkTarget = openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : {};
     return (
         <article className="catalog-card">
             <Link
+                {...linkTarget}
                 prefetch={false}
                 href={href}
                 className="catalog-card-image"
@@ -36,7 +42,11 @@ export function ProductCard({
             >
                 <ProductPhoto images={p.images} name={name} eager={eagerImage} />
                 <span className={`stock-pill ${available ? "" : "stock-pill-empty"}`}>
-                    {available ? "متوفر الآن" : preferredSize ? "هذا المقاس غير متوفر" : "نفدت الكمية"}
+                    {available
+                        ? "متوفر الآن"
+                        : preferredSize
+                          ? "هذا المقاس غير متوفر"
+                          : "نفدت الكمية"}
                 </span>
                 <span className="card-image-arrow" aria-hidden="true">
                     <ArrowUpLeft size={21} />
@@ -46,7 +56,7 @@ export function ProductCard({
                 <p className="card-category">{p.category?.nameAr || p.category?.nameFr}</p>
                 <div className="card-title-row">
                     <Heading>
-                        <Link prefetch={false} href={href}>
+                        <Link {...linkTarget} prefetch={false} href={href}>
                             {name}
                         </Link>
                     </Heading>
@@ -99,7 +109,7 @@ export function ProductCard({
                         {colors.length} {colors.length === 1 ? "لون" : "ألوان"} · {offered.length}{" "}
                         {offered.length === 1 ? "خيار" : "خيارات"}
                     </p>
-                    <Link prefetch={false} href={href} className="text-link">
+                    <Link {...linkTarget} prefetch={false} href={href} className="text-link">
                         اختيار التفاصيل <ArrowUpLeft size={16} aria-hidden="true" />
                     </Link>
                 </div>

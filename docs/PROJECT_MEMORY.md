@@ -1,5 +1,15 @@
 # Imad Store — Persistent Project Memory
 
+## Éditeur de contenu et aperçu fidèle — candidat du 6 novembre 2026
+
+L’aperçu utilise le catalogue public et les styles dorés de la boutique, avec les textes privés en cours de saisie. Les liens vers la boutique s’ouvrent dans un autre onglet ; l’ancre des collections reste locale. Les liens des pages publiques gardent leur comportement habituel. Aucun produit, prix, stock ou original d’image n’est modifié.
+
+Les champs sont verrouillés pendant la sauvegarde et sa relecture, les actions concurrentes sont refusées et un brouillon non enregistré est protégé au rechargement. Si l’écriture réussit mais que la relecture échoue, un message distinct demande une relecture avant toute nouvelle publication. Une panne du catalogue de l’aperçu propose un nouvel essai sans annoncer une collection vide. Recette et publication de ce candidat à consigner.
+
+## PR 98 publiée et vérifiée — 6 novembre 2026
+
+La production exécute b243035465d7af9f07662a6e79657063d450225d, version gallery-b243035465d7 (Master de fusion 7a5f5227dc3498e2a7eb2e4f510ff4b045fe9436). CI réussie : 169 UI et 109 PostgreSQL/unitaires. Filtres commandes, période statistiques et navigation clavier des galeries vérifiés à 390 et 1280 px. Tables métier, réglages et treize originaux préservés ; sauvegarde vérifiée sur VPS et DATA. Accès temporaire retiré, nouvelle connexion refusée, paire locale supprimée. Les anciennes références de production ci-dessous sont historiques.
+
 ## Galerie et contexte des listes — 6 novembre 2026
 
 Poursuite de l’audit boutique/admin autorisée, avec tests et publication sur imadmode.com. La production est désormais `a7890e8ad6d78f37ebfc00fcd688bc2e486f8dc4` (`display-a7890e8ad6d7`, PR 97 fusionnée, CI 161 UI / 109 tests SQL-unitaires réussie), et non 50da cité historiquement. Les contrôles de préservation et la sauvegarde DATA sont vérifiés ; l’accès temporaire a été retiré et sa clé supprimée. Nouveau lot : filtres commandes et période statistiques gardés uniquement pendant la session ; miniatures sélectionnées visibles dans leur propre bande, sans saut du document ni modification de photos. Ne pas conserver de dialogue modal monté derrière une section masquée. La déconnexion efface la recherche admin en mémoire. Résultats finaux et nouvelle publication à consigner.
