@@ -1,5 +1,13 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Suivi CRM lisible et vérifications récentes — candidat du 7 novembre 2026
+
+Le diagnostic d’une commande ignore les réponses et erreurs d’une ancienne référence après modification du champ. Une modification annule la lecture en cours et permet une nouvelle vérification ; la fermeture du composant annule aussi sa lecture. Les résultats ne déclenchent aucune création ni relance. Le statut respecte la langue du dashboard, avec référence isolée en lecture gauche-droite et encadré doré lisible sur mobile. Les réglages de connexion, les envois et les automatisations ne changent pas. Vérifications isolées à 390/1440 px ; recette complète et publication à consigner.
+
+## Production vérifiée — PR 103, 7 novembre 2026
+
+La production exécute 64827f173c17a04fa8da40d2f653d2222a4d4fc6, version cart-settings-64827f173c17, arbre identique à Master 7bc092277ad044cf0b0002deb9174b3fbb8f4573. CI : 216 UI et 114 PostgreSQL/unitaires réussis. Panier et brouillons livraison/retours/Pixel vérifiés en arabe à 390/1440 px ; valeur livraison 30 DH restaurée sans sauvegarde, panier vidé, aucun ordre créé. Onze tables métier, deux environnements et treize originaux identiques avant/après/final ; 383 fichiers source vérifiés. Sauvegarde VPS/DATA vérifiée, accès temporaire retiré, connexion neuve refusée et paire locale supprimée. Les états précédents ci-dessous sont historiques.
+
 ## Panier et brouillons de réglages — candidat du 7 novembre 2026
 
 Une réponse tardive de vérification du panier pouvait rétablir un ancien prix/stock ou marquer disponible une variante devenue indisponible. Chaque ligne conserve la version de sa dernière relecture réussie ou de son ajout explicite, sans persister ce suivi ; les quantités modifiées et lignes retirées pendant l’attente sont respectées. Les échecs de lecture ne remplacent pas les données. Régressions isolées avant/après à consigner.

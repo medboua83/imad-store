@@ -1,7 +1,7 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import CrmConnectionForm, { type CompanyConnection } from "./crm-connection-form";
 import { getBaseUrl } from "@/lib/api";
@@ -47,25 +47,51 @@ export default function DeskcommTab() {
     } | null>(null);
     const [diagnosticError, setDiagnosticError] = useState("");
     const [checking, setChecking] = useState(false);
+    const diagnosticSequence = useRef(0);
+    const diagnosticController = useRef<AbortController | null>(null);
+    useEffect(
+        () => () => {
+            diagnosticSequence.current++;
+            diagnosticController.current?.abort();
+        },
+        [],
+    );
+    function resetDiagnostic() {
+        diagnosticSequence.current++;
+        diagnosticController.current?.abort();
+        diagnosticController.current = null;
+        setChecking(false);
+        setDelivery(null);
+        setDiagnosticError("");
+    }
     async function checkOrder(e: React.FormEvent) {
         e.preventDefault();
+        if (diagnosticController.current) return;
+        const request = ++diagnosticSequence.current;
+        const controller = new AbortController();
+        diagnosticController.current = controller;
         setChecking(true);
         setDelivery(null);
         setDiagnosticError("");
         try {
             const r = await axios.get(
                 base + "/integrations/deskcomm/orders/" + encodeURIComponent(reference.trim()),
-                { headers: headers() },
+                { headers: headers(), signal: controller.signal },
             );
+            if (request !== diagnosticSequence.current || controller.signal.aborted) return;
             setDelivery(r.data.data);
         } catch (e) {
+            if (request !== diagnosticSequence.current || controller.signal.aborted) return;
             setDiagnosticError(
                 axios.isAxiosError(e)
                     ? e.response?.data?.error || "Vérification impossible"
                     : "Erreur réseau",
             );
         } finally {
-            setChecking(false);
+            if (request === diagnosticSequence.current) {
+                diagnosticController.current = null;
+                setChecking(false);
+            }
         }
     }
     const headers = () => ({
@@ -165,7 +191,9 @@ export default function DeskcommTab() {
                                 {config.activity?.lastReturnAt
                                     ? new Date(config.activity.lastReturnAt).toLocaleString(
                                           "fr-MA",
-                                          { timeZone: "Africa/Casablanca" },
+                                          {
+                                              timeZone: "Africa/Casablanca",
+                                          },
                                       )
                                     : t("Aucun retour observé")}
                             </dd>
@@ -276,7 +304,11 @@ export default function DeskcommTab() {
                     </p>
                 )}
             </details>
-            <form className="space-y-3" onSubmit={checkOrder}>
+            <form
+                className="space-y-3 crm-order-diagnostic"
+                onSubmit={checkOrder}
+                aria-busy={checking}
+            >
                 <h3 className="font-semibold">{t("Suivi CRM d’une commande")}</h3>
                 <label className="block text-sm">
                     {t("Référence de commande")}
@@ -286,8 +318,7 @@ export default function DeskcommTab() {
                         value={reference}
                         onChange={(e) => {
                             setReference(e.target.value);
-                            setDelivery(null);
-                            setDiagnosticError("");
+                            resetDiagnostic();
                         }}
                         placeholder={t("Ex. 29EF8EA4")}
                         pattern="[a-fA-F0-9]{8}|[a-fA-F0-9]{24}"
@@ -298,18 +329,30 @@ export default function DeskcommTab() {
                     {checking ? t("Vérification…") : t("Vérifier l’envoi CRM")}
                 </button>
                 {delivery && (
-                    <div className="text-sm space-y-2" role="status">
-                        <p>
-                            #{delivery.reference} —{" "}
-                            {{
-                                NO_EVENT: "Aucun envoi CRM prévu",
-                                PENDING: "En attente d’envoi",
-                                PROCESSING: "En cours d’envoi",
-                                SENT: "Transmis au webhook",
-                                FAILED: "Échec après plusieurs tentatives",
-                            }[delivery.state] || delivery.state}{" "}
-                            {t("· Tentatives : ")}
-                            {delivery.attempts}
+                    <div
+                        className="text-sm space-y-2 crm-delivery-status"
+                        role="status"
+                        data-state={delivery.state}
+                    >
+                        <p className="crm-delivery-heading">
+                            <strong>
+                                <bdi dir="ltr">#{delivery.reference}</bdi>
+                            </strong>
+                            <span className="crm-delivery-state">
+                                {t(
+                                    {
+                                        NO_EVENT: "Aucun envoi CRM prévu",
+                                        PENDING: "En attente d’envoi",
+                                        PROCESSING: "En cours d’envoi",
+                                        SENT: "Transmis au webhook",
+                                        FAILED: "Échec après plusieurs tentatives",
+                                    }[delivery.state] || delivery.state,
+                                )}
+                            </span>
+                            <span>
+                                {t("· Tentatives : ")}
+                                {delivery.attempts}
+                            </span>
                         </p>
                         <p>
                             {delivery.state === "NO_EVENT"

@@ -1814,3 +1814,28 @@
     color: #79531b;
     font-weight: 600;
 }
+
+.admin-app .admin-crm .crm-delivery-status {
+    padding: 16px;
+    border: 1px solid #dfc58f;
+    border-radius: 12px;
+    background: #fcf8ef;
+    overflow-wrap: anywhere;
+}
+.admin-app .crm-delivery-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.admin-app .crm-delivery-state {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eee1c4;
+    color: #624820;
+    font-weight: 600;
+}
+.admin-app .crm-delivery-status[data-state="FAILED"] .crm-delivery-state {
+    color: #8b3026;
+    background: #f8e5dc;
+}
