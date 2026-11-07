@@ -58,9 +58,9 @@ for (const width of [320, 390, 1440]) {
     await phone.fill("06 00 00 00 99");
     await expect(phone).toHaveAttribute("aria-invalid", "false");
     await expect(phone).toHaveAttribute("aria-describedby", "phone-hint");
-    await page.locator("#checkout-city-search").fill("طنجة");
+    await city.fill("طنج");
     await expect(city).toHaveAttribute("aria-invalid", "true");
-    await city.selectOption("tangier");
+    await city.fill("Tanger");
     await expect(city).toHaveAttribute("aria-invalid", "false");
     await address.fill("abcd");
     await expect(address).toHaveAttribute("aria-invalid", "true");

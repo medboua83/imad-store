@@ -87,19 +87,28 @@ async function fillCheckout(page: Page, phone = "0600000099") {
     await page.goto("/checkout");
     await page.getByLabel("الاسم الكامل").fill("Client fictif");
     await page.getByLabel("رقم الهاتف", { exact: false }).fill(phone);
-    await page.getByLabel("المدينة", { exact: false }).selectOption("rabat");
+    await page.getByLabel("المدينة", { exact: false }).fill("Rabat");
     await page.getByLabel("عنوان التوصيل", { exact: false }).fill("Adresse fictive 1");
 }
-test("A saved cart hydrates without React text mismatches and survives reload", async ({page}) => {
+test("A saved cart hydrates without React text mismatches and survives reload", async ({
+    page,
+}) => {
     const errors: string[] = [];
-    page.on("pageerror", error => errors.push(error.message));
-    page.on("console", message => { if(message.type() === "error" && /hydration|#418|server rendered/i.test(message.text())) errors.push(message.text()); });
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => {
+        if (message.type() === "error" && /hydration|#418|server rendered/i.test(message.text()))
+            errors.push(message.text());
+    });
     await fixture(page);
     await page.goto("/checkout");
-    await expect(page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true})).toBeVisible();
+    await expect(
+        page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }),
+    ).toBeVisible();
     await page.reload();
-    await expect(page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true})).toBeVisible();
-    await page.getByRole("button", {name:"فتح السلة، 1 قطعة",exact:true}).click();
+    await expect(
+        page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("130.00");
     expect(errors).toEqual([]);
 });
@@ -121,7 +130,7 @@ for (const viewport of [
         await expect(review).toContainText("130.00");
         expect(requests).toHaveLength(0);
         await page.getByRole("button", { name: "تعديل المعلومات", exact: true }).click();
-        await page.getByLabel("المدينة", { exact: false }).selectOption("tangier");
+        await page.getByLabel("المدينة", { exact: false }).fill("Tanger");
         await expect(review).toHaveCount(0);
         await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
         await expect(review).toContainText("طنجة");
@@ -168,23 +177,39 @@ for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
         await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
         await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
         expect(requests).toHaveLength(1);
-        expect(requests[0].body.customer.phone).toBe(phone.startsWith("+") ? "+212612345678" : "0612345678");
+        expect(requests[0].body.customer.phone).toBe(
+            phone.startsWith("+") ? "+212612345678" : "0612345678",
+        );
     });
 }
-test("delivery fields use official cities and preserve local delivery phone", async ({ page }, info) => {
+test("delivery fields use official cities and preserve local delivery phone", async ({
+    page,
+}, info) => {
     const { requests } = await fixture(page, false);
     await fillCheckout(page, "0600000099");
     const city = page.getByRole("combobox", { name: /المدينة/ });
-    await expect(city.locator("option")).toHaveCount(356);
-    await city.selectOption("tangier");
-    await expect(city).toHaveValue("tangier");
-    await expect(page.getByLabel("عنوان التوصيل", { exact: false })).toHaveAttribute("maxlength", "124");
+    await city.fill("طنج");
+    await expect(page.getByRole("option", { name: /طنجة/ })).toBeVisible();
+    await city.fill("Tanger");
+    await page.getByRole("option", { name: /طنجة/ }).click();
+    await expect(city).toHaveValue("طنجة");
+    await expect(page.getByLabel("عنوان التوصيل", { exact: false })).toHaveAttribute(
+        "maxlength",
+        "124",
+    );
     await expect(page.getByLabel("الاسم الكامل")).toHaveAttribute("minlength", "3");
-    await page.screenshot({ path: info.outputPath("carrier-compatible-checkout.png"), fullPage: true });
+    await page.screenshot({
+        path: info.outputPath("carrier-compatible-checkout.png"),
+        fullPage: true,
+    });
     await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
-    expect(requests[0].body.customer).toMatchObject({ city: "tangier", phone: "0600000099", street: "Adresse fictive 1" });
+    expect(requests[0].body.customer).toMatchObject({
+        city: "tangier",
+        phone: "0600000099",
+        street: "Adresse fictive 1",
+    });
     expect(requests[0].body.aiServiceConsent).toBe(false);
 });
 test("network retry retains the same idempotency key and request", async ({ page }) => {

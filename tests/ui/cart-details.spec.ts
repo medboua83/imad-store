@@ -109,7 +109,7 @@ for (const width of [390, 1440]) {
         .getByRole("textbox", { name: "الاسم الكامل", exact: true })
         .fill("اختبار واجهة فقط");
       await page.getByRole("textbox", { name: "رقم الهاتف", exact: true }).fill("0600000099");
-      await page.locator("#checkout-city").selectOption("tangier");
+      await page.locator("#checkout-city").fill("Tanger");
       await page
         .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
         .fill("Rue fictive de test 1");

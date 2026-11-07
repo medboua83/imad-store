@@ -1,10 +1,11 @@
 "use client";
+import { CheckoutCityInput } from "./city-input";
+import { checkoutPhoneDigits, formatCheckoutPhone } from "./phone-input";
 import { CheckoutReview } from "@/components/store/CheckoutReview";
 import { metaPurchase } from "@/lib/meta-pixel";
 import {
     shippingFee,
     priceCart,
-    searchShippingCities,
     shippingCityLabel,
     canonicalShippingCity,
     normalizeShippingPhone,
@@ -32,8 +33,12 @@ import { CartDeliveryBenefit } from "@/components/store/CartDeliveryBenefit";
 type CheckoutForm = { fullName: string; phone: string; city: string; address: string };
 function checkoutFieldError(field: keyof CheckoutForm, value: string): string {
     if (field === "fullName") return value.trim().length < 3 ? "أدخلوا الاسم الكامل" : "";
-    if (field === "phone") return normalizeShippingPhone(value) ? "" : "أدخلوا رقم هاتف مغربي صالحاً";
-    if (field === "city") return canonicalShippingCity(value) ? "" : "اختاروا مدينة التوصيل من القائمة";
+    if (field === "phone")
+        return normalizeShippingPhone(formatCheckoutPhone(value))
+            ? ""
+            : "أدخلوا رقم هاتف مغربي صالحاً";
+    if (field === "city")
+        return canonicalShippingCity(value) ? "" : "اختاروا مدينة التوصيل من القائمة";
     return value.trim().length < 5 || value.trim().length > 124
         ? "أدخلوا العنوان الكامل بين 5 و124 حرفاً"
         : "";
@@ -41,14 +46,14 @@ function checkoutFieldError(field: keyof CheckoutForm, value: string): string {
 export default function CheckoutPage() {
     const { items, total, clearCart, refreshCart } = useCartStore();
     const shipping = useShipping(total(), items);
-    const [form, setForm] = useState<CheckoutForm>({ fullName: "", phone: "", city: "", address: "" });
+    const [form, setForm] = useState<CheckoutForm>({
+        fullName: "",
+        phone: "",
+        city: "",
+        address: "",
+    });
     const validationAttempted = useRef(false);
-    const [citySearch, setCitySearch] = useState("");
-    const matchingCities = searchShippingCities(citySearch);
-    const visibleCities =
-        form.city && !matchingCities.includes(form.city)
-            ? [form.city, ...matchingCities]
-            : matchingCities;
+    const touched = useRef(new Set<keyof CheckoutForm>());
     const [fields, setFields] = useState<Record<string, string>>({});
     const [error, setError] = useState("");
     const submissionError = useRef<HTMLParagraphElement>(null);
@@ -58,7 +63,7 @@ export default function CheckoutPage() {
     }, [submissionErrorVersion]);
     function announceSubmissionError(message: string) {
         setError(message);
-        setSubmissionErrorVersion(version => version + 1);
+        setSubmissionErrorVersion((version) => version + 1);
     }
     const [busy, setBusy] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
@@ -92,7 +97,10 @@ export default function CheckoutPage() {
             checked = true;
             refreshCart()
                 .then((changed) => {
-                    if (active && changed) setError("تم تحديث تفاصيل المنتجات أو الأسعار أو الكميات. راجعوا ملخص الطلب.");
+                    if (active && changed)
+                        setError(
+                            "تم تحديث تفاصيل المنتجات أو الأسعار أو الكميات. راجعوا ملخص الطلب.",
+                        );
                 })
                 .catch(() => {
                     if (active) setError("تعذر تحديث السلة. اضغطوا تأكيد الطلب لإعادة التحقق.");
@@ -102,7 +110,10 @@ export default function CheckoutPage() {
         // empty server snapshot would otherwise skip the saved basket entirely.
         const unsubscribe = useCartStore.persist.onFinishHydration(check);
         if (useCartStore.persist.hasHydrated()) check();
-        return () => { active = false; unsubscribe(); };
+        return () => {
+            active = false;
+            unsubscribe();
+        };
     }, [refreshCart]);
     async function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -128,7 +139,9 @@ export default function CheckoutPage() {
             const freshSettings = (await shipping.retry({ throwOnError: true })).data;
             if (changed) {
                 setReview(null);
-                announceSubmissionError("تغيرت تفاصيل المنتجات أو السعر أو التوفر. راجعوا ملخص الطلب ثم أكدوا مجدداً.");
+                announceSubmissionError(
+                    "تغيرت تفاصيل المنتجات أو السعر أو التوفر. راجعوا ملخص الطلب ثم أكدوا مجدداً.",
+                );
                 return;
             }
             const cart = useCartStore.getState().items;
@@ -139,13 +152,17 @@ export default function CheckoutPage() {
             if (!freshSettings) throw new Error("Shipping settings unavailable");
             if ((freshSettings.directSiteConfirmation === true) !== direct) {
                 setReview(null);
-                announceSubmissionError("تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.");
+                announceSubmissionError(
+                    "تغيرت طريقة تأكيد الطلب. راجعوا المعلومات ثم تابعوا مجدداً.",
+                );
                 return;
             }
             const subtotal = priceCart(cart).subtotal;
             const confirmedTotal = subtotal + shippingFee(subtotal, cart, freshSettings);
             if (shipping.total === null || Math.abs(confirmedTotal - shipping.total) > 0.005) {
-                announceSubmissionError("تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.");
+                announceSubmissionError(
+                    "تغيرت رسوم التوصيل. راجعوا الإجمالي الجديد ثم أكدوا مجدداً.",
+                );
                 return;
             }
             if (direct && review !== reviewSignature(cart, confirmedTotal)) {
@@ -165,7 +182,7 @@ export default function CheckoutPage() {
                     expectedTotal: confirmedTotal,
                     customer: {
                         fullName: form.fullName.trim(),
-                        phone: form.phone.replace(/[\s().-]/g, ""),
+                        phone: formatCheckoutPhone(form.phone).replace(/[\s().-]/g, ""),
                         city: canonicalShippingCity(form.city)!,
                         region: canonicalShippingCity(form.city)!,
                         street: form.address.trim(),
@@ -241,6 +258,33 @@ export default function CheckoutPage() {
         city: "address-level2",
         address: "street-address",
     };
+    function validateField(field: keyof CheckoutForm, value: string) {
+        const message = checkoutFieldError(field, value);
+        setFields((old) => {
+            if ((old[field] || "") === message) return old;
+            const next = { ...old };
+            if (message) next[field] = message;
+            else delete next[field];
+            return next;
+        });
+    }
+    function updateField(field: keyof CheckoutForm, value: string) {
+        const next = field === "phone" ? checkoutPhoneDigits(value) : value;
+        setReview(null);
+        setForm((old) => ({ ...old, [field]: next }));
+        if (validationAttempted.current || touched.current.has(field)) validateField(field, next);
+    }
+    function blurField(field: keyof CheckoutForm) {
+        touched.current.add(field);
+        let value = form[field];
+        if (field === "phone") value = formatCheckoutPhone(value);
+        if (field === "city") {
+            const city = canonicalShippingCity(value);
+            if (city) value = shippingCityLabel(city);
+        }
+        if (value !== form[field]) updateField(field, value);
+        validateField(field, value);
+    }
     function field(field: keyof typeof form) {
         const describedBy =
             [field === "phone" ? "phone-hint" : "", fields[field] ? `${field}-error` : ""]
@@ -253,95 +297,37 @@ export default function CheckoutPage() {
             autoComplete: autocomplete[field],
             required: true,
             disabled: busy,
-            maxLength: field === "address" ? 124 : 120,
+            maxLength: field === "address" ? 124 : field === "phone" ? 32 : 120,
             value: form[field],
             "aria-invalid": !!fields[field],
             "aria-describedby": describedBy,
             placeholder: placeholders[field],
+            onBlur: () => blurField(field),
             onChange: (
                 event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
             ) => {
-                const value = event.target.value;
-                setReview(null);
-                setForm((old) => ({ ...old, [field]: value }));
-                if (validationAttempted.current) {
-                    const message = checkoutFieldError(field, value);
-                    setFields((old) => {
-                        if ((old[field] || "") === message) return old;
-                        const next = { ...old };
-                        if (message) next[field] = message;
-                        else delete next[field];
-                        return next;
-                    });
-                }
+                updateField(field, event.target.value);
             },
         };
         return (
             <div
-                className={`checkout-field ${field === "address" ? "checkout-field-wide" : ""}`}
+                className={`checkout-field ${field === "address" || field === "city" ? "checkout-field-wide" : ""}`}
                 key={field}
             >
                 <label htmlFor={`checkout-${field}`}>
                     {labels[field]} <span aria-hidden="true">*</span>
                 </label>
                 {field === "city" ? (
-                    <>
-                        <label className="city-search-label" htmlFor="checkout-city-search">
-                            بحث سريع عن مدينة
-                        </label>
-                        <input
-                            id="checkout-city-search"
-                            type="search"
-                            className="store-input"
-                            value={citySearch}
-                            maxLength={80}
-                            disabled={busy}
-                            autoComplete="off"
-                            placeholder="مثال: طنجة أو Tanger"
-                            aria-controls="checkout-city"
-                            aria-describedby="city-search-results"
-                            onChange={(e) => setCitySearch(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
-                                e.preventDefault();
-                                if (matchingCities.length)
-                                    document.getElementById("checkout-city")?.focus();
-                            }}
-                        />
-                        <select
-                            id={common.id}
-                            name={common.name}
-                            className={common.className}
-                            autoComplete={common.autoComplete}
-                            required
-                            disabled={common.disabled}
-                            value={common.value}
-                            onChange={common.onChange}
-                            aria-invalid={common["aria-invalid"]}
-                            aria-describedby={common["aria-describedby"]}
-                        >
-                            <option value="">اختاروا مدينة التوصيل</option>
-                            {visibleCities.map((city) => (
-                                <option key={city} value={city}>
-                                    {shippingCityLabel(city)}
-                                    {citySearch &&
-                                    city === form.city &&
-                                    !matchingCities.includes(city)
-                                        ? " — اختياركم الحالي"
-                                        : ""}
-                                </option>
-                            ))}
-                        </select>
-                        <p id="city-search-results" className="checkout-hint" role="status">
-                            {citySearch
-                                ? matchingCities.length
-                                    ? `${matchingCities.length} نتيجة. اختاروا مدينتكم من القائمة.`
-                                    : "لا توجد نتيجة. غيّروا البحث أو امسحوه لعرض كل المدن."
-                                : "يمكنكم البحث بالعربية أو الفرنسية ثم اختيار المدينة من القائمة."}
-                        </p>
-                    </>
+                    <CheckoutCityInput
+                        value={form.city}
+                        onChange={(value) => updateField("city", value)}
+                        onBlur={() => blurField("city")}
+                        disabled={busy}
+                        invalid={!!fields.city}
+                        describedBy={describedBy}
+                    />
                 ) : field === "address" ? (
-                    <textarea {...common} rows={3} minLength={5} />
+                    <textarea {...common} rows={2} minLength={5} />
                 ) : (
                     <input
                         {...common}
@@ -353,13 +339,12 @@ export default function CheckoutPage() {
                 )}
                 {field === "phone" && (
                     <p className="checkout-hint" id="phone-hint">
-                        رقم مغربي يبدأ بـ 05 أو 06 أو 07، أو برمز +212.
+                        رقم مغربي: <bdi dir="ltr">05 / 06 / 07</bdi> أو <bdi dir="ltr">+212</bdi>.
+                        يمكنكم لصق الرقم.
                     </p>
                 )}
                 {field === "address" && (
-                    <p className="checkout-hint">
-                        الحي، الشارع ورقم المنزل أو الشقة — 124 حرفاً كحد أقصى.
-                    </p>
+                    <p className="checkout-hint">الحي، الشارع ورقم المنزل أو الشقة.</p>
                 )}
                 {fields[field] && (
                     <p id={`${field}-error`} className="checkout-field-error">
@@ -437,22 +422,31 @@ export default function CheckoutPage() {
                         aria-busy={busy}
                     >
                         {error && (
-                            <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">
+                            <p
+                                ref={submissionError}
+                                role="alert"
+                                tabIndex={-1}
+                                className="checkout-alert checkout-submission-error"
+                            >
                                 {error}
                             </p>
                         )}
                         {invalidItems && (
                             <p role="alert" className="checkout-alert">
                                 احذفوا المنتجات غير المتوفرة من ملخص الطلب للمتابعة.{" "}
-                                <button type="button" className="text-link" disabled={busy}
-                                    onClick={() => useCartStore.getState().openCart()}>
+                                <button
+                                    type="button"
+                                    className="text-link"
+                                    disabled={busy}
+                                    onClick={() => useCartStore.getState().openCart()}
+                                >
                                     مراجعة الحقيبة
                                 </button>
                             </p>
                         )}
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
-                                <span>01</span>لنتواصل بشأن طلبكم
+                                <span>01</span>معلومات التواصل
                             </legend>
                             <p className="checkout-section-note">
                                 {direct
@@ -466,7 +460,7 @@ export default function CheckoutPage() {
                         </fieldset>
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
-                                <span>02</span>أين نرسل طلبكم؟
+                                <span>02</span>عنوان التوصيل
                             </legend>
                             <div className="checkout-fields">
                                 {field("city")}
@@ -543,18 +537,33 @@ export default function CheckoutPage() {
                         </p>
                     </form>
                     <aside className="checkout-summary checkout-review" aria-label="ملخص الطلب">
-                        <details className="checkout-order-disclosure" open={summaryOpen}
-                            onToggle={event => setSummaryOpen(event.currentTarget.open)}>
+                        <details
+                            className="checkout-order-disclosure"
+                            open={summaryOpen}
+                            onToggle={(event) => setSummaryOpen(event.currentTarget.open)}
+                        >
                             <summary aria-label="عرض أو إخفاء ملخص الطلب">
                                 <ShoppingBag size={20} aria-hidden="true" />
                                 <span className="checkout-summary-label">
-                                    <strong>ملخص طلبكم <small>{count} قطعة</small></strong>
-                                    <small>{summaryOpen ? "إخفاء التفاصيل" : "عرض المنتجات والتوصيل"}</small>
+                                    <strong>
+                                        ملخص طلبكم <small>{count} قطعة</small>
+                                    </strong>
+                                    <small>
+                                        {summaryOpen ? "إخفاء التفاصيل" : "عرض المنتجات والتوصيل"}
+                                    </small>
                                 </span>
                                 <span className="checkout-compact-total" aria-live="polite">
-                                    {invalidItems ? "راجعوا الحقيبة" : shipping.loading ? "جارٍ الحساب…" : shipping.error || shipping.total === null
-                                        ? "بانتظار رسوم التوصيل"
-                                        : <bdi>{shipping.total.toFixed(2)} <small>MAD</small></bdi>}
+                                    {invalidItems ? (
+                                        "راجعوا الحقيبة"
+                                    ) : shipping.loading ? (
+                                        "جارٍ الحساب…"
+                                    ) : shipping.error || shipping.total === null ? (
+                                        "بانتظار رسوم التوصيل"
+                                    ) : (
+                                        <bdi>
+                                            {shipping.total.toFixed(2)} <small>MAD</small>
+                                        </bdi>
+                                    )}
                                     <small>شامل التوصيل</small>
                                 </span>
                                 <ChevronDown size={18} aria-hidden="true" />
@@ -583,12 +592,24 @@ export default function CheckoutPage() {
                                     </summary>
                                     <div>
                                         {items.map((item) => (
-                                            <CartLine key={item.variantId} item={item} disabled={busy} />
+                                            <CartLine
+                                                key={item.variantId}
+                                                item={item}
+                                                disabled={busy}
+                                            />
                                         ))}
                                     </div>
                                 </details>
-                                <CartDeliveryBenefit subtotal={total()} shipping={shipping} needsReview={invalidItems} />
-                                <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} />
+                                <CartDeliveryBenefit
+                                    subtotal={total()}
+                                    shipping={shipping}
+                                    needsReview={invalidItems}
+                                />
+                                <CartTotals
+                                    subtotal={total()}
+                                    shipping={shipping}
+                                    needsReview={invalidItems}
+                                />
                                 <p className="checkout-summary-note">
                                     <Truck size={18} aria-hidden="true" />
                                     رسوم التوصيل ضمن الإجمالي أعلاه.
