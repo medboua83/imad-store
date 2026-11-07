@@ -1,20 +1,34 @@
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
+import type { ComponentProps } from "react";
 import { ArrowUpLeft, PackageCheck, SlidersHorizontal, Truck } from "lucide-react";
 import type { SiteContent } from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
 import { publishedCategories } from "@/lib/catalog-navigation";
+function DraftPreviewLink(props: ComponentProps<typeof Link>) {
+    const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
+    return (
+        <Link
+            {...props}
+            target={localAnchor ? undefined : "_blank"}
+            rel={localAnchor ? undefined : "noopener noreferrer"}
+        />
+    );
+}
 export function HomeView({
     content,
     products,
     categories,
+    preview = false,
 }: {
     content: SiteContent;
     products: Product[];
     categories: Category[];
+    preview?: boolean;
 }) {
+    const ViewLink = preview ? DraftPreviewLink : Link;
     const featured = products.find((p) => p.category?.slug === "abayas") || products[0];
     const detail =
         products.find((p) => p.category?.slug === "shawls") ||
@@ -34,12 +48,12 @@ export function HomeView({
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>
                     <div className="hero-actions">
-                        <Link prefetch={false} href="/shop" className="btn-primary">
+                        <ViewLink prefetch={false} href="/shop" className="btn-primary">
                             اكتشفوا المجموعة <ArrowUpLeft size={19} aria-hidden="true" />
-                        </Link>
-                        <Link href="#collections" className="text-link">
+                        </ViewLink>
+                        <ViewLink href="#collections" className="text-link">
                             تصفحوا الفئات
-                        </Link>
+                        </ViewLink>
                     </div>
                     <div className="hero-note">
                         <span className="hero-note-line" />
@@ -63,14 +77,14 @@ export function HomeView({
                         className="hero-photo"
                     />
                     {useCatalogue && featured && (
-                        <Link className="hero-product-tag" href={`/products/${featured.slug}`}>
+                        <ViewLink className="hero-product-tag" href={`/products/${featured.slug}`}>
                             <span>{featured.nameAr || featured.nameFr}</span>
                             <span dir="ltr">{featured.price.toFixed(2)} MAD</span>
                             <ArrowUpLeft size={18} aria-hidden="true" />
-                        </Link>
+                        </ViewLink>
                     )}
                     {useCatalogue && detail?.images[0] && (
-                        <Link
+                        <ViewLink
                             href={`/products/${detail.slug}`}
                             className="hero-detail-card"
                             aria-label={detail.nameAr || detail.nameFr}
@@ -84,7 +98,7 @@ export function HomeView({
                             <span>
                                 التفاصيل تصنع الفرق <ArrowUpLeft size={16} aria-hidden="true" />
                             </span>
-                        </Link>
+                        </ViewLink>
                     )}
                     <span className="hero-image-label" dir="ltr">
                         THE IMAD EDIT
@@ -108,13 +122,13 @@ export function HomeView({
                         اختيارات على مقاسكم<span>اللون، المقاس والتوفر في كل قطعة</span>
                     </p>
                 </div>
-                <Link href="/delivery">
+                <ViewLink href="/delivery">
                     <Truck size={23} aria-hidden="true" />
                     <p>
                         تفاصيل واضحة<span>رسوم التوصيل قبل تأكيد الطلب</span>
                     </p>
                     <ArrowUpLeft size={17} aria-hidden="true" />
-                </Link>
+                </ViewLink>
             </div>
             <section id="collections" className="collection-section section-container">
                 <div className="section-heading">
@@ -132,7 +146,7 @@ export function HomeView({
                     {publishedCategories(categories).map((c) => {
                         const visual = categoryVisual(c, products);
                         return (
-                            <Link
+                            <ViewLink
                                 prefetch={false}
                                 className="collection-tile"
                                 key={c.id}
@@ -160,7 +174,7 @@ export function HomeView({
                                     )}
                                 </span>
                                 <ArrowUpLeft size={22} aria-hidden="true" />
-                            </Link>
+                            </ViewLink>
                         );
                     })}
                 </nav>
@@ -168,7 +182,12 @@ export function HomeView({
             {!!content.banners.length && (
                 <section aria-label="إعلانات المتجر" className="section-container banner-grid">
                     {content.banners.map((banner, i) => (
-                        <Link prefetch={false} href={banner.href} key={i} className="campaign-card">
+                        <ViewLink
+                            prefetch={false}
+                            href={banner.href}
+                            key={i}
+                            className="campaign-card"
+                        >
                             <div className="relative aspect-[2/1]">
                                 <ProductPhoto
                                     images={[banner.image]}
@@ -181,7 +200,7 @@ export function HomeView({
                                 {banner.title}
                                 <ArrowUpLeft size={20} aria-hidden="true" />
                             </p>
-                        </Link>
+                        </ViewLink>
                     ))}
                 </section>
             )}
@@ -191,23 +210,28 @@ export function HomeView({
                         <p className="eyebrow">اختاروا قطعتكم القادمة</p>
                         <h2>{content.featuredTitle}</h2>
                     </div>
-                    <Link prefetch={false} href="/shop" className="text-link">
+                    <ViewLink prefetch={false} href="/shop" className="text-link">
                         كل المنتجات <ArrowUpLeft size={18} aria-hidden="true" />
-                    </Link>
+                    </ViewLink>
                 </div>
                 {products.length ? (
                     <div className="catalog-grid">
                         {products.map((p) => (
-                            <ProductCard product={p} key={p.id} headingLevel={3} />
+                            <ProductCard
+                                product={p}
+                                key={p.id}
+                                headingLevel={3}
+                                openInNewTab={preview}
+                            />
                         ))}
                     </div>
                 ) : (
                     <div className="empty-collection">
                         <h3>مجموعتنا الجديدة قيد التحضير.</h3>
                         <p>تواصلوا معنا للاستفسار عن المنتجات المتوفرة.</p>
-                        <Link prefetch={false} href="/contact" className="btn-primary">
+                        <ViewLink prefetch={false} href="/contact" className="btn-primary">
                             تواصلوا معنا
-                        </Link>
+                        </ViewLink>
                     </div>
                 )}
             </section>
@@ -218,7 +242,11 @@ export function HomeView({
                     {[
                         ["01", "اكتشفوا", "تصفحوا المجموعة واختاروا القطعة التي تناسبكم."],
                         ["02", "اختاروا", "حددوا اللون والمقاس والكمية المتوفرة."],
-                        ["03", "أكملوا طلبكم", "راجعوا الإجمالي وأضيفوا عنوانكم. الدفع عند الاستلام."],
+                        [
+                            "03",
+                            "أكملوا طلبكم",
+                            "راجعوا الإجمالي وأضيفوا عنوانكم. الدفع عند الاستلام.",
+                        ],
                     ].map(([n, title, text]) => (
                         <div key={n}>
                             <span aria-hidden="true">{n}</span>

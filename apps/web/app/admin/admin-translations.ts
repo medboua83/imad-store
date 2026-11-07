@@ -1,4 +1,12 @@
 export const adminArabic: Record<string, string> = {
+    "Aperçu privé du brouillon": "معاينة خاصة للمسودة",
+    "Aperçu privé : vos textes ne sont pas publiés. Les liens vers la boutique s’ouvrent dans un nouvel onglet pour conserver votre saisie.":
+        "معاينة خاصة: نصوصكم غير منشورة. تفتح روابط المتجر في علامة تبويب جديدة للحفاظ على تعديلاتكم.",
+    "Chargement du catalogue de l’aperçu…": "جارٍ تحميل كتالوج المعاينة…",
+    "Le catalogue de l’aperçu est indisponible. Vos textes restent conservés.":
+        "كتالوج المعاينة غير متاح. تبقى نصوصكم محفوظة في هذه الصفحة.",
+    "Enregistrement effectué, mais relecture impossible. Rechargez la configuration avant de continuer. Vos valeurs restent affichées.":
+        "تم الحفظ، لكن تعذّرت إعادة قراءة الإعدادات. أعيدوا تحميلها قبل المتابعة. تبقى القيم ظاهرة.",
     "Le stock réservé sera restitué uniquement si sa réservation est vérifiée.":
         "يُعاد المخزون المحجوز فقط بعد التحقق من حجزه.",
     "· filtres actifs": "· فلاتر نشطة",

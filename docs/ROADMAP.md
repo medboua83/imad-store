@@ -1,5 +1,16 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Éditeur de contenu — 6 novembre 2026
+
+- [x] Audit de l’aperçu : faux catalogue vide et liens quittant l’éditeur.
+- [x] Préparer un aperçu doré avec catalogue public et liens ouvrant un autre onglet.
+- [x] Préparer le verrouillage de la saisie et le diagnostic de relecture après enregistrement.
+- [ ] Valider mobile/ordinateur, les incidents réseau et la conservation du brouillon ; publier avec sauvegarde.
+
+## PR 98 publiée et vérifiée — 6 novembre 2026
+
+La production exécute b243035465d7af9f07662a6e79657063d450225d, version gallery-b243035465d7 (Master de fusion 7a5f5227dc3498e2a7eb2e4f510ff4b045fe9436). CI réussie : 169 UI et 109 PostgreSQL/unitaires. Filtres commandes, période statistiques et navigation clavier des galeries vérifiés à 390 et 1280 px. Tables métier, réglages et treize originaux préservés ; sauvegarde vérifiée sur VPS et DATA. Accès temporaire retiré, nouvelle connexion refusée, paire locale supprimée. Les anciennes références de production ci-dessous sont historiques.
+
 ## Contexte admin et galeries longues — 6 novembre 2026
 
 - [x] Préparer la conservation en mémoire des filtres commandes et de la période statistiques entre sections, avec remise à zéro à la fin de session.
