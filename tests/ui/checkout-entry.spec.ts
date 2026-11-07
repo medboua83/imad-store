@@ -45,7 +45,9 @@ for (const width of [320, 390, 1440]) {
         const requests = await prepare(page);
         const city = page.getByRole("combobox", { name: /المدينة/ });
         await expect(page.locator("#checkout-city-search")).toHaveCount(0);
-        await expect(page.locator("form input, form textarea")).toHaveCount(4);
+        await expect(
+            page.locator("form.checkout-details-form input, form.checkout-details-form textarea"),
+        ).toHaveCount(4);
         await city.fill("طنج");
         await expect(page.getByRole("option", { name: /طنجة/ })).toBeVisible();
         await city.press("ArrowDown");
@@ -67,10 +69,12 @@ for (const width of [320, 390, 1440]) {
         await city.press("Enter");
         await expect(city).toHaveValue("الرباط");
         await expect(city).toHaveAttribute("aria-invalid", "false");
-        await page.getByLabel("الاسم الكامل", { exact: true }).fill("Client fictif");
-        await page.getByLabel("رقم الهاتف", { exact: true }).fill("0612345678");
         await page
-            .getByLabel("عنوان التوصيل", { exact: true })
+            .getByRole("textbox", { name: "الاسم الكامل", exact: true })
+            .fill("Client fictif");
+        await page.getByRole("textbox", { name: "رقم الهاتف", exact: true }).fill("0612345678");
+        await page
+            .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
             .fill("Adresse fictive, ne pas livrer");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
@@ -86,7 +90,7 @@ for (const width of [320, 390, 1440]) {
     }) => {
         await page.setViewportSize({ width, height: 844 });
         const requests = await prepare(page);
-        const phone = page.getByLabel("رقم الهاتف", { exact: true });
+        const phone = page.getByRole("textbox", { name: "رقم الهاتف", exact: true });
         await phone.fill("0612345678");
         await phone.press("Home");
         await phone.press("ArrowRight");
@@ -102,9 +106,13 @@ for (const width of [320, 390, 1440]) {
         await phone.press("Tab");
         await expect(phone).toHaveValue("+212 6 12 34 56 78");
         await expect(phone).toHaveAttribute("aria-invalid", "false");
-        await page.getByLabel("الاسم الكامل", { exact: true }).fill("Client fictif");
+        await page
+            .getByRole("textbox", { name: "الاسم الكامل", exact: true })
+            .fill("Client fictif");
         await page.locator("#checkout-city").fill("Tanger");
-        await page.getByLabel("عنوان التوصيل", { exact: true }).fill("Adresse fictive de test 1");
+        await page
+            .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
+            .fill("Adresse fictive de test 1");
         await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
         await expect.poll(() => requests.length).toBe(1);
         expect(requests[0].customer).toMatchObject({
@@ -120,8 +128,8 @@ for (const width of [320, 390, 1440]) {
     }) => {
         await page.setViewportSize({ width, height: 844 });
         const requests = await prepare(page);
-        const name = page.getByLabel("الاسم الكامل", { exact: true }),
-            phone = page.getByLabel("رقم الهاتف", { exact: true });
+        const name = page.getByRole("textbox", { name: "الاسم الكامل", exact: true }),
+            phone = page.getByRole("textbox", { name: "رقم الهاتف", exact: true });
         await expect(page.locator(".checkout-field-error")).toHaveCount(0);
         await name.fill("Ab");
         await name.press("Tab");
