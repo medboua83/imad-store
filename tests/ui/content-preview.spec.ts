@@ -107,6 +107,21 @@ for (const width of [390, 1440]) {
         await expect(page.getByLabel("Titre d’accueil", { exact: true })).toHaveValue(
             "معاينة غير منشورة",
         );
+        if (width === 390) {
+            await page
+                .getByLabel("Langue de l’administration / لغة لوحة الإدارة", { exact: true })
+                .selectOption("ar");
+            await expect(page.getByLabel("عنوان الصفحة الرئيسية", { exact: true })).toHaveValue(
+                "معاينة غير منشورة",
+            );
+            await page.getByRole("button", { name: "معاينة المسودة", exact: true }).click();
+            await expect(
+                page.getByRole("region", { name: "معاينة خاصة للمسودة", exact: true }),
+            ).toContainText("تفتح روابط المتجر في علامة تبويب جديدة");
+            expect(
+                await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+            ).toBe(true);
+        }
         expect(writes).toEqual([]);
         await page.screenshot({ path: info.outputPath(`content-preview-${width}.png`) });
     });
@@ -165,14 +180,16 @@ test("Unavailable preview catalogue can be retried without losing the private dr
     page,
 }) => {
     const writes = await editor(page);
-    await page.route("**/api/products?limit=4", (route) => route.fulfill({ status: 503 }));
+    await page.route("**/api/products?limit=8&availability=in-stock", (route) =>
+        route.fulfill({ status: 503 }),
+    );
     await page.getByLabel("Titre d’accueil", { exact: true }).fill("Brouillon après incident");
     await page.getByRole("button", { name: "Aperçu du brouillon", exact: true }).click();
     await expect(
         page.getByRole("alert").filter({ hasText: "Le catalogue de l’aperçu est indisponible." }),
     ).toBeVisible();
     await expect(page.locator(".admin-draft-preview .storefront-home")).toHaveCount(0);
-    await page.unroute("**/api/products?limit=4");
+    await page.unroute("**/api/products?limit=8&availability=in-stock");
     await page
         .locator(".admin-draft-preview")
         .getByRole("button", { name: "Réessayer", exact: true })

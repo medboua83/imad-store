@@ -12,6 +12,7 @@ import {
     uploadProductImage,
 } from "@/lib/api";
 import { HomeView } from "@/components/store/HomeView";
+import { homeCatalogueQuery } from "@/lib/home-catalogue";
 export default function ContentTab() {
     const { t, locale } = useAdminLocale();
     const [content, setContent] = useState<SiteContent>(defaultSiteContent);
@@ -28,7 +29,7 @@ export default function ContentTab() {
         queryKey: ["content-preview-catalogue"],
         queryFn: async () => {
             const [products, categories] = await Promise.all([
-                getProducts({ limit: 4 }),
+                getProducts(homeCatalogueQuery),
                 getCategories(),
             ]);
             return { products: products.data, categories };
@@ -375,7 +376,11 @@ export default function ContentTab() {
                             aria-label={t("Aperçu privé du brouillon")}
                             dir="rtl"
                         >
-                            <p className="draft-preview-notice" role="status">
+                            <p
+                                className="draft-preview-notice"
+                                role="status"
+                                dir={locale === "ar" ? "rtl" : "ltr"}
+                            >
                                 {t(
                                     "Aperçu privé : vos textes ne sont pas publiés. Les liens vers la boutique s’ouvrent dans un nouvel onglet pour conserver votre saisie.",
                                 )}
