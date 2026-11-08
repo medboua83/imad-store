@@ -988,6 +988,20 @@
 .admin-category-form .primary {
     align-self: flex-start;
 }
+.admin-category-form .category-address-preview {
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #dfc58f;
+    border-radius: 10px;
+    background: #fcf8ef;
+    font-size: 13px;
+    line-height: 1.7;
+}
+.category-address-preview bdi {
+    display: block;
+    margin-top: 6px;
+    overflow-wrap: anywhere;
+}
 .admin-category-list > div {
     display: flex;
     align-items: center;

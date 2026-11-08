@@ -1,7 +1,9 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { isAxiosError } from "axios";
+import { productSlug } from "./product-utils";
 import { ArrowUpRight, Package, RefreshCw, ShoppingBag, Truck } from "lucide-react";
 import type { Product, Category } from "@/lib/api";
 import { money, statusLabels, summarize } from "./admin-utils";
@@ -223,59 +225,129 @@ export function CategoriesTab({
     const [form, setForm] = useState({ slug: "", nameFr: "", nameAr: "", nameEn: "" }),
         [busy, setBusy] = useState(false),
         [message, setMessage] = useState("");
+    const [failed, setFailed] = useState(false);
+    const lock = useRef(false);
+    const address = productSlug(form.slug.trim() || form.nameFr);
+    const requiredNames = {
+        nameFr: "Renseignez le nom français.",
+        nameAr: "Renseignez le nom arabe.",
+        nameEn: "Renseignez le nom anglais.",
+    };
     return (
         <div className="admin-category-grid">
             <section className="admin-panel">
                 <h2>{t("Ajouter une catégorie")}</h2>
                 <p className="admin-muted">
-                    {t("Renseignez les trois langues utilisées dans le catalogue.")}
+                    {t(
+                        "Les trois noms sont obligatoires. L’adresse est générée à partir du nom français si vous la laissez vide.",
+                    )}
                 </p>
                 <form
                     className="admin-category-form"
                     onSubmit={async (e) => {
                         e.preventDefault();
+                        if (busy || lock.current) return;
+                        const payload = {
+                            slug: address,
+                            nameFr: form.nameFr.trim(),
+                            nameAr: form.nameAr.trim(),
+                            nameEn: form.nameEn.trim(),
+                        };
+                        for (const key of ["nameFr", "nameAr", "nameEn"] as const) {
+                            if (!payload[key]) {
+                                const input = e.currentTarget.elements.namedItem(
+                                    key,
+                                ) as HTMLInputElement;
+                                input.setCustomValidity(t(requiredNames[key]));
+                                input.reportValidity();
+                                return;
+                            }
+                        }
+                        if (!address) {
+                            setFailed(true);
+                            setMessage(
+                                "Renseignez une adresse avec des lettres latines ou des chiffres, par exemple manteau-categorie.",
+                            );
+                            (
+                                e.currentTarget.elements.namedItem("slug") as HTMLInputElement
+                            ).focus();
+                            return;
+                        }
+                        lock.current = true;
                         setBusy(true);
+                        setFailed(false);
                         setMessage("");
                         try {
-                            await onCreate(form);
+                            await onCreate(payload);
                             setForm({ slug: "", nameFr: "", nameAr: "", nameEn: "" });
                             setMessage("Catégorie ajoutée.");
-                        } catch {
+                        } catch (error) {
+                            setFailed(true);
                             setMessage(
-                                "Impossible d’ajouter cette catégorie. Vérifiez son adresse et réessayez.",
+                                isAxiosError(error) && error.response?.status === 409
+                                    ? "Cette adresse est déjà utilisée. Choisissez une autre adresse ou actualisez la liste des catégories."
+                                    : "Impossible d’ajouter cette catégorie. Vos informations sont conservées ; réessayez.",
                             );
                         } finally {
+                            lock.current = false;
                             setBusy(false);
                         }
                     }}
                 >
                     {(
                         [
-                            ["slug", "Adresse de la catégorie"],
                             ["nameFr", "Nom français"],
                             ["nameAr", "Nom arabe"],
                             ["nameEn", "Nom anglais"],
+                            ["slug", "Adresse de la catégorie"],
                         ] as const
                     ).map(([key, label]) => (
                         <label key={key}>
                             {t(label)}
                             <input
-                                required
+                                name={key}
+                                required={key !== "slug"}
                                 disabled={busy}
                                 dir={key === "nameAr" ? "rtl" : "ltr"}
                                 value={form[key]}
-                                pattern={key === "slug" ? "[a-z0-9]+(-[a-z0-9]+)*" : undefined}
-                                placeholder={key === "slug" ? t("exemple-categorie") : undefined}
-                                onChange={(e) => setForm((v) => ({ ...v, [key]: e.target.value }))}
+                                aria-describedby={
+                                    key === "slug" ? "category-address-help" : undefined
+                                }
+                                placeholder={
+                                    key === "slug" ? address || t("exemple-categorie") : undefined
+                                }
+                                onInvalid={(e) => {
+                                    if (key !== "slug" && e.currentTarget.validity.valueMissing)
+                                        e.currentTarget.setCustomValidity(t(requiredNames[key]));
+                                }}
+                                onBlur={() => {
+                                    if (key === "slug" && form.slug)
+                                        setForm((v) => ({
+                                            ...v,
+                                            slug: productSlug(v.slug) || v.slug,
+                                        }));
+                                }}
+                                onChange={(e) => {
+                                    e.currentTarget.setCustomValidity("");
+                                    setMessage("");
+                                    setForm((v) => ({ ...v, [key]: e.target.value }));
+                                }}
                             />
                         </label>
                     ))}
+                    <p id="category-address-help" className="category-address-preview">
+                        {t("Majuscules, accents et espaces sont convertis automatiquement.")}
+                        {address && <bdi dir="ltr">/shop?category={address}</bdi>}
+                    </p>
                     <button className="admin-button primary" disabled={busy}>
                         {busy ? t("Enregistrement…") : t("Créer la catégorie")}
                     </button>
                 </form>
                 {message && (
-                    <p className="admin-feedback" role="status">
+                    <p
+                        className={failed ? "admin-alert" : "admin-feedback"}
+                        role={failed ? "alert" : "status"}
+                    >
                         {t(message)}
                     </p>
                 )}
@@ -312,10 +384,12 @@ export function CategoriesTab({
                                     )
                                         return;
                                     setBusy(true);
+                                    setFailed(false);
                                     try {
                                         await onDelete(c.id);
                                         setMessage("Catégorie supprimée.");
                                     } catch {
+                                        setFailed(true);
                                         setMessage(
                                             "Suppression impossible. Vérifiez que cette catégorie ne contient aucun produit.",
                                         );
