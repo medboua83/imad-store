@@ -1,4 +1,12 @@
 export const adminArabic: Record<string, string> = {
+    "Les trois noms sont obligatoires. L’adresse est générée à partir du nom français si vous la laissez vide.": "الأسماء باللغات الثلاث مطلوبة. يُنشأ رابط الفئة من الاسم الفرنسي عند تركه فارغاً.",
+    "Majuscules, accents et espaces sont convertis automatiquement.": "تُحوّل الأحرف الكبيرة والعلامات والمسافات تلقائياً إلى رابط مناسب.",
+    "Renseignez le nom français.": "أدخلوا الاسم بالفرنسية.",
+    "Renseignez le nom arabe.": "أدخلوا الاسم بالعربية.",
+    "Renseignez le nom anglais.": "أدخلوا الاسم بالإنجليزية.",
+    "Renseignez une adresse avec des lettres latines ou des chiffres, par exemple manteau-categorie.": "أدخلوا رابطاً بأحرف لاتينية أو أرقام، مثل manteau-categorie.",
+    "Cette adresse est déjà utilisée. Choisissez une autre adresse ou actualisez la liste des catégories.": "هذا الرابط مستخدم بالفعل. اختاروا رابطاً آخر أو حدّثوا قائمة الفئات.",
+    "Impossible d’ajouter cette catégorie. Vos informations sont conservées ; réessayez.": "تعذّرت إضافة الفئة. تبقى المعلومات التي أدخلتموها محفوظة؛ أعيدوا المحاولة.",
     "Actualisation incomplète": "التحديث غير مكتمل",
     "Aperçu privé du brouillon": "معاينة خاصة للمسودة",
     "Aperçu privé : vos textes ne sont pas publiés. Les liens vers la boutique s’ouvrent dans un nouvel onglet pour conserver votre saisie.":

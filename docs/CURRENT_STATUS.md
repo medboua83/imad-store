@@ -1,4 +1,12 @@
-# Current Status — 2026-11-07
+# Current Status — 2026-11-08
+
+## Création des catégories — correction du 8 novembre 2026
+
+L’adresse saisie avec une majuscule était bloquée par la contrainte HTML, avant tout appel au serveur. Le candidat normalise les majuscules, accents et séparateurs, génère une adresse depuis le nom français si le champ est vide et affiche un aperçu. Les trois noms restent obligatoires, avec indications explicites en français/arabe ; les espaces seuls ne sont pas acceptés. Une adresse déjà utilisée est signalée distinctement et les noms sont conservés en cas d’échec. Aucun changement de catégorie réelle, de produit ou de stock. Tests et publication à consigner.
+
+## Lot CRM fusionné, publication en attente — PR 104
+
+La PR104 est fusionnée dans e773e2569640469f9fac79b191ee536b7ed2d500 (code 1cd5be12c9a8354f5bcfada7805846b9887f0b6d), avec 222 UI et 114 PostgreSQL/unitaires réussis, plus les contrôles d’installation et d’hébergement. Ce lot n’a pas été publié pendant l’intervention précédente : l’accès temporaire restait en attente d’activation. La correction des catégories doit être testée avec ce lot et publiée ensemble. La dernière publication vérifiée reste 64827f173c17a04fa8da40d2f653d2222a4d4fc6 (PR103).
 
 ## Suivi CRM lisible et vérifications récentes — candidat du 7 novembre 2026
 
