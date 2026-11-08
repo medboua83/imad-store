@@ -103,6 +103,23 @@
     color: #fff;
     flex-shrink: 0;
 }
+.store-shell .refined-footer .footer-socials.footer-social-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: fit-content;
+    max-width: 100%;
+}
+.store-shell .refined-footer .footer-socials.footer-social-icons a {
+    justify-content: center;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    padding: 0;
+    gap: 0;
+    border-radius: 14px;
+}
 .refined-footer [data-network="whatsapp"] .social-brand-icon {
     background: #5c4826;
 }

@@ -1,5 +1,10 @@
 # Current Status — 2026-11-08
 
+## Reprise et icônes sociales — 8 novembre 2026
+
+Le propriétaire reprend le travail après la pause et choisit des icônes sociales seules. Les quatre liens et couleurs sont conservés, avec nom au survol, nom accessible et zones tactiles de 52 px. Le candidat précédent 7041f10 a passé 233 UI, 116 PostgreSQL/unitaires et les contrôles de compilation/hébergement, sans publication. L’ajustement social doit être vérifié sur le nouveau code avant fusion et publication groupée. La production vérifiée reste 3a19504361fa (PR105).
+
+
 ## Conflits de création de produit — ajout au candidat du 8 novembre 2026
 
 La photo du propriétaire montre un message générique qui confond adresse de produit et référence SKU. Le candidat distingue les contraintes correspondantes côté serveur. Le formulaire signale les conflits connus avec le catalogue chargé, identifie le produit/la variante, conserve toutes les saisies et place le focus sur le champ concerné ; une nouvelle référence peut être générée en laissant le SKU vide. Aucun SKU existant ni produit réel n’est renommé automatiquement. Les erreurs concurrentes côté serveur restent bloquantes et explicites en français/arabe. La première CI de l’accueil a détecté un prix trop bas sur la page boutique : les nouveaux styles de cartes sont désormais limités à l’accueil, avec vérification du parcours catalogue existant. Nouvelle recette complète à consigner.

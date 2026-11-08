@@ -111,7 +111,10 @@ export function Footer() {
                     <h2>لنكن على تواصل.</h2>
                     <p>تابعونا على مواقع التواصل</p>
                 </div>
-                <nav className="footer-socials" aria-label="تابعونا على مواقع التواصل">
+                <nav
+                    className="footer-socials footer-social-icons"
+                    aria-label="تابعونا على مواقع التواصل"
+                >
                     {socials.map(([href, label]) => (
                         <a
                             key={label}
@@ -121,12 +124,11 @@ export function Footer() {
                             dir="ltr"
                             data-network={label.toLowerCase()}
                             aria-label={`${label} — نافذة جديدة`}
+                            title={label}
                         >
-                            <span className="social-brand-icon">
+                            <span className="social-brand-icon" aria-hidden="true">
                                 <SocialIcon network={label} />
                             </span>
-                            <span>{label}</span>
-                            <ArrowUpLeft size={14} aria-hidden="true" />
                         </a>
                     ))}
                 </nav>

@@ -91,9 +91,22 @@ for (const width of [320, 390, 1440]) {
         await page.locator(".home-shopping-guide summary").click();
         await expect(page.locator(".footer-service-strip")).toHaveCount(0);
         await expect(page.locator(".footer-socials a")).toHaveCount(4);
+        for (const network of ["WhatsApp", "Instagram", "Facebook", "TikTok"]) {
+            const social = page
+                .locator(".footer-socials")
+                .getByRole("link", { name: `${network} — نافذة جديدة`, exact: true });
+            await expect(social).toHaveAttribute("title", network);
+            await expect(social).toHaveAttribute("rel", "noopener noreferrer");
+            expect(await social.innerText()).toBe("");
+            const box = await social.boundingBox();
+            expect(box!.width).toBeGreaterThanOrEqual(44);
+            expect(box!.height).toBeGreaterThanOrEqual(44);
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,
         );
+        await page.locator(".footer-socials").scrollIntoViewIfNeeded();
+        await page.screenshot({ path: info.outputPath(`social-icons-${width}.png`) });
         if (width < 768) {
             await page.getByRole("button", { name: "فتح القائمة", exact: true }).click();
             const menu = page.locator("#store-menu");
