@@ -80,6 +80,7 @@ export function ProductsTab({
         [images, setImages] = useState<string[]>([]),
         [baseline, setBaseline] = useState("");
     const [slugEdited, setSlugEdited] = useState(false);
+    const [conflictField, setConflictField] = useState("");
     const [busy, setBusy] = useState(false),
         [uploading, setUploading] = useState(false),
         [error, setError] = useState(""),
@@ -90,6 +91,8 @@ export function ProductsTab({
     const title = useRef<HTMLHeadingElement>(null),
         listTitle = useRef<HTMLHeadingElement>(null),
         lock = useRef(false);
+    const slugInput = useRef<HTMLInputElement>(null);
+    const skuInputs = useRef(new Map<string, HTMLInputElement>());
     const disabled = busy || uploading,
         dirty = open && JSON.stringify({ form, variants, images }) !== baseline;
     const summary = stockSummary(products);
@@ -172,6 +175,7 @@ export function ProductsTab({
         setBaseline(JSON.stringify({ form: next, variants: nextVariants, images: nextImages }));
         setOpen(true);
         setError("");
+        setConflictField("");
         setSuccess("");
         setUncertain(false);
         setSizes("");
@@ -228,6 +232,7 @@ export function ProductsTab({
         e.preventDefault();
         if (lock.current || disabled || uncertain) return;
         let data: Record<string, unknown>;
+        setConflictField("");
         try {
             const payload = variantPayload(prepareNewVariantSkus(variants, form.slug));
             const tiers = packOffers(Number(form.price), form.quantityDiscounts);
@@ -235,6 +240,25 @@ export function ProductsTab({
                 throw new Error(
                     "L’adresse utilise uniquement des lettres minuscules sans accents, des chiffres et des tirets.",
                 );
+            const sameAddress = products.find((p) => p.id !== id && p.slug === form.slug);
+            if (sameAddress) {
+                setConflictField("slug");
+                slugInput.current?.focus();
+                throw new Error(
+                    `L’adresse « ${form.slug} » appartient déjà au produit « ${sameAddress.nameFr} ». Modifiez l’adresse pour un autre produit, ou ouvrez la fiche existante pour ajouter des variantes.`,
+                );
+            }
+            for (const [index, v] of payload.entries()) {
+                const owner = products.find((p) =>
+                    p.variants.some((saved) => saved.sku === v.sku && saved.id !== v.id),
+                );
+                if (!owner) continue;
+                setConflictField(variants[index].key);
+                skuInputs.current.get(variants[index].key)?.focus();
+                throw new Error(
+                    `Variante ${index + 1} : la référence « ${v.sku} » est déjà utilisée dans « ${owner.nameFr} ». Choisissez une autre référence ou laissez vide pour une nouvelle variante.`,
+                );
+            }
             if (
                 form.promotionEnabled &&
                 (!form.compareAtPrice || Number(form.compareAtPrice) <= Number(form.price))
@@ -276,7 +300,12 @@ export function ProductsTab({
             );
             requestAnimationFrame(() => listTitle.current?.focus());
         } catch (e) {
-            const response = (e as { response?: { status: number } }).response;
+            const response = (e as { response?: { status: number; data?: { code?: string } } })
+                .response;
+            if (response?.data?.code === "PRODUCT_SLUG_CONFLICT") {
+                setConflictField("slug");
+                slugInput.current?.focus();
+            }
             if (!response) {
                 setUncertain(true);
                 setError(
@@ -461,15 +490,21 @@ export function ProductsTab({
                                 {t("Adresse du produit")}
                                 <div className="product-slug-field">
                                     <input
+                                        ref={slugInput}
                                         dir="auto"
                                         className={inputClass}
                                         required
                                         maxLength={160}
                                         value={form.slug}
                                         aria-label={t("Adresse du produit")}
+                                        aria-invalid={conflictField === "slug" || undefined}
                                         placeholder={t("exemple-sac-beige")}
                                         onChange={(e) => {
                                             setSlugEdited(true);
+                                            if (conflictField === "slug") {
+                                                setConflictField("");
+                                                setError("");
+                                            }
                                             set("slug", e.target.value);
                                         }}
                                     />
@@ -773,14 +808,34 @@ export function ProductsTab({
                                     <label>
                                         {t("Référence SKU")}
                                         <input
+                                            ref={(element) => {
+                                                if (element) skuInputs.current.set(v.key, element);
+                                                else skuInputs.current.delete(v.key);
+                                            }}
                                             dir="auto"
                                             className={inputClass}
                                             required={Boolean(v.id)}
                                             placeholder={t("Générée automatiquement si vide")}
                                             maxLength={100}
                                             value={v.sku}
-                                            onChange={(e) => variant(v.key, "sku", e.target.value)}
+                                            aria-label={t("Référence SKU")}
+                                            aria-describedby={!v.id ? `sku-help-${v.key}` : undefined}
+                                            aria-invalid={conflictField === v.key || undefined}
+                                            onChange={(e) => {
+                                                if (conflictField === v.key) {
+                                                    setConflictField("");
+                                                    setError("");
+                                                }
+                                                variant(v.key, "sku", e.target.value);
+                                            }}
                                         />
+                                        {!v.id && (
+                                            <small id={`sku-help-${v.key}`}>
+                                                {t(
+                                                    "Laissez vide pour générer une référence unique. Chaque variante doit avoir sa propre référence dans le catalogue.",
+                                                )}
+                                            </small>
+                                        )}
                                     </label>
                                     <label>
                                         {t("Taille (facultative)")}

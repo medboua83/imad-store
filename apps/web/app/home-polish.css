@@ -64,24 +64,24 @@
     outline-offset: 3px;
 }
 /* Equal card heights keep the actions aligned with mixed delivery/promotion badges. */
-.store-shell .catalog-card {
+.store-shell .storefront-home .catalog-card {
     display: flex;
     flex-direction: column;
     align-self: stretch;
 }
-.store-shell .catalog-card-image {
+.store-shell .storefront-home .catalog-card-image {
     flex-shrink: 0;
 }
-.store-shell .catalog-card-body {
+.store-shell .storefront-home .catalog-card-body {
     display: flex;
     flex-direction: column;
     flex: 1;
     gap: 8px;
 }
-.store-shell .card-title-row :is(h2, h3) {
+.store-shell .storefront-home .card-title-row :is(h2, h3) {
     min-height: 3.3em;
 }
-.store-shell .card-price {
+.store-shell .storefront-home .card-price {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -90,7 +90,7 @@
     min-height: 26px;
     margin-top: 4px;
 }
-.store-shell .card-price .product-current-price {
+.store-shell .storefront-home .card-price .product-current-price {
     order: -1;
     white-space: nowrap;
 }
@@ -100,10 +100,13 @@
     font-size: 13px;
     line-height: 1.6;
 }
-.store-shell .catalog-card .card-category {
+.store-shell .storefront-home .catalog-card .card-category {
     font-size: 12px;
 }
-.store-shell .catalog-card :is(.product-color-label, .product-shipping-badge, .card-price del) {
+.store-shell
+    .storefront-home
+    .catalog-card
+    :is(.product-color-label, .product-shipping-badge, .card-price del) {
     font-size: 12px;
     line-height: 1.5;
 }
@@ -112,10 +115,10 @@
     :is(.product-option-preview, .product-size-preview, .quantity-card-hint) {
     margin-top: 0;
 }
-.store-shell .catalog-card .card-bottom {
+.store-shell .storefront-home .catalog-card .card-bottom {
     margin-top: auto;
 }
-.store-shell .catalog-card .card-bottom .text-link {
+.store-shell .storefront-home .catalog-card .card-bottom .text-link {
     min-height: 44px;
     font-size: 13px;
 }
@@ -237,7 +240,7 @@
     .store-shell .storefront-home .catalog-grid:has(> :only-child) {
         grid-template-columns: minmax(0, 340px);
     }
-    .store-shell .catalog-card-body {
+    .store-shell .storefront-home .catalog-card-body {
         padding-inline: 10px;
     }
     .store-shell .home-shopping-guide {

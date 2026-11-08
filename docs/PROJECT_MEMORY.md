@@ -1,5 +1,9 @@
 # Imad Store — Persistent Project Memory
 
+## Conflits de création de produit — ajout au candidat du 8 novembre 2026
+
+La photo du propriétaire montre un message générique qui confond adresse de produit et référence SKU. Le candidat distingue les contraintes correspondantes côté serveur. Le formulaire signale les conflits connus avec le catalogue chargé, identifie le produit/la variante, conserve toutes les saisies et place le focus sur le champ concerné ; une nouvelle référence peut être générée en laissant le SKU vide. Aucun SKU existant ni produit réel n’est renommé automatiquement. Les erreurs concurrentes côté serveur restent bloquantes et explicites en français/arabe. La première CI de l’accueil a détecté un prix trop bas sur la page boutique : les nouveaux styles de cartes sont désormais limités à l’accueil, avec vérification du parcours catalogue existant. Nouvelle recette complète à consigner.
+
 ## Accueil équilibré et lisible — candidat du 8 novembre 2026
 
 Le propriétaire autorise les huit améliorations de l’audit de l’accueil. Grilles adaptées au nombre de catégories et de produits ; cartes de même rang avec actions alignées ; ancre native vers les catégories utilisable plusieurs fois ; bannière mobile raccourcie avec les deux photos originales du catalogue ; détails des cartes agrandis ; libellés de catégorie sans répétition française ; vignette du menu issue des photos du premier produit publié de la même catégorie, sans modifier la catégorie enregistrée ; suppression du bandeau de réassurance répété sur l’accueil et guide de commande repliable. Les liens du pied de page, réseaux sociaux, contenus personnalisés, prix, stocks et images restent conservés. Les autres pages gardent leur bandeau de pied de page. Recette mobile/ordinateur et publication à consigner.
