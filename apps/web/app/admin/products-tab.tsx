@@ -81,6 +81,7 @@ export function ProductsTab({
         [baseline, setBaseline] = useState("");
     const [slugEdited, setSlugEdited] = useState(false);
     const [conflictField, setConflictField] = useState("");
+    const [conflictAttempt, setConflictAttempt] = useState(0);
     const [busy, setBusy] = useState(false),
         [uploading, setUploading] = useState(false),
         [error, setError] = useState(""),
@@ -123,6 +124,13 @@ export function ProductsTab({
         window.addEventListener("beforeunload", prevent);
         return () => window.removeEventListener("beforeunload", prevent);
     }, [dirty]);
+    useEffect(() => {
+        if (disabled || !conflictField) return;
+        const input =
+            conflictField === "slug" ? slugInput.current : skuInputs.current.get(conflictField);
+        input?.focus({ preventScroll: true });
+        input?.scrollIntoView({ block: "center", behavior: "instant" });
+    }, [conflictField, conflictAttempt, disabled]);
     function discard() {
         return (
             !dirty || confirm(t("Abandonner les modifications non enregistrées de cette fiche ?"))
@@ -233,6 +241,7 @@ export function ProductsTab({
         if (lock.current || disabled || uncertain) return;
         let data: Record<string, unknown>;
         setConflictField("");
+        setConflictAttempt((attempt) => attempt + 1);
         try {
             const payload = variantPayload(prepareNewVariantSkus(variants, form.slug));
             const tiers = packOffers(Number(form.price), form.quantityDiscounts);
@@ -243,7 +252,6 @@ export function ProductsTab({
             const sameAddress = products.find((p) => p.id !== id && p.slug === form.slug);
             if (sameAddress) {
                 setConflictField("slug");
-                slugInput.current?.focus();
                 throw new Error(
                     `L’adresse « ${form.slug} » appartient déjà au produit « ${sameAddress.nameFr} ». Modifiez l’adresse pour un autre produit, ou ouvrez la fiche existante pour ajouter des variantes.`,
                 );
@@ -254,7 +262,6 @@ export function ProductsTab({
                 );
                 if (!owner) continue;
                 setConflictField(variants[index].key);
-                skuInputs.current.get(variants[index].key)?.focus();
                 throw new Error(
                     `Variante ${index + 1} : la référence « ${v.sku} » est déjà utilisée dans « ${owner.nameFr} ». Choisissez une autre référence ou laissez vide pour une nouvelle variante.`,
                 );
@@ -304,7 +311,6 @@ export function ProductsTab({
                 .response;
             if (response?.data?.code === "PRODUCT_SLUG_CONFLICT") {
                 setConflictField("slug");
-                slugInput.current?.focus();
             }
             if (!response) {
                 setUncertain(true);
@@ -819,7 +825,9 @@ export function ProductsTab({
                                             maxLength={100}
                                             value={v.sku}
                                             aria-label={t("Référence SKU")}
-                                            aria-describedby={!v.id ? `sku-help-${v.key}` : undefined}
+                                            aria-describedby={
+                                                !v.id ? `sku-help-${v.key}` : undefined
+                                            }
                                             aria-invalid={conflictField === v.key || undefined}
                                             onChange={(e) => {
                                                 if (conflictField === v.key) {

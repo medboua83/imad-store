@@ -113,8 +113,11 @@ for (const width of [390, 1440]) {
         await expect(address).toHaveAttribute("aria-invalid", "true");
         await expect(page.getByRole("alert").first()).toContainText(ar ? "الرابط" : "L’adresse");
         expect(writes).toHaveLength(0);
+        await save.click();
+        await expect(address).toBeFocused();
+        expect(writes).toHaveLength(0);
         await address.fill("manteau-noir-test");
-        await expect(page.getByRole("alert")).toHaveCount(0);
+        await expect(page.locator(".admin-products .admin-alert")).toHaveCount(0);
         for (let i = 0; i < 3; i++)
             await page
                 .getByRole("button", {
