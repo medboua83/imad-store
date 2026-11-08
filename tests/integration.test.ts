@@ -1192,12 +1192,16 @@ test("Published category counts exclude drafts and automatically follow newly pu
     const read=async()=> (await request(app).get("/api/categories")).body.data.find((entry:any)=>entry.id===c.id);
     assert.equal((await read()).publishedCount,0);
     assert.equal((await read())._count.products,1);
+    assert.deepEqual((await read()).productImages,[]);
+    assert.equal('products' in (await read()),false);
     await prisma.product.update({where:{id:p.id},data:{status:"ACTIVE"}});
     assert.equal((await read()).publishedCount,1);
+    assert.deepEqual((await read()).productImages,p.images);
     await prisma.product.update({where:{id:p.id},data:{images:[]}});
     assert.equal((await read()).publishedCount,0);
     await prisma.product.update({where:{id:p.id},data:{images:["/images/test.webp"],status:"ARCHIVED"}});
     assert.equal((await read()).publishedCount,0);
+    assert.deepEqual((await read()).productImages,[]);
 });
 
 test("Visitor statistics validate events, deduplicate concurrent views and exclude test/admin/bot traffic", async () => {

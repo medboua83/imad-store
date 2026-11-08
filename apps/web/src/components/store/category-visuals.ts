@@ -45,6 +45,7 @@ export function categoryImageSources(category: Category, products: Product[]) {
                 selectedCategoryArtwork[category.slug],
                 ...custom,
                 ...matching,
+                ...(category.productImages ?? []),
                 ...(illustration ? [illustration] : []),
             ].filter(Boolean),
         ),

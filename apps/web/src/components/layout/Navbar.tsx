@@ -1,6 +1,6 @@
 "use client";
-import Image from "next/image";
-import { categoryThumbnail } from "../store/category-visuals";
+import { categoryVisual } from "../store/category-visuals";
+import { ProductPhoto } from "../store/ProductPhoto";
 import { trapDialogFocus } from "./dialog-focus";
 import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -38,13 +38,21 @@ export function Navbar() {
         const element = header.current;
         const shell = element?.closest<HTMLElement>(".store-shell");
         if (!element || !shell) return;
-        const update = () => shell.style.setProperty("--store-header-offset", `${Math.ceil(element.getBoundingClientRect().height) + 12}px`);
+        const update = () =>
+            shell.style.setProperty(
+                "--store-header-offset",
+                `${Math.ceil(element.getBoundingClientRect().height) + 12}px`,
+            );
         update();
         const observer = new ResizeObserver(update);
         observer.observe(element);
         return () => observer.disconnect();
     }, []);
-    const {data = []} = useQuery({queryKey:["public-categories"],queryFn:getCategories,staleTime:60_000});
+    const { data = [] } = useQuery({
+        queryKey: ["public-categories"],
+        queryFn: getCategories,
+        staleTime: 60_000,
+    });
     const categories = publishedCategories(data);
     const menu = useRef<HTMLDialogElement>(null);
     const path = usePathname();
@@ -230,15 +238,17 @@ export function Navbar() {
                                     onClick={closeMenu}
                                 >
                                     <span className="menu-category-icon" aria-hidden="true">
-                                        {categoryThumbnail(category.slug) && <Image
-                                            src={categoryThumbnail(category.slug)}
-                                            alt=""
-                                            width={42}
-                                            height={42}
+                                        <ProductPhoto
+                                            images={categoryVisual(category, []).sources}
+                                            name=""
+                                            sizes="42px"
                                             className="menu-category-photo"
-                                        />}
+                                        />
                                     </span>
-                                    <span>{category.nameAr || category.nameFr} <small>({category.publishedCount})</small></span>
+                                    <span>
+                                        {category.nameAr || category.nameFr}{" "}
+                                        <small>({category.publishedCount})</small>
+                                    </span>
                                     <ArrowUpLeft size={16} aria-hidden="true" />
                                 </Link>
                             ))}

@@ -12,25 +12,35 @@ const categorySchema = z.object({
 });
 
 export async function readCategories() {
+    const published = {
+        status: "ACTIVE" as const,
+        images: { isEmpty: false },
+        NOT: [{ slug: { startsWith: "test-19a-" } }, { slug: "demo-bag-sample" }],
+    };
     const [categories, counts] = await Promise.all([
         prisma.category.findMany({
-            include: { _count: { select: { products: true } } },
+            include: {
+                _count: { select: { products: true } },
+                products: {
+                    where: published,
+                    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+                    take: 1,
+                    select: { images: true },
+                },
+            },
             orderBy: { nameFr: "asc" },
         }),
         prisma.product.groupBy({
             by: ["categoryId"],
-            where: {
-                status: "ACTIVE",
-                images: { isEmpty: false },
-                NOT: [{ slug: { startsWith: "test-19a-" } }, { slug: "demo-bag-sample" }],
-            },
+            where: published,
             _count: { _all: true },
         }),
     ]);
     return {
         success: true,
-        data: categories.map((c) => ({
+        data: categories.map(({ products, ...c }) => ({
             ...c,
+            productImages: products[0]?.images ?? [],
             publishedCount: counts.find((n) => n.categoryId === c.id)?._count._all ?? 0,
         })),
     };

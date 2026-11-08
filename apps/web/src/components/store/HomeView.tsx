@@ -1,7 +1,7 @@
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import type { ComponentProps } from "react";
-import { ArrowUpLeft, PackageCheck, SlidersHorizontal, Truck } from "lucide-react";
+import { ArrowUpLeft } from "lucide-react";
 import type { SiteContent } from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
@@ -51,31 +51,25 @@ export function HomeView({
                         <ViewLink prefetch={false} href="/shop" className="btn-primary">
                             اكتشفوا المجموعة <ArrowUpLeft size={19} aria-hidden="true" />
                         </ViewLink>
-                        <ViewLink href="#collections" className="text-link">
+                        <a href="#collections" className="text-link">
                             تصفحوا الفئات
-                        </ViewLink>
-                    </div>
-                    <div className="hero-note">
-                        <span className="hero-note-line" />
-                        <p>
-                            اختاروا ما يشبهكم.
-                            <br />
-                            <span>من القطعة الأولى إلى اللمسة الأخيرة.</span>
-                        </p>
+                        </a>
                     </div>
                 </div>
                 <div className="hero-visual">
-                    <ProductPhoto
-                        images={[heroImage, ...(featured?.images ?? [])]}
-                        name={
-                            useCatalogue && featured
-                                ? featured.nameAr || featured.nameFr
-                                : content.heroTitle
-                        }
-                        preload
-                        sizes="(max-width: 767px) 100vw, 55vw"
-                        className="hero-photo"
-                    />
+                    <div className="hero-primary-photo">
+                        <ProductPhoto
+                            images={[heroImage, ...(featured?.images ?? [])]}
+                            name={
+                                useCatalogue && featured
+                                    ? featured.nameAr || featured.nameFr
+                                    : content.heroTitle
+                            }
+                            preload
+                            sizes="(max-width: 767px) 100vw, 55vw"
+                            className="hero-photo"
+                        />
+                    </div>
                     {useCatalogue && featured && (
                         <ViewLink className="hero-product-tag" href={`/products/${featured.slug}`}>
                             <span>{featured.nameAr || featured.nameFr}</span>
@@ -93,11 +87,10 @@ export function HomeView({
                                 images={detail.images}
                                 name=""
                                 sizes="180px"
+                                eager
                                 className="object-cover"
                             />
-                            <span>
-                                التفاصيل تصنع الفرق <ArrowUpLeft size={16} aria-hidden="true" />
-                            </span>
+                            <span>{detail.nameAr || detail.nameFr}</span>
                         </ViewLink>
                     )}
                     <span className="hero-image-label" dir="ltr">
@@ -109,27 +102,6 @@ export function HomeView({
                     </div>
                 </div>
             </section>
-            <div className="service-strip" aria-label="تجربة التسوق">
-                <div>
-                    <PackageCheck size={23} aria-hidden="true" />
-                    <p>
-                        الدفع عند الاستلام<span>أكملوا طلبكم دون إنشاء حساب</span>
-                    </p>
-                </div>
-                <div>
-                    <SlidersHorizontal size={23} aria-hidden="true" />
-                    <p>
-                        اختيارات على مقاسكم<span>اللون، المقاس والتوفر في كل قطعة</span>
-                    </p>
-                </div>
-                <ViewLink href="/delivery">
-                    <Truck size={23} aria-hidden="true" />
-                    <p>
-                        تفاصيل واضحة<span>رسوم التوصيل قبل تأكيد الطلب</span>
-                    </p>
-                    <ArrowUpLeft size={17} aria-hidden="true" />
-                </ViewLink>
-            </div>
             <section id="collections" className="collection-section section-container">
                 <div className="section-heading">
                     <div>
@@ -169,9 +141,6 @@ export function HomeView({
                                 <span className="collection-name">
                                     {c.nameAr || c.nameFr}
                                     <small>{c.publishedCount} منتج</small>
-                                    {c.nameAr && c.nameAr !== c.nameFr && (
-                                        <small dir="ltr">{c.nameFr}</small>
-                                    )}
                                 </span>
                                 <ArrowUpLeft size={22} aria-hidden="true" />
                             </ViewLink>
@@ -235,9 +204,8 @@ export function HomeView({
                     </div>
                 )}
             </section>
-            <section className="shopping-guide section-container">
-                <p className="eyebrow">من الاختيار إلى الطلب</p>
-                <h2>تجربة بسيطة، من أجلكم.</h2>
+            <details className="shopping-guide section-container home-shopping-guide">
+                <summary>كيف تطلبون من IMAD؟</summary>
                 <div className="guide-grid">
                     {[
                         ["01", "اكتشفوا", "تصفحوا المجموعة واختاروا القطعة التي تناسبكم."],
@@ -255,7 +223,7 @@ export function HomeView({
                         </div>
                     ))}
                 </div>
-            </section>
+            </details>
         </div>
     );
 }

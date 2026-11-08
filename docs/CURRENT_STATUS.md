@@ -1,5 +1,14 @@
 # Current Status — 2026-11-08
 
+## Accueil équilibré et lisible — candidat du 8 novembre 2026
+
+Le propriétaire autorise les huit améliorations de l’audit de l’accueil. Grilles adaptées au nombre de catégories et de produits ; cartes de même rang avec actions alignées ; ancre native vers les catégories utilisable plusieurs fois ; bannière mobile raccourcie avec les deux photos originales du catalogue ; détails des cartes agrandis ; libellés de catégorie sans répétition française ; vignette du menu issue des photos du premier produit publié de la même catégorie, sans modifier la catégorie enregistrée ; suppression du bandeau de réassurance répété sur l’accueil et guide de commande repliable. Les liens du pied de page, réseaux sociaux, contenus personnalisés, prix, stocks et images restent conservés. Les autres pages gardent leur bandeau de pied de page. Recette mobile/ordinateur et publication à consigner.
+
+## Production vérifiée — PR 104 et 105, 8 novembre 2026
+
+La production exécute 3a19504361fa247ee507c34771aa3da65fadc32c, version category-entry-3a19504361fa, arbre identique à Master e8ec7c47a0576829d4fe8d76d86472a70199689e. CI : 228 UI et 114 PostgreSQL/unitaires réussis. Catégories et boutique vérifiées à 390/1440 px ; diagnostic CRM en lecture seule efface l’ancien résultat après modification de référence. Onze tables métier, deux fichiers de configuration et 26 originaux identiques avant/après et au contrôle final ; 385 fichiers source vérifiés. Sauvegarde privée vérifiée sur VPS et DATA ; accès temporaire retiré, connexion neuve refusée, clés dédiées locales supprimées. Les états précédents ci-dessous sont historiques.
+
+
 ## Création des catégories — correction du 8 novembre 2026
 
 L’adresse saisie avec une majuscule était bloquée par la contrainte HTML, avant tout appel au serveur. Le candidat normalise les majuscules, accents et séparateurs, génère une adresse depuis le nom français si le champ est vide et affiche un aperçu. Les trois noms restent obligatoires, avec indications explicites en français/arabe ; les espaces seuls ne sont pas acceptés. Une adresse déjà utilisée est signalée distinctement et les noms sont conservés en cas d’échec. Aucun changement de catégorie réelle, de produit ou de stock. Tests et publication à consigner.

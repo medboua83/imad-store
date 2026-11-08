@@ -121,6 +121,7 @@ export async function saveContent(
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Category {
     publishedCount?: number;
+    productImages?: string[];
     id: string;
     slug: string;
     nameFr: string;
