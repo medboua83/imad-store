@@ -1,0 +1,250 @@
+/* Catalogue-aware layouts and original photo frames. No image or commerce changes. */
+.store-shell .storefront-home .editorial-hero {
+    min-height: 480px;
+}
+.store-shell .storefront-home .hero-visual {
+    min-height: 480px;
+}
+.hero-primary-photo {
+    position: absolute;
+    inset: 0;
+}
+.store-shell .storefront-home .hero-copy h1 {
+    font-size: clamp(44px, 5vw, 72px);
+}
+.store-shell .storefront-home #collections {
+    scroll-margin-block-start: var(--store-header-offset, 140px);
+    padding-block: 30px 20px;
+}
+.store-shell .storefront-home .section-heading {
+    margin-bottom: 20px;
+}
+.store-shell .storefront-home .collection-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 240px));
+    justify-content: center;
+}
+.store-shell .storefront-home .collection-tile {
+    min-height: 180px;
+    padding: 20px 16px 26px;
+}
+.store-shell .storefront-home .collection-name small {
+    font-family: "Tajawal", sans-serif;
+    font-size: 13px;
+}
+.store-shell .storefront-home .featured-section {
+    padding-block: 24px 36px;
+}
+.store-shell .storefront-home .catalog-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 320px));
+    justify-content: center;
+    align-items: stretch;
+}
+/* The footer links remain visible; only the repeated three-step guide is optional. */
+.store-shell .home-shopping-guide {
+    margin-block: 0 36px;
+    padding: 0 24px;
+    background: #f5efe3;
+    border: 1px solid #e3d7c1;
+}
+.home-shopping-guide > summary {
+    cursor: pointer;
+    padding-block: 18px;
+    min-height: 56px;
+    font-size: 18px;
+    font-weight: 600;
+}
+.home-shopping-guide .guide-grid {
+    padding-bottom: 24px;
+}
+.store-shell .home-shopping-guide .guide-grid p {
+    font-size: 14px;
+}
+.home-shopping-guide > summary:focus-visible {
+    outline: 2px solid #94702e;
+    outline-offset: 3px;
+}
+/* Equal card heights keep the actions aligned with mixed delivery/promotion badges. */
+.store-shell .storefront-home .catalog-card {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+}
+.store-shell .storefront-home .catalog-card-image {
+    flex-shrink: 0;
+}
+.store-shell .storefront-home .catalog-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 8px;
+}
+.store-shell .storefront-home .card-title-row :is(h2, h3) {
+    min-height: 3.3em;
+}
+.store-shell .storefront-home .card-price {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-height: 26px;
+    margin-top: 4px;
+}
+.store-shell .storefront-home .card-price .product-current-price {
+    order: -1;
+    white-space: nowrap;
+}
+.store-shell
+    .catalog-card
+    :is(.card-category, .variant-hint, .product-size-preview, .quantity-card-hint) {
+    font-size: 13px;
+    line-height: 1.6;
+}
+.store-shell .storefront-home .catalog-card .card-category {
+    font-size: 12px;
+}
+.store-shell
+    .storefront-home
+    .catalog-card
+    :is(.product-color-label, .product-shipping-badge, .card-price del) {
+    font-size: 12px;
+    line-height: 1.5;
+}
+.store-shell
+    .catalog-card
+    :is(.product-option-preview, .product-size-preview, .quantity-card-hint) {
+    margin-top: 0;
+}
+.store-shell .storefront-home .catalog-card .card-bottom {
+    margin-top: auto;
+}
+.store-shell .storefront-home .catalog-card .card-bottom .text-link {
+    min-height: 44px;
+    font-size: 13px;
+}
+.store-menu .menu-category-icon {
+    position: relative;
+}
+@media (max-width: 767px) {
+    .store-shell .storefront-home .editorial-hero,
+    .store-shell .storefront-home .hero-visual {
+        min-height: 0;
+    }
+    .store-shell .storefront-home .hero-copy {
+        padding: 20px;
+    }
+    .store-shell .storefront-home .hero-copy .eyebrow {
+        display: none;
+    }
+    .store-shell .storefront-home .hero-copy h1 {
+        font-size: clamp(34px, 9vw, 44px);
+        margin-bottom: 6px;
+    }
+    .store-shell .storefront-home .hero-description {
+        font-size: 15px;
+        line-height: 1.7;
+    }
+    .store-shell .storefront-home .hero-actions {
+        margin-top: 12px;
+        gap: 6px 14px;
+    }
+    .store-shell .storefront-home .hero-actions .text-link {
+        font-size: 13px;
+    }
+    .store-shell .storefront-home .hero-visual {
+        height: 230px;
+        aspect-ratio: auto;
+    }
+    .store-shell .storefront-home .hero-visual:has(.hero-detail-card) .hero-primary-photo {
+        inset-block-end: 48px;
+        inset-inline-end: 34%;
+    }
+    .store-shell .storefront-home .hero-detail-card {
+        display: block !important;
+        width: 31%;
+        top: 8px;
+        bottom: 60px;
+        inset-inline-end: 12px;
+        aspect-ratio: auto;
+        transform: none;
+        border-width: 3px;
+        box-shadow: 0 4px 12px #78551f12;
+    }
+    .store-shell .storefront-home .hero-detail-card img {
+        object-fit: contain;
+        padding-bottom: 24px;
+        background: #fffdf8;
+    }
+    .store-shell .storefront-home .hero-detail-card > span {
+        justify-content: center;
+        font-size: 12px;
+        padding: 5px 2px;
+    }
+    .store-shell .storefront-home .hero-image-label {
+        display: none;
+    }
+    .store-shell .storefront-home .hero-product-tag {
+        bottom: 8px;
+        min-height: 44px;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    .store-shell .storefront-home #collections {
+        padding-block: 22px 10px;
+    }
+    .store-shell .storefront-home .collection-section .eyebrow {
+        display: none;
+    }
+    .store-shell .storefront-home .section-heading h2 {
+        font-size: 27px;
+    }
+    .store-shell .storefront-home .section-heading {
+        margin-bottom: 12px;
+    }
+    .store-shell .storefront-home .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .store-shell .storefront-home .collection-tile {
+        min-height: 125px;
+        padding: 12px 6px 20px;
+        gap: 8px;
+    }
+    .store-shell .storefront-home .collection-photo {
+        width: 54px;
+        height: 54px;
+    }
+    .store-shell .storefront-home .collection-tile > span.collection-name {
+        font-family: "Tajawal", sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    .store-shell .storefront-home .collection-name small {
+        margin-top: 2px;
+        font-size: 12px;
+    }
+    .store-shell .storefront-home .collection-tile > svg {
+        bottom: 6px;
+        width: 14px;
+        height: 14px;
+    }
+    .store-shell .storefront-home .featured-section {
+        padding-block: 14px 28px;
+    }
+    .store-shell .storefront-home .featured-section .eyebrow {
+        display: none;
+    }
+    .store-shell .storefront-home .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .store-shell .storefront-home .catalog-grid:has(> :only-child) {
+        grid-template-columns: minmax(0, 340px);
+    }
+    .store-shell .storefront-home .catalog-card-body {
+        padding-inline: 10px;
+    }
+    .store-shell .home-shopping-guide {
+        margin-inline: 16px;
+        padding-inline: 16px;
+    }
+}

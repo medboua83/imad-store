@@ -1,4 +1,9 @@
 export const adminArabic: Record<string, string> = {
+    "L’adresse « {slug} » appartient déjà au produit « {name} ». Modifiez l’adresse pour un autre produit, ou ouvrez la fiche existante pour ajouter des variantes.": "الرابط «{slug}» مستخدم للمنتج «{name}». غيّروا الرابط لإنشاء منتج آخر، أو افتحوا المنتج الموجود لإضافة ألوان أو مقاسات.",
+    "Variante {number} : la référence « {sku} » est déjà utilisée dans « {name} ». Choisissez une autre référence ou laissez vide pour une nouvelle variante.": "الخيار {number}: المرجع «{sku}» مستخدم في «{name}». اختاروا مرجعاً آخر أو اتركوه فارغاً للخيار الجديد.",
+    "Cette adresse de produit existe déjà. Modifiez l’adresse ou ouvrez la fiche existante pour ajouter une couleur ou une taille.": "رابط المنتج مستخدم بالفعل. غيّروا الرابط أو افتحوا المنتج الموجود لإضافة لون أو مقاس.",
+    "Une référence SKU est déjà utilisée. Chaque variante doit avoir sa propre référence dans le catalogue. Pour une nouvelle variante, laissez le champ vide afin de la générer.": "أحد مراجع SKU مستخدم بالفعل. يجب أن يكون لكل خيار مرجع خاص في الكتالوج. اتركوا الحقل فارغاً للخيار الجديد لإنشاء المرجع تلقائياً.",
+    "Laissez vide pour générer une référence unique. Chaque variante doit avoir sa propre référence dans le catalogue.": "اتركوه فارغاً لإنشاء مرجع فريد. يجب أن يكون لكل خيار مرجع خاص في الكتالوج.",
     "Les trois noms sont obligatoires. L’adresse est générée à partir du nom français si vous la laissez vide.": "الأسماء باللغات الثلاث مطلوبة. يُنشأ رابط الفئة من الاسم الفرنسي عند تركه فارغاً.",
     "Majuscules, accents et espaces sont convertis automatiquement.": "تُحوّل الأحرف الكبيرة والعلامات والمسافات تلقائياً إلى رابط مناسب.",
     "Renseignez le nom français.": "أدخلوا الاسم بالفرنسية.",

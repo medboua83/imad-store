@@ -37,6 +37,24 @@ export function errorMiddleware(
         return;
     }
     if (code === "P2002") {
+        const meta = (err as { meta?: { modelName?: string; target?: unknown } }).meta;
+        const target = Array.isArray(meta?.target) ? meta.target : [];
+        if (meta?.modelName === "Product" && target.includes("slug")) {
+            res.status(409).json({
+                success: false,
+                code: "PRODUCT_SLUG_CONFLICT",
+                error: "Cette adresse de produit existe déjà. Modifiez l’adresse ou ouvrez la fiche existante pour ajouter une couleur ou une taille.",
+            });
+            return;
+        }
+        if (target.includes("sku")) {
+            res.status(409).json({
+                success: false,
+                code: "PRODUCT_SKU_CONFLICT",
+                error: "Une référence SKU est déjà utilisée. Chaque variante doit avoir sa propre référence dans le catalogue. Pour une nouvelle variante, laissez le champ vide afin de la générer.",
+            });
+            return;
+        }
         res.status(409).json({ success: false, error: "Cet identifiant ou SKU existe déjà" });
         return;
     }

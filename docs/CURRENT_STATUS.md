@@ -1,5 +1,23 @@
 # Current Status — 2026-11-08
 
+## Reprise et icônes sociales — 8 novembre 2026
+
+Le propriétaire reprend le travail après la pause et choisit des icônes sociales seules. Les quatre liens et couleurs sont conservés, avec nom au survol, nom accessible et zones tactiles de 52 px. Le candidat précédent 7041f10 a passé 233 UI, 116 PostgreSQL/unitaires et les contrôles de compilation/hébergement, sans publication. L’ajustement social doit être vérifié sur le nouveau code avant fusion et publication groupée. La production vérifiée reste 3a19504361fa (PR105).
+
+
+## Conflits de création de produit — ajout au candidat du 8 novembre 2026
+
+La photo du propriétaire montre un message générique qui confond adresse de produit et référence SKU. Le candidat distingue les contraintes correspondantes côté serveur. Le formulaire signale les conflits connus avec le catalogue chargé, identifie le produit/la variante, conserve toutes les saisies et place le focus sur le champ concerné ; une nouvelle référence peut être générée en laissant le SKU vide. Aucun SKU existant ni produit réel n’est renommé automatiquement. Les erreurs concurrentes côté serveur restent bloquantes et explicites en français/arabe. La première CI de l’accueil a détecté un prix trop bas sur la page boutique : les nouveaux styles de cartes sont désormais limités à l’accueil, avec vérification du parcours catalogue existant. Nouvelle recette complète à consigner.
+
+## Accueil équilibré et lisible — candidat du 8 novembre 2026
+
+Le propriétaire autorise les huit améliorations de l’audit de l’accueil. Grilles adaptées au nombre de catégories et de produits ; cartes de même rang avec actions alignées ; ancre native vers les catégories utilisable plusieurs fois ; bannière mobile raccourcie avec les deux photos originales du catalogue ; détails des cartes agrandis ; libellés de catégorie sans répétition française ; vignette du menu issue des photos du premier produit publié de la même catégorie, sans modifier la catégorie enregistrée ; suppression du bandeau de réassurance répété sur l’accueil et guide de commande repliable. Les liens du pied de page, réseaux sociaux, contenus personnalisés, prix, stocks et images restent conservés. Les autres pages gardent leur bandeau de pied de page. Recette mobile/ordinateur et publication à consigner.
+
+## Production vérifiée — PR 104 et 105, 8 novembre 2026
+
+La production exécute 3a19504361fa247ee507c34771aa3da65fadc32c, version category-entry-3a19504361fa, arbre identique à Master e8ec7c47a0576829d4fe8d76d86472a70199689e. CI : 228 UI et 114 PostgreSQL/unitaires réussis. Catégories et boutique vérifiées à 390/1440 px ; diagnostic CRM en lecture seule efface l’ancien résultat après modification de référence. Onze tables métier, deux fichiers de configuration et 26 originaux identiques avant/après et au contrôle final ; 385 fichiers source vérifiés. Sauvegarde privée vérifiée sur VPS et DATA ; accès temporaire retiré, connexion neuve refusée, clés dédiées locales supprimées. Les états précédents ci-dessous sont historiques.
+
+
 ## Création des catégories — correction du 8 novembre 2026
 
 L’adresse saisie avec une majuscule était bloquée par la contrainte HTML, avant tout appel au serveur. Le candidat normalise les majuscules, accents et séparateurs, génère une adresse depuis le nom français si le champ est vide et affiche un aperçu. Les trois noms restent obligatoires, avec indications explicites en français/arabe ; les espaces seuls ne sont pas acceptés. Une adresse déjà utilisée est signalée distinctement et les noms sont conservés en cas d’échec. Aucun changement de catégorie réelle, de produit ou de stock. Tests et publication à consigner.

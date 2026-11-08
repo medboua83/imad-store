@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/lib/api";
 import { publishedCategories } from "@/lib/catalog-navigation";
@@ -15,30 +16,37 @@ const socials = [
 ];
 
 export function Footer() {
-    const {data = []} = useQuery({queryKey:["public-categories"],queryFn:getCategories,staleTime:60_000});
+    const home = usePathname() === "/";
+    const { data = [] } = useQuery({
+        queryKey: ["public-categories"],
+        queryFn: getCategories,
+        staleTime: 60_000,
+    });
     return (
         <footer className="site-footer refined-footer">
-            <div className="footer-service-strip section-container" aria-label="تجربة التسوق">
-                <div>
-                    <PackageCheck size={22} aria-hidden="true" />
-                    <span>
-                        الدفع عند الاستلام<small>راجعوا المبلغ قبل تأكيد الطلب</small>
-                    </span>
+            {!home && (
+                <div className="footer-service-strip section-container" aria-label="تجربة التسوق">
+                    <div>
+                        <PackageCheck size={22} aria-hidden="true" />
+                        <span>
+                            الدفع عند الاستلام<small>راجعوا المبلغ قبل تأكيد الطلب</small>
+                        </span>
+                    </div>
+                    <div>
+                        <SlidersHorizontal size={22} aria-hidden="true" />
+                        <span>
+                            اختيارات على مقاسكم<small>اللون والمقاس والتوفر في كل قطعة</small>
+                        </span>
+                    </div>
+                    <Link href="/contact">
+                        <MessageCircle size={22} aria-hidden="true" />
+                        <span>
+                            نحن هنا للمساعدة<small>سؤال عن قطعة أو عن طلبكم؟</small>
+                        </span>
+                        <ArrowUpLeft size={18} aria-hidden="true" />
+                    </Link>
                 </div>
-                <div>
-                    <SlidersHorizontal size={22} aria-hidden="true" />
-                    <span>
-                        اختيارات على مقاسكم<small>اللون والمقاس والتوفر في كل قطعة</small>
-                    </span>
-                </div>
-                <Link href="/contact">
-                    <MessageCircle size={22} aria-hidden="true" />
-                    <span>
-                        نحن هنا للمساعدة<small>سؤال عن قطعة أو عن طلبكم؟</small>
-                    </span>
-                    <ArrowUpLeft size={18} aria-hidden="true" />
-                </Link>
-            </div>
+            )}
             <div className="footer-main section-container">
                 <div className="footer-brand">
                     <Link
@@ -61,7 +69,7 @@ export function Footer() {
                 <nav aria-label="اكتشفوا المتجر">
                     <h2>اكتشفوا IMAD</h2>
                     <Link href="/shop">كل المنتجات</Link>
-                    {publishedCategories(data).map(c => (
+                    {publishedCategories(data).map((c) => (
                         <Link key={c.id} href={`/shop?category=${c.slug}`}>
                             {c.nameAr || c.nameFr} ({c.publishedCount})
                         </Link>
@@ -103,7 +111,10 @@ export function Footer() {
                     <h2>لنكن على تواصل.</h2>
                     <p>تابعونا على مواقع التواصل</p>
                 </div>
-                <nav className="footer-socials" aria-label="تابعونا على مواقع التواصل">
+                <nav
+                    className="footer-socials footer-social-icons"
+                    aria-label="تابعونا على مواقع التواصل"
+                >
                     {socials.map(([href, label]) => (
                         <a
                             key={label}
@@ -113,12 +124,11 @@ export function Footer() {
                             dir="ltr"
                             data-network={label.toLowerCase()}
                             aria-label={`${label} — نافذة جديدة`}
+                            title={label}
                         >
-                            <span className="social-brand-icon">
+                            <span className="social-brand-icon" aria-hidden="true">
                                 <SocialIcon network={label} />
                             </span>
-                            <span>{label}</span>
-                            <ArrowUpLeft size={14} aria-hidden="true" />
                         </a>
                     ))}
                 </nav>

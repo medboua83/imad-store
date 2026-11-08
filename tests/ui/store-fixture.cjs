@@ -47,6 +47,10 @@ const recommended = (id, slug, nameAr, price) => ({ ...product, id, slug, nameAr
 const premium = recommended("444444444444444444444444", "fixture-premium", "موديل للمقارنة", 300);
 const accessory = recommended("555555555555555555555555", "fixture-accessory", "قطعة مكملة تجريبية", 50);
 const secondSource = recommended("666666666666666666666666", "fixture-second-source", "منتج ثان تجريبي", 80);
+const coatCategory = {...category, id:"111111111111111111111113", slug:"fixture-coats", nameAr:"معاطف", nameFr:"Coats", productImages:["/images/catalogue-test/abaya.webp"]};
+const homeProducts = [product,
+  {...premium, category:coatCategory, freeShipping:false, images:coatCategory.productImages},
+  {...accessory, quantityDiscounts:[{minQuantity:2,totalPrice:90,unitPrice:45}]}];
 const catalogueAttempts = new Map();
 createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
@@ -60,8 +64,10 @@ createServer((req, res) => {
   if (pathname === "/api/settings")
     data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false };
   else if (pathname === "/api/content") data = defaultSiteContent;
-  else if (pathname === "/api/categories") data = [category, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
+  else if (pathname === "/api/categories") data = [category, coatCategory, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
   else if (pathname === "/api/products") {
+    if (url.searchParams.get("limit") === "8" && url.searchParams.get("availability") === "in-stock")
+      return res.end(JSON.stringify({success:true,data:homeProducts,total:3,totalPages:1,page:1}));
     const search = url.searchParams.get("search");
     if (/^retry-fixture-(390|1440)$/.test(search || "")) {
       const attempts = catalogueAttempts.get(search) || 0;

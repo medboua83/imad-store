@@ -280,3 +280,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+.admin-product-editor input[aria-invalid="true"] {
+    border-color: #ad4338;
+    box-shadow: 0 0 0 2px #ad43381a;
+}

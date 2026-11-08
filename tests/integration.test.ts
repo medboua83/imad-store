@@ -291,6 +291,23 @@ test("Products require publication readiness; variants and stock can be edited",
         2,
     );
 });
+test("Product conflicts distinguish addresses from global SKUs without partial writes", async () => {
+    const count = await prisma.product.count();
+    const stock = await prisma.productVariant.findUnique({ where: { id: product.variants[0].id } });
+    const sameAddress = await request(app).post('/api/products').set(admin()).send({...payload(),slug:product.slug});
+    assert.equal(sameAddress.status,409);
+    assert.equal(sameAddress.body.code,'PRODUCT_SLUG_CONFLICT');
+    assert.match(sameAddress.body.error,/adresse de produit/);
+    const other = payload();
+    other.variants[0].sku = product.variants[0].sku;
+    const sameSku = await request(app).post('/api/products').set(admin()).send(other);
+    assert.equal(sameSku.status,409);
+    assert.equal(sameSku.body.code,'PRODUCT_SKU_CONFLICT');
+    assert.match(sameSku.body.error,/référence SKU/);
+    assert.equal(await prisma.product.count(),count);
+    assert.equal(await prisma.product.findUnique({where:{slug:other.slug}}),null);
+    assert.deepEqual(await prisma.productVariant.findUnique({where:{id:stock.id}}),stock);
+});
 test("Image uploads are authenticated, validated, transformed and served", async () => {
     assert.equal(
         (
@@ -1192,12 +1209,16 @@ test("Published category counts exclude drafts and automatically follow newly pu
     const read=async()=> (await request(app).get("/api/categories")).body.data.find((entry:any)=>entry.id===c.id);
     assert.equal((await read()).publishedCount,0);
     assert.equal((await read())._count.products,1);
+    assert.deepEqual((await read()).productImages,[]);
+    assert.equal('products' in (await read()),false);
     await prisma.product.update({where:{id:p.id},data:{status:"ACTIVE"}});
     assert.equal((await read()).publishedCount,1);
+    assert.deepEqual((await read()).productImages,p.images);
     await prisma.product.update({where:{id:p.id},data:{images:[]}});
     assert.equal((await read()).publishedCount,0);
     await prisma.product.update({where:{id:p.id},data:{images:["/images/test.webp"],status:"ARCHIVED"}});
     assert.equal((await read()).publishedCount,0);
+    assert.deepEqual((await read()).productImages,[]);
 });
 
 test("Visitor statistics validate events, deduplicate concurrent views and exclude test/admin/bot traffic", async () => {

@@ -38,3 +38,17 @@ test("The owner-selected Sabots artwork is shared by homepage, menu and shop", (
     assert.equal(visual.illustrative, true);
     assert.equal(visual.sources[1], category.image);
 });
+
+test("New category thumbnails reuse published product originals without changing custom artwork", () => {
+    const category = {
+        slug: "coats",
+        image: "/uploads/custom.webp",
+        productImages: ["/uploads/coat.webp", "/uploads/coat-detail.webp"],
+    } as Category;
+    assert.deepEqual(categoryImageSources(category, []), [
+        "/uploads/custom.webp",
+        "/uploads/coat.webp",
+        "/uploads/coat-detail.webp",
+    ]);
+    assert.equal(categoryVisual({ ...category, image: undefined }, []).src, "/uploads/coat.webp");
+});

@@ -13,6 +13,7 @@ import "./quantity-offers.css";
 import "./product-compact.css";
 import "./recommendations.css";
 import "./store-refinements.css";
+import "./home-polish.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 
