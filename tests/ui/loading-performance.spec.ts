@@ -71,3 +71,21 @@ test("Ordinary visits do not enable performance diagnostic logs", async ({page})
   await page.goto("/contact?stats_test=1");
   expect(messages).toEqual([]);
 });
+
+test("Catalogue keeps the original photo when its small version is unavailable", async ({page}) => {
+    const file = `${"a".repeat(64)}.webp`;
+    const preview = `/api/uploads/preview-v1/${file}`;
+    const original = `/uploads/${file}`;
+    await page.setViewportSize({width:390,height:844});
+    await page.route(preview, route => route.fulfill({status:503}));
+    await page.route(original, route => route.fulfill({
+        path: "apps/web/public/images/catalogue-test/sac.webp",
+        contentType: "image/webp",
+    }));
+    const previewRequested = page.waitForResponse(response => new URL(response.url()).pathname === preview);
+    await page.goto("/shop?search=preview-fixture&stats_test=1");
+    expect((await previewRequested).status()).toBe(503);
+    const cover = page.locator(".catalog-card-image img");
+    await expect(cover).toHaveAttribute("src", original);
+    await expect.poll(() => cover.evaluate((image:HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+});

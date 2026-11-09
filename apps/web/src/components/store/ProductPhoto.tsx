@@ -8,6 +8,7 @@ export function ProductPhoto({
     sizes = "(max-width:767px) 100vw, (max-width:1023px) 50vw, 25vw",
     preload = false,
     eager = false,
+    thumbnail = false,
 }: {
     images: string[];
     name: string;
@@ -15,9 +16,16 @@ export function ProductPhoto({
     sizes?: string;
     preload?: boolean;
     eager?: boolean;
+    thumbnail?: boolean;
 }) {
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
-    const src = images.find((src) => src && !failed.has(src));
+    const sources = thumbnail
+        ? images.flatMap((source) => {
+              const upload = /^\/uploads\/([a-f0-9]{64}\.webp)$/.exec(source);
+              return upload ? [`/api/uploads/preview-v1/${upload[1]}`, source] : [source];
+          })
+        : images;
+    const src = sources.find((src) => src && !failed.has(src));
     return src ? (
         <Image
             src={src}
