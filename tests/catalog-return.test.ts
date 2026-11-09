@@ -3,12 +3,12 @@ import assert from "node:assert/strict";
 import { catalogReturnPath, productDetailsHref } from "../apps/web/src/lib/catalog-return";
 
 test("Catalogue return keeps the full public search and pagination, without diagnostic or private parameters", () => {
-    const value = catalogReturnPath("/shop?search=صابو&category=mens-clogs&sort=price-asc&minPrice=100&maxPrice=500&availability=in-stock&size=40&page=2&filters=open&token=private&stats_test=1#other");
+    const value = catalogReturnPath("/shop?search=صابو&category=mens-clogs&section=men&sort=price-asc&minPrice=100&maxPrice=500&availability=in-stock&size=40&page=2&filters=open&token=private&stats_test=1#other");
     const target = new URL(value!, "https://store.example");
     assert.equal(target.pathname, "/shop");
     assert.equal(target.hash, "#catalog-results");
     assert.deepEqual(Object.fromEntries(target.searchParams), {
-        search: "صابو", category: "mens-clogs", sort: "price-asc", minPrice: "100",
+        search: "صابو", category: "mens-clogs", section: "men", sort: "price-asc", minPrice: "100",
         maxPrice: "500", availability: "in-stock", size: "40", page: "2",
     });
 });

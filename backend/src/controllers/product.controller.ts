@@ -1,7 +1,13 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { isAmbiguousSize, MAX_PRODUCT_PHOTOS, quantityDiscountError } from "@imad-store/shared";
+import {
+    catalogSectionKeys,
+    catalogSections,
+    isAmbiguousSize,
+    MAX_PRODUCT_PHOTOS,
+    quantityDiscountError,
+} from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { objectIdSchema, paginationSchema, isPublishableImage } from "../lib/validation";
@@ -86,6 +92,7 @@ async function list(queryInput: unknown, admin: boolean) {
     const query = paginationSchema
         .extend({
             category: slugSchema.optional(),
+            section: z.enum(catalogSectionKeys).optional(),
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
             size: z.string().max(40).refine(v => !isAmbiguousSize(v), "Une seule taille par filtre").optional(),
@@ -132,7 +139,17 @@ async function list(queryInput: unknown, admin: boolean) {
                 : [{ createdAt: "desc" }, { id: "desc" }];
     if (admin && query.status) where.status = query.status;
     if (admin && query.ids) where.id = { in: query.ids };
-    if (query.category) where.category = { slug: query.category };
+    const categoryFilter = query.section
+        ? {
+              slug: {
+                  in: [...catalogSections[query.section].categorySlugs],
+                  ...(query.category ? { equals: query.category } : {}),
+              },
+          }
+        : query.category
+          ? { slug: query.category }
+          : undefined;
+    if (categoryFilter) where.category = categoryFilter;
     if (query.search)
         where.OR = ["nameFr", "nameAr", "nameEn"].map((field) => ({
             [field]: { contains: query.search!.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" },
@@ -149,7 +166,7 @@ async function list(queryInput: unknown, admin: boolean) {
         !admin && query.includeFilters === "1"
             ? prisma.productVariant.groupBy({
                 by: ["size"],
-                where: { stock: { gt: 0 }, product: { is: { ...visibility, ...(query.category ? { category: { slug: query.category } } : {}) } } },
+                where: { stock: { gt: 0 }, product: { is: { ...visibility, ...(categoryFilter ? { category: categoryFilter } : {}) } } },
               }).then(rows => rows.flatMap(row => row.size?.trim() && !isAmbiguousSize(row.size) ? [row.size] : []))
                 // Suggestions are optional; a failure must not hide the catalog.
                 .catch(() => null)

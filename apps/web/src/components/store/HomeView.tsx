@@ -6,7 +6,8 @@ import type { SiteContent } from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
-import { publishedCategories } from "@/lib/catalog-navigation";
+import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
+import { CatalogSectionLinks } from "./CatalogSectionLinks";
 function DraftPreviewLink(props: ComponentProps<typeof Link>) {
     const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
     return (
@@ -115,6 +116,7 @@ export function HomeView({
                         واكتشفوا القطع المتوفرة.
                     </p>
                 </div>
+                <CatalogSectionLinks sections={availableCatalogSections(categories)} newTab={preview} />
                 <nav aria-label="فئات المتجر" className="collection-grid">
                     {publishedCategories(categories).map((c) => {
                         const visual = categoryVisual(c, products);
