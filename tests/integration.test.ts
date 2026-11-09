@@ -404,6 +404,46 @@ test("An existing gallery can grow to 25 photos and a 26th cannot overwrite it",
         await prisma.product.update({ where: { id: product.id }, data: { images: product.images } });
     }
 });
+test("Catalogue sections scope products, categories and size suggestions", async () => {
+    const categoryIds: string[] = [];
+    try {
+        for (const [slug, name, size] of [
+            ["manteau-femme", "Manteaux femme", "M"],
+            ["mens-clogs", "Sabots homme", "42"],
+        ]) {
+            const group = await prisma.category.create({
+                data: { slug, nameFr: name, nameAr: name, nameEn: name },
+            });
+            categoryIds.push(group.id);
+            const { variants, ...fields } = payload();
+            await prisma.product.create({
+                data: {
+                    ...fields,
+                    categoryId: group.id,
+                    variants: { create: variants.map((variant) => ({ ...variant, size })) },
+                },
+            });
+        }
+        const women = await request(app).get("/api/products?section=women&includeFilters=1");
+        assert.equal(women.status, 200);
+        assert.equal(women.body.total, 1);
+        assert.equal(women.body.data[0].category.slug, "manteau-femme");
+        assert.deepEqual(women.body.filterOptions.sizes, ["M"]);
+        const men = await request(app).get("/api/products?section=men&includeFilters=1");
+        assert.equal(men.status, 200);
+        assert.equal(men.body.total, 1);
+        assert.equal(men.body.data[0].category.slug, "mens-clogs");
+        assert.deepEqual(men.body.filterOptions.sizes, ["42"]);
+        const conflicting = await request(app).get("/api/products?section=men&category=manteau-femme");
+        assert.equal(conflicting.status, 200);
+        assert.equal(conflicting.body.total, 0);
+        assert.equal((await request(app).get("/api/products?category=manteau-femme")).body.total, 1);
+        assert.equal((await request(app).get("/api/products?section=other")).status, 400);
+    } finally {
+        await prisma.product.deleteMany({ where: { categoryId: { in: categoryIds } } });
+        await prisma.category.deleteMany({ where: { id: { in: categoryIds } } });
+    }
+});
 test("Concurrent checkout creates one order and one CRM event; public tracking hides personal data", async () => {
     const idem = key(),
         body = checkout();

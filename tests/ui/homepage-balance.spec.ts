@@ -110,7 +110,7 @@ for (const width of [320, 390, 1440]) {
         if (width < 768) {
             await page.getByRole("button", { name: "فتح القائمة", exact: true }).click();
             const menu = page.locator("#store-menu");
-            const coat = menu.locator('a[href="/shop?category=fixture-coats"] img');
+            const coat = menu.locator('a[href="/shop?category=manteau-femme"] img');
             await expect(coat).toBeVisible();
             await expect(coat).toHaveAttribute("src", /abaya.webp/);
             await expect

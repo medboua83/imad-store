@@ -5,14 +5,16 @@ import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/serve
 import { storefrontShareMetadata } from "@/lib/share-metadata";
 import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
+import { CatalogSectionLinks } from "@/components/store/CatalogSectionLinks";
 import { categoryThumbnail } from "@/components/store/category-visuals";
-import { publishedCategories } from "@/lib/catalog-navigation";
+import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { orderedSizes } from "@/lib/product-presentation";
+import { catalogSectionKeys, catalogSections } from "@imad-store/shared";
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
     return storefrontShareMetadata("shop", await requestSiteOrigin());
 }
-const filterKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability", "size"] as const;
+const filterKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size"] as const;
 const sortLabels: Record<string, string> = {
     newest: "الأحدث",
     "price-asc": "السعر: من الأقل",
@@ -31,8 +33,13 @@ export default async function ShopPage({
     const page = Number(value("page") || 1);
     params.page = Number.isSafeInteger(page) && page > 0 && page <= 100000 ? page : 1;
     const categories = await publicCategories();
+    const sectionKey = catalogSectionKeys.find((key) => key === value("section"));
+    const section = sectionKey ? catalogSections[sectionKey] : undefined;
+    const sectionCategories = publishedCategories(categories).filter(
+        (category) => !section || section.categorySlugs.includes(category.slug),
+    );
     let result: Awaited<ReturnType<typeof publicProducts>> | null = null;
-    let invalid = Array.isArray(raw.size);
+    let invalid = Array.isArray(raw.size) || Array.isArray(raw.section);
     try {
         if (!invalid) result = await publicProducts(params);
     } catch (error) {
@@ -63,6 +70,7 @@ export default async function ShopPage({
         ({
             search: `بحث: ${value(key)}`,
             category: category?.nameAr || category?.nameFr || value(key),
+            section: section?.nameAr || value(key),
             minPrice: `من ${value(key)} MAD`,
             maxPrice: `حتى ${value(key)} MAD`,
             availability: "المتوفر فقط",
@@ -81,13 +89,19 @@ export default async function ShopPage({
             <div className="shop-intro">
                 <div>
                     <p className="eyebrow">THE IMAD EDIT</p>
-                    <h1>{category?.nameAr || "اكتشفوا ما يشبهكم."}</h1>
+                    <h1>{category?.nameAr || section?.nameAr || "اكتشفوا ما يشبهكم."}</h1>
                     <p>قطع تختارونها بطريقتكم. تصفحوا، قارنوا التفاصيل واختاروا ما يناسبكم.</p>
                 </div>
                 <span className="shop-intro-note">
                     <LayoutGrid size={19} aria-hidden="true" /> مجموعتكم، بتفاصيل أوضح
                 </span>
             </div>
+            <CatalogSectionLinks
+                sections={availableCatalogSections(categories)}
+                active={sectionKey}
+                allHref={queryLink({ section: null, category: null })}
+                hrefFor={(key) => queryLink({ section: key, category: null })}
+            />
             <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
                 <Link
                     href={queryLink({ category: null })}
@@ -96,7 +110,7 @@ export default async function ShopPage({
                     <LayoutGrid size={18} aria-hidden="true" />
                     كل القطع
                 </Link>
-                {publishedCategories(categories).map((c) => (
+                {sectionCategories.map((c) => (
                     <Link
                         key={c.id}
                         href={queryLink({ category: c.slug })}
@@ -136,6 +150,7 @@ export default async function ShopPage({
                     className="shop-filters catalog-filter-form"
                     aria-describedby={invalid ? "catalog-filter-error" : undefined}
                 >
+                    {sectionKey && <input type="hidden" name="section" value={sectionKey} />}
                     <div className="filter-form-heading">
                         <h2>اختاروا التفاصيل المناسبة</h2>
                         <p>يمكنكم الجمع بين أكثر من فلتر، ثم عرض النتائج.</p>
@@ -161,7 +176,7 @@ export default async function ShopPage({
                             defaultValue={value("category")}
                         >
                             <option value="">جميع الفئات</option>
-                            {publishedCategories(categories).map((c) => (
+                            {sectionCategories.map((c) => (
                                 <option key={c.id} value={c.slug}>
                                     {c.nameAr || c.nameFr}
                                 </option>
@@ -271,7 +286,7 @@ export default async function ShopPage({
                 <>
                     <div id="catalog-results" className="catalog-results-heading">
                         <div>
-                            <h2> {category?.nameAr || "كل القطع"}</h2>
+                            <h2> {category?.nameAr || section?.nameAr || "كل القطع"}</h2>
                             <p role="status">
                                 {result.total} {result.total === 1 ? "منتج" : "منتجات"}
                                 {!missingPage &&

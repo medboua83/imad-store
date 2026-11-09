@@ -1,5 +1,5 @@
 // Carry only public catalogue filters. Never use an arbitrary URL as a return destination.
-const catalogKeys = ["search", "category", "sort", "minPrice", "maxPrice", "availability", "size", "page"];
+const catalogKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "page"];
 
 export function catalogReturnPath(value: unknown): string | undefined {
     if (typeof value !== "string" || value.length > 2000 ||

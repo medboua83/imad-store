@@ -21,7 +21,8 @@ import { useCartStore } from "@/store/cart.store";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/lib/api";
-import { publishedCategories } from "@/lib/catalog-navigation";
+import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
+import { CatalogSectionLinks } from "../store/CatalogSectionLinks";
 const dockLinks = [
     ["/", "الرئيسية", House],
     ["/shop", "المتجر", LayoutGrid],
@@ -229,6 +230,7 @@ export function Navbar() {
                             </span>
                             <ArrowUpLeft size={20} aria-hidden="true" />
                         </Link>
+                        <CatalogSectionLinks sections={availableCatalogSections(data)} onClick={closeMenu} />
                         <nav className="menu-categories" aria-label="فئات المنتجات">
                             <h3>تسوقوا حسب الفئة</h3>
                             {categories.map((category) => (

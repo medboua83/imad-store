@@ -1,6 +1,6 @@
 // Read-only isolated store API for SSR and browser regression tests. No external services.
 const { createServer } = require("node:http");
-const { defaultSiteContent } = require("../../packages/shared/dist");
+const { defaultSiteContent, catalogSections } = require("../../packages/shared/dist");
 const category = {
   id: "111111111111111111111111",
   slug: "mens-clogs",
@@ -47,7 +47,7 @@ const recommended = (id, slug, nameAr, price) => ({ ...product, id, slug, nameAr
 const premium = recommended("444444444444444444444444", "fixture-premium", "موديل للمقارنة", 300);
 const accessory = recommended("555555555555555555555555", "fixture-accessory", "قطعة مكملة تجريبية", 50);
 const secondSource = recommended("666666666666666666666666", "fixture-second-source", "منتج ثان تجريبي", 80);
-const coatCategory = {...category, id:"111111111111111111111113", slug:"fixture-coats", nameAr:"معاطف", nameFr:"Coats", productImages:["/images/catalogue-test/abaya.webp"]};
+const coatCategory = {...category, id:"111111111111111111111113", slug:"manteau-femme", nameAr:"معاطف نسائية", nameFr:"Manteaux femme", productImages:["/images/catalogue-test/abaya.webp"]};
 const homeProducts = [product,
   {...premium, category:coatCategory, freeShipping:false, images:coatCategory.productImages},
   {...accessory, quantityDiscounts:[{minQuantity:2,totalPrice:90,unitPrice:45}]}];
@@ -69,6 +69,17 @@ createServer((req, res) => {
     if (url.searchParams.get("limit") === "8" && url.searchParams.get("availability") === "in-stock")
       return res.end(JSON.stringify({success:true,data:homeProducts,total:3,totalPages:1,page:1}));
     const search = url.searchParams.get("search");
+    const section = url.searchParams.get("section");
+    if (section) {
+      if (!Object.hasOwn(catalogSections,section)) {
+        res.writeHead(400);
+        return res.end(JSON.stringify({success:false}));
+      }
+      const categorySlug=url.searchParams.get("category");
+      const items=homeProducts.filter(p => catalogSections[section].categorySlugs.includes(p.category.slug)
+        && (!categorySlug || p.category.slug===categorySlug));
+      return res.end(JSON.stringify({success:true,data:items,total:items.length,totalPages:items.length?1:0,page:1,filterOptions:{sizes:[]}}));
+    }
     if (search === "preview-fixture") {
       const previewProduct = { ...product, images: [`/uploads/${"a".repeat(64)}.webp`, ...product.images] };
       return res.end(JSON.stringify({success:true,data:[previewProduct],total:1,totalPages:1,page:1}));
