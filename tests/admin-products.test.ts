@@ -49,7 +49,7 @@ test("Photo validation enforces format, nonempty files, 5 MiB and remaining capa
     assert.match(validatePhoto({type:"image/svg+xml",size:20},1)!,/Format/);
     assert.match(validatePhoto({type:"image/jpeg",size:0},1)!,/vide/);
     assert.match(validatePhoto({type:"image/jpeg",size:5*1024*1024+1},1)!,/5 Mo/);
-    assert.match(validatePhoto({type:"image/png",size:20},0)!,/12 photos/);
+    assert.match(validatePhoto({type:"image/png",size:20},0)!,/25 photos/);
 });
 test("Stock indicators count active products only and distinguish missing variants from complete stockouts",()=>{
     const product=(status:string,stocks:number[])=>({status,variants:stocks.map(stock=>({stock}))}) as Product;

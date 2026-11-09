@@ -310,8 +310,10 @@ export const adminArabic: Record<string, string> = {
     "La corbeille est vide.": "سلة المحذوفات فارغة.",
     "La date de fin doit être égale ou postérieure à la date de début.":
         "يجب أن يكون تاريخ النهاية مساوياً لتاريخ البداية أو لاحقاً له.",
-    "La première photo est la couverture. Jusqu’à 12 photos · PNG, JPEG ou WebP · 5 Mo par fichier.":
-        "الصورة الأولى هي الرئيسية. حتى 12 صورة · PNG أو JPEG أو WebP · 5 ميغابايت لكل ملف.",
+    "La première photo est la couverture. Jusqu’à {limit} photos · PNG, JPEG ou WebP · 5 Mo par fichier.":
+        "الصورة الأولى هي الرئيسية. حتى {limit} صورة · PNG أو JPEG أو WebP · 5 ميغابايت لكل ملف.",
+    "{file} : Maximum {limit} photos. Retirez une photo avant d’en ajouter.":
+        "{file}: الحد الأقصى {limit} صورة. احذفوا صورة قبل إضافة أخرى.",
     "Laissez un délai vide pour ne pas annoncer d’engagement. Ces informations apparaissent sur les pages pratiques et les fiches produits. Vérifiez leur cohérence avec vos conditions détaillées ; aucun remboursement ni colis n’est déclenché.":
         "اتركوا المدة فارغة إذا لم ترغبوا في الإعلان عن التزام. تظهر هذه المعلومات في صفحات المعلومات والمنتجات. تحققوا من توافقها مع شروطكم التفصيلية؛ ولا يؤدي حفظها إلى استرداد مبالغ أو إنشاء طرود.",
     "Le client": "العميل",

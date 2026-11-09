@@ -376,6 +376,29 @@ test("Catalogue photo previews are smaller, cacheable and leave the original int
     );
     assert.equal((await request(app).get("/api/uploads/preview-v1/other.webp")).status, 404);
 });
+test("An existing gallery can grow to 25 photos and a 26th cannot overwrite it", async () => {
+    const images = Array.from(
+        { length: 26 },
+        (_, i) => `/uploads/${i.toString(16).padStart(64, "0")}.webp`,
+    );
+    const initial = { ...payload(), images: images.slice(0, 12) };
+    const created = await request(app).post("/api/products").set(admin()).send(initial);
+    assert.equal(created.status, 201);
+    const route = `/api/products/${created.body.data.id}`;
+    const expanded = images.slice(0, 25);
+    const update = await request(app).put(route).set(admin()).send({ images: expanded });
+    assert.equal(update.status, 200);
+    assert.deepEqual(update.body.data.images, expanded);
+
+    const rejected = await request(app).put(route).set(admin()).send({ images });
+    assert.equal(rejected.status, 400);
+    assert.ok(rejected.body.details.some((detail: { path: string[]; message: string }) =>
+        detail.path[0] === "images" && detail.message.includes("25 photos"),
+    ));
+    const detail = await request(app).get(`/api/products/${initial.slug}`);
+    assert.equal(detail.status, 200);
+    assert.deepEqual(detail.body.data.images, expanded);
+});
 test("Concurrent checkout creates one order and one CRM event; public tracking hides personal data", async () => {
     const idem = key(),
         body = checkout();

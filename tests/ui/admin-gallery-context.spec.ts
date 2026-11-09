@@ -138,7 +138,7 @@ test("A new admin session clears the previous order search and analytics period"
 });
 
 for (const width of [320, 390, 1280]) {
-    test(`Long gallery keeps the selected thumbnail visible without moving the page at ${width}px`, async ({
+    test(`Gallery of 25 photos keeps the selected thumbnail visible without moving the page at ${width}px`, async ({
         page,
     }, info) => {
         await page.setViewportSize({ width, height: 900 });
@@ -157,7 +157,7 @@ for (const width of [320, 390, 1280]) {
         const initialY = await page.evaluate(() => scrollY);
         await next.press("End");
         await expect(
-            page.getByRole("button", { name: "عرض الصورة 12", exact: true }),
+            page.getByRole("button", { name: "عرض الصورة 25", exact: true }),
         ).toHaveAttribute("aria-pressed", "true");
         await expect.poll(visible).toBe(true);
         await expect(next).toBeFocused();
@@ -167,7 +167,7 @@ for (const width of [320, 390, 1280]) {
         await expect.poll(visible).toBe(true);
         await first.focus();
         await first.press("End");
-        const last = page.getByRole("button", { name: "عرض الصورة 12", exact: true });
+        const last = page.getByRole("button", { name: "عرض الصورة 25", exact: true });
         await expect(last).toBeFocused();
         await expect.poll(visible).toBe(true);
         if (width === 1280) {

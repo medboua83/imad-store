@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, MAX_PRODUCT_PHOTOS } from "@imad-store/shared";
 export type DraftVariant = {
     key: string;
     id?: string;
@@ -124,7 +124,8 @@ export function stockSummary(products: Product[]) {
     };
 }
 export function validatePhoto(file: { type: string; size: number }, remaining: number) {
-    if (remaining <= 0) return "Maximum 12 photos. Retirez une photo avant d’en ajouter.";
+    if (remaining <= 0)
+        return `Maximum ${MAX_PRODUCT_PHOTOS} photos. Retirez une photo avant d’en ajouter.`;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type))
         return "Format non pris en charge : choisissez PNG, JPEG ou WebP.";
     if (file.size === 0) return "Le fichier est vide.";

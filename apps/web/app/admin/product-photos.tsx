@@ -3,6 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { useRef, useState } from "react";
 import { ImagePlus, ArrowLeft, ArrowRight, Star, X } from "lucide-react";
+import { MAX_PRODUCT_PHOTOS } from "@imad-store/shared";
 import { uploadProductImage } from "@/lib/api";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { validatePhoto } from "./product-utils";
@@ -33,7 +34,7 @@ export function ProductPhotos({
         try {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i],
-                    invalid = validatePhoto(file, 12 - result.length);
+                    invalid = validatePhoto(file, MAX_PRODUCT_PHOTOS - result.length);
                 if (invalid) {
                     errors.push(`${file.name} : ${invalid}`);
                     continue;
@@ -73,7 +74,8 @@ export function ProductPhotos({
             <legend>{t("2. Photos du produit")}</legend>
             <p className="admin-muted">
                 {t(
-                    "La première photo est la couverture. Jusqu’à 12 photos · PNG, JPEG ou WebP · 5 Mo par fichier.",
+                    "La première photo est la couverture. Jusqu’à {limit} photos · PNG, JPEG ou WebP · 5 Mo par fichier.",
+                    { limit: MAX_PRODUCT_PHOTOS },
                 )}
             </p>
             <div
@@ -101,7 +103,7 @@ export function ProductPhotos({
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         multiple
-                        disabled={busy || images.length >= 12}
+                        disabled={busy || images.length >= MAX_PRODUCT_PHOTOS}
                         onChange={(e) => {
                             const input = e.currentTarget;
                             void upload(Array.from(input.files || []));
