@@ -9,6 +9,7 @@ export function ProductCard({
     product: p,
     headingLevel = 2,
     eagerImage = false,
+    thumbnail = true,
     preferredSize,
     returnTo,
     openInNewTab = false,
@@ -16,6 +17,7 @@ export function ProductCard({
     product: Product;
     headingLevel?: 2 | 3;
     eagerImage?: boolean;
+    thumbnail?: boolean;
     preferredSize?: string;
     returnTo?: string;
     openInNewTab?: boolean;
@@ -40,7 +42,7 @@ export function ProductCard({
                 className="catalog-card-image"
                 aria-label={`عرض تفاصيل ${name}`}
             >
-                <ProductPhoto images={p.images} name={name} eager={eagerImage} />
+                <ProductPhoto images={p.images} name={name} eager={eagerImage} thumbnail={thumbnail} />
                 <span className={`stock-pill ${available ? "" : "stock-pill-empty"}`}>
                     {available
                         ? "متوفر الآن"

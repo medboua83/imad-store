@@ -69,6 +69,10 @@ createServer((req, res) => {
     if (url.searchParams.get("limit") === "8" && url.searchParams.get("availability") === "in-stock")
       return res.end(JSON.stringify({success:true,data:homeProducts,total:3,totalPages:1,page:1}));
     const search = url.searchParams.get("search");
+    if (search === "preview-fixture") {
+      const previewProduct = { ...product, images: [`/uploads/${"a".repeat(64)}.webp`, ...product.images] };
+      return res.end(JSON.stringify({success:true,data:[previewProduct],total:1,totalPages:1,page:1}));
+    }
     if (/^retry-fixture-(390|1440)$/.test(search || "")) {
       const attempts = catalogueAttempts.get(search) || 0;
       catalogueAttempts.set(search, attempts + 1);

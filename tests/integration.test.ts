@@ -342,6 +342,40 @@ test("Image uploads are authenticated, validated, transformed and served", async
     assert.equal(image.status, 200);
     assert.match(image.headers["content-type"], /image\/webp/);
 });
+test("Catalogue photo previews are smaller, cacheable and leave the original intact", async () => {
+    const png = await sharp(randomBytes(800 * 800 * 3), {
+        raw: { width: 800, height: 800, channels: 3 },
+    }).png().toBuffer();
+    const upload = await request(app)
+        .post("/api/uploads")
+        .set(admin())
+        .set("Content-Type", "image/png")
+        .send(png);
+    assert.equal(upload.status, 201);
+    const originalUrl: string = upload.body.data.url;
+    const previewUrl = originalUrl.replace("/uploads/", "/api/uploads/preview-v1/");
+    const original = await request(app).get(originalUrl);
+    const previews = await Promise.all([
+        request(app).get(previewUrl),
+        request(app).get(previewUrl),
+    ]);
+    for (const preview of previews) {
+        assert.equal(preview.status, 200);
+        assert.match(preview.headers["content-type"], /^image\/webp/);
+        assert.match(preview.headers["cache-control"], /immutable/);
+        assert.ok(preview.body.length < original.body.length);
+        const dimensions = await sharp(preview.body).metadata();
+        assert.equal(dimensions.width, 480);
+        assert.equal(dimensions.height, 480);
+    }
+    assert.deepEqual(previews[0].body, previews[1].body);
+    assert.deepEqual((await request(app).get(originalUrl)).body, original.body);
+    assert.equal(
+        (await request(app).get(previewUrl).set("If-None-Match", previews[0].headers.etag)).status,
+        304,
+    );
+    assert.equal((await request(app).get("/api/uploads/preview-v1/other.webp")).status, 404);
+});
 test("Concurrent checkout creates one order and one CRM event; public tracking hides personal data", async () => {
     const idem = key(),
         body = checkout();

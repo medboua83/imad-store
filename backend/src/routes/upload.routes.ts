@@ -1,6 +1,6 @@
 import express, { Router, IRouter } from "express";
 import path from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
@@ -13,6 +13,60 @@ const { resolveUploadDirectory, seedPublishedUploads } =
 export const uploadDirectory = resolveUploadDirectory(path.resolve(__dirname, "../../.."));
 seedPublishedUploads(path.resolve(__dirname, "../../.."), uploadDirectory);
 export const uploadRoutes: IRouter = Router();
+
+const previews = new Map<string, Buffer>();
+const pendingPreviews = new Map<string, Promise<Buffer | null>>();
+
+async function createPreview(name: string): Promise<Buffer | null> {
+    try {
+        const file = path.join(uploadDirectory, name);
+        const info = await lstat(file);
+        if (!info.isFile() || info.size > 6 * 1024 * 1024) return null;
+        const original = await readFile(file);
+        if (original.length <= 32 * 1024) return original;
+
+        const preview = await sharp(original, { limitInputPixels: 20_000_000 })
+            .rotate()
+            .resize({ width: 480, height: 640, fit: "inside", withoutEnlargement: true })
+            .webp({ quality: 76 })
+            .toBuffer();
+        return preview.length < original.length ? preview : original;
+    } catch {
+        return null;
+    }
+}
+
+uploadRoutes.get(/^\/preview-v1\/([a-f0-9]{64}\.webp)$/, async (req, res) => {
+    const name = req.params[0];
+    let image = previews.get(name);
+    if (!image) {
+        let pending = pendingPreviews.get(name);
+        if (!pending) {
+            // Bound the work for uncached images and share concurrent requests for a photo.
+            if (pendingPreviews.size >= 2) {
+                return res.set("Cache-Control", "no-store").sendStatus(503);
+            }
+            pending = createPreview(name).then((result) => {
+                pendingPreviews.delete(name);
+                if (result && result.length <= 256 * 1024) {
+                    if (previews.size >= 48) {
+                        const oldest = previews.keys().next().value;
+                        if (oldest) previews.delete(oldest);
+                    }
+                    previews.set(name, result);
+                }
+                return result;
+            });
+            pendingPreviews.set(name, pending);
+        }
+        image = (await pending) ?? undefined;
+    }
+    if (!image) return res.set("Cache-Control", "no-store").sendStatus(404);
+    if (!req.headers.authorization)
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    return res.type("webp").send(image);
+});
+
 uploadRoutes.post(
     "/",
     authenticate,

@@ -38,6 +38,7 @@ export function HomeView({
     const heroImage = useCatalogue
         ? featured?.images[0] || "/images/catalogue-test/abaya.webp"
         : content.heroImage;
+    const heroImages = [heroImage, useCatalogue ? detail?.images[0] : undefined];
     return (
         <div className="storefront-home">
             <section className="editorial-hero">
@@ -190,6 +191,7 @@ export function HomeView({
                                 product={p}
                                 key={p.id}
                                 headingLevel={3}
+                                thumbnail={!heroImages.includes(p.images[0])}
                                 openInNewTab={preview}
                             />
                         ))}
