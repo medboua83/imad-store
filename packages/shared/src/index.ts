@@ -51,6 +51,7 @@ export interface Category {
 
 // ─── Product ────────────────────────────────────────────────────────────────
 export type ProductStatus = "ACTIVE" | "DRAFT" | "ARCHIVED";
+export const MAX_PRODUCT_PHOTOS = 25;
 
 export interface ProductVariant {
     id: string;

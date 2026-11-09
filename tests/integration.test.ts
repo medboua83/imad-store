@@ -110,7 +110,7 @@ test("Invalid public queries return 400 without database diagnostics", async () 
 test("Oversized product collections stop at their bounds before validating each element", async () => {
     const response = await request(app).post("/api/products").set(admin()).send({
         ...payload(),
-        images: Array(13).fill("invalid-image"),
+        images: Array(26).fill("invalid-image"),
         variants: Array(101).fill({}),
     });
     assert.equal(response.status, 400);
@@ -375,6 +375,34 @@ test("Catalogue photo previews are smaller, cacheable and leave the original int
         304,
     );
     assert.equal((await request(app).get("/api/uploads/preview-v1/other.webp")).status, 404);
+});
+test("An existing gallery can grow to 25 photos and a 26th cannot overwrite it", async () => {
+    const images = Array.from(
+        { length: 26 },
+        (_, i) => `/uploads/${i.toString(16).padStart(64, "0")}.webp`,
+    );
+    const route = `/api/products/${product.id}`;
+    const expanded = images.slice(0, 25);
+    try {
+        const initial = await request(app).put(route).set(admin()).send({ images: images.slice(0, 12) });
+        assert.equal(initial.status, 200);
+        const update = await request(app).put(route).set(admin()).send({ images: expanded });
+        assert.equal(update.status, 200);
+        assert.deepEqual(update.body.data.images, expanded);
+
+        const rejected = await request(app).put(route).set(admin()).send({ images });
+        assert.equal(rejected.status, 400);
+        assert.ok(
+            rejected.body.details.some((detail: { path: string[]; message: string }) =>
+                detail.path[0] === "images" && detail.message.includes("25 photos"),
+            ),
+        );
+        const detail = await request(app).get(`/api/products/${product.slug}`);
+        assert.equal(detail.status, 200);
+        assert.deepEqual(detail.body.data.images, expanded);
+    } finally {
+        await prisma.product.update({ where: { id: product.id }, data: { images: product.images } });
+    }
 });
 test("Concurrent checkout creates one order and one CRM event; public tracking hides personal data", async () => {
     const idem = key(),

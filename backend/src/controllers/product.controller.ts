@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { isAmbiguousSize, quantityDiscountError } from "@imad-store/shared";
+import { isAmbiguousSize, MAX_PRODUCT_PHOTOS, quantityDiscountError } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
 import { objectIdSchema, paginationSchema, isPublishableImage } from "../lib/validation";
@@ -41,7 +41,7 @@ const productSchema = z.object({
     recommendationSettings: recommendationSettingsSchema.optional(),
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
-        .max(12),
+        .max(MAX_PRODUCT_PHOTOS, `Maximum ${MAX_PRODUCT_PHOTOS} photos par produit.`),
     status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]),
     categoryId: objectIdSchema,
     variants: z.array(variantSchema).max(100),
