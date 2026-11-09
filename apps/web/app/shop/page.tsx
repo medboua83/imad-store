@@ -96,34 +96,36 @@ export default async function ShopPage({
                     <LayoutGrid size={19} aria-hidden="true" /> مجموعتكم، بتفاصيل أوضح
                 </span>
             </div>
-            <CatalogSectionLinks
-                sections={availableCatalogSections(categories)}
-                active={sectionKey}
-                allHref={queryLink({ section: null, category: null })}
-                hrefFor={(key) => queryLink({ section: key, category: null })}
-            />
-            <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
-                <Link
-                    href={queryLink({ category: null })}
-                    aria-current={!value("category") ? "page" : undefined}
-                >
-                    <LayoutGrid size={18} aria-hidden="true" />
-                    كل القطع
-                </Link>
-                {sectionCategories.map((c) => (
+            <div className="shop-navigation-rails">
+                <CatalogSectionLinks
+                    sections={availableCatalogSections(categories)}
+                    active={sectionKey}
+                    allHref={queryLink({ section: null, category: null })}
+                    hrefFor={(key) => queryLink({ section: key, category: null })}
+                />
+                <nav className="shop-category-rail" aria-label="تصفح حسب الفئة">
                     <Link
-                        key={c.id}
-                        href={queryLink({ category: c.slug })}
-                        aria-current={value("category") === c.slug ? "page" : undefined}
+                        href={queryLink({ category: null })}
+                        aria-current={!value("category") ? "page" : undefined}
                     >
-                        {categoryThumbnail(c.slug) && (
-                            <Image src={categoryThumbnail(c.slug)} width={30} height={30} alt="" />
-                        )}
-                        {c.nameAr || c.nameFr}
-                        <small>({c.publishedCount})</small>
+                        <LayoutGrid size={18} aria-hidden="true" />
+                        كل القطع
                     </Link>
-                ))}
-            </nav>
+                    {sectionCategories.map((c) => (
+                        <Link
+                            key={c.id}
+                            href={queryLink({ category: c.slug })}
+                            aria-current={value("category") === c.slug ? "page" : undefined}
+                        >
+                            {categoryThumbnail(c.slug) && (
+                                <Image src={categoryThumbnail(c.slug)} width={30} height={30} alt="" />
+                            )}
+                            {c.nameAr || c.nameFr}
+                            <small>({c.publishedCount})</small>
+                        </Link>
+                    ))}
+                </nav>
+            </div>
             {invalid && (
                 <p id="catalog-filter-error" role="alert" className="shop-filter-error">
                     تعذر تطبيق هذه الفلاتر. صححوا الفلاتر، بما فيها نطاق السعر، ثم اعرضوا النتائج
