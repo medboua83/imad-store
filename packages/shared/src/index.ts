@@ -141,7 +141,8 @@ export interface PaginatedResponse<T> {
     totalPages: number;
 }
 
-export { defaultSiteContent } from "./site-content";
+export { defaultSiteContent, homeSectionKeys } from "./site-content";
+export type { HomeSection } from "./site-content";
 export type { SiteContent } from "./site-content";
 
 // Version of the explicit checkout request for automated WhatsApp order assistance.

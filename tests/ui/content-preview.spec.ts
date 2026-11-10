@@ -226,3 +226,19 @@ test("Public home and product cards retain ordinary same-tab navigation", async 
         await expect(link).not.toHaveAttribute("target", "_blank");
     await expect(page.locator(".draft-preview-notice")).toHaveCount(0);
 });
+
+test("Home section order and visibility persist in the private draft", async ({ page }) => {
+    const writes = await editor(page);
+    await page.getByRole("button", { name: "Monter · Produits mis en avant", exact: true }).click();
+    await page.getByRole("checkbox", { name: "Guide de commande", exact: true }).uncheck();
+    await page.getByRole("button", { name: "Aperçu du brouillon", exact: true }).click();
+    const preview = page.getByRole("region", { name: "Aperçu privé du brouillon", exact: true });
+    await expect(preview.locator(".featured-section + #collections")).toHaveCount(1);
+    await expect(preview.locator(".home-shopping-guide")).toHaveCount(0);
+    await page.getByRole("checkbox", { name: "Catégories de l’accueil", exact: true }).uncheck();
+    await expect(preview.locator(".hero-actions a")).toHaveAttribute("href", "/shop");
+    await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Publier", exact: true })).toBeEnabled();
+    await expect(page.getByRole("checkbox", { name: "Catégories de l’accueil", exact: true })).not.toBeChecked();
+    expect(writes).toEqual(["/api/content/draft"]);
+});

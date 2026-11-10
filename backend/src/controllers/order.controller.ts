@@ -432,6 +432,32 @@ export async function getOrder(req: Request, res: Response) {
     res.json({ success: true, data: order });
 }
 
+export async function getOrderHistory(req: Request, res: Response) {
+    const order = await prisma.order.findUnique({
+        where: { id: req.params.id },
+        select: {
+            confirmationMethod: true,
+            events: {
+                orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+                take: 50,
+                select: { id: true, type: true, message: true, createdAt: true },
+            },
+        },
+    });
+    if (!order) throw new AppError("Commande introuvable", 404);
+    res.setHeader("Cache-Control", "no-store");
+    const events = order.events.map(({ id, type, message, createdAt }) => {
+        const transition = /^Order marked as ([A-Z]+) \((admin|sheets|crm|olivraison)\)$/.exec(message);
+        const status = type === "status_changed" ? statusSchema.safeParse(transition?.[1]) : null;
+        return {
+            id, type, createdAt,
+            ...(type === "created" ? { source: "site", status: order.confirmationMethod === "SITE" ? "CONFIRMED" : "PENDING" } : {}),
+            ...(status?.success ? { source: transition?.[2], status: status.data } : {}),
+        };
+    });
+    res.json({ success: true, data: events });
+}
+
 export async function listOrders(req: Request, res: Response) {
     const { page, limit } = paginationSchema.parse(req.query);
     const status =

@@ -219,8 +219,8 @@ export const getProducts = async (params?: {
     minPrice?: number;
     maxPrice?: number;
     availability?: string;
-}): Promise<ProductsResponse> => {
-    const { data } = await api.get("/products", { params });
+}, signal?: AbortSignal): Promise<ProductsResponse> => {
+    const { data } = await api.get("/products", { params, signal });
     return data;
 };
 
@@ -364,6 +364,19 @@ export const getAllOrders = async (params?: {
         page: number;
         totalPages: number;
     };
+};
+
+export interface OrderHistoryEvent {
+    id: string;
+    type: string;
+    createdAt: string;
+    source?: string;
+    status?: string;
+}
+
+export const getOrderHistory = async (id: string, signal?: AbortSignal) => {
+    const { data } = await api.get<{ data: OrderHistoryEvent[] }>(`/orders/${id}/history`, { signal });
+    return data.data;
 };
 
 export const updateOrderStatus = async (id: string, status: string) => {

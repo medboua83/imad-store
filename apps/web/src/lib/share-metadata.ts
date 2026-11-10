@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import type { Category } from "./api";
+import { categoryImageSources } from "../components/store/category-visuals";
 import { productDescription } from "./product-presentation";
 
 /** Use the installation URL, or the public request host when hosting omits SITE_URL. */
@@ -36,6 +38,20 @@ export function storefrontShareMetadata(page: "home" | "shop", origin: URL): Met
     twitter: { card: "summary_large_image", title, description, images },
   };
 }
+export function collectionShareMetadata(category: Category, origin: URL): Metadata {
+  const name = text(category.nameAr, category.nameFr, category.nameEn);
+  const title = `${name} | IMAD Mode`;
+  const description = `تصفحوا مجموعة ${name} لدى IMAD Mode واختاروا من الألوان والمقاسات المتوفرة.`;
+  const url = new URL(`/collections/${encodeURIComponent(category.slug)}`, origin).href;
+  const image = categoryImageSources(category, [])[0] || "/images/brand/imad-share-gold-v1.png";
+  const images = [{ url: new URL(image, origin).href, alt: name }];
+  return {
+    title: { absolute: title }, description, alternates: { canonical: url },
+    openGraph: { type: "website", siteName: "IMAD Mode", locale: "ar_MA", title, description, url, images },
+    twitter: { card: "summary_large_image", title, description, images },
+  };
+}
+
 export function productShareMetadata(
   product: {
     slug: string;

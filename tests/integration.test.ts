@@ -2246,3 +2246,31 @@ test("PostgreSQL analytics retention removes expired events without touching oth
     assert.equal(await prisma.storeAnalytics.findUnique({where:{id:expired}}),null);
     assert.ok(await prisma.storeAnalytics.findUnique({where:{id:retained}}));
 });
+
+test("Order history is admin-only and returns dates and sources without raw messages", async () => {
+    const createdAt = new Date("2026-11-06T10:00:00Z");
+    const confirmedAt = new Date("2026-11-06T11:00:00Z");
+    const order = await prisma.order.create({data:{
+        status:"CONFIRMED", paymentMethod:"COD", totalAmount:230,
+        events:{create:[
+            {type:"created", message:"New COD order from Private fixture", createdAt},
+            {type:"status_changed", message:"Order marked as CONFIRMED (crm)", createdAt:confirmedAt},
+        ]},
+    }});
+    try {
+        const endpoint = `/api/orders/${order.id}/history`;
+        await request(app).get(endpoint).expect(401);
+        const customer = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+        await request(app).get(endpoint).set("Authorization", `Bearer ${customer}`).expect(403);
+        const result = await request(app).get(endpoint).set(admin()).expect(200);
+        assert.equal(result.headers["cache-control"],"no-store");
+        assert.equal(result.body.data.length,2);
+        assert.deepEqual(result.body.data.map(({type,status,source,createdAt})=>({type,status,source,createdAt})), [
+            {type:"status_changed",status:"CONFIRMED",source:"crm",createdAt:confirmedAt.toISOString()},
+            {type:"created",status:"PENDING",source:"site",createdAt:createdAt.toISOString()},
+        ]);
+        assert.ok(result.body.data.every(event => !("message" in event)));
+    } finally {
+        await prisma.order.delete({where:{id:order.id}});
+    }
+});

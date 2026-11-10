@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/server-api";
-import { storefrontShareMetadata } from "@/lib/share-metadata";
+import { collectionShareMetadata, storefrontShareMetadata } from "@/lib/share-metadata";
 import { ArrowUpLeft, Check, ChevronDown, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
 import { CatalogSectionLinks } from "@/components/store/CatalogSectionLinks";
@@ -11,8 +11,16 @@ import { availableCatalogSections, publishedCategories } from "@/lib/catalog-nav
 import { orderedSizes } from "@/lib/product-presentation";
 import { catalogSectionKeys, catalogSections } from "@imad-store/shared";
 export const dynamic = "force-dynamic";
-export async function generateMetadata(): Promise<Metadata> {
-    return storefrontShareMetadata("shop", await requestSiteOrigin());
+export async function generateMetadata({ searchParams }: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+    const raw = await searchParams;
+    const origin = await requestSiteOrigin();
+    if (typeof raw.category === "string") {
+        const category = publishedCategories(await publicCategories()).find((entry) => entry.slug === raw.category);
+        if (category) return collectionShareMetadata(category, origin);
+    }
+    return storefrontShareMetadata("shop", origin);
 }
 const filterKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "color"] as const;
 const sortLabels: Record<string, string> = {
