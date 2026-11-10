@@ -132,8 +132,7 @@ export function HomeView({
                                         <ProductPhoto
                                             images={visual.sources}
                                             name=""
-                                            sizes="96px"
-                                            className="object-cover"
+                                            sizes="(max-width: 767px) 50vw, (max-width: 1240px) 25vw, 300px"
                                         />
                                     ) : (
                                         <span className="category-photo-empty" aria-hidden="true">
@@ -142,10 +141,9 @@ export function HomeView({
                                     )}
                                 </span>
                                 <span className="collection-name">
-                                    {c.nameAr || c.nameFr}
-                                    <small>{c.publishedCount} منتج</small>
+                                    <span>{c.nameAr || c.nameFr}</span>
+                                    <ArrowUpLeft size={16} aria-hidden="true" />
                                 </span>
-                                <ArrowUpLeft size={22} aria-hidden="true" />
                             </ViewLink>
                         );
                     })}

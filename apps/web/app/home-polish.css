@@ -19,18 +19,6 @@
 .store-shell .storefront-home .section-heading {
     margin-bottom: 20px;
 }
-.store-shell .storefront-home .collection-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 240px));
-    justify-content: center;
-}
-.store-shell .storefront-home .collection-tile {
-    min-height: 180px;
-    padding: 20px 16px 26px;
-}
-.store-shell .storefront-home .collection-name small {
-    font-family: "Tajawal", sans-serif;
-    font-size: 13px;
-}
 .store-shell .storefront-home .featured-section {
     padding-block: 24px 36px;
 }
@@ -200,33 +188,6 @@
     }
     .store-shell .storefront-home .section-heading {
         margin-bottom: 12px;
-    }
-    .store-shell .storefront-home .collection-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-    }
-    .store-shell .storefront-home .collection-tile {
-        min-height: 125px;
-        padding: 12px 6px 20px;
-        gap: 8px;
-    }
-    .store-shell .storefront-home .collection-photo {
-        width: 54px;
-        height: 54px;
-    }
-    .store-shell .storefront-home .collection-tile > span.collection-name {
-        font-family: "Tajawal", sans-serif;
-        font-size: 16px;
-        line-height: 1.5;
-    }
-    .store-shell .storefront-home .collection-name small {
-        margin-top: 2px;
-        font-size: 12px;
-    }
-    .store-shell .storefront-home .collection-tile > svg {
-        bottom: 6px;
-        width: 14px;
-        height: 14px;
     }
     .store-shell .storefront-home .featured-section {
         padding-block: 14px 28px;

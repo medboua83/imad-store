@@ -137,26 +137,6 @@
 .store-shell .collection-section {
     padding-top: 64px;
 }
-.store-shell .collection-grid {
-    border: 0;
-    gap: 12px;
-}
-.store-shell .collection-tile {
-    min-height: 130px;
-    background: #f1f0e9;
-    border: 1px solid #e4e0d9 !important;
-    border-radius: 14px;
-    padding: 19px;
-    gap: 8px;
-}
-.store-shell .collection-tile:hover {
-    background: #eae5dc;
-}
-.store-shell .collection-tile > span:nth-child(2) {
-    font-family: "Tajawal", sans-serif;
-    font-size: 19px;
-    font-weight: 500;
-}
 .store-shell .catalog-card {
     border: 1px solid #e5e1da;
     border-radius: 15px;
@@ -591,23 +571,6 @@
     .store-shell .section-container,
     .store-shell .page-shell {
         padding-inline: 16px;
-    }
-    .store-shell .collection-grid {
-        display: flex;
-        overflow-x: auto;
-        padding-bottom: 8px;
-        gap: 10px;
-    }
-    .store-shell .collection-tile {
-        flex: 0 0 145px;
-        min-height: 112px;
-        padding: 16px;
-    }
-    .store-shell .collection-tile > span:nth-child(2) {
-        font-size: 17px;
-    }
-    .store-shell .collection-tile:last-child:nth-child(odd) {
-        min-height: 112px;
     }
     .store-shell .catalog-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -51,8 +51,19 @@ for (const width of [320, 390, 1440]) {
                 await collections.evaluate((el) => el.getBoundingClientRect().top),
             ).toBeGreaterThan(70);
         }
-        expect(await page.locator(".collection-name small[dir=ltr]").count()).toBe(0);
-        await expect(page.locator(".collection-grid .collection-tile")).toHaveCount(2);
+        const categoryGrid = page.getByRole("navigation", { name: "فئات المتجر" });
+        const categoryLinks = categoryGrid.getByRole("link");
+        await expect(categoryLinks).toHaveCount(2);
+        await expect(categoryLinks.last()).toHaveAttribute("href", "/shop?category=manteau-femme");
+        for (const link of await categoryLinks.all()) {
+            const photo = link.locator(".collection-photo");
+            await expect(photo).toHaveCSS("aspect-ratio", "1 / 1");
+            await expect(photo.locator("img")).toHaveCSS("object-fit", "cover");
+            const bounds = await link.boundingBox();
+            const image = await photo.boundingBox();
+            expect(Math.abs(image!.width - image!.height)).toBeLessThan(1);
+            expect(bounds!.width - image!.width).toBeLessThanOrEqual(2);
+        }
         if (width > 767) {
             for (const selector of [".collection-grid", ".featured-section .catalog-grid"]) {
                 const centered = await page.locator(selector).evaluate((el) => {
