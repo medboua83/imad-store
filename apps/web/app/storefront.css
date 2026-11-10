@@ -11,6 +11,38 @@
     outline: 2px solid #94723c;
     outline-offset: 4px;
 }
+.store-shell .store-whatsapp-float {
+    position: fixed;
+    z-index: 30;
+    inset-inline-start: max(24px, env(safe-area-inset-right));
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ffffff55;
+    border-radius: 50%;
+    background: #147447;
+    color: #fff;
+    box-shadow: 0 4px 14px #201b182b;
+}
+.store-shell .store-whatsapp-float:hover {
+    background: #105b38;
+}
+.store-shell:has(dialog[open]) .store-whatsapp-float {
+    display: none;
+}
+@media (max-width: 767px) {
+    .store-shell .store-whatsapp-float {
+        inset-inline-start: max(12px, env(safe-area-inset-right));
+        bottom: calc(74px + env(safe-area-inset-bottom));
+        width: 46px;
+        height: 46px;
+    }
+    .compact-product-shell .store-whatsapp-float {
+        display: none;
+    }
+}
 .store-shell .site-header {
     background: #fcfaf6f5;
     backdrop-filter: blur(16px);

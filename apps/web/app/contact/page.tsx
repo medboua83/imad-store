@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShoppingQuestions } from "@/components/store/ShoppingQuestions";
+import { storeWhatsAppUrl } from "@/lib/store-contact";
 import { ArrowUpLeft, MessageCircle, PackageCheck, RotateCcw, CircleHelp } from "lucide-react";
 
 export const metadata = { title: "تواصلوا معنا", alternates: { canonical: "/contact" } };
@@ -12,7 +13,7 @@ export default function ContactPage() {
         <h1>تواصلوا معنا</h1>
         <p>للاستفسار عن المنتجات أو متابعة طلبكم، تواصلوا مع فريق IMAD Mode عبر واتساب.</p>
         <a
-          href="https://wa.me/message/M44N6KT35MW4N1"
+          href={storeWhatsAppUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary contact-whatsapp"

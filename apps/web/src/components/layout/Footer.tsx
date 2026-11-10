@@ -3,12 +3,13 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getSettings } from "@/lib/api";
 import { publishedCategories } from "@/lib/catalog-navigation";
+import { storeWhatsAppUrl } from "@/lib/store-contact";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SocialIcon } from "../store/StoreIcons";
 import { PackageCheck } from "lucide-react";
 
 const socials = [
-    ["https://wa.me/message/M44N6KT35MW4N1", "WhatsApp"],
+    [storeWhatsAppUrl, "WhatsApp"],
     ["https://www.instagram.com/imad.mode?igsi=em85MTVmanRpa29p", "Instagram"],
     ["https://www.facebook.com/share/1Lwh3Akcuo/", "Facebook"],
     ["https://www.tiktok.com/@imad_mode?_r=1&_t=ZS-99NC3oV9y44", "TikTok"],
@@ -82,7 +83,7 @@ export function Footer() {
                         </Link>
                     ))}
                     <a
-                        href={socials[0][0]}
+                        href={storeWhatsAppUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="تواصلوا عبر واتساب — نافذة جديدة"
