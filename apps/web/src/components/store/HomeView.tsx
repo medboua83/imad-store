@@ -45,7 +45,7 @@ export function HomeView({
                     <p className="hero-description">{content.heroSubtitle}</p>
                     <div className="hero-actions">
                         <a href="#collections" className="btn-primary">
-                            اكتشفوا المجموعة <ArrowDown size={19} aria-hidden="true" />
+                            تصفحوا المجموعة <ArrowDown size={16} aria-hidden="true" />
                         </a>
                     </div>
                 </div>
@@ -54,7 +54,7 @@ export function HomeView({
                         images={heroImages}
                         name={useCatalogue && featured ? featured.nameAr || featured.nameFr : ""}
                         preload
-                        sizes="(max-width: 767px) 100vw, 55vw"
+                        sizes="(max-width: 767px) calc(45vw - 12px), 336px"
                         className="hero-photo"
                     />
                 </div>
