@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/lib/api";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { CatalogSectionLinks } from "../store/CatalogSectionLinks";
+import { catalogSections } from "@imad-store/shared";
 const dockLinks = [
     ["/", "الرئيسية", House],
     ["/shop", "المتجر", LayoutGrid],
@@ -55,6 +56,12 @@ export function Navbar() {
         staleTime: 60_000,
     });
     const categories = publishedCategories(data);
+    const sections = availableCatalogSections(data);
+    const desktopLinks = [
+        ...links.slice(0, 2),
+        ...sections.map((section) => [`/shop?section=${section}`, catalogSections[section].nameAr]),
+        links[2],
+    ];
     const menu = useRef<HTMLDialogElement>(null);
     const path = usePathname();
     const menuTrigger = useRef<HTMLButtonElement>(null);
@@ -108,7 +115,7 @@ export function Navbar() {
                         <BrandLogo />
                     </Link>
                     <nav aria-label="التنقل الرئيسي" className="desktop-navigation">
-                        {links.map(([href, label]) => (
+                        {desktopLinks.map(([href, label]) => (
                             <Link
                                 key={href}
                                 href={href}
@@ -230,7 +237,7 @@ export function Navbar() {
                             </span>
                             <ArrowUpLeft size={20} aria-hidden="true" />
                         </Link>
-                        <CatalogSectionLinks sections={availableCatalogSections(data)} onClick={closeMenu} />
+                        <CatalogSectionLinks sections={sections} onClick={closeMenu} />
                         <nav className="menu-categories" aria-label="فئات المنتجات">
                             <h3>تسوقوا حسب الفئة</h3>
                             {categories.map((category) => (

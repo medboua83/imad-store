@@ -29,10 +29,13 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const raw = await searchParams;
   const returnTo = catalogReturnPath(raw.returnTo);
   const requestedSize = typeof raw.size === "string" && raw.size.length <= 40 && !isAmbiguousSize(raw.size) ? raw.size : undefined;
-  const sizeUnavailable = Boolean(raw.size) && (!requestedSize || !variants.some(v => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase()));
-  const initialVariant = requestedSize
-    ? variants.find((v) => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase())
-    : variants.find((v) => v.stock > 0) ?? variants[0];
+  const requestedColor = typeof raw.color === "string" && raw.color.length <= 80 ? raw.color : undefined;
+  const hasRequestedOptions = Boolean(raw.size || raw.color);
+  const matchingVariant = variants.find((v) => v.stock > 0 &&
+    (!raw.size || (v.size || "").toLowerCase() === requestedSize?.toLowerCase()) &&
+    (!raw.color || v.color.toLowerCase() === requestedColor?.toLowerCase()));
+  const optionsUnavailable = hasRequestedOptions && !matchingVariant;
+  const initialVariant = matchingVariant ?? (!hasRequestedOptions ? variants[0] : undefined);
   const inStock = variants.some((v) => v.stock > 0);
   const settings = await publicSettings();
   const description = productDescription(product);
@@ -69,9 +72,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
         / {name}
       </nav>
       <ProductPresentation
-        key={`${product.id}:${requestedSize || ""}:${sizeUnavailable}`}
+        key={`${product.id}:${requestedSize || ""}:${requestedColor || ""}:${optionsUnavailable}`}
         product={product}
-        initialVariant={sizeUnavailable ? undefined : initialVariant}
+        initialVariant={initialVariant}
         identity={
           <div className="product-identity">
             <div className="product-heading-tools">
@@ -105,10 +108,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
             </div>
           </div>
         }
-        unavailable={sizeUnavailable ? (
-            <div className="product-size-unavailable" role="status" aria-label="المقاس المطلوب">
-              <p>المقاس المطلوب غير متوفر حالياً. راجعوا المقاسات الأخرى قبل الإضافة.</p>
-              <Link href={productDetailsHref(product.slug, undefined, returnTo)} prefetch={false}>عرض المقاسات الأخرى</Link>
+        unavailable={optionsUnavailable ? (
+            <div className="product-size-unavailable" role="status" aria-label={raw.color ? "الخيار المطلوب" : "المقاس المطلوب"}>
+              <p>{raw.color
+                ? "الخيار المطلوب غير متوفر حالياً. راجعوا الألوان والمقاسات الأخرى قبل الإضافة."
+                : "المقاس المطلوب غير متوفر حالياً. راجعوا المقاسات الأخرى قبل الإضافة."}</p>
+              <Link href={productDetailsHref(product.slug, undefined, returnTo)} prefetch={false}>
+                {raw.color ? "عرض الخيارات الأخرى" : "عرض المقاسات الأخرى"}
+              </Link>
             </div>
         ) : null}
       >

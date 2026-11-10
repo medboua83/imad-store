@@ -103,9 +103,13 @@ createServer((req, res) => {
     }
     if (search === "size-fixture" || search === "size-no-options") {
       const size = url.searchParams.get("size");
-      const catalog = [product, premium].filter(p => !size || p.variants.some(v => v.size?.toLowerCase() === size.toLowerCase() && v.stock > 0));
+      const color = url.searchParams.get("color");
+      const catalog = [product, premium].filter(p => (!size && !color) || p.variants.some(v =>
+        v.stock > 0 && (!size || v.size?.toLowerCase() === size.toLowerCase()) && (!color || v.color === color)));
       return res.end(JSON.stringify({ success:true, data:catalog, total:catalog.length, page:1, totalPages:catalog.length ? 1 : 0,
-        ...(search === "size-fixture" && url.searchParams.get("includeFilters") === "1" ? {filterOptions:{sizes:["40","44","M"]}} : {}),
+        ...(search === "size-fixture" && url.searchParams.get("includeFilters") === "1" ? {filterOptions:{
+          sizes:["40","44","M"], colors:[{value:"#000000",label:"أسود"},{value:"#804000",label:"بني"}],
+        }} : {}),
       }));
     }
     if (search === "outage-fixture") {

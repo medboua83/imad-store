@@ -51,7 +51,8 @@ export function ProductOptions({
     const savings = Math.round((product.price * selectionQuantity - total) * 100) / 100;
     const choices = [...new Set([1, 2, 3, ...tiers.map((tier) => tier.minQuantity)])].sort(
         (a, b) => a - b,
-    );
+    ).filter((count) => count <= available);
+    const showOffers = tiers.some((tier) => tier.minQuantity <= available);
     const colors = [...new Map(variants.map((v) => [productColorKey(v), v])).values()];
     const sizes = orderedSizes(variants);
     const selectedColor = variant ? productColorKey(variant) : "";
@@ -153,104 +154,94 @@ export function ProductOptions({
                 </fieldset>
             </div>
             {!variants.length && <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>}
-            <section className="quantity-offers" aria-label="عروض الكمية">
-                <h2>اختاروا الكمية المناسبة</h2>
-                <div className="quantity-choice-grid" role="group" aria-label="اختيار عدد القطع">
-                    {choices.map((count) => {
-                        const choiceTotal = quantityPriceBreakdown(
-                            product.price,
-                            tiers,
-                            count,
-                        ).total;
-                        const choiceSaving =
-                            Math.round((product.price * count - choiceTotal) * 100) / 100;
-                        return (
-                            <button
-                                type="button"
-                                key={count}
-                                className="quantity-choice"
-                                aria-pressed={
-                                    selectedQuantity === count && available > 0 && !quantityInvalid
-                                }
-                                aria-label={
-                                    count === 1
-                                        ? "اختيار قطعة واحدة"
-                                        : count === 2
-                                          ? "اختيار قطعتين"
-                                          : `اختيار ${count} قطع`
-                                }
-                                aria-describedby={`quantity-choice-price-${count}`}
-                                disabled={count > available}
-                                onClick={() => chooseQuantity(count)}
-                            >
-                                <span className="quantity-choice-label">
-                                    <strong>{count}</strong>
-                                    <span>
-                                        {count === 1
-                                            ? "قطعة واحدة"
+            {showOffers && (
+                <section className="quantity-offers" aria-label="عروض الكمية">
+                    <h2>اختاروا الكمية المناسبة</h2>
+                    <div className="quantity-choice-grid" role="group" aria-label="اختيار عدد القطع">
+                        {choices.map((count) => {
+                            const choiceTotal = quantityPriceBreakdown(
+                                product.price,
+                                tiers,
+                                count,
+                            ).total;
+                            const choiceSaving =
+                                Math.round((product.price * count - choiceTotal) * 100) / 100;
+                            return (
+                                <button
+                                    type="button"
+                                    key={count}
+                                    className="quantity-choice"
+                                    aria-pressed={
+                                        selectedQuantity === count && available > 0 && !quantityInvalid
+                                    }
+                                    aria-label={
+                                        count === 1
+                                            ? "اختيار قطعة واحدة"
                                             : count === 2
-                                              ? "قطعتان"
-                                              : "قطع"}
-                                    </span>
-                                </span>
-                                <span
-                                    id={`quantity-choice-price-${count}`}
-                                    className="quantity-choice-details"
+                                              ? "اختيار قطعتين"
+                                              : `اختيار ${count} قطع`
+                                    }
+                                    aria-describedby={`quantity-choice-price-${count}`}
+                                    onClick={() => chooseQuantity(count)}
                                 >
-                                    <span className="quantity-choice-price" dir="ltr">
-                                        {choiceTotal.toFixed(2)} <small>MAD</small>
-                                    </span>
-                                    {choiceSaving > 0 && (
-                                        <span className="quantity-choice-saving">
-                                            توفير <bdi>{choiceSaving.toFixed(2)} MAD</bdi>
+                                    <span className="quantity-choice-label">
+                                        <strong>{count}</strong>
+                                        <span>
+                                            {count === 1
+                                                ? "قطعة واحدة"
+                                                : count === 2
+                                                  ? "قطعتان"
+                                                  : "قطع"}
                                         </span>
-                                    )}
-                                </span>
-                                <Check
-                                    size={15}
-                                    aria-hidden="true"
-                                    className="quantity-choice-check"
-                                />
-                            </button>
-                        );
-                    })}
-                </div>
-                <div
-                    className={`quantity-selection-summary${available > 0 && !quantityInvalid ? " is-repeated-total" : ""}`}
-                    aria-live="polite"
-                    aria-atomic="true"
-                >
-                    {quantityInvalid ? (
-                        <p id="product-quantity-error" className="quantity-input-error">
-                            {quantityError}
-                        </p>
-                    ) : available > 0 ? (
-                        <>
-                            <p>سعر الكمية المختارة</p>
-                            <strong className="quantity-selection-total" dir="ltr">
-                                {total.toFixed(2)} <span>MAD</span>
-                            </strong>
-                            {savings > 0 && (
-                                <p className="quantity-selection-saving">
-                                    <del dir="ltr">
-                                        {(product.price * selectionQuantity).toFixed(2)} MAD
-                                    </del>
-                                    <span>
-                                        توفير <bdi>{savings.toFixed(2)} MAD</bdi>
                                     </span>
-                                </p>
-                            )}
-                            <small>قيمة المنتجات فقط · التوصيل يُحسب في السلة.</small>
-                        </>
-                    ) : (
-                        <p>
-                            {stock
-                                ? "الكمية المتوفرة لهذا الخيار موجودة في السلة. يمكن اختيار مقاس أو لون آخر."
-                                : "اختاروا مقاساً ولوناً متوفرين."}
-                        </p>
+                                    <span
+                                        id={`quantity-choice-price-${count}`}
+                                        className="quantity-choice-details"
+                                    >
+                                        <span className="quantity-choice-price" dir="ltr">
+                                            {choiceTotal.toFixed(2)} <small>MAD</small>
+                                        </span>
+                                        {choiceSaving > 0 && (
+                                            <span className="quantity-choice-saving">
+                                                توفير <bdi>{choiceSaving.toFixed(2)} MAD</bdi>
+                                            </span>
+                                        )}
+                                    </span>
+                                    <Check
+                                        size={15}
+                                        aria-hidden="true"
+                                        className="quantity-choice-check"
+                                    />
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {!quantityInvalid && (
+                        <div className="quantity-selection-summary is-repeated-total" aria-live="polite" aria-atomic="true">
+                                <p>سعر الكمية المختارة</p>
+                                <strong className="quantity-selection-total" dir="ltr">
+                                    {total.toFixed(2)} <span>MAD</span>
+                                </strong>
+                                {savings > 0 && (
+                                    <p className="quantity-selection-saving">
+                                        <del dir="ltr">
+                                            {(product.price * selectionQuantity).toFixed(2)} MAD
+                                        </del>
+                                        <span>
+                                            توفير <bdi>{savings.toFixed(2)} MAD</bdi>
+                                        </span>
+                                    </p>
+                                )}
+                                <small>قيمة المنتجات فقط · التوصيل يُحسب في السلة.</small>
+                        </div>
                     )}
-                </div>
-            </section>
+                </section>
+            )}
+            {quantityInvalid && (
+                <p id="product-quantity-error" className="quantity-input-error" role="alert">
+                    {quantityError}
+                </p>
+            )}
             <div className="product-buy-controls">
                 <div className="product-quantity-row">
                     <div className="quantity-heading">

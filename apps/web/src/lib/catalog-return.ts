@@ -1,5 +1,5 @@
 // Carry only public catalogue filters. Never use an arbitrary URL as a return destination.
-const catalogKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "page"];
+const catalogKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "color", "page"];
 
 export function catalogReturnPath(value: unknown): string | undefined {
     if (typeof value !== "string" || value.length > 2000 ||
@@ -15,9 +15,10 @@ export function catalogReturnPath(value: unknown): string | undefined {
     return `/shop${query.size ? `?${query}` : ""}#catalog-results`;
 }
 
-export function productDetailsHref(slug: string, size?: string, returnTo?: unknown): string {
+export function productDetailsHref(slug: string, size?: string, returnTo?: unknown, color?: string): string {
     const query = new URLSearchParams();
     if (size) query.set("size", size);
+    if (color) query.set("color", color);
     const catalog = catalogReturnPath(returnTo);
     if (catalog) query.set("returnTo", catalog);
     return `/products/${encodeURIComponent(slug)}${query.size ? `?${query}` : ""}`;

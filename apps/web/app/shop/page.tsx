@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
     return storefrontShareMetadata("shop", await requestSiteOrigin());
 }
-const filterKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size"] as const;
+const filterKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "color"] as const;
 const sortLabels: Record<string, string> = {
     newest: "الأحدث",
     "price-asc": "السعر: من الأقل",
@@ -39,7 +39,7 @@ export default async function ShopPage({
         (category) => !section || section.categorySlugs.includes(category.slug),
     );
     let result: Awaited<ReturnType<typeof publicProducts>> | null = null;
-    let invalid = Array.isArray(raw.size) || Array.isArray(raw.section);
+    let invalid = Array.isArray(raw.size) || Array.isArray(raw.section) || Array.isArray(raw.color);
     try {
         if (!invalid) result = await publicProducts(params);
     } catch (error) {
@@ -73,6 +73,9 @@ export default async function ShopPage({
             !(key === "availability" && value(key) === "all"),
     );
     const sort = value("sort") || "newest";
+    const selectedColor = value("color");
+    const colors = result?.filterOptions?.colors ?? [];
+    const colorLabel = colors.find((color) => color.value === selectedColor)?.label;
     const resultAnchor = category ? "#catalog-results" : "";
     const chipLabel = (key: (typeof filterKeys)[number]) =>
         ({
@@ -84,6 +87,7 @@ export default async function ShopPage({
             availability: "المتوفر فقط",
             sort: sortLabels[value(key)] || value(key),
             size: `المقاس: ${value(key)}`,
+            color: `اللون: ${colorLabel || selectedColor}`,
         })[key];
     const suggestedSizes = result?.filterOptions?.sizes;
     const sizes = suggestedSizes ? orderedSizes(suggestedSizes.map(size => ({ size }))) : [];
@@ -187,7 +191,7 @@ export default async function ShopPage({
                         <span className="active-filter-count">{active.length}</span>
                     )}
                     <span className="filter-result-count">
-                        {category ? "المقاس، السعر والتوفر" : "المقاس، الفئة والسعر"}
+                        المقاس، اللون والسعر
                     </span>
                 </summary>
                 <form
@@ -245,8 +249,18 @@ export default async function ShopPage({
                             <input className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" maxLength={40}
                                 defaultValue={value("size")} placeholder="مثلاً 40 أو M" />
                         )}
-                        <small id="catalog-size-help" className="filter-size-help">عند تحديد مقاس، تظهر القطع المتوفرة به فقط. راجعوا اللون في صفحة المنتج.</small>
+                        <small id="catalog-size-help" className="filter-size-help">عند اختيار مقاس ولون، تظهر القطع التي يتوفر فيها الخياران معاً.</small>
                     </label>
+                    {(colors.length > 0 || selectedColor) && (
+                        <label>
+                            اللون
+                            <select className="store-input" name="color" defaultValue={selectedColor}>
+                                <option value="">جميع الألوان</option>
+                                {selectedColor && !colorLabel && <option value={selectedColor}>{selectedColor}</option>}
+                                {colors.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                        </label>
+                    )}
                     <label>
                         الترتيب
                         <select
@@ -323,6 +337,9 @@ export default async function ShopPage({
                             href={queryLink({ [key]: null }) + resultAnchor}
                             aria-label={`إزالة الفلتر: ${chipLabel(key)}`}
                         >
+                            {key === "color" && /^#[0-9a-f]{6}$/i.test(selectedColor) && (
+                                <span className="filter-color-swatch" style={{ backgroundColor: selectedColor }} aria-hidden="true" />
+                            )}
                             <span>{chipLabel(key)}</span>
                             <X size={14} aria-hidden="true" />
                         </Link>
@@ -390,6 +407,7 @@ export default async function ShopPage({
                                     headingLevel={3}
                                     eagerImage={index === 0}
                                     preferredSize={value("size") || undefined}
+                                    preferredColor={selectedColor || undefined}
                                     returnTo={queryLink({ page: result.page > 1 ? result.page : null })}
                                 />
                             ))}

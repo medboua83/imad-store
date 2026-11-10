@@ -37,7 +37,7 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
-        await expect(page.locator(".quantity-selection-total")).toContainText("230.00");
+        await expect(page.locator(".purchase-price")).toContainText("230.00");
         await expect(page.getByLabel("تقدير السلة بعد الإضافة", { exact: true })).toContainText(
             "630.00",
         );
@@ -64,15 +64,15 @@ for (const width of [390, 1440]) {
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto("/products/fixture-sabot");
-        await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
-        await expect(page.locator(".quantity-selection-total")).toContainText("460.00");
-        await expect(page.locator(".quantity-selection-saving")).toHaveCount(0);
+        await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
+        await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
+        await expect(page.locator(".purchase-price")).toContainText("460.00");
         await page.goto("/products/fixture-offer");
         const one = page.getByRole("button", { name: "اختيار قطعة واحدة", exact: true });
         const two = page.getByRole("button", { name: "اختيار قطعتين", exact: true });
         const three = page.getByRole("button", { name: "اختيار 3 قطع", exact: true });
         await expect(one).toHaveAttribute("aria-pressed", "true");
-        await expect(three).toBeDisabled();
+        await expect(three).toHaveCount(0);
         await two.focus();
         await two.press("Enter");
         await expect(two).toHaveAttribute("aria-pressed", "true");
@@ -85,8 +85,7 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
-        await expect(one).toBeDisabled();
-        await expect(two).toBeDisabled();
+        await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
         await expect(
             page.getByRole("button", { name: "الكمية في السلة", exact: true }),
         ).toBeDisabled();

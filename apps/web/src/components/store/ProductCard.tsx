@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
-import { quantityDiscounts } from "@imad-store/shared";
+import { productColorKey, quantityDiscounts } from "@imad-store/shared";
 import { productDetailsHref } from "@/lib/catalog-return";
 
 const squarePhotoCategories = new Set(["mens-clogs", "womens-shoes", "bags"]);
@@ -14,6 +14,7 @@ export function ProductCard({
     eagerImage = false,
     thumbnail = true,
     preferredSize,
+    preferredColor,
     returnTo,
     openInNewTab = false,
 }: {
@@ -22,19 +23,25 @@ export function ProductCard({
     eagerImage?: boolean;
     thumbnail?: boolean;
     preferredSize?: string;
+    preferredColor?: string;
     returnTo?: string;
     openInNewTab?: boolean;
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
     const variants = sellableVariants(p.variants).filter(
-        (v) => !preferredSize || (v.size || "").toLowerCase() === preferredSize.toLowerCase(),
+        (v) => (!preferredSize || (v.size || "").toLowerCase() === preferredSize.toLowerCase()) &&
+            (!preferredColor || v.color.toLowerCase() === preferredColor.toLowerCase()),
     );
     const available = variants.some((v) => v.stock > 0);
     const offered = available ? variants.filter((v) => v.stock > 0) : variants;
     const colors = [...new Map(offered.map((v) => [v.color, v])).values()];
     const sizes = orderedSizes(offered).filter(Boolean);
-    const href = productDetailsHref(p.slug, preferredSize, returnTo);
+    const selectedColorKey = preferredColor && offered[0] ? productColorKey(offered[0]) : undefined;
+    const matchingPhoto = p.colorPhotos?.find((entry) =>
+        entry.colorKey === selectedColorKey && p.images.includes(entry.image))?.image;
+    const photos = matchingPhoto ? [matchingPhoto, ...p.images.filter((image) => image !== matchingPhoto)] : p.images;
+    const href = productDetailsHref(p.slug, preferredSize, returnTo, preferredColor);
     const linkTarget = openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : {};
     return (
         <article
@@ -48,7 +55,7 @@ export function ProductCard({
                 className="catalog-card-image"
                 aria-label={`عرض تفاصيل ${name}`}
             >
-                <ProductPhoto images={p.images} name={name} eager={eagerImage} thumbnail={thumbnail} />
+                <ProductPhoto images={photos} name={name} eager={eagerImage} thumbnail={thumbnail} />
                 <span className={`stock-pill ${available ? "" : "stock-pill-empty"}`}>
                     {available
                         ? "متوفر الآن"

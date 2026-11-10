@@ -17,8 +17,7 @@ for (const viewport of [
         await expect(one.locator(".quantity-choice-saving")).toHaveCount(0);
         await expect(two.locator(".quantity-choice-price")).toHaveText("400.00 MAD");
         await expect(two).toHaveAccessibleDescription(/400.00 MAD.*60.00 MAD/);
-        await expect(three.locator(".quantity-choice-price")).toHaveText("630.00 MAD");
-        await expect(three).toBeDisabled();
+        await expect(three).toHaveCount(0);
         const recap = page.locator(".purchase-selection");
         await expect(recap).toHaveText("أسود · 40 · 1 قطعة");
         const add = page.getByRole("button", { name: "إضافة إلى السلة", exact: true });
@@ -26,6 +25,7 @@ for (const viewport of [
         expect(box!.y).toBeGreaterThanOrEqual(0);
         expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
         await page.getByRole("button", { name: "بني", exact: true }).click();
+        await expect(three.locator(".quantity-choice-price")).toHaveText("630.00 MAD");
         await three.click();
         await expect(recap).toHaveText("بني · 44 · 3 قطع");
         await expect(page.locator(".purchase-price")).toContainText("630.00");
@@ -48,12 +48,9 @@ test("Ordinary prices are not advertised as promotions and invalid quantities hi
     page,
 }) => {
     await page.goto("/products/fixture-sabot?stats_test=1");
-    await expect(
-        page
-            .getByRole("button", { name: "اختيار قطعتين", exact: true })
-            .locator(".quantity-choice-price"),
-    ).toHaveText("460.00 MAD");
-    await expect(page.locator(".quantity-choice-saving")).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
+    await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
+    await expect(page.locator(".purchase-price")).toContainText("460.00");
     await page.getByRole("spinbutton", { name: "الكمية", exact: true }).fill("");
     await expect(page.locator(".purchase-selection")).toHaveText("تحققوا من الكمية");
     await expect(page.locator(".purchase-price")).toContainText("—");

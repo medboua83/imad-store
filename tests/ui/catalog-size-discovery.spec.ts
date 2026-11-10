@@ -9,6 +9,7 @@ for (const width of [320, 390, 1440]) {
     const size = page.getByRole("combobox", { name: "المقاس", exact: true });
     await expect(size.locator("option")).toHaveText(["جميع المقاسات", "40", "44", "M"]);
     await size.selectOption("44");
+    await page.getByRole("combobox", { name: "اللون", exact: true }).selectOption("#804000");
     await page.screenshot({ path: info.outputPath(`size-filter-${width}.png`) });
     await page.getByRole("button", { name: "عرض النتائج", exact: true }).click();
     await expect(page.locator(".catalog-card")).toHaveCount(1);
@@ -19,16 +20,22 @@ for (const width of [320, 390, 1440]) {
     await expect(page).toHaveURL(url => url.searchParams.get("size") === "44");
     const query = new URL(page.url()).searchParams;
     expect(query.get("size")).toBe("44");
+    expect(query.get("color")).toBe("#804000");
     expect(query.get("search")).toBe("size-fixture");
     expect(query.get("category")).toBe("mens-clogs");
     expect(query.get("sort")).toBe("price-asc");
     await expect(page.locator(".active-filter-chips")).toContainText("المقاس: 44");
+    await expect(page.locator(".active-filter-chips")).toContainText("اللون: بني");
     for (const href of await page
       .locator(".catalog-card a")
       .evaluateAll((links) => links.map((a) => a.getAttribute("href"))))
       expect(new URL(href!, page.url()).searchParams.get("size")).toBe("44");
     await page.locator(".catalog-card .text-link").click();
     await expect(page).toHaveURL(url => url.pathname.startsWith("/products/"), { timeout: 30000 });
+    expect(new URL(page.url()).searchParams.get("color")).toBe("#804000");
+    await expect(page.getByRole("link", { name: "العودة إلى النتائج" })).toHaveAttribute(
+      "href", /color=%23804000/,
+    );
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -44,7 +51,7 @@ for (const width of [320, 390, 1440]) {
     const canonical = new URL("/products/fixture-sabot", page.url()).href;
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
-    await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
+    await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
     await expect(page.locator(".purchase-price")).toContainText("460.00");
     await page.screenshot({ path: info.outputPath(`size-selected-${width}.png`) });
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
