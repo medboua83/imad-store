@@ -6,7 +6,7 @@ import { isAmbiguousSize, productColorKey, validColorPhotos, type ProductColorPh
 import { QuantityOfferEditor, packOffers, type DraftQuantityOffer } from "./quantity-offer-editor";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
-import { type Product, type Category } from "@/lib/api";
+import { getAdminProductBySlug, type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
 import { ProductRecommendationEditor } from "./product-recommendations";
 import {
@@ -60,6 +60,7 @@ type Props = {
     onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
     onDelete: (id: string) => Promise<boolean>;
 };
+type CreationRecovery = { slug: string; existing?: Product | null };
 export function ProductsTab({
     products,
     total,
@@ -90,6 +91,7 @@ export function ProductsTab({
         [uncertain, setUncertain] = useState(false),
         [sizes, setSizes] = useState(""),
         [session, setSession] = useState(0);
+    const [creationRecovery, setCreationRecovery] = useState<CreationRecovery | null>(null);
     const title = useRef<HTMLHeadingElement>(null),
         listTitle = useRef<HTMLHeadingElement>(null),
         lock = useRef(false);
@@ -97,6 +99,9 @@ export function ProductsTab({
     const skuInputs = useRef(new Map<string, HTMLInputElement>());
     const disabled = busy || uploading,
         dirty = open && JSON.stringify({ form, variants, images }) !== baseline;
+    const recoveredProduct = creationRecovery?.existing;
+    const checkingRequired = creationRecovery !== null && recoveredProduct === undefined;
+    const saveBlocked = uncertain || (creationRecovery !== null && recoveredProduct !== null);
     const summary = stockSummary(products);
     const photoColors = new Map(
         variants.filter((v) => !isAmbiguousSize(v.size)).map((v) => [productColorKey(v), v]),
@@ -191,6 +196,7 @@ export function ProductsTab({
         setConflictField("");
         setSuccess("");
         setUncertain(false);
+        setCreationRecovery(null);
         setSizes("");
         requestAnimationFrame(() => {
             title.current?.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -241,9 +247,24 @@ export function ProductsTab({
             setBusy(false);
         }
     }
+    async function verifyCreation() {
+        if (lock.current || disabled || !creationRecovery) return;
+        lock.current = true;
+        setBusy(true);
+        setError("");
+        try {
+            const existing = await getAdminProductBySlug(creationRecovery.slug);
+            setCreationRecovery({ ...creationRecovery, existing });
+        } catch {
+            setError("Vérification impossible. Vos saisies sont conservées. Réessayez la vérification.");
+        } finally {
+            lock.current = false;
+            setBusy(false);
+        }
+    }
     async function save(e: React.FormEvent) {
         e.preventDefault();
-        if (lock.current || disabled || uncertain) return;
+        if (lock.current || disabled || saveBlocked) return;
         let data: Record<string, unknown>;
         setConflictField("");
         setConflictAttempt((attempt) => attempt + 1);
@@ -254,7 +275,7 @@ export function ProductsTab({
                 throw new Error(
                     "L’adresse utilise uniquement des lettres minuscules sans accents, des chiffres et des tirets.",
                 );
-            const sameAddress = products.find((p) => p.id !== id && p.slug === form.slug);
+            const sameAddress = !creationRecovery && products.find((p) => p.id !== id && p.slug === form.slug);
             if (sameAddress) {
                 setConflictField("slug");
                 throw new Error(
@@ -315,6 +336,12 @@ export function ProductsTab({
         } catch (e) {
             const response = (e as { response?: { status: number; data?: { code?: string } } })
                 .response;
+            const status = response?.status;
+            if (!id && (!response || status === 408 || (status ?? 0) >= 500 || (creationRecovery && status === 409))) {
+                setCreationRecovery({ slug: form.slug });
+                setError("Enregistrement non confirmé. Vérifiez cette adresse pour reprendre. Vos saisies sont conservées.");
+                return;
+            }
             if (response?.data?.code === "PRODUCT_SLUG_CONFLICT") {
                 setConflictField("slug");
             }
@@ -491,7 +518,7 @@ export function ProductsTab({
                                         setForm((v) => ({
                                             ...v,
                                             nameFr: e.target.value,
-                                            ...(!id && !slugEdited
+                                            ...(!id && !slugEdited && !creationRecovery
                                                 ? { slug: productSlug(e.target.value) }
                                                 : {}),
                                         }))
@@ -508,6 +535,7 @@ export function ProductsTab({
                                         required
                                         maxLength={160}
                                         value={form.slug}
+                                        readOnly={Boolean(creationRecovery)}
                                         aria-label={t("Adresse du produit")}
                                         aria-invalid={conflictField === "slug" || undefined}
                                         placeholder={t("exemple-sac-beige")}
@@ -523,6 +551,7 @@ export function ProductsTab({
                                     <button
                                         type="button"
                                         className="admin-text-button"
+                                        disabled={Boolean(creationRecovery)}
                                         onClick={() => set("slug", productSlug(form.nameFr))}
                                     >
                                         {t("Suggérer")}
@@ -1027,9 +1056,17 @@ export function ProductsTab({
                     />
                     <div className="product-editor-footer">
                         {error && <p className="admin-alert">{t(error)}</p>}
+                        {recoveredProduct === null && !error && (
+                            <p role="status">{t("Aucune fiche trouvée à cette adresse. Vous pouvez réessayer avec la même saisie.")}</p>
+                        )}
+                        {recoveredProduct && (
+                            <p role="status">{t("Une fiche existe déjà à cette adresse. Vos saisies restent dans ce formulaire.")}</p>
+                        )}
                         <p>
                             {uploading
                                 ? t("Envoi des photos… Attendez la fin avant d’enregistrer.")
+                                : busy && checkingRequired
+                                  ? t("Vérification en cours…")
                                 : busy
                                   ? t("Enregistrement en cours…")
                                   : dirty
@@ -1042,7 +1079,7 @@ export function ProductsTab({
                             <button
                                 type="submit"
                                 className="admin-button primary"
-                                disabled={disabled || uncertain}
+                                disabled={disabled || saveBlocked}
                             >
                                 {busy ? t("En cours…") : t("Enregistrer le produit")}
                             </button>
@@ -1070,6 +1107,21 @@ export function ProductsTab({
                                     {t("Recharger cette fiche")}
                                 </button>
                             ) : null}
+                            {checkingRequired && (
+                                <button type="button" className="admin-button" disabled={disabled} onClick={verifyCreation}>
+                                    {t("Vérifier l’enregistrement")}
+                                </button>
+                            )}
+                            {recoveredProduct && (
+                                <button
+                                    type="button"
+                                    className="admin-button"
+                                    disabled={disabled}
+                                    onClick={() => edit(recoveredProduct)}
+                                >
+                                    {t("Ouvrir la fiche existante")}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </form>

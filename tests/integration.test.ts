@@ -308,6 +308,31 @@ test("Product conflicts distinguish addresses from global SKUs without partial w
     assert.equal(await prisma.product.findUnique({where:{slug:other.slug}}),null);
     assert.deepEqual(await prisma.productVariant.findUnique({where:{id:stock.id}}),stock);
 });
+test("An exact private product lookup finds drafts and duplicate creation attempts keep one product", async () => {
+    const first = { ...payload(), status: "DRAFT" };
+    const url = `/api/products/admin/catalog/${first.slug}`;
+    assert.equal((await request(app).get(url)).status, 401);
+    const absent = await request(app).get(url).set(admin());
+    assert.equal(absent.status, 200);
+    assert.equal(absent.headers["cache-control"], "no-store");
+    assert.equal(absent.body.data, null);
+    const second = { ...payload(), slug: first.slug, status: "DRAFT" };
+    const responses = await Promise.all(
+        [first, second].map((draft) => request(app).post("/api/products").set(admin()).send(draft)),
+    );
+    assert.deepEqual(responses.map((response) => response.status).sort(), [201, 409]);
+    const saved = responses.find((response) => response.status === 201)!.body.data;
+    try {
+        const found = await request(app).get(url).set(admin());
+        assert.equal(found.status, 200);
+        assert.equal(found.body.data.id, saved.id);
+        assert.equal(found.body.data.status, "DRAFT");
+        assert.equal(await prisma.product.count({ where: { slug: first.slug } }), 1);
+        assert.equal((await request(app).get(`/api/products/${first.slug}`)).status, 404);
+    } finally {
+        await prisma.product.delete({ where: { id: saved.id } });
+    }
+});
 test("Image uploads are authenticated, validated, transformed and served", async () => {
     assert.equal(
         (

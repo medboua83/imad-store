@@ -217,6 +217,12 @@ export async function getProducts(req: Request, res: Response) {
 export async function getAdminProducts(req: Request, res: Response) {
     res.json(await list(req.query, true));
 }
+export async function getAdminProductBySlug(req: Request, res: Response) {
+    const slug = slugSchema.parse(req.params.slug);
+    const product = await prisma.product.findUnique({ where: { slug }, include });
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ success: true, data: product });
+}
 export const readPublicProducts = (query: unknown) => list(query, false);
 async function findPublicProduct(slugInput: unknown) {
     const slug = slugSchema.parse(slugInput);

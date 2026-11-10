@@ -430,6 +430,14 @@ export default api;
 export async function getAdminProducts(params: Record<string, unknown> = {}) {
     return (await api.get<ProductsResponse>("/products/admin/catalog", { params })).data;
 }
+export async function getAdminProductBySlug(slug: string): Promise<Product | null> {
+    const { data } = await api.get<{ success: boolean; data: Product | null }>(
+        `/products/admin/catalog/${encodeURIComponent(slug)}`,
+    );
+    if (data?.success !== true || (data.data !== null && data.data?.slug !== slug))
+        throw new Error("Résultat de vérification invalide.");
+    return data.data;
+}
 export async function uploadProductImage(file: File): Promise<string> {
     return (await api.post("/uploads", file, { headers: { "Content-Type": file.type } })).data.data
         .url;
