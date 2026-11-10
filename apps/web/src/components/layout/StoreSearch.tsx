@@ -82,7 +82,14 @@ export function StoreSearch() {
                 className={styles.dialog}
                 aria-labelledby="store-search-title"
                 ref={dialog}
-                onKeyDown={trapDialogFocus}
+                onKeyDown={event => {
+                    if (event.key === "Escape") {
+                        event.preventDefault();
+                        close();
+                        return;
+                    }
+                    trapDialogFocus(event);
+                }}
                 onClose={() => {
                     setOpen(false);
                     setValue("");
