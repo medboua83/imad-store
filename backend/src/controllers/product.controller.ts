@@ -7,6 +7,7 @@ import {
     isAmbiguousSize,
     MAX_PRODUCT_PHOTOS,
     quantityDiscountError,
+    validColorPhotos,
 } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -28,6 +29,13 @@ const slugSchema = z
     .string()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     .max(160);
+const colorPhotosSchema = z.array(z.object({
+    colorKey: z.string().max(400),
+    image: z.string().max(2000),
+})).max(100).refine(
+    (links) => new Set(links.map((link) => link.colorKey)).size === links.length,
+    "Choisissez une seule photo par couleur.",
+);
 const productSchema = z.object({
     slug: slugSchema,
     nameFr: z.string().trim().min(1).max(200),
@@ -48,6 +56,7 @@ const productSchema = z.object({
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
         .max(MAX_PRODUCT_PHOTOS, `Maximum ${MAX_PRODUCT_PHOTOS} photos par produit.`),
+    colorPhotos: colorPhotosSchema.optional(),
     status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]),
     categoryId: objectIdSchema,
     variants: z.array(variantSchema).max(100),
@@ -233,6 +242,8 @@ export async function createProduct(req: Request, res: Response) {
     if (!(await prisma.category.findUnique({ where: { id: body.categoryId } })))
         throw new AppError("Catégorie introuvable", 400);
     const { variants, ...data } = body;
+    if (body.colorPhotos && validColorPhotos(body.colorPhotos, body.images, variants).length !== body.colorPhotos.length)
+        throw new AppError("Associez les couleurs du produit aux photos de sa galerie.", 400);
     if (variants.some((v) => v.id)) throw new AppError("Identifiant de variante inattendu", 400);
     const product = await prisma.product.create({
         data: { ...data, variants: { create: variants.map(({ id, expectedStock, ...v }) => v) } },
@@ -243,15 +254,25 @@ export async function createProduct(req: Request, res: Response) {
 export async function updateProduct(req: Request, res: Response) {
     const input = productSchema.partial().parse(req.body);
     const product = await prisma.$transaction(async (tx) => {
+        // Serialize catalogue edits so a concurrent gallery change cannot revive an obsolete link.
+        await tx.$queryRaw`SELECT id FROM products WHERE id = ${req.params.id} FOR NO KEY UPDATE`;
         const current = await tx.product.findUnique({ where: { id: req.params.id }, include });
         if (!current) throw new AppError("Produit introuvable", 404);
         await validateRecommendationTargets(tx, input.recommendationSettings, current.id);
-        const { variants, ...data } = input;
+        const { variants, colorPhotos, ...data } = input;
         if (variants) assertSizes(variants, current.variants);
         if (data.categoryId && !(await tx.category.findUnique({ where: { id: data.categoryId } })))
             throw new AppError("Catégorie introuvable", 400);
         const ids = variants?.flatMap((v) => (v.id ? [v.id] : [])) || [];
         if (new Set(ids).size !== ids.length) throw new AppError("Variante répétée", 400);
+        const savedPhotos = colorPhotosSchema.safeParse(current.colorPhotos).data;
+        const links = colorPhotos ?? savedPhotos;
+        const nextVariants = variants
+            ? [...current.variants.filter((v) => !ids.includes(v.id)), ...variants]
+            : current.variants;
+        const validLinks = links && validColorPhotos(links, data.images ?? current.images, nextVariants);
+        if (colorPhotos && validLinks?.length !== colorPhotos.length)
+            throw new AppError("Associez les couleurs du produit aux photos de sa galerie.", 400);
         for (const variant of variants || []) {
             const { id, expectedStock, ...values } = variant;
             if (!id) {
@@ -277,7 +298,16 @@ export async function updateProduct(req: Request, res: Response) {
                 await tx.productVariant.update({ where: { id }, data: metadata });
             }
         }
-        const updated = await tx.product.update({ where: { id: current.id }, data, include });
+        const updated = await tx.product.update({
+            where: { id: current.id },
+            data: {
+                ...data,
+                ...(colorPhotos || validLinks?.length !== savedPhotos?.length
+                    ? { colorPhotos: validLinks }
+                    : {}),
+            },
+            include,
+        });
         assertPublishable(updated);
         return updated;
     });

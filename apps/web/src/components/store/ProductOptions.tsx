@@ -1,29 +1,20 @@
-"use client";
 import { Check, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-const colorKey = (v: Product["variants"][number]) =>
-    `${v.color.toLowerCase()}|${(v.colorNameFr || v.colorNameAr || v.colorNameEn).trim().toLowerCase()}`;
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
+import { isAmbiguousSize, productColorKey, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
 import { orderedSizes } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({
     product,
-    preferredSize,
+    variantId: id,
+    onVariantChange,
 }: {
     product: Product;
-    preferredSize?: string;
+    variantId: string;
+    onVariantChange: (variant: Product["variants"][number], colorClicked: boolean) => void;
 }) {
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
-    const [id, setId] = useState(() =>
-        preferredSize
-            ? variants.find(
-                  (v) =>
-                      v.stock > 0 && (v.size || "").toLowerCase() === preferredSize.toLowerCase(),
-              )?.id || ""
-            : variants.find((v) => v.stock > 0)?.id || variants[0]?.id || "",
-    );
     const [quantity, setQuantity] = useState(1);
     const [quantityDraft, setQuantityDraft] = useState<string | null>(null);
     const cart = useCartStore((state) => state.items);
@@ -61,20 +52,20 @@ export function ProductOptions({
     const choices = [...new Set([1, 2, 3, ...tiers.map((tier) => tier.minQuantity)])].sort(
         (a, b) => a - b,
     );
-    const colors = [...new Map(variants.map((v) => [colorKey(v), v])).values()];
+    const colors = [...new Map(variants.map((v) => [productColorKey(v), v])).values()];
     const sizes = orderedSizes(variants);
-    const selectedColor = variant ? colorKey(variant) : "";
+    const selectedColor = variant ? productColorKey(variant) : "";
     function chooseQuantity(value: number) {
         setQuantity(value);
         setQuantityDraft(null);
     }
-    function selectVariant(next: Product["variants"][number] | undefined) {
+    function selectVariant(next: Product["variants"][number] | undefined, colorClicked = false) {
         if (!next) return;
         const remaining = Math.max(
             0,
             next.stock - (cart.find((item) => item.variantId === next.id)?.quantity ?? 0),
         );
-        setId(next.id);
+        onVariantChange(next, colorClicked);
         chooseQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
     }
     return (
@@ -89,8 +80,8 @@ export function ProductOptions({
                     </legend>
                     <div className="color-options">
                         {colors.map((color) => {
-                            const key = colorKey(color);
-                            const matches = variants.filter((v) => colorKey(v) === key);
+                            const key = productColorKey(color);
+                            const matches = variants.filter((v) => productColorKey(v) === key);
                             const available = matches.some((v) => v.stock > 0);
                             const label =
                                 color.colorNameAr ||
@@ -112,6 +103,7 @@ export function ProductOptions({
                                             matches.find(
                                                 (v) => v.size === variant?.size && v.stock > 0,
                                             ) || matches.find((v) => v.stock > 0),
+                                            true,
                                         )
                                     }
                                 >
@@ -138,7 +130,7 @@ export function ProductOptions({
                     <div className="size-options">
                         {sizes.map((size) => {
                             const match = variants.find(
-                                (v) => colorKey(v) === selectedColor && (v.size || "") === size,
+                                (v) => productColorKey(v) === selectedColor && (v.size || "") === size,
                             );
                             const label = size || "مقاس موحد";
                             return (

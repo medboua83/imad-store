@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ProductGallery } from "@/components/store/ProductGallery";
+import { ProductPresentation } from "@/components/store/ProductPresentation";
 import { Suspense } from "react";
 import { ProductSuggestions } from "@/components/store/ProductSuggestions";
 import { ArrowRight, PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
 import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
-import { ProductOptions } from "@/components/store/ProductOptions";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
 import { isAmbiguousSize } from "@imad-store/shared";
@@ -31,6 +30,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const returnTo = catalogReturnPath(raw.returnTo);
   const requestedSize = typeof raw.size === "string" && raw.size.length <= 40 && !isAmbiguousSize(raw.size) ? raw.size : undefined;
   const sizeUnavailable = Boolean(raw.size) && (!requestedSize || !variants.some(v => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase()));
+  const initialVariant = requestedSize
+    ? variants.find((v) => v.stock > 0 && (v.size || "").toLowerCase() === requestedSize.toLowerCase())
+    : variants.find((v) => v.stock > 0) ?? variants[0];
   const inStock = variants.some((v) => v.stock > 0);
   const settings = await publicSettings();
   const description = productDescription(product);
@@ -66,9 +68,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
         </Link>{" "}
         / {name}
       </nav>
-      <div className="product-layout">
-        <ProductGallery key={product.id} images={product.images} name={name} />
-        <div className="product-detail refined-detail">
+      <ProductPresentation
+        key={`${product.id}:${requestedSize || ""}:${sizeUnavailable}`}
+        product={product}
+        initialVariant={sizeUnavailable ? undefined : initialVariant}
+        identity={
           <div className="product-identity">
             <div className="product-heading-tools">
               <Link
@@ -100,12 +104,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
               <span>{settings.codEnabled ? "الدفع عند الاستلام · بدون إنشاء حساب" : "راجعوا طرق الدفع المتاحة مع المتجر"}</span>
             </div>
           </div>
-          {sizeUnavailable ? (
+        }
+        unavailable={sizeUnavailable ? (
             <div className="product-size-unavailable" role="status" aria-label="المقاس المطلوب">
               <p>المقاس المطلوب غير متوفر حالياً. راجعوا المقاسات الأخرى قبل الإضافة.</p>
               <Link href={productDetailsHref(product.slug, undefined, returnTo)} prefetch={false}>عرض المقاسات الأخرى</Link>
             </div>
-          ) : <ProductOptions key={`${product.id}:${requestedSize || ""}`} product={product} preferredSize={requestedSize} />}
+        ) : null}
+      >
           <div className="product-information">
             <details open>
               <summary>تفاصيل القطعة</summary>
@@ -133,8 +139,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
               </nav>
             </details>
           </div>
-        </div>
-      </div>
+      </ProductPresentation>
       <Suspense fallback={null}><ProductSuggestions slug={slug} /></Suspense>
     </section>
   );
