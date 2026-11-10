@@ -284,6 +284,7 @@ export function ProductsTab({
             }
             for (const [index, v] of payload.entries()) {
                 const owner = products.find((p) =>
+                    p.slug !== creationRecovery?.slug &&
                     p.variants.some((saved) => saved.sku === v.sku && saved.id !== v.id),
                 );
                 if (!owner) continue;

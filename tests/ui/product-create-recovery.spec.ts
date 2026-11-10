@@ -94,6 +94,8 @@ for (const scenario of ["missing", "saved", "late"] as const) {
             expect(writes).toEqual([writes[0], { ...writes[0], nameFr: "Abaya de recette corrigée", nameEn: "Abaya de recette corrigée" }]);
         } else {
             if (scenario === "late") {
+                await page.getByRole("button", { name: "Actualiser", exact: true }).click();
+                await expect(page.getByRole("heading", { name: "Abaya de recette", level: 3 })).toBeVisible();
                 await save.click();
                 await expect(save).toBeDisabled();
                 await verify.click();
