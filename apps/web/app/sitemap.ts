@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { siteOrigin, publicProducts } from "@/lib/server-api";
+import { siteOrigin, publicCategories, publicProducts } from "@/lib/server-api";
+import { publishedCategories } from "@/lib/catalog-navigation";
 export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const origin = siteOrigin();
@@ -11,6 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         "/returns",
         "/privacy",
     ].map((path) => ({ url: new URL(path, origin).toString() }));
+    for (const category of publishedCategories(await publicCategories())) {
+        pages.push({ url: new URL(`/collections/${encodeURIComponent(category.slug)}`, origin).href });
+    }
     let page = 1,
         totalPages = 1;
     do {
