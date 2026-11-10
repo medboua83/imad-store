@@ -1,4 +1,8 @@
+export const homeSectionKeys = ["collections", "featured", "banners", "guide"] as const;
+export type HomeSection = (typeof homeSectionKeys)[number];
+
 export interface SiteContent {
+    homeSections?: HomeSection[];
     heroTitle: string;
     heroSubtitle: string;
     heroImage: string;

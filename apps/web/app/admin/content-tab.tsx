@@ -3,7 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { defaultSiteContent, type SiteContent } from "@imad-store/shared";
+import { defaultSiteContent, homeSectionKeys, type HomeSection, type SiteContent } from "@imad-store/shared";
 import {
     getContentAdmin,
     getProducts,
@@ -13,6 +13,13 @@ import {
 } from "@/lib/api";
 import { HomeView } from "@/components/store/HomeView";
 import { homeCatalogueQuery } from "@/lib/home-catalogue";
+const homeSectionLabels: Record<HomeSection, string> = {
+    collections: "Catégories de l’accueil",
+    featured: "Produits mis en avant",
+    banners: "Bannières de l’accueil",
+    guide: "Guide de commande",
+};
+
 export default function ContentTab() {
     const { t, locale } = useAdminLocale();
     const [content, setContent] = useState<SiteContent>(defaultSiteContent);
@@ -111,6 +118,15 @@ export default function ContentTab() {
             setBusy(false);
         }
     }
+    const homeSections = content.homeSections ?? homeSectionKeys;
+    const hiddenSections = homeSectionKeys.filter((section) => !homeSections.includes(section));
+    function moveHomeSection(index: number, direction: -1 | 1) {
+        const next = index + direction;
+        if (next < 0 || next >= homeSections.length) return;
+        const sections = [...homeSections];
+        [sections[index], sections[next]] = [sections[next], sections[index]];
+        change("homeSections", sections);
+    }
     const input = "admin-field mt-2";
     return (
         <div
@@ -191,6 +207,40 @@ export default function ContentTab() {
                                 />
                             </label>
                         </div>
+                        <fieldset className="border border-white/20 p-4 space-y-3">
+                            <legend>{t("Sections de l’accueil")}</legend>
+                            <p className="admin-muted">{t("Les sections s’affichent dans cet ordre, sous le bandeau.")}</p>
+                            <ol className="space-y-2">
+                                {[...homeSections, ...hiddenSections].map((section, index) => {
+                                    const visible = index < homeSections.length;
+                                    const label = t(homeSectionLabels[section]);
+                                    return (
+                                        <li key={section} className="flex flex-wrap items-center gap-2">
+                                            <label className="flex items-center gap-2 grow">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={visible}
+                                                    onChange={(event) => change("homeSections", event.target.checked
+                                                        ? [...homeSections, section]
+                                                        : homeSections.filter((key) => key !== section))}
+                                                />
+                                                {label}
+                                            </label>
+                                            {visible && (
+                                                <>
+                                                    <button type="button" className="action" disabled={index === 0}
+                                                        aria-label={`${t("Monter")} · ${label}`}
+                                                        onClick={() => moveHomeSection(index, -1)}>↑</button>
+                                                    <button type="button" className="action" disabled={index === homeSections.length - 1}
+                                                        aria-label={`${t("Descendre")} · ${label}`}
+                                                        onClick={() => moveHomeSection(index, 1)}>↓</button>
+                                                </>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        </fieldset>
                         <fieldset className="border border-white/20 p-4 space-y-4">
                             <legend>{t("Bannières (3 maximum)")}</legend>
                             {content.banners.map((banner, index) => (

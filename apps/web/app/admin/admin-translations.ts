@@ -1,4 +1,11 @@
 export const adminArabic: Record<string, string> = {
+    "Sections de l’accueil": "أقسام الصفحة الرئيسية",
+    "Les sections s’affichent dans cet ordre, sous le bandeau.": "تظهر الأقسام بهذا الترتيب تحت اللافتة الرئيسية.",
+    "Catégories de l’accueil": "فئات الصفحة الرئيسية",
+    "Produits mis en avant": "المنتجات المميزة",
+    "Bannières de l’accueil": "لافتات الصفحة الرئيسية",
+    "Guide de commande": "دليل الطلب",
+    "Descendre": "نقل للأسفل",
     "L’adresse « {slug} » appartient déjà au produit « {name} ». Modifiez l’adresse pour un autre produit, ou ouvrez la fiche existante pour ajouter des variantes.": "الرابط «{slug}» مستخدم للمنتج «{name}». غيّروا الرابط لإنشاء منتج آخر، أو افتحوا المنتج الموجود لإضافة ألوان أو مقاسات.",
     "Variante {number} : la référence « {sku} » est déjà utilisée dans « {name} ». Choisissez une autre référence ou laissez vide pour une nouvelle variante.": "الخيار {number}: المرجع «{sku}» مستخدم في «{name}». اختاروا مرجعاً آخر أو اتركوه فارغاً للخيار الجديد.",
     "Cette adresse de produit existe déjà. Modifiez l’adresse ou ouvrez la fiche existante pour ajouter une couleur ou une taille.": "رابط المنتج مستخدم بالفعل. غيّروا الرابط أو افتحوا المنتج الموجود لإضافة لون أو مقاس.",
