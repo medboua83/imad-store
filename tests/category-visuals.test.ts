@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
     categoryImageSources,
     categoryVisual,
-    categoryThumbnail,
 } from "../apps/web/src/components/store/category-visuals";
 import type { Category, Product } from "../apps/web/src/lib/api";
 test("Unconfigured categories fall back to their own products without borrowing unrelated photos", () => {
@@ -32,11 +31,10 @@ test("Legacy placeholder images are ignored and unknown empty categories have a 
 
 test("The owner-selected Sabots artwork is shared by homepage, menu and shop", () => {
     const category = { slug: "mens-clogs", image: "/uploads/old-cover.webp" } as Category;
-    const visual = categoryVisual(category, []);
-    assert.equal(visual.src, "/images/categories/sabots-homme-v2.webp");
-    assert.equal(categoryThumbnail(category.slug), visual.src);
-    assert.equal(visual.illustrative, true);
-    assert.equal(visual.sources[1], category.image);
+    const sources = categoryImageSources(category, []);
+    assert.equal(sources[0], "/images/categories/sabots-homme-v2.webp");
+    assert.equal(sources[1], category.image);
+    assert.equal(categoryVisual(category, []).illustrative, true);
 });
 
 test("New category thumbnails reuse published product originals without changing custom artwork", () => {

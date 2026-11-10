@@ -35,7 +35,9 @@ for (const width of [390, 1440]) {
         }
         await expect(page).toHaveURL(/\/shop\?section=men$/);
         await expect(page.locator(".catalog-card-image").first()).toHaveCSS("aspect-ratio", "1 / 1");
-        await expect(categoryRail.getByRole("link", { name: /صابو رجالي/ })).toBeVisible();
+        const clogsCategory = categoryRail.getByRole("link", { name: /صابو رجالي/ });
+        await expect(clogsCategory).toBeVisible();
+        await expect(clogsCategory.locator("img")).toHaveAttribute("src", /sabots-homme-v2.webp/);
         await expect(categoryRail.getByRole("link", { name: /معاطف نسائية/ })).toHaveCount(0);
         await expect(sections.getByRole("link", { name: /Homme/ })).toHaveAttribute("aria-current", "page");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
