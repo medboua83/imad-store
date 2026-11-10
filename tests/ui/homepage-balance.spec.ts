@@ -29,10 +29,13 @@ for (const width of [320, 390, 1440]) {
         const cta = page.locator('.hero-actions a[href="#collections"]');
         const collections = page.locator("#collections");
         const hero = page.locator(".editorial-hero");
-        await expect(page.locator(".hero-detail-card")).toBeVisible();
-        expect(await hero.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(
-            width < 768 ? 540 : 530,
-        );
+        await expect(hero.getByRole("link")).toHaveCount(1);
+        await expect(cta).toHaveAccessibleName("اكتشفوا المجموعة");
+        await expect(cta).toBeInViewport({ ratio: 1 });
+        await expect(hero.locator("img")).toHaveCount(1);
+        await expect(hero.locator(".hero-photo")).toHaveAttribute("src", /sac.webp/);
+        await expect(hero.locator(".hero-photo")).toHaveCSS("object-fit", "contain");
+        expect(await hero.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(475);
         const featuredY = await page
             .locator(".featured-section")
             .evaluate((el) => el.getBoundingClientRect().top + scrollY);
@@ -51,7 +54,17 @@ for (const width of [320, 390, 1440]) {
                 await collections.evaluate((el) => el.getBoundingClientRect().top),
             ).toBeGreaterThan(70);
         }
-        const categoryGrid = page.getByRole("navigation", { name: "فئات المتجر" });
+        await expect(collections).toBeFocused();
+        const sections = collections.getByRole("navigation", { name: "أقسام المتجر" });
+        await expect(sections.getByRole("link", { name: /Femme/ })).toHaveAttribute(
+            "href",
+            "/shop?section=women",
+        );
+        await expect(sections.getByRole("link", { name: /Homme/ })).toHaveAttribute(
+            "href",
+            "/shop?section=men",
+        );
+        const categoryGrid = collections.getByRole("navigation", { name: "فئات المتجر" });
         const categoryLinks = categoryGrid.getByRole("link");
         await expect(categoryLinks).toHaveCount(2);
         await expect(categoryLinks.last()).toHaveAttribute("href", "/shop?category=manteau-femme");
@@ -101,8 +114,9 @@ for (const width of [320, 390, 1440]) {
                 .locator(".product-size-preview")
                 .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
         ).toBeGreaterThanOrEqual(13);
-        await expect(page.locator(".hero-photo")).toHaveAttribute("src", /sac.webp/);
-        await expect(page.locator(".hero-detail-card img")).toHaveAttribute("src", /abaya.webp/);
+        await expect(
+            page.locator(".featured-section .catalog-card-image img[src$='abaya.webp']"),
+        ).toHaveCount(1);
         await expect(page.locator(".home-shopping-guide")).not.toHaveAttribute("open", "");
         await page.locator(".home-shopping-guide summary").click();
         await expect(page.locator(".home-shopping-guide .guide-grid")).toBeVisible();
