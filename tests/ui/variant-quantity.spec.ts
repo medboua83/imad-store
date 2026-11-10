@@ -32,7 +32,7 @@ for (const width of [390, 1440]) {
     await page.getByRole("button", { name: "أسود", exact: true }).click();
     await expect(quantity).toHaveValue("2");
     await expect(price).toContainText("400.00");
-    await expect(page.getByRole("button", { name: "اختيار 3 قطع", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "اختيار 3 قطع", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "بني", exact: true }).click();
     await expect(quantity).toHaveValue("2");
     await expect(page.locator(".purchase-price")).toContainText("400.00");
@@ -62,9 +62,9 @@ for (const width of [390, 1440]) {
     await expect(page.locator("#product-quantity")).toHaveValue("2");
     await page.getByRole("button", { name: "بني", exact: true }).click();
     await expect(page.locator("#product-quantity")).toHaveValue("1");
-    await expect(page.locator(".quantity-selection-total")).toContainText("230.00");
+    await expect(page.locator(".purchase-price")).toContainText("230.00");
     await expect(page.locator(".availability-note")).toContainText("1 قطعة متاحة");
-    await expect(page.getByRole("button", { name: "اختيار قطعتين", exact: true })).toBeDisabled();
+    await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
     await expect(page.locator(".quantity-cart-preview")).toContainText("630.00");
     await page.screenshot({ path: info.outputPath(`variant-reserved-stock-${width}.png`) });
     // Choosing an option alone never adds, removes or changes basket lines.

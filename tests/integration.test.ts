@@ -2175,7 +2175,7 @@ test("Dashboard controls signed transactional assistance without creating custom
 test("Size discovery matches positive stock on the same variant and keeps private sizes hidden", async () => {
     const prefix = `SizeDiscovery${randomBytes(4).toString("hex")}`;
     const ids: string[] = [];
-    const create = async (suffix: string, variants: {size:string;stock:number}[], extra: Record<string, unknown> = {}) => {
+    const create = async (suffix: string, variants: {size:string;stock:number;color?:string}[], extra: Record<string, unknown> = {}) => {
         const body = payload();
         const record = await prisma.product.create({data:{...body, slug:`size-discovery-${suffix}-${randomBytes(4).toString("hex")}`,
             nameFr:prefix, nameAr:prefix, nameEn:prefix, ...extra,
@@ -2184,7 +2184,7 @@ test("Size discovery matches positive stock on the same variant and keeps privat
         ids.push(record.id);return record;
     };
     try {
-        const a=await create("a",[{size:"40",stock:0},{size:"44",stock:4},{size:"40 41",stock:10}]);
+        const a=await create("a",[{size:"40",stock:0,color:"#000000"},{size:"44",stock:4,color:"#804000"},{size:"40 41",stock:10}]);
         const b=await create("b",[{size:"40",stock:2},{size:"M",stock:1}]);
         const hidden = [`DRAFT${prefix}`,`ARCHIVED${prefix}`,`NOPHOTO${prefix}`,`FIXTURE${prefix}`];
         await create("draft",[{size:hidden[0],stock:4}],{status:"DRAFT"});
@@ -2203,6 +2203,13 @@ test("Size discovery matches positive stock on the same variant and keeps privat
         const fortyFour=await request(app).get(`${base}&size=44`);
         assert.equal(fortyFour.body.total,1);
         assert.equal(fortyFour.body.data[0].id,a.id);
+        assert.ok(filtered.body.filterOptions.colors.some(color => color.value === "#804000"));
+        const brown44 = await request(app).get(`${base}&size=44&color=%23804000`);
+        assert.equal(brown44.status, 200);
+        assert.deepEqual(brown44.body.data.map(product => product.id), [a.id]);
+        assert.equal((await request(app).get(`${base}&size=44&color=%23000000`)).body.total, 0);
+        assert.equal((await request(app).get(`${base}&color=%25`)).body.total, 0);
+        assert.equal((await request(app).get(`${base}&color=black&color=brown`)).status, 400);
         assert.equal((await request(app).get(`${base}&size=m`)).body.data[0].id,b.id);
         assert.equal((await request(app).get(`${base}&size=99`)).body.total,0);
         assert.equal((await request(app).get(`${base}&size=.%2A`)).body.total,0);

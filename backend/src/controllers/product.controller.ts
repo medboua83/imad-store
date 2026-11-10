@@ -97,6 +97,8 @@ function assertSizes(variants: any[], previous: any[] = []) {
             throw new AppError("Une seule taille par variante. Créez une variante et un stock distincts pour chaque pointure.", 400);
     }
 }
+const literalLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
+
 async function list(queryInput: unknown, admin: boolean) {
     const query = paginationSchema
         .extend({
@@ -105,6 +107,7 @@ async function list(queryInput: unknown, admin: boolean) {
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
             size: z.string().max(40).refine(v => !isAmbiguousSize(v), "Une seule taille par filtre").optional(),
+            color: z.string().min(1).max(80).optional(),
             includeFilters: z.enum(["0", "1"]).optional(),
             ids: z.string().max(199).transform(v => v.split(",")).pipe(z.array(objectIdSchema).min(1).max(8)).optional(),
             minPrice: z.coerce.number().min(0).max(1000000).optional(),
@@ -128,10 +131,11 @@ async function list(queryInput: unknown, admin: boolean) {
         query.minPrice > query.maxPrice
     )
         throw new AppError("Le prix minimum dépasse le maximum", 400);
-    if (query.availability === "in-stock" || query.size)
+    if (query.availability === "in-stock" || query.size || query.color)
         where.variants = { some: { stock: { gt: 0 },
             // PostgreSQL case-insensitive matching uses ILIKE: escape wildcard characters.
-            ...(query.size ? { size: { equals: query.size.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" } } : {}),
+            ...(query.size ? { size: { equals: literalLike(query.size), mode: "insensitive" } } : {}),
+            ...(query.color ? { color: { equals: literalLike(query.color), mode: "insensitive" } } : {}),
         } };
     if (query.minPrice !== undefined || query.maxPrice !== undefined)
         where.price = {
@@ -161,9 +165,9 @@ async function list(queryInput: unknown, admin: boolean) {
     if (categoryFilter) where.category = categoryFilter;
     if (query.search)
         where.OR = ["nameFr", "nameAr", "nameEn"].map((field) => ({
-            [field]: { contains: query.search!.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" },
+            [field]: { contains: literalLike(query.search!), mode: "insensitive" },
         }));
-    const [products, total, sizes] = await Promise.all([
+    const [products, total, facets] = await Promise.all([
         prisma.product.findMany({
             where,
             include,
@@ -174,20 +178,36 @@ async function list(queryInput: unknown, admin: boolean) {
         prisma.product.count({ where }),
         !admin && query.includeFilters === "1"
             ? prisma.productVariant.groupBy({
-                by: ["size"],
+                by: ["size", "color", "colorNameAr", "colorNameFr", "colorNameEn"],
                 where: { stock: { gt: 0 }, product: { is: { ...visibility, ...(categoryFilter ? { category: categoryFilter } : {}) } } },
-              }).then(rows => rows.flatMap(row => row.size?.trim() && !isAmbiguousSize(row.size) ? [row.size] : []))
+                orderBy: [{ color: "asc" }, { colorNameAr: "asc" }, { colorNameFr: "asc" }],
+              })
                 // Suggestions are optional; a failure must not hide the catalog.
                 .catch(() => null)
             : Promise.resolve(null),
     ]);
+    const sizes = new Set<string>();
+    const colors = new Map<string, string>();
+    for (const variant of facets ?? []) {
+        if (isAmbiguousSize(variant.size)) continue;
+        if (variant.size?.trim()) sizes.add(variant.size);
+        const value = variant.color.toLowerCase();
+        if (value.trim() && !colors.has(value)) {
+            const label = variant.colorNameAr.trim() || variant.colorNameFr.trim() ||
+                variant.colorNameEn.trim() || variant.color;
+            colors.set(value, label);
+        }
+    }
     return {
         success: true,
         data: admin ? products : products.map(publicProduct),
         total,
         page: query.page,
         totalPages: Math.ceil(total / query.limit),
-        ...(sizes ? { filterOptions: { sizes: sizes.sort((a, b) => a.localeCompare(b, "en", { numeric: true })) } } : {}),
+        ...(facets ? { filterOptions: {
+            sizes: [...sizes].sort((a, b) => a.localeCompare(b, "en", { numeric: true })),
+            colors: [...colors].map(([value, label]) => ({ value, label })),
+        } } : {}),
     };
 }
 export async function getProducts(req: Request, res: Response) {

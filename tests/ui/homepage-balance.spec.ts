@@ -138,6 +138,29 @@ for (const width of [320, 390, 1440]) {
         await expect(page.locator(".home-shopping-guide .guide-grid")).toBeVisible();
         await page.locator(".home-shopping-guide summary").click();
         await expect(page.locator(".footer-service-strip")).toHaveCount(0);
+        const footer = page.getByRole("contentinfo");
+        const footerShop = footer.getByRole("navigation", { name: "المتجر", exact: true });
+        const footerHelp = footer.getByRole("navigation", { name: "خدمة العملاء", exact: true });
+        await expect(footerShop.getByRole("link", { name: "كل المنتجات" })).toHaveAttribute(
+            "href",
+            "/shop",
+        );
+        await expect(footerShop.locator('a[href="/shop?category=manteau-femme"]')).toBeVisible();
+        await expect(footerHelp.getByRole("link", { name: "الاستبدال والإرجاع" })).toHaveAttribute(
+            "href",
+            "/returns",
+        );
+        await expect(footer.getByRole("link", { name: "سياسة الخصوصية" })).toHaveCount(1);
+        const footerBrand = (await footer.locator(".footer-brand").boundingBox())!;
+        const shopBox = (await footerShop.boundingBox())!;
+        const helpBox = (await footerHelp.boundingBox())!;
+        expect(Math.abs(shopBox.y - helpBox.y)).toBeLessThan(1);
+        expect(helpBox.x + helpBox.width).toBeLessThanOrEqual(shopBox.x);
+        if (width < 768) {
+            expect(footerBrand.y + footerBrand.height).toBeLessThan(shopBox.y);
+        } else {
+            expect(Math.abs(footerBrand.y - shopBox.y)).toBeLessThan(1);
+        }
         await expect(page.locator(".footer-socials a")).toHaveCount(4);
         for (const network of ["WhatsApp", "Instagram", "Facebook", "TikTok"]) {
             const social = page
