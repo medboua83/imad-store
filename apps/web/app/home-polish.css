@@ -29,18 +29,15 @@
     object-fit: contain;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-block: 0 14px;
+    justify-content: flex-start;
+    margin-block: 0 10px;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections > a {
-    min-height: 52px;
-    justify-content: space-between;
-    padding-inline: clamp(12px, 3vw, 24px);
-    border-radius: 12px;
-    background: #f8f2e7;
-    font-size: 16px;
+    padding-inline: 12px;
+    border-color: #e3d9c6;
+    border-radius: 999px;
+    background: transparent;
+    font-size: 14px;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections > a:hover {
     border-color: #ac8540;
