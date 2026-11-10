@@ -551,7 +551,7 @@
     position: absolute;
     z-index: 5;
     inset-block-start: calc(100% + 5px);
-    inset-inline-end: 0;
+    inset-inline-start: 0;
     min-width: 155px;
     padding: 4px;
     border: 1px solid #dfd1b7;

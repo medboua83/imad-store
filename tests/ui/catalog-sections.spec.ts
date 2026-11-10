@@ -55,7 +55,12 @@ for (const width of [320, 1440]) {
 
         const sort = page.locator(".collection-sort");
         await sort.locator("summary").click();
-        await sort.getByRole("link", { name: "السعر: من الأقل" }).click();
+        const menu = sort.getByRole("group", { name: "ترتيب المنتجات" });
+        await expect(menu).toBeVisible();
+        const bounds = await menu.boundingBox();
+        expect(bounds?.x).toBeGreaterThanOrEqual(0);
+        expect((bounds?.x ?? width) + (bounds?.width ?? 1)).toBeLessThanOrEqual(width);
+        await menu.getByRole("link", { name: "السعر: من الأقل" }).click();
         await expect(page).toHaveURL(url =>
             url.searchParams.get("category") === "mens-clogs" &&
             url.searchParams.get("section") === "men" &&
