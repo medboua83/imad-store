@@ -485,3 +485,103 @@
 .shopping-questions summary { cursor:pointer; min-height:44px; padding-block:8px; font-weight:600; }
 .shopping-questions p { margin-top:10px; }
 .shopping-questions a { text-decoration:underline; text-underline-offset:4px; }
+
+/* Compact collection cover and quick controls above the product grid. */
+.shop-collection-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(12px, 4vw, 48px);
+    padding: clamp(12px, 2.5vw, 28px);
+    margin-block-end: 16px;
+    border: 1px solid #e3d7c0;
+    border-radius: 18px;
+    background: #f5eee3;
+}
+.shop-collection-heading h1 {
+    margin-block: 3px;
+    font-size: clamp(27px, 4.4vw, 49px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+.shop-collection-heading p {
+    color: #68583e;
+    font-size: clamp(12px, 1.4vw, 15px);
+}
+.shop-collection-heading .shop-collection-kicker {
+    font-size: 12px;
+    font-weight: 700;
+}
+.shop-collection-photo {
+    position: relative;
+    flex: 0 0 clamp(74px, 12vw, 148px);
+    aspect-ratio: 1;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #ebe0cd;
+}
+.shop-collection-photo img {
+    object-fit: cover;
+    object-position: center top;
+}
+.catalog-result-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.collection-sort {
+    position: relative;
+}
+.collection-sort summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding-inline: 12px;
+    border: 1px solid #dfdad0;
+    border-radius: 25px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+}
+.collection-sort summary::-webkit-details-marker {
+    display: none;
+}
+.collection-sort > div {
+    position: absolute;
+    z-index: 5;
+    inset-block-start: calc(100% + 5px);
+    inset-inline-end: 0;
+    min-width: 155px;
+    padding: 4px;
+    border: 1px solid #dfd1b7;
+    border-radius: 12px;
+    background: #fffefa;
+    box-shadow: 0 8px 22px #33240f1c;
+}
+.collection-sort a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-size: 13px;
+}
+.collection-sort a:hover,
+.collection-sort a[aria-current] {
+    color: #604416;
+    background: #f5eee3;
+}
+@media (max-width: 767px) {
+    .shop-collection-heading {
+        margin-block-end: 10px;
+    }
+    .shop-collection-photo {
+        flex-basis: 84px;
+    }
+    .catalog-results-heading {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
