@@ -77,6 +77,7 @@ export interface Product {
     quantityDiscounts?: import("./quantity-pricing").QuantityDiscount[];
     freeShipping?: boolean;
     images: string[]; // Supabase Storage URLs
+    colorPhotos?: import("./product-color-photos").ProductColorPhoto[] | null;
     status: ProductStatus;
     categoryId: string;
     category?: Category;
@@ -166,3 +167,4 @@ export const ORDER_SERVICE_POLICY_VERSION = "store-order-service-v1-2026-10-19";
 export * from "./shipping-address";
 export * from "./quantity-pricing";
 export * from "./catalog-sections";
+export * from "./product-color-photos";

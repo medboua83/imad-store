@@ -1,4 +1,3 @@
-"use client";
 import Image from "next/image";
 import { Expand, X, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import {
@@ -10,11 +9,15 @@ import {
     type TouchEvent,
 } from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
-export function ProductGallery({ images, name }: { images: string[]; name: string }) {
-    const [selected, setSelected] = useState(images[0]);
+export function ProductGallery({ images, name, selected, onSelect }: {
+    images: string[];
+    name: string;
+    selected?: string;
+    onSelect: (image: string) => void;
+}) {
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
     const available = [...new Set(images.filter((src) => src && !failed.has(src)))];
-    const active = Math.max(0, available.indexOf(selected));
+    const active = Math.max(0, selected ? available.indexOf(selected) : 0);
     function fail(src: string) {
         setFailed((previous) => (previous.has(src) ? previous : new Set([...previous, src])));
     }
@@ -55,7 +58,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
     }, [src, active, available.length, revealThumbnail]);
     function move(offset: number) {
         if (available.length > 1)
-            setSelected(available[(active + offset + available.length) % available.length]);
+            onSelect(available[(active + offset + available.length) % available.length]);
     }
     function navigate(event: KeyboardEvent<HTMLElement>) {
         if (
@@ -68,8 +71,8 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
             return;
         if (event.key === "ArrowRight") move(1);
         else if (event.key === "ArrowLeft") move(-1);
-        else if (event.key === "Home") setSelected(available[0]);
-        else if (event.key === "End") setSelected(available[available.length - 1]);
+        else if (event.key === "Home") onSelect(available[0]);
+        else if (event.key === "End") onSelect(available[available.length - 1]);
         else return;
         event.preventDefault();
         if (thumbnails.current?.contains(event.currentTarget))
@@ -158,6 +161,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                         alt={`${name} — الصورة ${active + 1}`}
                         fill
                         preload={active === 0}
+                        loading={active === 0 ? undefined : "eager"}
                         sizes="(max-width: 767px) 100vw, 50vw"
                         className="gallery-photo"
                     />
@@ -210,7 +214,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                             aria-label={`عرض الصورة ${i + 1}`}
                             aria-pressed={active === i}
                             onKeyDown={navigate}
-                            onClick={() => setSelected(image)}
+                            onClick={() => onSelect(image)}
                         >
                             <Image
                                 src={image}

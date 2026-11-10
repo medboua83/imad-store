@@ -156,6 +156,7 @@ export interface Product {
     freeShipping?: boolean;
     recommendationSettings?: RecommendationSettings;
     images: string[];
+    colorPhotos?: import("@imad-store/shared").ProductColorPhoto[] | null;
     status: string;
     category: Category;
     variants: ProductVariant[];

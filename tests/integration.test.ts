@@ -404,6 +404,39 @@ test("An existing gallery can grow to 25 photos and a 26th cannot overwrite it",
         await prisma.product.update({ where: { id: product.id }, data: { images: product.images } });
     }
 });
+test("Color photos reference the product gallery and survive reordering without stale links", async () => {
+    const fields = payload();
+    const [cover, detail] = [fields.images[0], "/images/cat-shoes-men.png"];
+    const photo = { colorKey: "#000000|noir", image: detail };
+    const created = await request(app).post("/api/products").set(admin()).send({
+        ...fields, images: [cover, detail], colorPhotos: [photo],
+    });
+    assert.equal(created.status, 201);
+    const route = `/api/products/${created.body.data.id}`;
+    const publicRoute = `/api/products/${fields.slug}`;
+    const update = (body: object) => request(app).put(route).set(admin()).send(body);
+    try {
+        assert.deepEqual((await request(app).get(publicRoute)).body.data.colorPhotos, [photo]);
+        const reordered = await update({ images: [detail, cover] });
+        assert.equal(reordered.status, 200);
+        assert.deepEqual(reordered.body.data.colorPhotos, [photo]);
+        for (const invalid of [
+            [photo, photo],
+            [{ ...photo, image: "/images/other-product.webp" }],
+            [{ ...photo, colorKey: "#ffffff|blanc" }],
+        ]) {
+            assert.equal((await update({ colorPhotos: invalid })).status, 400);
+        }
+        assert.deepEqual((await request(app).get(publicRoute)).body.data.colorPhotos, [photo]);
+        const removed = await update({ images: [cover] });
+        assert.equal(removed.status, 200);
+        assert.deepEqual(removed.body.data.colorPhotos, []);
+        assert.equal((await update({ images: [cover, detail] })).status, 200);
+        assert.deepEqual((await request(app).get(publicRoute)).body.data.colorPhotos, []);
+    } finally {
+        await prisma.product.delete({ where: { id: created.body.data.id } });
+    }
+});
 test("Catalogue sections scope products, categories and size suggestions", async () => {
     const categoryIds: string[] = [];
     try {

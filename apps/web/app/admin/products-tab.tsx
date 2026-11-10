@@ -2,7 +2,7 @@
 import { useAdminLocale } from "./admin-locale";
 
 import { useEffect, useRef, useState } from "react";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { isAmbiguousSize, productColorKey, validColorPhotos, type ProductColorPhoto } from "@imad-store/shared";
 import { QuantityOfferEditor, packOffers, type DraftQuantityOffer } from "./quantity-offer-editor";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
@@ -32,6 +32,7 @@ const blank = {
     quantityDiscounts: [] as DraftQuantityOffer[],
     promotionEnabled: false,
     freeShipping: false,
+    colorPhotos: [] as ProductColorPhoto[],
     recommendationSettings: {
         enabled: false,
         upsellProductIds: [] as string[],
@@ -68,7 +69,7 @@ export function ProductsTab({
     onDelete,
     onRefresh,
 }: Props) {
-    const { t } = useAdminLocale();
+    const { t, locale } = useAdminLocale();
     const [search, setSearch] = useState(""),
         [publication, setPublication] = useState("ALL"),
         [stock, setStock] = useState("ALL"),
@@ -97,6 +98,9 @@ export function ProductsTab({
     const disabled = busy || uploading,
         dirty = open && JSON.stringify({ form, variants, images }) !== baseline;
     const summary = stockSummary(products);
+    const photoColors = new Map(
+        variants.filter((v) => !isAmbiguousSize(v.size)).map((v) => [productColorKey(v), v]),
+    );
     const visible = products
         .filter(
             (p) =>
@@ -155,6 +159,7 @@ export function ProductsTab({
                   })),
                   promotionEnabled: Boolean(p.compareAtPrice && p.compareAtPrice > p.price),
                   freeShipping: Boolean(p.freeShipping),
+                  colorPhotos: p.colorPhotos ?? [],
                   recommendationSettings: p.recommendationSettings ?? {
                       enabled: false,
                       upsellProductIds: [],
@@ -287,6 +292,7 @@ export function ProductsTab({
                         ? Number(form.compareAtPrice)
                         : null,
                 images,
+                colorPhotos: validColorPhotos(form.colorPhotos, images, payload),
                 variants: payload,
             };
         } catch (e) {
@@ -957,6 +963,58 @@ export function ProductsTab({
                             {t("Ajouter une variante")}
                         </button>
                     </fieldset>
+                    {photoColors.size > 0 && (
+                        <fieldset className="admin-variant-fields" disabled={disabled || !images.length}>
+                            <legend>{t("Photo par couleur")}</legend>
+                            <p className="admin-muted">
+                                {t(images.length
+                                    ? "Choisissez une photo de la galerie pour chaque couleur. Elle s’affichera sur la fiche produit quand cette couleur est sélectionnée."
+                                    : "Ajoutez d’abord des photos à la galerie pour les associer aux couleurs.")}
+                            </p>
+                            <div className="grid gap-3 md:grid-cols-2">
+                                {[...photoColors].map(([key, color]) => {
+                                    const name = (locale === "ar" ? color.colorNameAr : color.colorNameFr).trim()
+                                        || color.colorNameFr.trim() || color.color.trim() || t("Couleur");
+                                    const selected = form.colorPhotos.find(
+                                        (link) => link.colorKey === key && images.includes(link.image),
+                                    )?.image;
+                                    return (
+                                        <div key={key} className="flex items-end gap-3">
+                                            <label className="min-w-0 flex-1">
+                                                {t("Photo pour {0}", { "0": name })}
+                                                <select
+                                                    className={inputClass}
+                                                    value={selected ?? ""}
+                                                    onChange={(e) => {
+                                                        const image = e.target.value;
+                                                        setForm((old) => ({
+                                                            ...old,
+                                                            colorPhotos: [
+                                                                ...old.colorPhotos.filter((link) => link.colorKey !== key),
+                                                                ...(image ? [{ colorKey: key, image }] : []),
+                                                            ],
+                                                        }));
+                                                    }}
+                                                >
+                                                    <option value="">{t("Par défaut · photo de couverture")}</option>
+                                                    {images.map((image, index) => (
+                                                        <option key={`${image}-${index}`} value={image}>
+                                                            {index === 0 ? t("Couverture") : t("Photo {0}", { "0": index + 1 })}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
+                                            {selected && (
+                                                <span className="shrink-0 overflow-hidden rounded-md">
+                                                    <AdminProductPhoto images={[selected]} name={name} width={44} height={44} />
+                                                </span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </fieldset>
+                    )}
                     <ProductRecommendationEditor
                         key={`recommendations-${session}`}
                         currentId={id}

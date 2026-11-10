@@ -1,6 +1,6 @@
 // Read-only isolated store API for SSR and browser regression tests. No external services.
 const { createServer } = require("node:http");
-const { defaultSiteContent, catalogSections } = require("../../packages/shared/dist");
+const { defaultSiteContent, catalogSections, productColorKey } = require("../../packages/shared/dist");
 const category = {
   id: "111111111111111111111111",
   slug: "mens-clogs",
@@ -143,6 +143,19 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-gallery") data = {
     ...product, slug: "fixture-gallery", images: [
       "/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp", "/images/catalogue-test/chale.webp",
+    ],
+  };
+  else if (pathname === "/api/products/fixture-color-photos") data = {
+    ...product, slug: "fixture-color-photos",
+    images: ["/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp", "/images/catalogue-test/chale.webp"],
+    variants: [
+      ...product.variants,
+      variant("333333333333333333333335", "بني", "45", 4),
+      { ...variant("333333333333333333333336", "أزرق", "44", 3), color: "#222288" },
+    ],
+    colorPhotos: [
+      { colorKey: productColorKey(product.variants[0]), image: "/images/catalogue-test/chale.webp" },
+      { colorKey: productColorKey(product.variants[3]), image: "/images/catalogue-test/abaya.webp" },
     ],
   };
   else if (pathname === "/api/products/fixture-offer") data = {

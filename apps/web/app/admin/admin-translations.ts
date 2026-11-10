@@ -892,4 +892,11 @@ export const adminArabic: Record<string, string> = {
     "La ville « {city} » figure déjà dans une autre ligne.": "المدينة «{city}» موجودة في سطر آخر.",
     "{count} commande(s) déplacée(s) dans la corbeille.": "نُقلت {count} طلبات إلى سلة المحذوفات.",
     "Vue {number} du produit": "الصورة {number} للمنتج",
+    "Photo par couleur": "صورة لكل لون",
+    "Choisissez une photo de la galerie pour chaque couleur. Elle s’affichera sur la fiche produit quand cette couleur est sélectionnée.": "اختاروا صورة من المعرض لكل لون. ستظهر في صفحة المنتج عند اختيار ذلك اللون.",
+    "Ajoutez d’abord des photos à la galerie pour les associer aux couleurs.": "أضيفوا الصور أولاً إلى المعرض لربطها بالألوان.",
+    "Photo pour {0}": "صورة اللون {0}",
+    "Par défaut · photo de couverture": "افتراضياً · صورة الغلاف",
+    "Associez les couleurs du produit aux photos de sa galerie.": "اربطوا ألوان المنتج بصور معرضه.",
+    "Choisissez une seule photo par couleur.": "اختاروا صورة واحدة لكل لون.",
 };
