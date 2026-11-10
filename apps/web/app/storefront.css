@@ -300,17 +300,6 @@
     border: 1px solid #e3dfd8;
     color: #473c29;
 }
-.gallery-position {
-    position: absolute;
-    bottom: 16px;
-    inset-inline-end: 18px;
-    font:
-        12px "DM Sans",
-        sans-serif;
-    border-radius: 30px;
-    background: #fffdf7dd;
-    padding: 7px 12px;
-}
 .gallery-thumbnails {
     display: flex;
     overflow-x: auto;

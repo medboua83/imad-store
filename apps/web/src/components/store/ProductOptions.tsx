@@ -1,4 +1,4 @@
-import { Check, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
+import { Check, ChevronUp, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import type { Product } from "@/lib/api";
@@ -69,7 +69,7 @@ export function ProductOptions({
         chooseQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
     }
     return (
-        <div className="product-options refined-options" id="product-options">
+        <div className="product-options refined-options" id="product-options" tabIndex={-1}>
             <div className="product-variant-grid">
                 <fieldset className="variant-fieldset">
                     <legend>
@@ -95,6 +95,8 @@ export function ProductOptions({
                                 <button
                                     type="button"
                                     key={key}
+                                    className={hex ? "swatch-choice" : undefined}
+                                    title={label}
                                     aria-pressed={selectedColor === key}
                                     disabled={!available}
                                     aria-label={`${label}${available ? "" : " — غير متوفر"}`}
@@ -114,9 +116,9 @@ export function ProductOptions({
                                             aria-hidden="true"
                                         />
                                     )}
-                                    <span>{label}</span>
+                                    {!hex && <span>{label}</span>}
                                     {selectedColor === key && (
-                                        <Check size={14} aria-hidden="true" />
+                                        <Check className="color-choice-check" size={14} aria-hidden="true" />
                                     )}
                                 </button>
                             );
@@ -320,7 +322,7 @@ export function ProductOptions({
                     <div className="purchase-summary">
                         <p className="purchase-price" dir="ltr">
                             {available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
-                            <span>MAD · سعر الكمية المختارة</span>
+                            <span>MAD</span>
                         </p>
                         <p className="purchase-selection" aria-live="polite" aria-atomic="true">
                             {quantityInvalid ? (
@@ -350,8 +352,12 @@ export function ProductOptions({
                                 "اختاروا لوناً ومقاساً"
                             )}
                         </p>
+                        <a className="purchase-edit" href="#product-options">
+                            تعديل الخيارات <ChevronUp size={13} aria-hidden="true" />
+                        </a>
                     </div>
                     <button
+                        type="button"
                         className="btn-primary w-full"
                         disabled={!variant || !available || quantityInvalid}
                         onClick={() => {
