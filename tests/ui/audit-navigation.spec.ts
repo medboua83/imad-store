@@ -42,7 +42,8 @@ for (const width of [390, 1440])
         await city.fill("Rabat");
         await page.getByRole("option", { name: /الرباط/ }).click();
         await expect(city).toHaveValue("الرباط");
-        await page.goto("/contact#questions");
+        await page.getByRole("contentinfo").getByRole("link", { name: "أسئلة قبل الطلب" }).click();
+        await expect(page).toHaveURL(/\/contact#questions$/);
         await page.getByText("هل يلزم إنشاء حساب؟", { exact: true }).click();
         await expect(page.getByText("يمكنكم الطلب دون حساب.", { exact: false })).toBeVisible();
         expect(errors).toEqual([]);

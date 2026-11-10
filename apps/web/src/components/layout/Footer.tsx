@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getCategories } from "@/lib/api";
+import { getCategories, getSettings } from "@/lib/api";
 import { publishedCategories } from "@/lib/catalog-navigation";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SocialIcon } from "../store/StoreIcons";
-import { ArrowUpLeft, PackageCheck, SlidersHorizontal, MessageCircle } from "lucide-react";
+import { PackageCheck } from "lucide-react";
 
 const socials = [
     ["https://wa.me/message/M44N6KT35MW4N1", "WhatsApp"],
@@ -16,37 +15,18 @@ const socials = [
 ];
 
 export function Footer() {
-    const home = usePathname() === "/";
     const { data = [] } = useQuery({
         queryKey: ["public-categories"],
         queryFn: getCategories,
         staleTime: 60_000,
     });
+    const { data: settings } = useQuery({
+        queryKey: ["store-settings"],
+        queryFn: getSettings,
+        staleTime: 60_000,
+    });
     return (
         <footer className="site-footer refined-footer">
-            {!home && (
-                <div className="footer-service-strip section-container" aria-label="تجربة التسوق">
-                    <div>
-                        <PackageCheck size={22} aria-hidden="true" />
-                        <span>
-                            الدفع عند الاستلام<small>راجعوا المبلغ قبل تأكيد الطلب</small>
-                        </span>
-                    </div>
-                    <div>
-                        <SlidersHorizontal size={22} aria-hidden="true" />
-                        <span>
-                            اختيارات على مقاسكم<small>اللون والمقاس والتوفر في كل قطعة</small>
-                        </span>
-                    </div>
-                    <Link href="/contact">
-                        <MessageCircle size={22} aria-hidden="true" />
-                        <span>
-                            نحن هنا للمساعدة<small>سؤال عن قطعة أو عن طلبكم؟</small>
-                        </span>
-                        <ArrowUpLeft size={18} aria-hidden="true" />
-                    </Link>
-                </div>
-            )}
             <div className="footer-main section-container">
                 <div className="footer-brand">
                     <Link
@@ -57,86 +37,73 @@ export function Footer() {
                     >
                         <BrandLogo />
                     </Link>
-                    <p className="footer-tagline">
-                        أناقة في الاختيار.
-                        <br />
-                        بساطة في التفاصيل.
-                    </p>
-                    <p className="footer-brand-note">
-                        قطع تختارونها بطريقتكم، وتفاصيل واضحة في كل خطوة.
-                    </p>
+                    <p className="footer-brand-note">أناقة يومية للنساء والرجال.</p>
+                    <nav
+                        className="footer-socials footer-social-icons"
+                        aria-label="تابعونا على مواقع التواصل"
+                    >
+                        {socials.map(([href, label]) => (
+                            <a
+                                key={label}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                dir="ltr"
+                                data-network={label.toLowerCase()}
+                                aria-label={`${label} — نافذة جديدة`}
+                                title={label}
+                            >
+                                <span className="social-brand-icon" aria-hidden="true">
+                                    <SocialIcon network={label} />
+                                </span>
+                            </a>
+                        ))}
+                    </nav>
                 </div>
-                <nav aria-label="اكتشفوا المتجر">
-                    <h2>اكتشفوا IMAD</h2>
+                <nav className="footer-nav" aria-labelledby="footer-catalog-title">
+                    <h2 id="footer-catalog-title">المتجر</h2>
                     <Link href="/shop">كل المنتجات</Link>
                     {publishedCategories(data).map((c) => (
                         <Link key={c.id} href={`/shop?category=${c.slug}`}>
-                            {c.nameAr || c.nameFr} ({c.publishedCount})
+                            {c.nameAr || c.nameFr}
                         </Link>
                     ))}
                 </nav>
-                <nav aria-label="معلومات المتجر">
-                    <h2>معلومات تهمكم</h2>
+                <nav className="footer-nav" aria-labelledby="footer-help-title">
+                    <h2 id="footer-help-title">خدمة العملاء</h2>
                     {[
                         ["/delivery", "التوصيل"],
                         ["/returns", "الاستبدال والإرجاع"],
-                        ["/privacy", "الخصوصية"],
-                        ["/contact", "تواصلوا معنا"],
                         ["/contact#questions", "أسئلة قبل الطلب"],
+                        ["/contact", "تواصلوا معنا"],
                     ].map(([href, label]) => (
                         <Link key={href} href={href}>
                             {label}
                         </Link>
                     ))}
-                </nav>
-                <div className="footer-help">
-                    <span className="footer-help-label">لأن التفاصيل تهمّكم</span>
-                    <h2>نساعدكم على الاختيار.</h2>
-                    <p>تواصلوا معنا للاستفسار عن المنتجات أو توضيح تفاصيل طلبكم.</p>
                     <a
                         href={socials[0][0]}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="تواصلوا عبر واتساب — نافذة جديدة"
                         className="footer-contact-button"
                     >
-                        تواصلوا عبر واتساب <ArrowUpLeft size={18} aria-hidden="true" />
+                        <SocialIcon network="WhatsApp" size={18} />
+                        تواصلوا عبر واتساب
                     </a>
-                    <Link href="/contact" className="footer-contact-alternative">
-                        طرق التواصل الأخرى
-                    </Link>
-                </div>
-            </div>
-            <div className="footer-community section-container">
-                <div>
-                    <h2>لنكن على تواصل.</h2>
-                    <p>تابعونا على مواقع التواصل</p>
-                </div>
-                <nav
-                    className="footer-socials footer-social-icons"
-                    aria-label="تابعونا على مواقع التواصل"
-                >
-                    {socials.map(([href, label]) => (
-                        <a
-                            key={label}
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            dir="ltr"
-                            data-network={label.toLowerCase()}
-                            aria-label={`${label} — نافذة جديدة`}
-                            title={label}
-                        >
-                            <span className="social-brand-icon" aria-hidden="true">
-                                <SocialIcon network={label} />
-                            </span>
-                        </a>
-                    ))}
                 </nav>
             </div>
             <div className="footer-bottom section-container">
-                <p dir="ltr">© {new Date().getFullYear()} IMAD Mode</p>
-                <p>اختاروا. راجعوا. واطلبوا بثقة.</p>
-                <Link href="/privacy">سياسة الخصوصية</Link>
+                <div className="footer-legal">
+                    <small dir="ltr">© {new Date().getFullYear()} IMAD Mode</small>
+                    <Link href="/privacy">سياسة الخصوصية</Link>
+                </div>
+                {settings?.codEnabled === true && (
+                    <span className="footer-payment">
+                        <PackageCheck size={18} aria-hidden="true" />
+                        الدفع عند الاستلام
+                    </span>
+                )}
             </div>
         </footer>
     );
