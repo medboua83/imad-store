@@ -668,6 +668,17 @@ export const adminArabic: Record<string, string> = {
         "تعذّر التحديث. ما زالت البيانات السابقة ظاهرة.",
     "Actualisation impossible. Vos saisies restent conservées.":
         "تعذّر التحديث. تبقى البيانات التي أدخلتموها محفوظة في النموذج.",
+    "Enregistrement non confirmé. Vérifiez cette adresse pour reprendre. Vos saisies sont conservées.":
+        "لم يتأكد الحفظ. تحقّقوا من هذا الرابط للمتابعة. تبقى بياناتكم محفوظة في النموذج.",
+    "Vérification impossible. Vos saisies sont conservées. Réessayez la vérification.":
+        "تعذّر التحقّق. تبقى بياناتكم محفوظة في النموذج. أعيدوا محاولة التحقّق.",
+    "Aucune fiche trouvée à cette adresse. Vous pouvez réessayer avec la même saisie.":
+        "لم نجد منتجاً بهذا الرابط. يمكنكم إعادة المحاولة بالبيانات نفسها.",
+    "Une fiche existe déjà à cette adresse. Vos saisies restent dans ce formulaire.":
+        "يوجد منتج بهذا الرابط بالفعل. تبقى بياناتكم في هذا النموذج.",
+    "Vérifier l’enregistrement": "التحقّق من الحفظ",
+    "Vérification en cours…": "جارٍ التحقّق…",
+    "Ouvrir la fiche existante": "فتح صفحة المنتج الموجودة",
     Adresse: "العنوان",
     "Adresse commerciale": "العنوان التجاري",
     "Adresse de la catégorie": "رابط الفئة",

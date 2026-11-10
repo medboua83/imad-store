@@ -2,6 +2,7 @@ import { validateObjectId } from "../lib/validation";
 import { Router, IRouter } from "express";
 import {
     getProducts,
+    getAdminProductBySlug,
     getAdminProducts,
     getProduct,
     getProductRecommendations,
@@ -17,6 +18,7 @@ productRoutes.param("id", validateObjectId);
 // Public
 productRoutes.get("/", getProducts);
 productRoutes.get("/admin/catalog", authenticate, requireAdmin, getAdminProducts);
+productRoutes.get("/admin/catalog/:slug", authenticate, requireAdmin, getAdminProductBySlug);
 productRoutes.get("/:slug/recommendations", getProductRecommendations);
 productRoutes.get("/:slug", getProduct);
 
