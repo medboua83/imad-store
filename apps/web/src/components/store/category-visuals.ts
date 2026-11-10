@@ -19,8 +19,6 @@ const selectedCategoryArtwork: Record<string, string> = {
     bags: "/images/categories/sacs-v2.webp",
     "mens-clogs": "/images/categories/sabots-homme-v2.webp",
 };
-export const categoryThumbnail = (slug: string) =>
-    selectedCategoryArtwork[slug] || categoryIllustrations[slug];
 
 function isIllustration(src: string) {
     return (

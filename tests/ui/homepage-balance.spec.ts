@@ -19,6 +19,13 @@ for (const width of [320, 390, 1440]) {
         await page.evaluate(() => document.fonts.ready);
         const cards = page.locator("main .catalog-card");
         await expect(cards).toHaveCount(3);
+        for (const cover of await cards.locator(".catalog-card-image").all()) {
+            await expect(cover).toHaveCSS("aspect-ratio", "3 / 4");
+        }
+        await expect(cards.first().locator(".catalog-card-image img")).toHaveCSS(
+            "object-fit",
+            "contain",
+        );
         const cta = page.locator('.hero-actions a[href="#collections"]');
         const collections = page.locator("#collections");
         const hero = page.locator(".editorial-hero");

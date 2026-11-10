@@ -5,6 +5,9 @@ import type { Product } from "@/lib/api";
 import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
 import { quantityDiscounts } from "@imad-store/shared";
 import { productDetailsHref } from "@/lib/catalog-return";
+
+const squarePhotoCategories = new Set(["mens-clogs", "womens-shoes", "bags"]);
+
 export function ProductCard({
     product: p,
     headingLevel = 2,
@@ -34,7 +37,10 @@ export function ProductCard({
     const href = productDetailsHref(p.slug, preferredSize, returnTo);
     const linkTarget = openInNewTab ? { target: "_blank", rel: "noopener noreferrer" } : {};
     return (
-        <article className="catalog-card">
+        <article
+            className="catalog-card"
+            data-photo-shape={squarePhotoCategories.has(p.category?.slug ?? "") ? "square" : undefined}
+        >
             <Link
                 {...linkTarget}
                 prefetch={false}

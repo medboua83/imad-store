@@ -14,6 +14,9 @@ for (const width of [390, 1440]) {
         await expect(page.locator(".catalog-card")).toHaveCount(1);
         const cover = page.locator(".catalog-card-image");
         await expect(cover).toHaveAttribute("href", /\/products\/fixture-premium\?/);
+        await expect(cover).toHaveCSS("aspect-ratio", "3 / 4");
+        await expect(cover.locator("img")).toHaveCSS("object-fit", "cover");
+        await expect(cover.locator("img")).toHaveCSS("padding", "0px");
         await cover.click();
         const back = page.locator(".product-catalog-return");
         await expect(back).toHaveAttribute("href", "/shop?section=women#catalog-results");
@@ -21,6 +24,9 @@ for (const width of [390, 1440]) {
         await expect(sections.getByRole("link", { name: /Femme/ })).toHaveAttribute("aria-current", "page");
         await categoryRail.getByRole("link", { name: /معاطف نسائية/ }).click();
         await expect(page).toHaveURL(/category=manteau-femme/);
+        const coatPhoto = categoryRail.getByRole("link", { name: /معاطف نسائية/ }).locator("img");
+        await expect(coatPhoto).toHaveAttribute("src", /abaya.webp/);
+        await expect(coatPhoto).toHaveCSS("object-fit", "cover");
         if (width === 390) {
             await page.getByRole("button", { name: "فتح القائمة", exact: true }).click();
             await page.getByRole("dialog").getByRole("link", { name: /Homme/ }).click();
@@ -28,7 +34,10 @@ for (const width of [390, 1440]) {
             await sections.getByRole("link", { name: /Homme/ }).click();
         }
         await expect(page).toHaveURL(/\/shop\?section=men$/);
-        await expect(categoryRail.getByRole("link", { name: /صابو رجالي/ })).toBeVisible();
+        await expect(page.locator(".catalog-card-image").first()).toHaveCSS("aspect-ratio", "1 / 1");
+        const clogsCategory = categoryRail.getByRole("link", { name: /صابو رجالي/ });
+        await expect(clogsCategory).toBeVisible();
+        await expect(clogsCategory.locator("img")).toHaveAttribute("src", /sabots-homme-v2.webp/);
         await expect(categoryRail.getByRole("link", { name: /معاطف نسائية/ })).toHaveCount(0);
         await expect(sections.getByRole("link", { name: /Homme/ })).toHaveAttribute("aria-current", "page");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
