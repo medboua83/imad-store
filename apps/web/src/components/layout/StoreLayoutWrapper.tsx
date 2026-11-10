@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { MetaPixel } from "@/components/store/MetaPixel";
@@ -11,9 +12,22 @@ import { storeWhatsAppUrl } from "@/lib/store-contact";
 
 export default function StoreLayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const shell = useRef<HTMLDivElement>(null);
+    const [footerVisible, setFooterVisible] = useState(false);
     const isAdmin = pathname?.startsWith("/admin");
     const isProduct = pathname?.startsWith("/products/");
     const showWhatsApp = pathname === "/" || pathname === "/shop" || isProduct;
+
+    useEffect(() => {
+        if (!showWhatsApp) return;
+        const footer = shell.current?.querySelector("footer");
+        if (!footer) return;
+        const observer = new IntersectionObserver(([entry]) => {
+            setFooterVisible(entry.isIntersecting);
+        }, { rootMargin: "0px 0px -80px 0px" });
+        observer.observe(footer);
+        return () => observer.disconnect();
+    }, [showWhatsApp]);
 
     if (isAdmin) {
         return children;
@@ -21,6 +35,7 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
 
     return (
         <div
+            ref={shell}
             className={`store-shell${isProduct ? " compact-product-shell" : ""}`}
         >
             <StoreAnalytics />
@@ -33,6 +48,7 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
             {showWhatsApp && (
                 <a
                     className="store-whatsapp-float"
+                    data-footer-visible={footerVisible}
                     href={storeWhatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"

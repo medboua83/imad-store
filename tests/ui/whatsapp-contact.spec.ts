@@ -23,6 +23,12 @@ for (const width of [390, 1440]) {
         await page.keyboard.press("Escape");
         await expect(whatsapp).toBeVisible();
 
+        await page.locator(".footer-socials").scrollIntoViewIfNeeded();
+        await expect(page.locator(".footer-socials")).toBeInViewport();
+        await expect(whatsapp).toBeHidden();
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+        await expect(whatsapp).toBeVisible();
+
         await page.goto("/shop?category=manteau-femme");
         await expect(whatsapp).toBeVisible();
         await page.goto("/products/fixture-sabot");

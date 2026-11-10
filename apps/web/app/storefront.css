@@ -29,7 +29,8 @@
 .store-shell .store-whatsapp-float:hover {
     background: #105b38;
 }
-.store-shell:has(dialog[open]) .store-whatsapp-float {
+.store-shell:has(dialog[open]) .store-whatsapp-float,
+.store-shell .store-whatsapp-float[data-footer-visible="true"] {
     display: none;
 }
 @media (max-width: 767px) {
