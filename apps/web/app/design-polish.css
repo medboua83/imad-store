@@ -27,7 +27,7 @@
 }
 .collection-photo img {
     object-fit: cover;
-    object-position: center 35%;
+    object-position: center top;
     transition: transform 0.4s;
 }
 .category-photo-empty {
