@@ -35,9 +35,10 @@ for (const viewport of [
             await page.getByRole("link", { name: "تعديل الخيارات" }).click();
             await expect(page).toHaveURL(/#product-options$/);
             await expect(page.locator("#product-options")).toBeFocused();
-            const variants = await page.locator(".product-variant-grid").boundingBox();
-            expect(variants!.y).toBeGreaterThan(0);
-            expect(variants!.y + variants!.height).toBeLessThan(box!.y);
+            await expect.poll(async () => {
+                const variants = await page.locator(".product-variant-grid").boundingBox();
+                return !!variants && variants.y > 0 && variants.y + variants.height < box!.y;
+            }).toBe(true);
         }
         const brown = page.getByRole("button", { name: "بني", exact: true });
         const target = await brown.boundingBox();
