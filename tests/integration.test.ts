@@ -1447,7 +1447,9 @@ test("Visitor statistics validate events, deduplicate concurrent views and exclu
         (await request(app).get("/api/analytics/summary?days=365").set(admin())).status,
         400,
     );
-    const saved = await events.findFirst({where: { kind: "page", test: false } });
+    const saved = await events.findFirst({
+        where: { kind: "page", page: `/products/${item.slug}`, test: false },
+    });
     assert.equal(saved?.session === session, false);
     assert.deepEqual(
         Object.keys(saved!).filter(k => saved[k] !== null).sort(),
