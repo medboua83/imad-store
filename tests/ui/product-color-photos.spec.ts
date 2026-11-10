@@ -8,7 +8,8 @@ for (const width of [390, 1440]) {
         await page.goto("/products/fixture-color-photos");
         const photo = page.locator(".gallery-stage img");
         const color = (name: string) => page.getByRole("button", { name, exact: true });
-        const show = (index: number) => expect(photo).toHaveAttribute("src", images[index]);
+        const show = (index: number) =>
+            expect(photo).toHaveJSProperty("src", new URL(images[index], page.url()).href);
 
         await show(2);
         await color("بني").click();
@@ -22,7 +23,9 @@ for (const width of [390, 1440]) {
         await color("أسود").press("Enter");
         await show(2);
         await color("تكبير صورة المنتج").click();
-        await expect(page.locator(".gallery-dialog img")).toHaveAttribute("src", images[2]);
+        await expect(page.locator(".gallery-dialog img")).toHaveJSProperty(
+            "src", new URL(images[2], page.url()).href,
+        );
         await page.keyboard.press("Escape");
         await page.goto("/products/fixture-color-photos?size=44");
         await show(1);
