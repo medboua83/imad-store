@@ -5,7 +5,6 @@ export const adminArabic: Record<string, string> = {
     "Produits mis en avant": "المنتجات المميزة",
     "Bannières de l’accueil": "لافتات الصفحة الرئيسية",
     "Guide de commande": "دليل الطلب",
-    "Monter": "نقل للأعلى",
     "Descendre": "نقل للأسفل",
     "L’adresse « {slug} » appartient déjà au produit « {name} ». Modifiez l’adresse pour un autre produit, ou ouvrez la fiche existante pour ajouter des variantes.": "الرابط «{slug}» مستخدم للمنتج «{name}». غيّروا الرابط لإنشاء منتج آخر، أو افتحوا المنتج الموجود لإضافة ألوان أو مقاسات.",
     "Variante {number} : la référence « {sku} » est déjà utilisée dans « {name} ». Choisissez une autre référence ou laissez vide pour une nouvelle variante.": "الخيار {number}: المرجع «{sku}» مستخدم في «{name}». اختاروا مرجعاً آخر أو اتركوه فارغاً للخيار الجديد.",
