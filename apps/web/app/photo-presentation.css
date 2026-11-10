@@ -1,11 +1,11 @@
-.store-shell :is(.collection-photo, .store-menu .menu-category-icon, .category-rail-photo) {
+.store-shell :is(.store-menu .menu-category-icon, .category-rail-photo) {
     border: 0;
     border-radius: 12px;
     overflow: hidden;
     background: #f4eee3;
     box-shadow: none;
 }
-.store-shell :is(.collection-photo img, .store-menu .menu-category-photo, .category-rail-photo img) {
+.store-shell :is(.store-menu .menu-category-photo, .category-rail-photo img) {
     border-radius: 0;
     object-fit: cover;
 }
@@ -17,9 +17,6 @@
 }
 .store-shell .shop-category-rail a[aria-current="page"] .category-rail-photo {
     box-shadow: 0 0 0 1px var(--gold-light);
-}
-.store-shell .collection-tile:focus-visible .collection-photo {
-    box-shadow: 0 0 0 2px var(--gold-dark);
 }
 .store-shell .refined-gallery {
     min-width: 0;

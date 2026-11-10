@@ -1,40 +1,33 @@
 /* Local assets and compact category photos; no icon fonts or third-party scripts. */
-.store-shell .collection-grid {
-    border: 0;
-    gap: 14px;
+.collection-grid {
+    --collection-columns: 4;
+    --collection-gap: clamp(10px, 1.4vw, 18px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--collection-gap);
 }
-.store-shell .collection-tile {
-    position: relative;
-    align-items: center;
-    text-align: center;
-    justify-content: flex-start;
-    gap: 15px;
-    min-height: 214px;
-    padding: 24px 12px 30px;
-    border: 1px solid #e3dfd8;
-    border-radius: 18px;
+.collection-tile {
+    flex: 0 0 calc((100% - (var(--collection-columns) - 1) * var(--collection-gap)) / var(--collection-columns));
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e3d9c6;
+    border-radius: 14px;
     background: #fffefa;
-    box-shadow: 0 3px 15px #2e261704;
-    transition:
-        border-color 0.2s,
-        box-shadow 0.2s,
-        transform 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 .collection-photo {
     position: relative;
     display: block;
-    width: 96px;
-    height: 96px;
     aspect-ratio: 1;
-    background: #eae9e1;
-    border-radius: 50%;
-    border: 4px solid #f4f1e8;
-    box-shadow: 0 0 0 1px #e5e0d8;
-    flex-shrink: 0;
+    overflow: hidden;
+    background: #f4eee3;
 }
 .collection-photo img {
-    border-radius: 50%;
-    object-position: center 60%;
+    object-fit: cover;
+    object-position: center 35%;
     transition: transform 0.4s;
 }
 .category-photo-empty {
@@ -44,28 +37,25 @@
     color: #7a6e59;
     letter-spacing: 0.2em;
 }
-.store-shell .collection-tile > span.collection-name {
-    font-family: "Amiri", serif;
-    font-weight: 400;
-    font-size: 25px;
-    line-height: 1.4;
+.collection-name {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px clamp(8px, 1.2vw, 16px);
+    font-size: clamp(15px, 1.65vw, 21px);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
-.collection-name small {
-    display: block;
-    margin-top: 6px;
-    font:
-        11px/1.5 "DM Sans",
-        sans-serif;
-    color: #796d58;
-    letter-spacing: 0.025em;
+.collection-name svg {
+    flex-shrink: 0;
+    color: var(--gold-dark);
 }
-.store-shell .collection-tile > svg {
-    position: absolute;
-    bottom: 15px;
-    inset-inline-end: 17px;
-    color: #7a6e59;
-    width: 17px;
-    height: 17px;
+@media (max-width: 767px) {
+    .collection-grid {
+        --collection-columns: 2;
+    }
 }
 .store-menu .menu-category-icon {
     display: grid;
@@ -151,8 +141,8 @@
 }
 @media (hover: hover) {
     .store-shell .collection-tile:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 30px #2e26170c;
+        border-color: #b99a65;
+        box-shadow: 0 6px 18px #2e26170c;
     }
     .collection-tile:hover .collection-photo img {
         transform: scale(1.04);
@@ -163,35 +153,6 @@
     }
 }
 @media (max-width: 767px) {
-    .store-shell .collection-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        overflow: visible;
-        gap: 12px;
-    }
-    .store-shell .collection-tile {
-        min-height: 188px;
-        padding: 20px 10px 27px;
-        gap: 15px;
-        border-radius: 15px;
-    }
-    .collection-photo {
-        width: 76px;
-        height: 76px;
-    }
-    .store-shell .collection-tile > span.collection-name {
-        font-size: 21px;
-    }
-    .collection-name small {
-        font-size: 10px;
-    }
-    .store-shell .collection-tile:last-child:nth-child(odd) {
-        grid-column: 1/-1;
-        flex-direction: row;
-        min-height: 112px;
-        padding: 16px;
-        gap: 23px;
-    }
     .store-shell .refined-footer .footer-socials {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
