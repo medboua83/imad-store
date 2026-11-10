@@ -187,45 +187,36 @@ export function ProductGallery({ images, name, selected, onSelect }: {
                         <span>تكبير</span>
                     </button>
                 )}
-                <span className="gallery-position" dir="ltr">
-                    {available.length ? active + 1 : 0} / {available.length}
-                </span>
-            </div>
-            <div className="gallery-caption">
-                <p>
-                    {src ? "شاهدوا التفاصيل عن قرب" : "تواصلوا معنا للاستفسار عن صور القطعة"}
-                    {available.length > 1 && (
-                        <span className="gallery-swipe-hint">اسحبوا لتصفح الصور</span>
-                    )}
-                </p>
-                {controls()}
             </div>
             {available.length > 1 && (
-                <div
-                    ref={thumbnails}
-                    className="gallery-thumbnails"
-                    role="group"
-                    aria-label="صور المنتج"
-                >
-                    {available.map((image, i) => (
-                        <button
-                            key={`${image}-${i}`}
-                            type="button"
-                            aria-label={`عرض الصورة ${i + 1}`}
-                            aria-pressed={active === i}
-                            onKeyDown={navigate}
-                            onClick={() => onSelect(image)}
-                        >
-                            <Image
-                                src={image}
-                                alt=""
-                                fill
-                                sizes="80px"
-                                className="gallery-photo"
-                                onError={() => fail(image)}
-                            />
-                        </button>
-                    ))}
+                <div className="gallery-tools">
+                    <div
+                        ref={thumbnails}
+                        className="gallery-thumbnails"
+                        role="group"
+                        aria-label="صور المنتج"
+                    >
+                        {available.map((image, i) => (
+                            <button
+                                key={`${image}-${i}`}
+                                type="button"
+                                aria-label={`عرض الصورة ${i + 1}`}
+                                aria-pressed={active === i}
+                                onKeyDown={navigate}
+                                onClick={() => onSelect(image)}
+                            >
+                                <Image
+                                    src={image}
+                                    alt=""
+                                    fill
+                                    sizes="80px"
+                                    className="gallery-photo"
+                                    onError={() => fail(image)}
+                                />
+                            </button>
+                        ))}
+                    </div>
+                    <div className="gallery-caption">{controls()}</div>
                 </div>
             )}
             <dialog

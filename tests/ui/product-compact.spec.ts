@@ -31,7 +31,20 @@ for (const viewport of [
             expect(quantity!.x >= box!.x + box!.width || quantity!.x + quantity!.width <= box!.x).toBe(true);
         }
         await page.screenshot({ path: info.outputPath(`compact-initial-${viewport.width}.png`) });
-        await page.getByRole("button", { name: "بني", exact: true }).click();
+        if (viewport.width < 768) {
+            await page.getByRole("link", { name: "تعديل الخيارات" }).click();
+            await expect(page).toHaveURL(/#product-options$/);
+            await expect(page.locator("#product-options")).toBeFocused();
+            await expect.poll(async () => {
+                const variants = await page.locator(".product-variant-grid").boundingBox();
+                return !!variants && variants.y > 0 && variants.y + variants.height < box!.y;
+            }).toBe(true);
+        }
+        const brown = page.getByRole("button", { name: "بني", exact: true });
+        const target = await brown.boundingBox();
+        expect(target!.width).toBeGreaterThanOrEqual(44);
+        expect(target!.height).toBeGreaterThanOrEqual(44);
+        await brown.click();
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
         await expect(page.locator(".purchase-price")).toContainText("630.00");
         await page.getByText("تفاصيل السعر والعروض", { exact: true }).click();

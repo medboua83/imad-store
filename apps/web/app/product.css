@@ -76,10 +76,6 @@
     min-height: 48px;
     gap: 12px;
 }
-.gallery-caption > p {
-    font-size: 11px;
-    color: #80735c;
-}
 .gallery-navigation {
     display: flex;
     align-items: center;
