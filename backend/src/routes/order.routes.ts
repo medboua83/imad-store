@@ -4,6 +4,7 @@ import {
     createOrder,
     moveOrdersToTrash,
     getOrder,
+    getOrderHistory,
     listOrders,
     updateOrderStatus,
     getAdminNotifications,
@@ -21,6 +22,7 @@ orderRoutes.get("/:id", getOrder); // order tracking by ID
 
 // ─── Admin ────────────────────────────────────────────────────────────────
 orderRoutes.get("/", authenticate, requireAdmin, listOrders);
+orderRoutes.get("/:id/history", authenticate, requireAdmin, getOrderHistory);
 orderRoutes.post("/trash", authenticate, requireAdmin, moveOrdersToTrash);
 orderRoutes.patch("/:id/status", authenticate, requireAdmin, updateOrderStatus);
 

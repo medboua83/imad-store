@@ -6,6 +6,7 @@ import { initialOrderListFilters, type OrderListFilters } from "./order-list-con
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
 import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
 import { OrderTrash } from "./order-trash";
+import { OrderHistory } from "./order-history";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
 const actionLabels: Record<string, string> = {
@@ -483,11 +484,7 @@ function OrderDetails({
                     ))}
                 </ol>
             )}
-            <p className="admin-scope">
-                {t(
-                    "Le parcours indique le statut actuel. Les dates de passage entre étapes ne sont pas disponibles.",
-                )}
-            </p>
+            <OrderHistory orderId={o.id} status={o.status} />
             <div className="order-detail-columns">
                 <section>
                     <h3>{t("Client et livraison")}</h3>

@@ -366,6 +366,19 @@ export const getAllOrders = async (params?: {
     };
 };
 
+export interface OrderHistoryEvent {
+    id: string;
+    type: string;
+    createdAt: string;
+    source?: string;
+    status?: string;
+}
+
+export const getOrderHistory = async (id: string, signal?: AbortSignal) => {
+    const { data } = await api.get<{ data: OrderHistoryEvent[] }>(`/orders/${id}/history`, { signal });
+    return data.data;
+};
+
 export const updateOrderStatus = async (id: string, status: string) => {
     const { data } = await api.patch(`/orders/${id}/status`, { status });
     return data;
