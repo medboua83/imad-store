@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/server-api";
@@ -6,7 +5,8 @@ import { storefrontShareMetadata } from "@/lib/share-metadata";
 import { ArrowUpLeft, Check, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "@/components/store/ProductCard";
 import { CatalogSectionLinks } from "@/components/store/CatalogSectionLinks";
-import { categoryThumbnail } from "@/components/store/category-visuals";
+import { ProductPhoto } from "@/components/store/ProductPhoto";
+import { categoryImageSources } from "@/components/store/category-visuals";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { orderedSizes } from "@/lib/product-presentation";
 import { catalogSectionKeys, catalogSections } from "@imad-store/shared";
@@ -111,19 +111,24 @@ export default async function ShopPage({
                         <LayoutGrid size={18} aria-hidden="true" />
                         كل القطع
                     </Link>
-                    {sectionCategories.map((c) => (
-                        <Link
-                            key={c.id}
-                            href={queryLink({ category: c.slug })}
-                            aria-current={value("category") === c.slug ? "page" : undefined}
-                        >
-                            {categoryThumbnail(c.slug) && (
-                                <Image src={categoryThumbnail(c.slug)} width={30} height={30} alt="" />
-                            )}
-                            {c.nameAr || c.nameFr}
-                            <small>({c.publishedCount})</small>
-                        </Link>
-                    ))}
+                    {sectionCategories.map((c) => {
+                        const images = categoryImageSources(c, []);
+                        return (
+                            <Link
+                                key={c.id}
+                                href={queryLink({ category: c.slug })}
+                                aria-current={value("category") === c.slug ? "page" : undefined}
+                            >
+                                {images.length > 0 && (
+                                    <span className="category-rail-photo" aria-hidden="true">
+                                        <ProductPhoto images={images} name="" sizes="30px" thumbnail />
+                                    </span>
+                                )}
+                                {c.nameAr || c.nameFr}
+                                <small>({c.publishedCount})</small>
+                            </Link>
+                        );
+                    })}
                 </nav>
             </div>
             {invalid && (
