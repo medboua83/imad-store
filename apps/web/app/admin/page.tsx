@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { initialOrderListFilters } from "./order-list-context";
+import type { InventoryStatus } from "./product-utils";
 import { acceptAdminRead, startAdminRead, type AdminReadState } from "./read-version";
 import {
     ArrowUpRight,
@@ -17,6 +18,7 @@ import {
     LogOut,
     Menu,
     Package,
+    Boxes,
     RefreshCw,
     Settings2,
     ShoppingBag,
@@ -65,6 +67,7 @@ const ProductsTab = dynamic(() => import("./products-tab").then((m) => m.Product
     loading: PendingView,
 });
 const CommerceTab = dynamic(() => import("./commerce-tab"), { loading: PendingView });
+const InventoryTab = dynamic(() => import("./inventory-tab"), { loading: PendingView });
 const ContentTab = dynamic(() => import("./content-tab"), { loading: PendingView });
 const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: PendingView });
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: PendingView });
@@ -72,6 +75,7 @@ type Tab =
     | "overview"
     | "orders"
     | "products"
+    | "inventory"
     | "categories"
     | "content"
     | "deskcomm"
@@ -87,12 +91,6 @@ const sections = [
         icon: LayoutDashboard,
     },
     {
-        id: "analytics" as Tab,
-        label: "Statistiques",
-        description: "Comprenez les visites, les produits consultés et les commandes.",
-        icon: ChartNoAxesCombined,
-    },
-    {
         id: "orders" as Tab,
         label: "Commandes",
         description: "Retrouvez une commande et suivez sa progression.",
@@ -105,10 +103,22 @@ const sections = [
         icon: ShoppingBag,
     },
     {
+        id: "inventory" as Tab,
+        label: "Stock",
+        description: "Retrouvez les quantités disponibles de chaque variante.",
+        icon: Boxes,
+    },
+    {
         id: "categories" as Tab,
         label: "Catégories",
         description: "Organisez votre collection pour vos visiteurs.",
         icon: Grid2X2,
+    },
+    {
+        id: "analytics" as Tab,
+        label: "Statistiques",
+        description: "Comprenez les visites, les produits consultés et les commandes.",
+        icon: ChartNoAxesCombined,
     },
     {
         id: "content" as Tab,
@@ -141,6 +151,12 @@ function tabFromLocation(): Tab {
         ? sections.find(({ id }) => id === values[0])?.id || "overview"
         : "overview";
 }
+function productFromLocation(tab: Tab) {
+    const values = new URLSearchParams(window.location.search).getAll("product");
+    return tab === "products" && values.length === 1 && /^[a-f0-9]{24}$/i.test(values[0])
+        ? values[0]
+        : undefined;
+}
 export default function AdminPage() {
     const { t, locale } = useAdminLocale();
     const [token, setToken] = useState<string | null>(null),
@@ -166,6 +182,8 @@ export default function AdminPage() {
         [lastSync, setLastSync] = useState<Date | null>(null);
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
+    const [inventoryStock, setInventoryStock] = useState<InventoryStatus>("ALL");
+    const [focusedProduct, setFocusedProduct] = useState<string>();
     const [analyticsDays, setAnalyticsDays] = useState(7);
     const readState = useRef<AdminReadState>({
         session: 0,
@@ -180,6 +198,7 @@ export default function AdminPage() {
         const restoreTab = () => {
             const tab = tabFromLocation();
             setActiveTab(tab);
+            setFocusedProduct(productFromLocation(tab));
             setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
             setMobileMenu(false);
             setActionMessage("");
@@ -204,6 +223,7 @@ export default function AdminPage() {
             readState.current.session++;
             productSnapshot.current = [];
             setOrderFilters(initialOrderListFilters);
+            setInventoryStock("ALL");
             setAnalyticsDays(7);
             setToken(null);
             setOrders([]);
@@ -305,14 +325,16 @@ export default function AdminPage() {
                 nav.current?.querySelector<HTMLButtonElement>("button")
             )?.focus();
     }, [mobileMenu]);
-    const selectTab = (tab: Tab) => {
-        if (tab !== activeTab) {
-            const url = new URL(window.location.href);
-            if (tab === "overview") url.searchParams.delete("tab");
-            else url.searchParams.set("tab", tab);
+    const selectTab = (tab: Tab, productId?: string) => {
+        const url = new URL(window.location.href);
+        if (tab === "overview") url.searchParams.delete("tab");
+        else url.searchParams.set("tab", tab);
+        if (tab === "products" && productId) url.searchParams.set("product", productId);
+        else url.searchParams.delete("product");
+        if (url.href !== window.location.href)
             window.history.pushState(null, "", url.pathname + url.search + url.hash);
-        }
         setActiveTab(tab);
+        setFocusedProduct(productId);
         setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
         requestAnimationFrame(() => mainTitle.current?.focus());
         setMobileMenu(false);
@@ -619,7 +641,14 @@ export default function AdminPage() {
                                     products={products}
                                     orderTotal={orderTotal}
                                     productTotal={productTotal}
-                                    onNavigate={selectTab}
+                                    onOrders={(status) => {
+                                        setOrderFilters({ ...initialOrderListFilters, status });
+                                        selectTab("orders");
+                                    }}
+                                    onInventory={(stock) => {
+                                        setInventoryStock(stock);
+                                        selectTab("inventory");
+                                    }}
                                 />
                             )}
                             {activeTab === "orders" && (
@@ -631,12 +660,19 @@ export default function AdminPage() {
                                     setFilters={setOrderFilters}
                                 />
                             )}
+                            {activeTab === "inventory" && (
+                                <InventoryTab products={products} total={productTotal}
+                                    stock={inventoryStock} onStock={setInventoryStock}
+                                    onProduct={(id) => selectTab("products", id)} />
+                            )}
                             {openedTabs.includes("products") && (
                                 <div hidden={activeTab !== "products"}>
                                     <ProductsTab
                                         products={products}
                                         categories={categories}
                                         total={productTotal}
+                                        focusedProduct={focusedProduct}
+                                        clearProductFocus={() => selectTab("products")}
                                         onRefresh={refreshProducts}
                                         onCreate={async (d) => {
                                             const session = readState.current.session;

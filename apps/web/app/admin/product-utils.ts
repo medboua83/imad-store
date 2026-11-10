@@ -105,6 +105,22 @@ export function sizeVariants(
         };
     });
 }
+export type InventoryStatus = "ALL" | "LOW" | "OUT";
+
+export function inventoryVariants(products: Product[]) {
+    return products.flatMap((product) =>
+        product.status === "ACTIVE"
+            ? product.variants.filter((variant) => !isAmbiguousSize(variant.size))
+                .map((variant) => ({ product, variant }))
+            : [],
+    );
+}
+
+export function inventoryStatus(stock: number): InventoryStatus {
+    if (stock === 0) return "OUT";
+    return stock <= 3 ? "LOW" : "ALL";
+}
+
 export function stockMatches(product: Product, stock: string) {
     return (
         stock === "ALL" ||

@@ -3,8 +3,8 @@ import { useAdminLocale } from "./admin-locale";
 
 import { useMemo, useRef, useState } from "react";
 import { isAxiosError } from "axios";
-import { productSlug } from "./product-utils";
-import { ArrowUpRight, Package, RefreshCw, ShoppingBag, Truck } from "lucide-react";
+import { inventoryStatus, inventoryVariants, productSlug, type InventoryStatus } from "./product-utils";
+import { ArrowUpRight, Boxes, Package, RefreshCw, ShoppingBag, Truck } from "lucide-react";
 import type { Product, Category } from "@/lib/api";
 import { money, statusLabels, summarize } from "./admin-utils";
 type Order = {
@@ -23,13 +23,15 @@ export function OverviewTab({
     products,
     orderTotal,
     productTotal,
-    onNavigate,
+    onOrders,
+    onInventory,
 }: {
     orders: Order[];
     products: Product[];
     orderTotal: number;
     productTotal: number;
-    onNavigate: (tab: "orders" | "products") => void;
+    onOrders: (status: "ALL" | "PENDING" | "CONFIRMED") => void;
+    onInventory: (status: InventoryStatus) => void;
 }) {
     const { t, locale } = useAdminLocale();
     const dateLocale = locale === "ar" ? "ar-MA" : "fr-MA";
@@ -86,8 +88,39 @@ export function OverviewTab({
             icon: ShoppingBag,
         },
     ];
+    const stock = inventoryVariants(products);
+    const tasks = [
+        { label: "Commandes à confirmer", count: summary.pending, icon: RefreshCw, open: () => onOrders("PENDING") },
+        { label: "Commandes à expédier", count: orders.filter((order) => order.status === "CONFIRMED").length,
+            icon: Truck, open: () => onOrders("CONFIRMED") },
+        { label: "Variantes en stock faible", count: stock.filter(({ variant }) => inventoryStatus(variant.stock) === "LOW").length,
+            icon: Boxes, open: () => onInventory("LOW") },
+        { label: "Variantes en rupture", count: stock.filter(({ variant }) => inventoryStatus(variant.stock) === "OUT").length,
+            icon: ShoppingBag, open: () => onInventory("OUT") },
+    ];
     return (
         <div className="admin-overview">
+            <section className="admin-panel">
+                <div className="admin-panel-heading">
+                    <div>
+                        <h2>{t("À traiter")}</h2>
+                        <p>{t("Accédez directement aux commandes et aux variantes qui demandent votre attention.")}</p>
+                    </div>
+                </div>
+                <div className="admin-task-grid">
+                    {tasks.map(({ label, count, icon: Icon, open }) => (
+                        <button type="button" key={label} onClick={open} className="admin-task">
+                            <Icon size={18} aria-hidden="true" />
+                            <span>{t(label)}</span>
+                            <strong>{count}</strong>
+                            <ArrowUpRight size={16} aria-hidden="true" />
+                        </button>
+                    ))}
+                </div>
+                {(orders.length < orderTotal || products.length < productTotal) && (
+                    <p className="admin-scope">{t("Ces compteurs portent sur les commandes et produits chargés.")}</p>
+                )}
+            </section>
             <div className="admin-kpi-grid">
                 {cards.map(({ label, value, sub, icon: Icon }) => (
                     <section className="admin-kpi" key={label}>
@@ -102,83 +135,51 @@ export function OverviewTab({
                     </section>
                 ))}
             </div>
-            <div className="admin-overview-grid">
-                <section className="admin-panel">
-                    <div className="admin-panel-heading">
-                        <div>
-                            <h2>{t("L’activité de votre boutique")}</h2>
-                            <p>{t("Commandes reçues · 7 derniers jours · heure du Maroc")}</p>
-                        </div>
-                        <span className="admin-tag">
-                            {days.reduce((s, d) => s + d.count, 0)}
-                            {t(" commandes")}
-                        </span>
+            <section className="admin-panel">
+                <div className="admin-panel-heading">
+                    <div>
+                        <h2>{t("L’activité de votre boutique")}</h2>
+                        <p>{t("Commandes reçues · 7 derniers jours · heure du Maroc")}</p>
                     </div>
-                    <div
-                        className="admin-activity-chart"
-                        role="img"
-                        aria-label={days
-                            .map((d) => t("{0} : {1} commandes", { "0": d.date, "1": d.count }))
-                            .join(" ; ")}
-                    >
-                        {days.map((d) => (
-                            <div key={d.date}>
-                                <span className="admin-bar-count">{d.count}</span>
-                                <div className="admin-bar-track">
-                                    <span
-                                        style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
-                                    />
-                                </div>
-                                <span>{d.label}</span>
+                    <span className="admin-tag">
+                        {days.reduce((s, d) => s + d.count, 0)}
+                        {t(" commandes")}
+                    </span>
+                </div>
+                <div
+                    className="admin-activity-chart"
+                    role="img"
+                    aria-label={days
+                        .map((d) => t("{0} : {1} commandes", { "0": d.date, "1": d.count }))
+                        .join(" ; ")}
+                >
+                    {days.map((d) => (
+                        <div key={d.date}>
+                            <span className="admin-bar-count">{d.count}</span>
+                            <div className="admin-bar-track">
+                                <span
+                                    style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
+                                />
                             </div>
-                        ))}
-                    </div>
-                    <p className="admin-scope">
-                        {t("Calculé sur les ")}
-                        {orders.length}
-                        {t(
-                            " commandes chargées, toutes situations confondues. Les annulations restent dans l’activité; elles sont exclues du montant livré.",
-                        )}
-                    </p>
-                </section>
-                <section className="admin-attention">
-                    <p className="admin-eyebrow">{t("VOTRE PROCHAINE ÉTAPE")}</p>
-                    <h2>
-                        {t("Une boutique")}
-                        <br />
-                        {t("bien suivie.")}
-                    </h2>
-                    <p>
-                        {summary.pending
-                            ? t("{0} commande(s) en attente de confirmation.", {
-                                  "0": summary.pending,
-                              })
-                            : t("Aucune commande à confirmer dans la sélection.")}
-                    </p>
-                    <button className="admin-button" onClick={() => onNavigate("orders")}>
-                        {t("Voir les commandes")}
-                        <ArrowUpRight size={17} />
-                    </button>
-                    <div className="admin-attention-stock">
-                        <ShoppingBag size={18} />
-                        <span>
-                            {summary.lowStock}
-                            {t(" produit(s) en vente avec une variante à 3 unités ou moins.")}
-                        </span>
-                    </div>
-                    <button className="admin-text-button" onClick={() => onNavigate("products")}>
-                        {t("Vérifier les stocks ")}
-                        <ArrowUpRight size={15} />
-                    </button>
-                </section>
-            </div>
+                            <span>{d.label}</span>
+                        </div>
+                    ))}
+                </div>
+                <p className="admin-scope">
+                    {t("Calculé sur les ")}
+                    {orders.length}
+                    {t(
+                        " commandes chargées, toutes situations confondues. Les annulations restent dans l’activité; elles sont exclues du montant livré.",
+                    )}
+                </p>
+            </section>
             <section className="admin-panel">
                 <div className="admin-panel-heading">
                     <div>
                         <h2>{t("Dernières commandes")}</h2>
                         <p>{t("Les cinq dernières demandes reçues.")}</p>
                     </div>
-                    <button className="admin-text-button" onClick={() => onNavigate("orders")}>
+                    <button className="admin-text-button" onClick={() => onOrders("ALL")}>
                         {t("Tout consulter")}
                         <ArrowUpRight size={16} />
                     </button>
