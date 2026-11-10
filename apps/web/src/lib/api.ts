@@ -219,8 +219,8 @@ export const getProducts = async (params?: {
     minPrice?: number;
     maxPrice?: number;
     availability?: string;
-}): Promise<ProductsResponse> => {
-    const { data } = await api.get("/products", { params });
+}, signal?: AbortSignal): Promise<ProductsResponse> => {
+    const { data } = await api.get("/products", { params, signal });
     return data;
 };
 

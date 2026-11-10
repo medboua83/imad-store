@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/lib/api";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { CatalogSectionLinks } from "../store/CatalogSectionLinks";
+import { StoreSearch } from "./StoreSearch";
 const dockLinks = [
     ["/", "الرئيسية", House],
     ["/shop", "المتجر", LayoutGrid],
@@ -129,14 +130,7 @@ export function Navbar() {
                         ))}
                     </nav>
                     <div className="nav-actions flex gap-2">
-                        <Link
-                            href="/shop?filters=open#catalog-search"
-                            className="action nav-search"
-                            aria-label="البحث في المتجر"
-                        >
-                            <Search size={20} aria-hidden="true" />
-                            <span className="header-search-label">بحث</span>
-                        </Link>
+                        <StoreSearch />
                         <button
                             className="action cart-toggle"
                             id="store-cart-trigger"

@@ -1,0 +1,70 @@
+.dialog {
+    position: fixed;
+    inset: clamp(12px, 7vh, 72px) 0 auto;
+    margin: 0 auto;
+    width: min(36rem, calc(100% - 24px));
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #ddc9a3;
+    border-radius: 16px;
+    padding: clamp(12px, 3vw, 24px);
+    color: #3d3220;
+    background: #fcfaf6;
+    box-shadow: 0 20px 60px #211b1460;
+}
+
+.dialog::backdrop { background: #211b147a; }
+
+.heading, .form, .list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.heading { justify-content: space-between; margin-block-end: 12px; }
+.heading h2 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.close, .form button {
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 8px;
+}
+.close { display: grid; place-items: center; border: 1px solid #ddc9a3; }
+.form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid #baaa8d;
+    border-radius: 8px;
+    padding-inline: 10px;
+    background: #fff;
+}
+.form button { background: #73541f; color: #fff; padding-inline: 12px; }
+.form button:disabled { opacity: .55; }
+.dialog :focus-visible { outline: 2px solid #73541f; outline-offset: 2px; }
+.status { margin: 12px 0 4px; color: #625540; font-size: .875rem; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list a {
+    min-height: 56px;
+    padding: 6px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+.list a:hover, .list a:focus-visible { background: #f0e9db; }
+.photo {
+    position: relative;
+    overflow: hidden;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 6px;
+    background: #f0e9db;
+}
+.name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.price { flex: none; font-size: .875rem; white-space: nowrap; }
+
+@media (max-width: 430px) {
+    .dialog { top: 12px; }
+    .form { gap: 8px; }
+}
