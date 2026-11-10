@@ -30,16 +30,22 @@ for (const width of [320, 390, 1440]) {
         const collections = page.locator("#collections");
         const hero = page.locator(".editorial-hero");
         await expect(hero.getByRole("link")).toHaveCount(1);
-        await expect(cta).toHaveAccessibleName("اكتشفوا المجموعة");
+        await expect(cta).toHaveAccessibleName("تصفحوا المجموعة");
         await expect(cta).toBeInViewport({ ratio: 1 });
+        expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
         await expect(hero.locator("img")).toHaveCount(1);
         await expect(hero.locator(".hero-photo")).toHaveAttribute("src", /sac.webp/);
         await expect(hero.locator(".hero-photo")).toHaveCSS("object-fit", "contain");
-        expect(await hero.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(475);
+        await expect(hero.locator(".hero-visual")).toHaveCSS("aspect-ratio", "3 / 4");
+        const copy = (await hero.locator(".hero-copy").boundingBox())!;
+        const visual = (await hero.locator(".hero-visual").boundingBox())!;
+        expect(Math.abs(copy.y - visual.y)).toBeLessThan(1);
+        expect(Math.abs(visual.x + visual.width - copy.x)).toBeLessThan(1);
+        expect((await hero.boundingBox())!.height).toBeLessThan(width < 768 ? 250 : 475);
         const featuredY = await page
             .locator(".featured-section")
             .evaluate((el) => el.getBoundingClientRect().top + scrollY);
-        if (width < 768) expect(featuredY).toBeLessThan(1100);
+        if (width < 768) expect(featuredY).toBeLessThan(850);
         await page.screenshot({ path: info.outputPath(`home-top-${width}.png`) });
         // Revisit an already active hash after scrolling away: this was broken with router links.
         for (let repeat = 0; repeat < 2; repeat++) {

@@ -1,8 +1,10 @@
 /* Catalogue-aware layouts and original photo frames. No image or commerce changes. */
 .store-shell .storefront-home .editorial-hero {
-    max-width: 1240px;
-    min-height: 400px;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    --home-hero-photo-width: min(45%, 336px);
+    max-width: 940px;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) var(--home-hero-photo-width);
+    background: #f5eddf;
     border: 1px solid #e6d7b9;
 }
 .store-shell .storefront-home .hero-copy {
@@ -22,11 +24,13 @@
     margin-top: 18px;
 }
 .store-shell .storefront-home .hero-visual {
-    min-height: 400px;
-    background: #ebe2d1;
+    min-height: 0;
+    aspect-ratio: 3 / 4;
+    background: inherit;
 }
 .store-shell .storefront-home .hero-photo {
     object-fit: contain;
+    object-position: center;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections {
     justify-content: flex-start;
@@ -145,15 +149,11 @@
     position: relative;
 }
 @media (max-width: 767px) {
-    .store-shell .storefront-home .editorial-hero {
-        min-height: 0;
-        grid-template-columns: minmax(0, 1fr);
-    }
     .store-shell .storefront-home .hero-copy {
-        padding: 18px;
+        padding: clamp(12px, 3.5vw, 24px);
     }
     .store-shell .storefront-home .hero-copy h1 {
-        font-size: clamp(32px, 9vw, 43px);
+        font-size: clamp(26px, 8vw, 42px);
         margin-bottom: 6px;
     }
     .store-shell .storefront-home .hero-description {
@@ -163,13 +163,15 @@
         margin-top: 12px;
     }
     .store-shell .storefront-home .hero-actions .btn-primary {
-        width: 100%;
         justify-content: center;
+        min-height: 44px;
+        gap: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+        text-align: center;
     }
-    .store-shell .storefront-home .hero-visual {
-        min-height: 0;
-        height: clamp(170px, 27svh, 245px);
-        aspect-ratio: auto;
+    .store-shell .storefront-home .hero-actions svg {
+        flex-shrink: 0;
     }
     .store-shell .storefront-home #collections {
         padding-block: 20px 10px;
@@ -198,5 +200,10 @@
     .store-shell .home-shopping-guide {
         margin-inline: 16px;
         padding-inline: 16px;
+    }
+}
+@media (max-width: 359px) {
+    .store-shell .storefront-home .hero-actions svg {
+        display: none;
     }
 }
