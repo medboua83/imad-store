@@ -55,6 +55,8 @@ type Props = {
     products: Product[];
     total: number;
     categories: Category[];
+    focusedProduct?: string;
+    clearProductFocus: () => void;
     onRefresh: () => Promise<Product[]>;
     onCreate: (data: Record<string, unknown>) => Promise<boolean>;
     onUpdate: (id: string, data: Record<string, unknown>) => Promise<boolean>;
@@ -65,6 +67,8 @@ export function ProductsTab({
     products,
     total,
     categories,
+    focusedProduct,
+    clearProductFocus,
     onCreate,
     onUpdate,
     onDelete,
@@ -108,7 +112,7 @@ export function ProductsTab({
     );
     const visible = products
         .filter(
-            (p) =>
+            (p) => focusedProduct ? p.id === focusedProduct :
                 (publication === "ALL" || p.status === publication) &&
                 stockMatches(p, stock) &&
                 [p.nameFr, p.nameAr, p.nameEn, p.slug, ...p.variants.map((v) => v.sku)].some((v) =>
@@ -1128,67 +1132,78 @@ export function ProductsTab({
                 </form>
             )}
             <section className="admin-panel">
-                <div className="admin-toolbar">
-                    <label className="admin-search">
-                        <span>{t("Rechercher un produit")}</span>
-                        <div>
-                            <Search size={17} />
-                            <input
-                                dir="auto"
-                                type="search"
-                                value={search}
-                                placeholder={t("Nom, adresse ou SKU")}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
+                {focusedProduct ? (
+                    <div className="admin-panel-heading">
+                        <h2>{t("Produit sélectionné dans le stock")}</h2>
+                        <button type="button" className="admin-button" onClick={clearProductFocus}>
+                            {t("Afficher tous les produits")}
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="admin-toolbar">
+                            <label className="admin-search">
+                                <span>{t("Rechercher un produit")}</span>
+                                <div>
+                                    <Search size={17} />
+                                    <input
+                                        dir="auto"
+                                        type="search"
+                                        value={search}
+                                        placeholder={t("Nom, adresse ou SKU")}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                </div>
+                            </label>
+                            <label>
+                                {t("Publication")}
+                                <select
+                                    value={publication}
+                                    onChange={(e) => setPublication(e.target.value)}
+                                >
+                                    <option value="ALL">{t("Tous les statuts")}</option>
+                                    <option value="ACTIVE">{t("En vente")}</option>
+                                    <option value="DRAFT">{t("Brouillons")}</option>
+                                    <option value="ARCHIVED">{t("Archivés")}</option>
+                                </select>
+                            </label>
                         </div>
-                    </label>
-                    <label>
-                        {t("Publication")}
-                        <select
-                            value={publication}
-                            onChange={(e) => setPublication(e.target.value)}
-                        >
-                            <option value="ALL">{t("Tous les statuts")}</option>
-                            <option value="ACTIVE">{t("En vente")}</option>
-                            <option value="DRAFT">{t("Brouillons")}</option>
-                            <option value="ARCHIVED">{t("Archivés")}</option>
-                        </select>
-                    </label>
-                </div>
-                <div className="product-list-filters">
-                    <label>
-                        {t("Stock")}
-                        <select value={stock} onChange={(e) => setStock(e.target.value)}>
-                            <option value="ALL">{t("Tous les stocks")}</option>
-                            <option value="LOW">{t("Une variante à 3 unités ou moins")}</option>
-                            <option value="OUT">{t("Toutes les variantes épuisées")}</option>
-                            <option value="NONE">{t("Sans variante")}</option>
-                        </select>
-                    </label>
-                    <label>
-                        {t("Trier par")}
-                        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                            <option value="recent">{t("Ordre du catalogue")}</option>
-                            <option value="name">{t("Nom A–Z")}</option>
-                            <option value="stock">{t("Stock total croissant")}</option>
-                        </select>
-                    </label>
-                    <button
-                        type="button"
-                        className="admin-text-button"
-                        disabled={
-                            !search && publication === "ALL" && stock === "ALL" && sort === "recent"
-                        }
-                        onClick={() => {
-                            setSearch("");
-                            setPublication("ALL");
-                            setStock("ALL");
-                            setSort("recent");
-                        }}
-                    >
-                        {t("Effacer les filtres")}
-                    </button>
-                </div>
+                        <div className="product-list-filters">
+                            <label>
+                                {t("Stock")}
+                                <select value={stock} onChange={(e) => setStock(e.target.value)}>
+                                    <option value="ALL">{t("Tous les stocks")}</option>
+                                    <option value="LOW">{t("Une variante à 3 unités ou moins")}</option>
+                                    <option value="OUT">{t("Toutes les variantes épuisées")}</option>
+                                    <option value="NONE">{t("Sans variante")}</option>
+                                </select>
+                            </label>
+                            <label>
+                                {t("Trier par")}
+                                <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                                    <option value="recent">{t("Ordre du catalogue")}</option>
+                                    <option value="name">{t("Nom A–Z")}</option>
+                                    <option value="stock">{t("Stock total croissant")}</option>
+                                </select>
+                            </label>
+                            <button
+                                type="button"
+                                className="admin-text-button"
+                                disabled={
+                                    !search && publication === "ALL" && stock === "ALL" && sort === "recent"
+                                }
+                                onClick={() => {
+                                    setSearch("");
+                                    setPublication("ALL");
+                                    setStock("ALL");
+                                    setSort("recent");
+                                }}
+                            >
+                                {t("Effacer les filtres")}
+                            </button>
+                        </div>
+                    </>
+                )}
                 <p className="admin-result-count" role="status">
                     {visible.length}
                     {t(" résultat")}
