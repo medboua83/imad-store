@@ -84,7 +84,7 @@ export function HomeView({
                                         <ProductPhoto
                                             images={visual.sources}
                                             name=""
-                                            sizes="(max-width: 767px) 50vw, (max-width: 1240px) 25vw, 300px"
+                                            sizes="(max-width: 359px) 48px, 56px"
                                         />
                                     ) : (
                                         <span className="category-photo-empty" aria-hidden="true">

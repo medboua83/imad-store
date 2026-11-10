@@ -64,7 +64,13 @@ for (const width of [320, 390, 1440]) {
             "href",
             "/shop?section=men",
         );
+        for (const section of await sections.getByRole("link").all()) {
+            const box = await section.boundingBox();
+            expect(box!.height).toBeGreaterThanOrEqual(44);
+            expect(box!.width).toBeLessThan(130);
+        }
         const categoryGrid = collections.getByRole("navigation", { name: "فئات المتجر" });
+        await expect(categoryGrid).toHaveCSS("--collection-columns", width < 768 ? "2" : "4");
         const categoryLinks = categoryGrid.getByRole("link");
         await expect(categoryLinks).toHaveCount(2);
         await expect(categoryLinks.last()).toHaveAttribute("href", "/shop?category=manteau-femme");
@@ -74,8 +80,12 @@ for (const width of [320, 390, 1440]) {
             await expect(photo.locator("img")).toHaveCSS("object-fit", "cover");
             const bounds = await link.boundingBox();
             const image = await photo.boundingBox();
-            expect(Math.abs(image!.width - image!.height)).toBeLessThan(1);
-            expect(bounds!.width - image!.width).toBeLessThanOrEqual(2);
+            expect(image!.width).toBe(width < 360 ? 48 : 56);
+            expect(image!.height).toBe(image!.width);
+            expect(bounds!.height).toBeLessThanOrEqual(76);
+            expect(image!.x + image!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width);
+            const label = await link.locator(".collection-name").boundingBox();
+            expect(label!.x + label!.width).toBeLessThanOrEqual(image!.x);
         }
         if (width > 767) {
             for (const selector of [".collection-grid", ".featured-section .catalog-grid"]) {
