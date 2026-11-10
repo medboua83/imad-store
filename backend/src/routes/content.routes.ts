@@ -1,6 +1,6 @@
 import { Router, IRouter } from "express";
 import { z } from "zod";
-import { defaultSiteContent } from "@imad-store/shared";
+import { defaultSiteContent, homeSectionKeys } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
@@ -13,6 +13,9 @@ const contentSchema = z
         heroSubtitle: text,
         heroImage: z.string().refine(isPublishableImage),
         featuredTitle: z.string().trim().min(1).max(160),
+        homeSections: z.array(z.enum(homeSectionKeys)).max(homeSectionKeys.length)
+            .refine((sections) => new Set(sections).size === sections.length, "Chaque section ne peut figurer qu’une fois.")
+            .optional(),
         banners: z
             .array(
                 z
