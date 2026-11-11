@@ -1,18 +1,23 @@
 import Link from "next/link";
 import { ShoppingQuestions } from "@/components/store/ShoppingQuestions";
 import { ContactWhatsAppButton } from "@/components/store/ContactWhatsAppButton";
+import { publicSettings } from "@/lib/server-api";
+import { storeContacts } from "@imad-store/shared";
 import { PackageCheck, RotateCcw, CircleHelp } from "lucide-react";
 
 export const metadata = { title: "تواصلوا معنا", alternates: { canonical: "/contact" } };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  // Render the current contact before the browser positions a direct link to #questions.
+  const settings = await publicSettings().catch(() => null);
+  const whatsappUrl = settings ? storeContacts(settings).whatsappUrl : "";
   return (
     <section className="page-shell contact-page" dir="rtl">
       <div className="contact-intro">
         <p className="contact-eyebrow">IMAD Mode · نحن هنا للمساعدة</p>
         <h1>تواصلوا معنا</h1>
         <p>للاستفسار عن المنتجات أو متابعة طلبكم، راجعوا وسائل التواصل مع فريق IMAD Mode أسفل الصفحة.</p>
-        <ContactWhatsAppButton />
+        <ContactWhatsAppButton initialHref={whatsappUrl} />
         <p className="contact-service-note">لتسهيل المساعدة، أرسلوا اسم المنتج أو مرجع الطلب مع رسالتكم.</p>
       </div>
       <nav className="contact-shortcuts" aria-label="مساعدة سريعة">

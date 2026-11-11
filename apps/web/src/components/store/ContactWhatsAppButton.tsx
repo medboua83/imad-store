@@ -2,12 +2,13 @@
 import { ArrowUpLeft, MessageCircle } from "lucide-react";
 import { useStoreContacts } from "@/lib/use-store-contacts";
 
-export function ContactWhatsAppButton() {
+export function ContactWhatsAppButton({ initialHref = "" }: { initialHref?: string }) {
     const contacts = useStoreContacts();
-    if (!contacts?.whatsappUrl) return null;
+    const href = contacts ? contacts.whatsappUrl : initialHref;
+    if (!href) return null;
     return (
         <a
-            href={contacts.whatsappUrl}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-primary contact-whatsapp"

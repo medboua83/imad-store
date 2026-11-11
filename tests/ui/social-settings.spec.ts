@@ -14,7 +14,7 @@ async function fixture(page: Page) {
     let fail = true;
     await page.addInitScript(() => {
         localStorage.setItem("adminToken", "isolated-social-settings");
-        localStorage.setItem("imad-admin-language", "fr");
+        if (!localStorage.getItem("imad-admin-language")) localStorage.setItem("imad-admin-language", "fr");
     });
     await page.route("**/api/**", async (route) => {
         const req = route.request(),
@@ -162,8 +162,8 @@ test("Store waits for contact settings instead of exposing old or unsafe links",
             },
         });
     });
-    await page.goto("/contact");
-    await expect(page.locator(".footer-socials a, .contact-whatsapp")).toHaveCount(0);
+    await page.goto("/");
+    await expect(page.locator(".footer-socials a, .store-whatsapp-float")).toHaveCount(0);
     release();
     await expect(page.locator(".footer-socials a")).toHaveCount(2);
     await expect(page.locator(".contact-whatsapp")).toHaveCount(0);
