@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { readPublicProducts, readPublicProduct, readPublicRecommendations } from "../controllers/product.controller";
 import { readCategories } from "../controllers/category.controller";
 import { readSettings } from "../controllers/settings.controller";
-import { readPublicContent } from "./public-content";
+import { readPublicContent, readPublicHeroProducts } from "./public-content";
 import { AppError } from "../middleware/error.middleware";
 
 // Only public reads are available to server-rendered pages. HTTP controllers
@@ -20,6 +20,7 @@ export async function readPublicStore(path: string) {
         else if (url.pathname === "/categories") body = await readCategories();
         else if (url.pathname === "/settings") body = await readSettings();
         else if (url.pathname === "/content") body = await readPublicContent();
+        else if (url.pathname === "/content/hero-products") body = await readPublicHeroProducts();
         else return { status: 404, body: { success: false } };
         // Match JSON-over-HTTP Date serialization before crossing into Next.
         return { status: 200, body: JSON.parse(JSON.stringify(body)) as unknown };

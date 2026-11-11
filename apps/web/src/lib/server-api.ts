@@ -29,6 +29,11 @@ export const publicContent = cache(async () => {
     const response = await serverGet<{ data: SiteContent }>("/content");
     return { ...defaultSiteContent, ...response.data };
 });
+export const publicHeroProducts = cache(async (): Promise<Product[]> => {
+    try {
+        return (await serverGet<{ data: Product[] }>("/content/hero-products")).data;
+    } catch { return []; } // Optional selection never blocks the home page.
+});
 export const publicCategories = cache(
     async () => (await serverGet<{ data: Category[] }>("/categories")).data,
 );

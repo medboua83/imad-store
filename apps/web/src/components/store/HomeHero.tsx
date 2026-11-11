@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, ArrowUpLeft } from "lucide-react";
 import { ProductPhoto } from "./ProductPhoto";
 
@@ -18,10 +18,14 @@ export function HomeHero({
     slides,
     children,
     preview = false,
+    autoplay = true,
+    minimalControls = true,
 }: {
     slides: HeroSlide[];
     children: ReactNode;
     preview?: boolean;
+    autoplay?: boolean;
+    minimalControls?: boolean;
 }) {
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(preview);
@@ -29,11 +33,15 @@ export function HomeHero({
     const [reducedMotion, setReducedMotion] = useState(true);
     const [visible, setVisible] = useState(false);
     const [inView, setInView] = useState(false);
+    const [hasAdvanced, setHasAdvanced] = useState(false);
+    const hint = useId();
+    const touch = useRef<{ id: number; x: number; y: number } | null>(null);
     const root = useRef<HTMLElement>(null);
     const activeIndex = index % Math.max(1, slides.length);
     const active = slides[activeIndex];
     const multiple = slides.length > 1;
-    const playing = multiple && !paused && !reducedMotion && !hovered && visible && inView;
+    const playing =
+        multiple && autoplay && !paused && !reducedMotion && !hovered && visible && inView;
 
     useEffect(() => {
         const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -59,10 +67,10 @@ export function HomeHero({
 
     useEffect(() => {
         if (!playing) return;
-        const timer = window.setInterval(
-            () => setIndex((current) => (current + 1) % slides.length),
-            7000,
-        );
+        const timer = window.setInterval(() => {
+            setHasAdvanced(true);
+            setIndex((current) => (current + 1) % slides.length);
+        }, 7000);
         return () => window.clearInterval(timer);
     }, [playing, slides.length]);
 
@@ -78,6 +86,7 @@ export function HomeHero({
 
     const move = (direction: number) => {
         setPaused(true);
+        setHasAdvanced(true);
         setIndex((current) => (current + direction + slides.length) % slides.length);
     };
 
@@ -85,22 +94,47 @@ export function HomeHero({
     return (
         <section
             ref={root}
-            className="home-hero-carousel"
+            className={`home-hero-carousel${minimalControls ? " hero-minimal" : ""}`}
             data-rotation-state={
-                paused
-                    ? "paused"
-                    : reducedMotion
-                      ? "reduced-motion"
-                      : hovered
-                        ? "hovered"
-                        : !visible
-                          ? "hidden-tab"
-                          : !inView
-                            ? "offscreen"
-                            : "playing"
+                !autoplay
+                    ? "manual"
+                    : paused
+                      ? "paused"
+                      : reducedMotion
+                        ? "reduced-motion"
+                        : hovered
+                          ? "hovered"
+                          : !visible
+                            ? "hidden-tab"
+                            : !inView
+                              ? "offscreen"
+                              : "playing"
             }
             aria-label="مختارات IMAD Mode"
             aria-roledescription="عارض المنتجات"
+            aria-describedby={hint}
+            onPointerDownCapture={(event) => {
+                if (event.pointerType !== "touch") return;
+                setPaused(true);
+                if (
+                    multiple &&
+                    event.target instanceof Element &&
+                    event.target.closest(".hero-visual") &&
+                    !event.target.closest("button, a")
+                )
+                    touch.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            }}
+            onPointerUpCapture={(event) => {
+                const start = touch.current;
+                touch.current = null;
+                if (!start || start.id !== event.pointerId) return;
+                const dx = event.clientX - start.x,
+                    dy = event.clientY - start.y;
+                if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) move(dx < 0 ? 1 : -1);
+            }}
+            onPointerCancelCapture={() => {
+                touch.current = null;
+            }}
             onPointerEnter={(event) => {
                 if (event.pointerType !== "touch") setHovered(true);
             }}
@@ -109,6 +143,10 @@ export function HomeHero({
                 if (event.target.matches(":focus-visible")) setPaused(true);
             }}
         >
+            <p id={hint} className="sr-only">
+                استخدموا الأزرار لاختيار منتج. على الهاتف، يوقف اللمس العرض التلقائي ويمكن السحب على
+                الصورة لتغيير المنتج.
+            </p>
             <div className="editorial-hero">
                 {children}
                 <div className="hero-visual">
@@ -119,8 +157,26 @@ export function HomeHero({
                         preload={activeIndex === 0}
                         eager={activeIndex !== 0}
                         sizes="(max-width: 767px) calc(45vw - 12px), 336px"
-                        className="hero-photo"
+                        className={`hero-photo${hasAdvanced ? " hero-photo-arrival" : ""}`}
                     />
+                    {multiple && minimalControls && (
+                        <div className="hero-image-arrows" dir="ltr">
+                            <button
+                                type="button"
+                                onClick={() => move(-1)}
+                                aria-label="المنتج السابق"
+                            >
+                                <ChevronLeft size={20} aria-hidden="true" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => move(1)}
+                                aria-label="المنتج التالي"
+                            >
+                                <ChevronRight size={20} aria-hidden="true" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="hero-carousel-bar">
@@ -155,20 +211,56 @@ export function HomeHero({
                         aria-label="التحكم في عرض المنتجات"
                         dir="ltr"
                     >
-                        <button type="button" onClick={() => move(-1)} aria-label="المنتج السابق">
-                            <ChevronLeft size={20} aria-hidden="true" />
-                        </button>
+                        {!minimalControls && (
+                            <button
+                                type="button"
+                                onClick={() => move(-1)}
+                                aria-label="المنتج السابق"
+                            >
+                                <ChevronLeft size={20} aria-hidden="true" />
+                            </button>
+                        )}
                         <span
-                            className="hero-slide-count"
+                            className={`hero-slide-count${minimalControls ? " sr-only" : ""}`}
                             aria-label={`المنتج ${activeIndex + 1} من ${slides.length}`}
                         >
                             {activeIndex + 1} / {slides.length}
                         </span>
-                        <button type="button" onClick={() => move(1)} aria-label="المنتج التالي">
-                            <ChevronRight size={20} aria-hidden="true" />
-                        </button>
-                        {!reducedMotion && (
+                        {!minimalControls && (
                             <button
+                                type="button"
+                                onClick={() => move(1)}
+                                aria-label="المنتج التالي"
+                            >
+                                <ChevronRight size={20} aria-hidden="true" />
+                            </button>
+                        )}
+                        {minimalControls && (
+                            <div
+                                className="hero-slide-dots"
+                                role="group"
+                                aria-label="اختيار منتج من العرض"
+                            >
+                                {slides.map((slide, number) => (
+                                    <button
+                                        type="button"
+                                        key={slide.id}
+                                        aria-label={`عرض المنتج ${number + 1} من ${slides.length}`}
+                                        aria-pressed={number === activeIndex}
+                                        onClick={() => {
+                                            setPaused(true);
+                                            setHasAdvanced(true);
+                                            setIndex(number);
+                                        }}
+                                    >
+                                        <span aria-hidden="true" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {autoplay && !reducedMotion && (
+                            <button
+                                className="hero-pause-toggle"
                                 type="button"
                                 onClick={() => setPaused((current) => !current)}
                                 aria-label={

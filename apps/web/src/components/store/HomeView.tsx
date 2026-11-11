@@ -2,13 +2,20 @@ import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { ArrowDown, ArrowUpLeft } from "lucide-react";
-import { homeSectionKeys, type HomeSection, type SiteContent } from "@imad-store/shared";
+import {
+    homeSectionKeys,
+    MAX_HERO_PRODUCTS,
+    usesManualHeroSelection,
+    type HomeSection,
+    type SiteContent,
+} from "@imad-store/shared";
 import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { CatalogSectionLinks } from "./CatalogSectionLinks";
 import { HomeHero, type HeroSlide } from "./HomeHero";
+import { isAvailableHeroProduct } from "@/lib/hero-selection";
 function DraftPreviewLink(props: ComponentProps<typeof Link>) {
     const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
     return (
@@ -23,27 +30,36 @@ export function HomeView({
     content,
     products,
     categories,
+    heroProducts = [],
     preview = false,
 }: {
     content: SiteContent;
     products: Product[];
     categories: Category[];
+    heroProducts?: Product[];
     preview?: boolean;
 }) {
     const ViewLink = preview ? DraftPreviewLink : Link;
+    const available = products.filter(isAvailableHeroProduct);
     const featured =
-        products.find((product) => product.category?.slug === "abayas" && product.images[0]) ||
-        products.find((product) => product.images[0]);
+        available.find((product) => product.category?.slug === "abayas") || available[0];
     // The legacy default points to a missing asset.
     const useCatalogue = !content.heroImage || content.heroImage === "/images/hero-1.png";
     const catalogueImages = featured?.images ?? ["/images/catalogue-test/abaya.webp"];
     const heroImages = useCatalogue ? catalogueImages : [content.heroImage, ...catalogueImages];
-    const heroProducts = [featured, ...products].filter(
+    const automaticProducts = [featured, ...available].filter(
         (product, index, list): product is Product =>
             Boolean(product?.images[0]) &&
             list.findIndex((entry) => entry?.id === product?.id) === index,
     );
-    const productSlides: HeroSlide[] = heroProducts.map((product) => ({
+    const manual = usesManualHeroSelection(content);
+    const selected = manual
+        ? (content.heroProductIds ?? []).flatMap((id) => {
+              const product = heroProducts.find((p) => p.id === id && isAvailableHeroProduct(p));
+              return product ? [product] : [];
+          })
+        : automaticProducts;
+    const productSlides: HeroSlide[] = selected.map((product) => ({
         id: product.id,
         images: product.images,
         name: product.nameAr || product.nameFr,
@@ -51,18 +67,18 @@ export function HomeView({
         price: product.price,
     }));
     const slides: HeroSlide[] = (
-        useCatalogue && productSlides.length
+        (manual || useCatalogue) && productSlides.length
             ? productSlides
             : [
                   {
                       id: "collection",
-                      images: heroImages,
+                      images: manual ? (useCatalogue ? [] : [content.heroImage]) : heroImages,
                       name: "اكتشفوا مجموعة IMAD Mode",
                       href: "/shop",
                   },
                   ...productSlides,
               ]
-    ).slice(0, 4);
+    ).slice(0, manual ? MAX_HERO_PRODUCTS : 4);
     const homeSections = content.homeSections ?? homeSectionKeys;
     const blocks: Record<HomeSection, ReactNode> = {
         collections: (
@@ -130,7 +146,7 @@ export function HomeView({
                                 product={p}
                                 key={p.id}
                                 headingLevel={3}
-                                thumbnail={heroImages[0] !== p.images[0]}
+                                thumbnail={slides[0]?.images[0] !== p.images[0]}
                                 openInNewTab={preview}
                             />
                         ))}
@@ -191,7 +207,13 @@ export function HomeView({
     };
     return (
         <div className="storefront-home">
-            <HomeHero slides={slides} preview={preview}>
+            <HomeHero
+                key={slides.map((slide) => slide.id).join("|")}
+                slides={slides}
+                preview={preview}
+                autoplay={content.heroAutoplay ?? true}
+                minimalControls={content.heroMinimalControls ?? true}
+            >
                 <div className="hero-copy">
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>

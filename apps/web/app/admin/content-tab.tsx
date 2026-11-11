@@ -1,12 +1,15 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
+import "./content-hero.css";
+import { HeroProducts } from "./hero-products";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { defaultSiteContent, homeSectionKeys, type HomeSection, type SiteContent } from "@imad-store/shared";
+import { defaultSiteContent, homeSectionKeys, usesManualHeroSelection, type HomeSection, type SiteContent } from "@imad-store/shared";
 import {
     getContentAdmin,
     getProducts,
+    getAdminProducts,
     getCategories,
     saveContent,
     uploadProductImage,
@@ -32,6 +35,14 @@ export default function ContentTab() {
     const [dirty, setDirty] = useState(false);
     const [readbackPending, setReadbackPending] = useState(false);
     const lock = useRef(false);
+    const heroIds = content.heroProductIds ?? [];
+    const heroManual = usesManualHeroSelection(content);
+    const selectedHero = useQuery({
+        queryKey: ["hero-selected-products", [...heroIds].sort().join(",")],
+        queryFn: () => getAdminProducts({ ids: heroIds.join(","), limit: 8 }),
+        enabled: ready && heroManual && heroIds.length > 0,
+        staleTime: 30_000, refetchOnWindowFocus: false, retry: false,
+    });
     const catalogue = useQuery({
         queryKey: ["content-preview-catalogue"],
         queryFn: async () => {
@@ -207,6 +218,18 @@ export default function ContentTab() {
                                 />
                             </label>
                         </div>
+                        <fieldset className="hero-selection-settings space-y-3" id="hero-products">
+                            <legend>{t("Bandeau d’accueil")}</legend>
+                            <HeroProducts value={content.heroProductIds} manual={heroManual} onModeChange={manual => change("heroProductMode", manual ? "manual" : "auto")} onChange={ids => change("heroProductIds", ids)}
+                                selected={selectedHero.data?.data ?? []} loading={heroIds.length > 0 && selectedHero.isPending}
+                                error={heroIds.length > 0 && selectedHero.isError} onRetry={() => void selectedHero.refetch()} />
+                            <label className="hero-setting-toggle"><input type="checkbox" checked={content.heroAutoplay ?? true}
+                                onChange={event => change("heroAutoplay", event.target.checked)} />{t("Défilement automatique")}</label>
+                            <label className="hero-setting-toggle"><input type="checkbox" checked={content.heroMinimalControls ?? true}
+                                onChange={event => change("heroMinimalControls", event.target.checked)} />{t("Commandes discrètes")}</label>
+                            <p className="admin-muted">{t("Commandes discrètes : petits repères et pause masquée au repos. Un toucher arrête le défilement ; le clavier conserve un bouton de pause accessible.")}</p>
+                            <p className="admin-muted">{t("Enregistrez le brouillon, vérifiez l’aperçu, puis cliquez sur Publier. Les produits sans stock ou archivés sont ignorés, sans remplacer votre sélection.")}</p>
+                        </fieldset>
                         <fieldset className="border border-white/20 p-4 space-y-3">
                             <legend>{t("Sections de l’accueil")}</legend>
                             <p className="admin-muted">{t("Les sections s’affichent dans cet ordre, sous le bandeau.")}</p>
@@ -435,9 +458,9 @@ export default function ContentTab() {
                                     "Aperçu privé : vos textes ne sont pas publiés. Les liens vers la boutique s’ouvrent dans un nouvel onglet pour conserver votre saisie.",
                                 )}
                             </p>
-                            {catalogue.isPending ? (
+                            {catalogue.isPending || (heroManual && heroIds.length > 0 && selectedHero.isPending) ? (
                                 <p role="status">{t("Chargement du catalogue de l’aperçu…")}</p>
-                            ) : catalogue.isError ? (
+                            ) : catalogue.isError || (heroManual && heroIds.length > 0 && selectedHero.isError) ? (
                                 <div className="admin-alert" role="alert">
                                     <p>
                                         {t(
@@ -446,7 +469,7 @@ export default function ContentTab() {
                                     </p>
                                     <button
                                         className="admin-button"
-                                        onClick={() => void catalogue.refetch()}
+                                        onClick={() => { void catalogue.refetch(); if (heroIds.length) void selectedHero.refetch(); }}
                                     >
                                         {t("Réessayer")}
                                     </button>
@@ -455,6 +478,7 @@ export default function ContentTab() {
                                 <HomeView
                                     content={content}
                                     products={catalogue.data.products}
+                                    heroProducts={selectedHero.data?.data ?? []}
                                     categories={catalogue.data.categories}
                                     preview
                                 />
