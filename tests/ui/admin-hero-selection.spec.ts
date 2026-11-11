@@ -124,6 +124,10 @@ for (const width of [320, 390, 1440]) {
         await page.setViewportSize({ width, height: width > 767 ? 1000 : 844 });
         const state = await setup(page);
         const editor = page.locator("#hero-products");
+        const mode = editor.getByRole("radio", { name: "Choisir les produits", exact: true });
+        const modeBox = (await mode.boundingBox())!;
+        expect(modeBox.width).toBeLessThanOrEqual(24);
+        expect(modeBox.height).toBeLessThanOrEqual(24);
         await editor.getByRole("radio", { name: "Choisir les produits", exact: true }).check();
         await editor.getByRole("button", { name: "Suivant", exact: true }).click();
         await editor.getByRole("checkbox", { name: "Article 25", exact: true }).check();

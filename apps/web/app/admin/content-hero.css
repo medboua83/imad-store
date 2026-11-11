@@ -104,8 +104,9 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.admin-app .hero-selection-settings input[type="checkbox"],
-.admin-app .hero-selection-settings input[type="radio"] {
+.admin-app .hero-selection-settings .hero-product-options input[type="checkbox"],
+.admin-app .hero-selection-settings .hero-setting-toggle input[type="checkbox"],
+.admin-app .hero-selection-settings .hero-selection-modes input[type="radio"] {
   width: 20px;
   min-width: 20px;
   max-width: 20px;
