@@ -172,6 +172,8 @@ export function ProductPreview({
                                     {variant.colorNameAr || variant.colorNameFr || variant.color}
                                 </button>)}
                             </div>}
+                            {selectedColor && !draft.colorPhotos.some(link => link.colorKey === selectedColor && gallery.includes(link.image)) &&
+                                <p className="admin-scope" role="status">{t("Cette couleur n’a pas de photo associée. Choisissez-la dans Photos et couleurs.")}</p>}
                             {sizes.length > 0 && <div className="product-preview-sizes" aria-label={t("Tailles du produit")}>
                                 {sizes.map((size) => <bdi key={size}>{size}</bdi>)}
                             </div>}

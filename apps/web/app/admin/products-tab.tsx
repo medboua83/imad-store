@@ -2,13 +2,14 @@
 import { useAdminLocale } from "./admin-locale";
 
 import { useEffect, useRef, useState } from "react";
-import { isAmbiguousSize, productColorKey, validColorPhotos, type ProductColorPhoto } from "@imad-store/shared";
+import { isAmbiguousSize, validColorPhotos, type ProductColorPhoto } from "@imad-store/shared";
 import { QuantityOfferEditor, packOffers, type DraftQuantityOffer } from "./quantity-offer-editor";
 import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { getAdminProductBySlug, type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
 import { ProductPreview } from "./product-preview";
+import { ProductColorPhotos } from "./product-color-photos";
 import { matchesCatalogueSearch } from "./catalogue-search";
 import { ProductRecommendationEditor } from "./product-recommendations";
 import {
@@ -19,6 +20,7 @@ import {
     sizeVariants,
     stockMatches,
     stockSummary,
+    preserveColorPhotoOnRename,
 } from "./product-utils";
 import { money } from "./admin-utils";
 const blank = {
@@ -78,7 +80,7 @@ export function ProductsTab({
     onDelete,
     onRefresh,
 }: Props) {
-    const { t, locale } = useAdminLocale();
+    const { t } = useAdminLocale();
     const [search, setSearch] = useState(""),
         [publication, setPublication] = useState("ALL"),
         [stock, setStock] = useState("ALL"),
@@ -111,9 +113,6 @@ export function ProductsTab({
     const checkingRequired = creationRecovery !== null && recoveredProduct === undefined;
     const saveBlocked = uncertain || (creationRecovery !== null && recoveredProduct !== null);
     const summary = stockSummary(products);
-    const photoColors = new Map(
-        variants.filter((v) => !isAmbiguousSize(v.size)).map((v) => [productColorKey(v), v]),
-    );
     const visible = products
         .filter(
             (p) => focusedProduct ? p.id === focusedProduct :
@@ -215,10 +214,17 @@ export function ProductsTab({
     }
     const set = (key: keyof typeof blank, value: string) =>
         setForm((previous) => ({ ...previous, [key]: value }));
-    const variant = (key: string, field: keyof DraftVariant, value: string) =>
-        setVariants((previous) =>
-            previous.map((v) => (v.key === key ? { ...v, [field]: value } : v)),
-        );
+    function variant(key: string, field: keyof DraftVariant, value: string) {
+        const before = variants.find(variant => variant.key === key);
+        if (!before) return;
+        const next = variants.map(variant => variant.key === key ? { ...variant, [field]: value } : variant);
+        const after = next.find(variant => variant.key === key)!;
+        setVariants(next);
+        setForm(previous => {
+            const colorPhotos = preserveColorPhotoOnRename(previous.colorPhotos, before, after, next);
+            return colorPhotos === previous.colorPhotos ? previous : { ...previous, colorPhotos };
+        });
+    }
     function failure(e: unknown) {
         const r = e as {
             message?: string;
@@ -647,6 +653,9 @@ export function ProductsTab({
                             busy={disabled}
                             onBusy={setUploading}
                         />
+                        <ProductColorPhotos key={`color-photos-${session}`} images={images}
+                            variants={variants} value={form.colorPhotos} disabled={disabled}
+                            onChange={colorPhotos => setForm(previous => ({ ...previous, colorPhotos }))} />
                         <ProductPreview key={`preview-photos-${session}-${active}`}
                             draft={form} images={images} variants={variants} categories={categories}
                             disabled={busy} label="Prévisualiser les photos" />
@@ -729,6 +738,7 @@ export function ProductsTab({
                         id="product-variants"
                     >
                         <legend>{t("4. Tailles, couleurs et stock")}</legend>
+                        <a className="color-photo-back-link" href="#product-color-photos">{t("Associer les photos aux couleurs")}</a>
                         <p className="admin-muted">
                             {t(
                                 "Chaque variante possède une référence SKU unique. Le stock correspond aux unités disponibles, après les réservations des commandes.",
@@ -1011,58 +1021,6 @@ export function ProductsTab({
                             {t("Ajouter une variante")}
                         </button>
                     </fieldset>
-                    {photoColors.size > 0 && (
-                        <fieldset className="admin-variant-fields" disabled={disabled || !images.length}>
-                            <legend>{t("Photo par couleur")}</legend>
-                            <p className="admin-muted">
-                                {t(images.length
-                                    ? "Choisissez une photo de la galerie pour chaque couleur. Elle s’affichera sur la fiche produit quand cette couleur est sélectionnée."
-                                    : "Ajoutez d’abord des photos à la galerie pour les associer aux couleurs.")}
-                            </p>
-                            <div className="grid gap-3 md:grid-cols-2">
-                                {[...photoColors].map(([key, color]) => {
-                                    const name = (locale === "ar" ? color.colorNameAr : color.colorNameFr).trim()
-                                        || color.colorNameFr.trim() || color.color.trim() || t("Couleur");
-                                    const selected = form.colorPhotos.find(
-                                        (link) => link.colorKey === key && images.includes(link.image),
-                                    )?.image;
-                                    return (
-                                        <div key={key} className="flex items-end gap-3">
-                                            <label className="min-w-0 flex-1">
-                                                {t("Photo pour {0}", { "0": name })}
-                                                <select
-                                                    className={inputClass}
-                                                    value={selected ?? ""}
-                                                    onChange={(e) => {
-                                                        const image = e.target.value;
-                                                        setForm((old) => ({
-                                                            ...old,
-                                                            colorPhotos: [
-                                                                ...old.colorPhotos.filter((link) => link.colorKey !== key),
-                                                                ...(image ? [{ colorKey: key, image }] : []),
-                                                            ],
-                                                        }));
-                                                    }}
-                                                >
-                                                    <option value="">{t("Par défaut · photo de couverture")}</option>
-                                                    {images.map((image, index) => (
-                                                        <option key={`${image}-${index}`} value={image}>
-                                                            {index === 0 ? t("Couverture") : t("Photo {0}", { "0": index + 1 })}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                            {selected && (
-                                                <span className="shrink-0 overflow-hidden rounded-md">
-                                                    <AdminProductPhoto images={[selected]} name={name} width={44} height={44} />
-                                                </span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </fieldset>
-                    )}
                     <ProductRecommendationEditor
                         key={`recommendations-${session}`}
                         currentId={id}
