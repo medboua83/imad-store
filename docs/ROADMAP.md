@@ -1,11 +1,18 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Démarrage et commandes masquées — 11 novembre 2026
+
+- [x] Différer le chargement Google Sheets quand la connexion n’est pas configurée.
+- [x] Borner l’attente de santé et l’arrêt du processus, conserver les assertions anti-démo.
+- [x] Masquer les commandes au pointeur, conserver lecture automatique et accès clavier/tactile.
+- [ ] Vérifier le candidat en local et dans GitHub, puis publier et contrôler les deux formats.
+
 ## Sélection du bandeau — 11 novembre 2026
 
 - [x] Choix dans le catalogue, conservation de l’ordre et prévisualisation du brouillon.
 - [x] Lecture publique limitée à la sélection publiée et aux produits disponibles, sans substitution.
 - [x] Commandes discrètes, pause accessible, toucher et glissement mobile.
-- [ ] Terminer les tests serveur/navigateur et publier le candidat exact.
+- [x] PR131 publiée : sélection/ordre/aperçu et recette réelle vérifiés, données originales conservées ; contrôle global de Master 43106862442 finalement réussi.
 
 ## Bandeau dynamique — 11 novembre 2026
 

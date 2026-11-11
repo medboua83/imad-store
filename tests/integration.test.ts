@@ -861,7 +861,27 @@ test("Demo seeding refuses a live database and startup has no automatic fixture 
     await assert.rejects(ensureProductionData(true), /restricted/);
 });
 
-test("An empty server startup does not publish demo data even with a legacy seed flag", async () => {
+test("Unconfigured Sheets does not load the optional Google API SDK", async () => {
+    const keys = ["GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "GOOGLE_SHEETS_SPREADSHEET_ID"];
+    const previous = keys.map(key => process.env[key]);
+    const loaded = () => Object.keys(require.cache).some(path => /[\\/]node_modules[\\/]googleapis[\\/]/.test(path));
+    try {
+        for (const key of keys) process.env[key] = "";
+        assert.equal(loaded(), false, "The unused SDK must not delay application startup");
+        const sheets = await import("../backend/src/lib/notifications");
+        await sheets.appendOrderToSheets({} as any);
+        await sheets.updateOrderStatusInSheets("123456789012345678901234", "CONFIRMED");
+        await sheets.syncSheetsToDatabase();
+        assert.equal(loaded(), false);
+    } finally {
+        keys.forEach((key, index) => {
+            if (previous[index] === undefined) delete process.env[key];
+            else process.env[key] = previous[index];
+        });
+    }
+});
+
+test("An empty server startup does not publish demo data even with a legacy seed flag", { timeout: 60000 }, async () => {
     const { spawn } = await import("node:child_process");
     const isolated = `imad_ci_${randomBytes(8).toString("hex")}`;
     await createDatabase(isolated);
@@ -874,32 +894,49 @@ test("An empty server startup does not publish demo data even with a legacy seed
             PORT: "0",
             IMAD_SEED_DEMO: "true",
             DESKCOMM_OUTBOX_WORKER_ENABLED: "false",
+            GOOGLE_SERVICE_ACCOUNT_EMAIL: "",
+            GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
+            GOOGLE_SHEETS_SPREADSHEET_ID: "",
         },
         stdio: ["ignore", "pipe", "pipe"],
     });
+    let output = "", errors = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", chunk => { errors = (errors + chunk).slice(-4000); });
     try {
         const port = await new Promise<number>((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error("Startup timeout")), 8000);
+            // Readiness of a fresh process is not an 8 s performance benchmark on an external disk.
+            // Keep a hard bound and still require a real listener, healthy response and empty tables.
+            const timer = setTimeout(() => reject(new Error(`Startup timeout: ${errors}`)), 30000);
             child.stdout.on("data", (chunk) => {
-                const match = String(chunk).match(/http:\/\/localhost:(\d+)/);
+                output = (output + chunk).slice(-8000);
+                const match = output.match(/http:\/\/localhost:(\d+)\s/);
                 if (match) {
                     clearTimeout(timer);
                     resolve(Number(match[1]));
                 }
             });
+            child.once("error", error => { clearTimeout(timer); reject(error); });
             child.on("exit", () => {
                 clearTimeout(timer);
-                reject(new Error("Server exited"));
+                reject(new Error(`Server exited: ${errors}`));
             });
         });
-        const response = await fetch(`http://127.0.0.1:${port}/health`);
+        const response = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(3000) });
         assert.equal(response.status, 200);
+        assert.equal((await response.json()).status, "ok");
         await new Promise((resolve) => setTimeout(resolve, 150));
         assert.equal(await isolatedClient.product.count(), 0);
         assert.equal(await isolatedClient.siteContent.count(), 0);
     } finally {
-        child.kill("SIGTERM");
-        await new Promise((resolve) => child.once("exit", resolve));
+        if (child.pid && child.exitCode === null && child.signalCode === null) {
+            // Register before signalling; a fast exit must not leave cleanup waiting forever.
+            const exited = new Promise(resolve => child.once("exit", resolve));
+            child.kill("SIGTERM");
+            const force = setTimeout(() => child.kill("SIGKILL"), 2000);
+            try { await exited; } finally { clearTimeout(force); }
+        }
         await isolatedClient.$disconnect();
         await dropDatabase(isolated);
     }

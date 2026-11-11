@@ -1,5 +1,15 @@
 # Imad Store — Persistent Project Memory
 
+## Démarrage et bandeau sans commandes visuelles — candidat du 11 novembre 2026
+
+Le démarrage chargeait de façon synchrone le SDK complet Google APIs, même sans configuration Google Sheets. Son import est désormais différé après vérification des identifiants, dans les trois opérations existantes, sans modifier leur contrat. Le test anti-données-démo attend un port complet à travers plusieurs fragments de sortie, consomme les diagnostics, borne la requête de santé et inscrit l’écoute d’arrêt avant le signal avec recours à SIGKILL après deux secondes. Sa limite de disponibilité passe de huit à trente secondes pour un processus neuf sur stockage externe ; plafond global d’une minute. Les assertions santé et tables vides restent obligatoires. Une régression vérifie qu’une intégration Sheets non configurée ne charge pas le SDK.
+
+Le mode masqué du bandeau conserve la lecture automatique par défaut et cache les points, flèches et pause même au survol. Les contrôles restent accessibles et se révèlent au clavier ; le glissement tactile, la pause à l’interaction, la visibilité de l’onglet et la réduction des animations sont conservés. Le dashboard nomme explicitement l’option « Masquer les commandes du bandeau ». Aucune photo, sélection réelle, donnée commerciale, dépendance ou migration n’est modifiée. Tests et publication du candidat exact à consigner.
+
+## Production vérifiée — PR131, 11 novembre 2026
+
+Source 84d49ccb54b08c0f0dc3e7732879b8a53a75d079 publiée, arbre identique à Master 2c980f7c19aea94349b2542fb2ba26a5bd035c87. Sauvegarde privée, compilation isolée et activation confirmées depuis le Terminal Mac. Cinq empreintes JavaScript/CSS comparées en HTTPS ; réglages, contenu, catégories et catalogue identiques avant/après. Sélection privée et ordre de Saboliya/Abaya Fodan 01, aperçu des photos/liens et accueil réel vérifiés à 1440×1000 et 390×844. Choix d’essai abandonnés ; mode automatique et révision 0 restaurés. 24 tests visuels locaux réussis, 127/128 serveur (ancien délai de démarrage reproduit sur l’ancienne version). Le contrôle GitHub de Master 43106862442 a finalement obtenu un runner et réussi ; le premier run de PR avait échoué sans runner. Aucune commande créée ni photo réenregistrée. Rapports sur DATA dans outputs/admin-hero-selection.
+
 ## Choix et ordre du bandeau — candidat du 11 novembre 2026
 
 Contenu du site ajoute le mode automatique ou manuel, jusqu’à six produits choisis dans tout le catalogue de cette installation, une recherche et une pagination, des miniatures et des boutons de classement. Le passage temporaire au mode automatique conserve la liste et son ordre. L’enregistrement reste un brouillon avant publication, avec les protections de révision existantes ; aucune fiche produit n’est réenregistrée.
