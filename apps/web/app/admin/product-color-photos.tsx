@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { Check, ImagePlus, X } from "lucide-react";
 import { isAmbiguousSize, productColorKey, type ProductColorPhoto } from "@imad-store/shared";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
@@ -27,6 +27,9 @@ export function ProductColorPhotos({ images, variants, value, disabled, onChange
     function close(key: string) {
         setExpanded("");
         openers.current.get(key)?.focus();
+    }
+    function escape(event: KeyboardEvent<HTMLButtonElement>, key: string) {
+        if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(key); }
     }
     return <fieldset id="product-color-photos" className="product-color-photos" disabled={disabled}>
         <legend>{t("Photos et couleurs")}</legend>
@@ -64,22 +67,22 @@ export function ProductColorPhotos({ images, variants, value, disabled, onChange
                         ref={node => { if (node) openers.current.set(key, node); else openers.current.delete(key); }}
                         aria-label={t("Choisir une photo pour {name}", { name })}
                         aria-expanded={expanded === key && gallery.length > 0} aria-controls={panelId}
+                        onKeyDown={event => escape(event, key)}
                         onClick={() => setExpanded(expanded === key ? "" : key)}>
                         <ImagePlus size={17} aria-hidden="true" />{t(image ? "Changer la photo" : "Choisir une photo")}
                     </button>
-                    <div id={panelId} className="color-photo-picker" hidden={expanded !== key || !gallery.length}
-                        onKeyDown={event => {
-                            if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(key); }
-                        }}>
+                    <div id={panelId} className="color-photo-picker" hidden={expanded !== key || !gallery.length}>
                         {expanded === key && gallery.length > 0 && <><div className="color-photo-picker-heading">
                             <strong>{t("Photos pour {name}", { name })}</strong>
                             <button type="button" className="admin-icon-button" aria-label={t("Fermer le choix de photo pour {name}", { name })}
+                                onKeyDown={event => escape(event, key)}
                                 onClick={() => close(key)}><X size={18} aria-hidden="true" /></button>
                         </div>
                         <div className="color-photo-choice-grid" role="group" aria-label={t("Photos disponibles pour {name}", { name })}>
                             {gallery.map((src, position) => <button type="button" key={src}
                                 aria-label={t("Associer la photo {number} à {name}", { number: position + 1, name })}
                                 aria-pressed={src === image}
+                                onKeyDown={event => escape(event, key)}
                                 onClick={() => onChange([...value.filter(link => link.colorKey !== key), { colorKey: key, image: src }])}>
                                 <span className="color-photo-choice-image"><ProductPhoto images={[src]} name="" thumbnail sizes="90px" className="object-contain" /></span>
                                 <span>{position === 0 ? t("Couverture") : t("Photo {0}", { "0": position + 1 })}</span>

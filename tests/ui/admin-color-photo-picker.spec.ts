@@ -48,6 +48,8 @@ for (const width of [320, 390, 1440]) {
         await expect(card("Noir").locator(".color-photo-choice-grid > button")).toHaveCount(25);
         await card("Noir").getByRole("button", { name: "Associer la photo 2 à Noir", exact: true }).click();
         await expect(card("Noir").getByText("Photo 2 associée", { exact: true })).toBeVisible();
+        await card("Noir").getByRole("button", { name: "Associer la photo 2 à Noir", exact: true }).press("Escape");
+        await expect(card("Noir").getByRole("button", { name: "Choisir une photo pour Noir", exact: true })).toBeFocused();
         await page.getByRole("button", { name: "Prévisualiser le produit", exact: true }).click();
         const preview = page.getByRole("dialog", { name: "Prévisualisation du produit", exact: true });
         const photo = preview.locator(".product-preview-photo img");
