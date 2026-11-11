@@ -136,10 +136,11 @@ test("A delayed history close cannot dismiss a reopened order", async ({ page })
         HTMLDialogElement.prototype.close = function (value?: string) {
             this.addEventListener("close", (event) => {
                 event.stopImmediatePropagation();
-                setTimeout(() => {
+                document.addEventListener("imad-test-deliver-close", () => {
                     this.dispatchEvent(new Event("close"));
                     document.documentElement.setAttribute("data-test-close-delivered", "true");
-                }, 500);
+                }, { once: true });
+                document.documentElement.setAttribute("data-test-close-queued", "true");
             }, { capture: true, once: true });
             close.call(this, value);
         };
@@ -150,7 +151,10 @@ test("A delayed history close cannot dismiss a reopened order", async ({ page })
     await expect(details).toBeVisible();
     await page.goBack();
     await expect(details).not.toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-test-close-queued", "true");
     await page.goForward();
+    await expect(details).toBeVisible();
+    await page.evaluate(() => document.dispatchEvent(new Event("imad-test-deliver-close")));
     await expect(page.locator("html")).toHaveAttribute("data-test-close-delivered", "true");
     await expect(details).toBeVisible();
     await expect(page).toHaveURL(url => url.searchParams.get("order") === order.id);
