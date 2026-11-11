@@ -1,4 +1,9 @@
 export const adminArabic: Record<string, string> = {
+    "Nom, adresse, SKU, taille ou couleur": "الاسم أو الرابط أو المرجع أو المقاس أو اللون",
+    "Effacer la recherche et les filtres": "مسح البحث والفلاتر",
+    "Affichage {from}–{to}": "عرض {from}–{to}",
+    "Navigation du stock, début": "التنقل في المخزون، أعلى النتائج",
+    "Navigation du stock, fin": "التنقل في المخزون، أسفل النتائج",
     "Prévisualiser le produit": "معاينة المنتج",
     "Prévisualiser les photos": "معاينة الصور",
     "Prévisualisation du produit": "معاينة المنتج قبل الحفظ",
