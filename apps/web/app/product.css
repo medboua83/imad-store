@@ -61,6 +61,24 @@
     border: 1px solid #e5e2d9;
     background: #f0ede6;
 }
+@media (hover: hover) and (pointer: fine) {
+    .refined-gallery .gallery-stage > .gallery-photo {
+        transition: transform 180ms ease-out;
+        transform-origin: var(--photo-zoom-x, 50%) var(--photo-zoom-y, 50%);
+    }
+    .refined-gallery .gallery-stage[data-hover-zoom="true"] {
+        cursor: zoom-in;
+    }
+    .refined-gallery .gallery-stage[data-hover-zoom="true"] > .gallery-photo {
+        transform: scale(2);
+        will-change: transform;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .refined-gallery .gallery-stage > .gallery-photo {
+        transition: none;
+    }
+}
 .refined-gallery .gallery-expand {
     width: auto;
     min-width: 44px;
