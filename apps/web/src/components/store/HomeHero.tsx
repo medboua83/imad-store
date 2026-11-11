@@ -50,7 +50,6 @@ export function HomeHero({
                       threshold: 0.25,
                   });
         if (root.current && observer) observer.observe(root.current);
-        if (!observer) setInView(true);
         return () => {
             motion.removeEventListener("change", updateMotion);
             document.removeEventListener("visibilitychange", updateVisibility);
