@@ -54,36 +54,52 @@ test("Automatic hero rotation pauses for hover, keyboard and explicit pause", as
         hero.getByRole("button", { name: "إيقاف العرض التلقائي", exact: true }),
     ).toBeVisible();
     await expect(summary).toHaveAttribute("aria-live", "off");
-    await page.clock.runFor(7500);
+    await page.clock.fastForward(7500);
     await expect(count).toHaveText("2 / 3");
     await hero.hover();
-    await page.clock.runFor(15000);
+    await page.clock.fastForward(15000);
     await expect(count).toHaveText("2 / 3");
     await page.mouse.move(0, 0);
     await expect(summary).toHaveAttribute("aria-live", "off");
-    await page.clock.runFor(7500);
+    await page.clock.fastForward(7500);
     await expect(count).toHaveText("3 / 3");
-    await page.locator("footer").first().scrollIntoViewIfNeeded();
-    await expect(summary).toHaveAttribute("aria-live", "polite");
-    await page.clock.runFor(15000);
-    await expect(count).toHaveText("3 / 3");
-    await hero.scrollIntoViewIfNeeded();
     await hero.getByRole("button", { name: "إيقاف العرض التلقائي", exact: true }).click();
     await page.mouse.move(0, 0);
-    await page.clock.runFor(15000);
+    await page.clock.fastForward(15000);
     await expect(count).toHaveText("3 / 3");
     await hero.getByRole("button", { name: "تشغيل العرض التلقائي", exact: true }).click();
     await page.mouse.move(0, 0);
+    await expect(hero).toBeInViewport({ ratio: 1 });
     await expect(summary).toHaveAttribute("aria-live", "off");
-    await page.clock.runFor(7500);
+    await page.clock.fastForward(7500);
     await expect(count).toHaveText("1 / 3");
     await page.keyboard.press("Tab");
     await hero.locator(".hero-product-link").focus();
     await expect(
         hero.getByRole("button", { name: "تشغيل العرض التلقائي", exact: true }),
     ).toBeVisible();
-    await page.clock.runFor(15000);
+    await page.clock.fastForward(15000);
     await expect(count).toHaveText("1 / 3");
+});
+
+test("An offscreen hero stops rotating and resumes when it is visible again", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.clock.install();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/?stats_test=1");
+    const hero = page.getByRole("region", { name: "مختارات IMAD Mode" });
+    const summary = hero.locator(".hero-product-summary");
+    await expect(summary).toHaveAttribute("aria-live", "off");
+    await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
+    await page.clock.fastForward(100);
+    await expect(summary).toHaveAttribute("aria-live", "polite");
+    await page.clock.fastForward(15000);
+    await expect(hero.locator(".hero-slide-count")).toHaveText("1 / 3");
+    await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+    await page.clock.fastForward(100);
+    await expect(summary).toHaveAttribute("aria-live", "off");
+    await page.clock.fastForward(7500);
+    await expect(hero.locator(".hero-slide-count")).toHaveText("2 / 3");
 });
 
 test("Reduced motion keeps the hero still with manual controls", async ({ page }) => {
@@ -91,7 +107,7 @@ test("Reduced motion keeps the hero still with manual controls", async ({ page }
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/?stats_test=1");
     const hero = page.getByRole("region", { name: "مختارات IMAD Mode" });
-    await page.clock.runFor(22000);
+    await page.clock.fastForward(22000);
     await expect(hero.locator(".hero-slide-count")).toHaveText("1 / 3");
     await expect(hero.getByRole("button", { name: /العرض التلقائي/ })).toHaveCount(0);
     await hero.getByRole("button", { name: "المنتج التالي", exact: true }).click();
