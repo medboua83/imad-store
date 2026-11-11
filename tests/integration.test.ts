@@ -886,22 +886,23 @@ test("An empty server startup does not publish demo data even with a legacy seed
     const isolated = `imad_ci_${randomBytes(8).toString("hex")}`;
     await createDatabase(isolated);
     const isolatedClient = new (require("@prisma/client").PrismaClient)({datasources:{db:{url:databaseUrl(isolated)}}});
-    const child = spawn(process.execPath, ["--import", "tsx", "backend/src/index.ts"], {
-        cwd: process.cwd(),
-        env: {
-            ...process.env,
-            DATABASE_URL: databaseUrl(isolated),
-            PORT: "0",
-            IMAD_SEED_DEMO: "true",
-            DESKCOMM_OUTBOX_WORKER_ENABLED: "false",
-            GOOGLE_SERVICE_ACCOUNT_EMAIL: "",
-            GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
-            GOOGLE_SHEETS_SPREADSHEET_ID: "",
-        },
-        stdio: ["ignore", "pipe", "pipe"],
+    const env: NodeJS.ProcessEnv = {
+        ...process.env,
+        DATABASE_URL: databaseUrl(isolated),
+        PORT: "0",
+        IMAD_SEED_DEMO: "true",
+        DESKCOMM_OUTBOX_WORKER_ENABLED: "false",
+        GOOGLE_SERVICE_ACCOUNT_EMAIL: "",
+        GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "",
+        GOOGLE_SHEETS_SPREADSHEET_ID: "",
+    };
+    // A standalone server must not inherit Node's child-test reporter protocol.
+    delete env.NODE_TEST_CONTEXT;
+    const child = spawn(process.execPath, ["--import", "tsx", "tests/fixtures/startup.ts"], {
+        cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe", "ipc"],
     });
-    let output = "", errors = "";
-    child.stdout.setEncoding("utf8");
+    let errors = "";
+    child.stdout.resume();
     child.stderr.setEncoding("utf8");
     child.stderr.on("data", chunk => { errors = (errors + chunk).slice(-4000); });
     try {
@@ -909,13 +910,12 @@ test("An empty server startup does not publish demo data even with a legacy seed
             // Readiness of a fresh process is not an 8 s performance benchmark on an external disk.
             // Keep a hard bound and still require a real listener, healthy response and empty tables.
             const timer = setTimeout(() => reject(new Error(`Startup timeout: ${errors}`)), 30000);
-            child.stdout.on("data", (chunk) => {
-                output = (output + chunk).slice(-8000);
-                const match = output.match(/http:\/\/localhost:(\d+)\s/);
-                if (match) {
-                    clearTimeout(timer);
-                    resolve(Number(match[1]));
-                }
+            child.on("message", (message: any) => {
+                if (message?.type !== "imad-startup-ready") return;
+                clearTimeout(timer);
+                if (!Number.isInteger(message.port) || message.port < 1 || message.port > 65535 || message.googleSdkLoaded !== false)
+                    return reject(new Error("Invalid readiness or unused Google SDK loaded"));
+                resolve(message.port);
             });
             child.once("error", error => { clearTimeout(timer); reject(error); });
             child.on("exit", () => {
