@@ -226,8 +226,8 @@ export default function ContentTab() {
                             <label className="hero-setting-toggle"><input type="checkbox" checked={content.heroAutoplay ?? true}
                                 onChange={event => change("heroAutoplay", event.target.checked)} />{t("Défilement automatique")}</label>
                             <label className="hero-setting-toggle"><input type="checkbox" checked={content.heroMinimalControls ?? true}
-                                onChange={event => change("heroMinimalControls", event.target.checked)} />{t("Commandes discrètes")}</label>
-                            <p className="admin-muted">{t("Commandes discrètes : petits repères et pause masquée au repos. Un toucher arrête le défilement ; le clavier conserve un bouton de pause accessible.")}</p>
+                                onChange={event => change("heroMinimalControls", event.target.checked)} />{t("Masquer les commandes du bandeau")}</label>
+                            <p className="admin-muted">{t("Les commandes sont masquées, même au survol. Le glissement tactile et les commandes au clavier restent disponibles.")}</p>
                             <p className="admin-muted">{t("Enregistrez le brouillon, vérifiez l’aperçu, puis cliquez sur Publier. Les produits sans stock ou archivés sont ignorés, sans remplacer votre sélection.")}</p>
                         </fieldset>
                         <fieldset className="border border-white/20 p-4 space-y-3">

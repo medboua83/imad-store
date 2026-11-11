@@ -1,7 +1,6 @@
 import { assertStoreInstallation } from "./store-installation";
 import { transitionOrderStatus } from "./order-lifecycle";
 import { statusSchema, objectIdSchema } from "./validation";
-import { google } from "googleapis";
 import { prisma } from "./prisma";
 
 // Order shape used for Sheets export — Prisma order + nested items
@@ -41,6 +40,8 @@ export async function appendOrderToSheets(order: OrderWithItems): Promise<void> 
     }
 
     try {
+        // This optional SDK loads every Google API; keep it off the server's startup path.
+        const { google } = await import("googleapis");
         const auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: clientEmail,
@@ -94,6 +95,7 @@ export async function updateOrderStatusInSheets(orderId: string, status: string)
     }
 
     try {
+        const { google } = await import("googleapis");
         const auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: clientEmail,
@@ -141,6 +143,7 @@ export async function syncSheetsToDatabase(): Promise<void> {
     if (!clientEmail || !privateKey || !spreadsheetId) return;
 
     try {
+        const { google } = await import("googleapis");
         const auth = new google.auth.GoogleAuth({
             credentials: {
                 client_email: clientEmail,

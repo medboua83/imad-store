@@ -12,7 +12,7 @@ const carrierTimer = setInterval(async () => {
 }, 15_000);
 carrierTimer.unref();
 const PORT = process.env.PORT ?? 4000;
-const server = app.listen(PORT, () => {
+export const server = app.listen(PORT, () => {
     const address = server.address();
     const port = address && typeof address === "object" ? address.port : PORT;
     console.log(`Imad Store API running on http://localhost:${port}`);

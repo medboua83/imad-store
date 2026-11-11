@@ -15,19 +15,18 @@ for (const width of [320, 390, 1440]) {
     await expect(link).toHaveAttribute("href", "/products/fixture-sabot");
     await expect(hero.locator(".hero-slide-count")).toHaveText("1 / 3");
     const height = (await hero.boundingBox())!.height;
-    // Compact mode exposes dots on touch screens and reveals image arrows on hover.
+    // Controls are revealed by keyboard focus, never by pointer hover.
     const choose = async (number: number, direction: "next" | "previous" = "next") => {
-      if (width < 768) {
-        await hero.getByRole("button", { name: `عرض المنتج ${number} من 3`, exact: true }).click();
-      } else {
-        await hero.hover();
-        await hero
-          .getByRole("button", {
-            name: direction === "next" ? "المنتج التالي" : "المنتج السابق",
-            exact: true,
-          })
-          .click();
-      }
+      const control =
+        width < 768
+          ? hero.getByRole("button", { name: `عرض المنتج ${number} من 3`, exact: true })
+          : hero.getByRole("button", {
+              name: direction === "next" ? "المنتج التالي" : "المنتج السابق",
+              exact: true,
+            });
+      await page.keyboard.press("Tab");
+      await control.focus();
+      await control.press("Space");
     };
     await choose(2);
     await expect(photo).toHaveAttribute("src", /abaya.webp/);
@@ -77,25 +76,23 @@ test("Automatic hero rotation pauses for hover, keyboard and explicit pause", as
   await expect(summary).toHaveAttribute("aria-live", "off");
   await page.clock.fastForward(7500);
   await expect(count).toHaveText("3 / 3");
-  await hero.hover();
-  await hero.getByRole("button", { name: "إيقاف العرض التلقائي", exact: true }).click();
-  await page.mouse.move(0, 0);
+  await page.keyboard.press("Tab");
+  await hero.locator(".hero-product-link").focus();
+  await expect(hero).toHaveAttribute("data-rotation-state", "paused");
   await page.clock.fastForward(15000);
   await expect(count).toHaveText("3 / 3");
-  await hero.hover();
-  await hero.getByRole("button", { name: "تشغيل العرض التلقائي", exact: true }).click();
+  const play = hero.getByRole("button", { name: "تشغيل العرض التلقائي", exact: true });
+  await play.focus();
+  await expect(play).toHaveCSS("opacity", "1");
+  await play.press("Space");
   await page.mouse.move(0, 0);
-  await expect(hero).toBeInViewport({ ratio: 1 });
   await expect(summary).toHaveAttribute("aria-live", "off");
   await page.clock.fastForward(7500);
   await expect(count).toHaveText("1 / 3");
-  await page.keyboard.press("Tab");
-  await hero.locator(".hero-product-link").focus();
-  await expect(
-    hero.getByRole("button", { name: "تشغيل العرض التلقائي", exact: true }),
-  ).toBeVisible();
+  await hero.getByRole("button", { name: "إيقاف العرض التلقائي", exact: true }).press("Space");
   await page.clock.fastForward(15000);
   await expect(count).toHaveText("1 / 3");
+  await expect(hero).toHaveAttribute("data-rotation-state", "paused");
 });
 
 test("An offscreen hero stops rotating and resumes when it is visible again", async ({ page }) => {
@@ -126,7 +123,9 @@ test("Reduced motion keeps the hero still with manual controls", async ({ page }
   await page.clock.fastForward(22000);
   await expect(hero.locator(".hero-slide-count")).toHaveText("1 / 3");
   await expect(hero.getByRole("button", { name: /العرض التلقائي/ })).toHaveCount(0);
-  await hero.getByRole("button", { name: "عرض المنتج 2 من 3", exact: true }).click();
+  await page.keyboard.press("Tab");
+  await hero.getByRole("button", { name: "عرض المنتج 2 من 3", exact: true }).focus();
+  await hero.getByRole("button", { name: "عرض المنتج 2 من 3", exact: true }).press("Space");
   await expect(hero.locator(".hero-slide-count")).toHaveText("2 / 3");
 });
 
@@ -169,5 +168,31 @@ for (const custom of [false, true]) {
     await expect(hero.locator(".hero-product-link")).toHaveAttribute("href", "/shop");
     await expect(hero.locator(".hero-product-link")).toHaveAttribute("target", "_blank");
     await expect(hero.getByRole("button")).toHaveCount(0);
+  });
+}
+
+for (const width of [320, 390, 1440]) {
+  test(`Hero starts automatically with no visual controls, even on hover, at ${width}px`, async ({
+    page,
+  }, info) => {
+    await page.setViewportSize({ width, height: width < 768 ? 844 : 1000 });
+    await page.clock.install();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/?stats_test=1");
+    const hero = page.getByRole("region", { name: "مختارات IMAD Mode", exact: true });
+    await expect(hero).toHaveAttribute("data-rotation-state", "playing");
+    await expect(hero.locator(".hero-carousel-controls")).toHaveCSS("clip-path", "inset(50%)");
+    await hero.hover();
+    await expect(hero.locator(".hero-carousel-controls")).toHaveCSS("clip-path", "inset(50%)");
+    await expect(hero.locator(".hero-pause-toggle")).toHaveCSS("opacity", "0");
+    await expect(hero.locator(".hero-image-arrows")).toHaveCSS("opacity", "0");
+    await page.mouse.move(0, 0);
+    await page.clock.fastForward(7500);
+    await expect(hero.locator(".hero-slide-count")).toHaveText("2 / 3");
+    await expect(hero.locator(".hero-product-link")).toHaveAttribute(
+      "href",
+      "/products/fixture-premium",
+    );
+    await page.screenshot({ path: info.outputPath(`automatic-clean-${width}.png`) });
   });
 }
