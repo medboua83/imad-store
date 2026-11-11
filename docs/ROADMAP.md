@@ -1,11 +1,19 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Association couleur–photo — 11 novembre 2026
+
+- [x] Diagnostiquer les couleurs sans association sur une fiche existante.
+- [x] Remplacer le choix caché par numéro par des cartes et miniatures près de la galerie.
+- [x] Préserver les associations lors d’un renommage complet, sans copier une photo à un nouveau groupe ou autre code couleur.
+- [ ] Valider création, 25 photos, effacement, prévisualisation et sauvegarde unique sur mobile/ordinateur, puis publier.
+
+
 ## Catalogue et stock — 11 novembre 2026
 
 - [x] Reproduire la perte de recherche au retour d’une fiche et la recherche arabe sensible aux signes.
 - [x] Conserver le contexte du stock, faciliter la pagination et corriger l’espace des icônes en arabe.
 - [x] Rechercher plusieurs termes, accents et chiffres arabes dans un même variant.
-- [ ] Valider les scénarios mobile/ordinateur, français/arabe et absence d’écriture, puis publier.
+- [x] PR128 publiée avec sauvegarde, 272 UI et 126 PostgreSQL/unitaires réussis, puis recette réelle mobile/ordinateur.
 - [ ] Évolution future : filtrage/pagination serveur au-delà des cent premières fiches chargées ; le périmètre actuel reste affiché explicitement.
 
 

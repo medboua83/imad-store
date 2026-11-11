@@ -1,5 +1,18 @@
 # Current Status — 2026-11-08
 
+## Choix visuel des photos par couleur — candidat du 11 novembre 2026
+
+Le produit public « Abaya gatifa avec chaîne » présente quatre couleurs et quatre photos, mais aucune association ; toutes les couleurs utilisent donc la couverture. L’ancien choix par numéro était placé après l’intégralité des variantes, peu visible dans une fiche longue.
+
+Le candidat déplace Photos et couleurs sous la galerie, avant les prix et le stock. Une carte par couleur, commune à toutes ses tailles, montre la photo choisie ou un état explicite à associer. Le choix ouvre les miniatures de la galerie (25 au maximum) ; l’association, son effacement et la prévisualisation restent des changements de brouillon jusqu’à l’enregistrement habituel. Un accès depuis les variantes revient à ce bloc. L’aperçu signale aussi une couleur sans association au lieu de laisser le même visuel sans explication.
+
+Renommer une couleur entière sans changer son code conserve sa photo. Un nouveau groupe créé en renommant une seule variante, ou un autre code couleur, nécessite un choix explicite ; une association déjà choisie pour la couleur de destination est conservée. Les liens existants, fichiers originaux, prix et stocks restent inchangés au chargement. Aucun remplissage automatique des correspondances sur les produits réels, aucune migration ou dépendance nouvelle. Tests et publication à consigner.
+
+## Production vérifiée — PR128, 11 novembre 2026
+
+Source a6869d95d9dd76ea96be22616b02d500bc84cfb2 publiée, arbre identique à Master 632c2a1fbcd43cee829949e29b9bc489f18063bc. Sauvegarde privée, compilation et activation vérifiées depuis le Terminal Mac. CI : 272 tests navigateur et 126 PostgreSQL/unitaires réussis. Cinq empreintes JavaScript/CSS comparées en HTTPS ; santé et protection administrateur contrôlées. Recette dans la session réelle à 1440×1000 et 390×844 : accents français et arabes, chiffres arabes, recherche/filtre/page conservés au retour depuis Produits, pagination et remise à zéro. Réglages, contenus, catégories et première réponse catalogue inchangés avant/après ; aucun produit ni stock réenregistré. Rapports et captures conservés sur DATA ; aucun nouvel accès SSH créé. Publication suivante via le Terminal Mac du propriétaire, l’accès direct agent étant fermé.
+
+
 ## Recherche et navigation du catalogue — candidat du 11 novembre 2026
 
 Audit en production : une recherche « فُودان » retourne zéro résultat alors que « فودان » en retourne seize ; revenir depuis une fiche ouverte à partir du stock efface la recherche. Le décalage de direction entre un champ `dir=auto` et son conteneur arabe pouvait aussi placer le texte sous l’icône.

@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize, MAX_PRODUCT_PHOTOS } from "@imad-store/shared";
+import { isAmbiguousSize, MAX_PRODUCT_PHOTOS, productColorKey, type ProductColorPhoto } from "@imad-store/shared";
 export type DraftVariant = {
     key: string;
     id?: string;
@@ -12,6 +12,17 @@ export type DraftVariant = {
     stock: string;
     sku: string;
 };
+/** Renaming a whole color keeps its photo. A split group or different swatch needs an explicit choice. */
+export function preserveColorPhotoOnRename(links: ProductColorPhoto[], before: DraftVariant, after: DraftVariant, variants: DraftVariant[]) {
+    const oldKey = productColorKey(before), newKey = productColorKey(after);
+    if (oldKey === newKey || before.color.trim().toLowerCase() !== after.color.trim().toLowerCase()) return links;
+    const existing = links.find(link => link.colorKey === oldKey);
+    if (!existing) return links;
+    const oldStillUsed = variants.some(variant => productColorKey(variant) === oldKey);
+    if (oldStillUsed) return links;
+    const next = links.filter(link => link.colorKey !== oldKey);
+    return next.some(link => link.colorKey === newKey) ? next : [...next, { ...existing, colorKey: newKey }];
+}
 export function productSlug(value: string) {
     return value
         .normalize("NFD")
