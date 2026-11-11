@@ -4,6 +4,7 @@ import { useAdminLocale } from "./admin-locale";
 import { OlivraisonSettings } from "./olivraison-settings";
 import { OrderSettings } from "./order-settings";
 import { SocialSettings } from "./social-settings";
+import { SettingsNavigation } from "./settings-navigation";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings, type StoreSettings } from "@/lib/api";
@@ -70,6 +71,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
     }, []);
     return (
         <section className="admin-panel">
+            <SettingsNavigation rulesReady={ready} />
             <SocialSettings />
             <OrderSettings />
             <OlivraisonSettings active={active} />
@@ -133,7 +135,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                             {t("Modifications non enregistrées")}
                         </p>
                     )}
-                    <fieldset disabled={busy}>
+                    <fieldset disabled={busy} id="shipping-settings" tabIndex={-1}>
                         <legend>{t("Règles de livraison")}</legend>
                         <label>
                             {t("Frais de livraison (DH)")}
@@ -174,7 +176,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                             )}
                         </p>
                     </fieldset>
-                    <fieldset disabled={busy}>
+                    <fieldset disabled={busy} id="return-settings" tabIndex={-1}>
                         <legend>{t("Délais et retours affichés aux clients")}</legend>
                         <label>
                             {t("Délai maximal de livraison (jours)")}
@@ -241,7 +243,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
                             )}
                         </p>
                     </fieldset>
-                    <fieldset disabled={busy}>
+                    <fieldset disabled={busy} id="pixel-settings" tabIndex={-1}>
                         <legend>{t("Meta Pixel")}</legend>
                         <label>
                             {t("Identifiant Meta Pixel")}

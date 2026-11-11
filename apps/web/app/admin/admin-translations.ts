@@ -1,4 +1,10 @@
 export const adminArabic: Record<string, string> = {
+    "Accès rapide aux réglages": "وصول سريع إلى الإعدادات",
+    "Aller à un réglage": "الانتقال إلى إعداد",
+    "Choisir un réglage…": "اختيار إعداد…",
+    "Société de livraison": "شركة التوصيل",
+    "Délais et retours": "الآجال والإرجاع",
+    "Ouvrir la commande #{reference}": "فتح الطلب #{reference}",
     "Commandes, réseaux sociaux, livraison et Meta Pixel.": "الطلبات ووسائل التواصل والتوصيل وMeta Pixel.",
     "Réseaux sociaux et WhatsApp": "وسائل التواصل الاجتماعي وواتساب",
     "Ces liens s’appliquent à la boutique, au pied de page et à la page Contact. Un champ vide masque le réseau et ses boutons.": "تُستخدم هذه الروابط في المتجر وأسفل الصفحات وصفحة التواصل. اتركوا الحقل فارغاً لإخفاء الشبكة وأزرارها.",

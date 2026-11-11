@@ -82,6 +82,7 @@ export function SocialSettings() {
     return (
         <section
             id="social-settings"
+            tabIndex={-1}
             className="admin-social-settings"
             aria-labelledby="social-settings-title"
         >

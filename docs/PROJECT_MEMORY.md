@@ -1,5 +1,14 @@
 # Imad Store — Persistent Project Memory
 
+## Navigation quotidienne du dashboard — candidat du 11 novembre 2026
+
+Les références des cinq dernières commandes ouvrent directement leur détail. Une adresse administrative `?tab=orders&order=...` conserve ce contexte au rechargement ; seules les références de 24 caractères hexadécimaux sont reconnues, uniquement parmi les commandes déjà autorisées et chargées. Le retour arrière ferme la fiche et une référence absente affiche un état indisponible, sans afficher une autre commande.
+
+Les paramètres offrent six accès directs sur ordinateur et une liste compacte sur mobile. Les formulaires restent montés pour conserver les brouillons ; les ancres ne contaminent plus les autres rubriques. La confirmation directe possède maintenant une indication de brouillon et un avertissement avant rechargement. L’enregistrement reste explicite, désactivé sans changement, et un échec conserve le choix pour un nouvel essai.
+
+Aucune migration, dépendance, commande, photo, tarif, stock ou automatisation modifiés. Tests et publication à consigner après vérification. Production précédente : PR125, source bd40a9ff76159eef7cfe8706d5b72f8397cdf0c1.
+
+
 ## Réseaux sociaux et WhatsApp configurables — candidat du 11 novembre 2026
 
 Paramètres ajoute un formulaire distinct français/arabe pour WhatsApp, Instagram, Facebook et TikTok. Les URL historiques restent les valeurs par défaut ; une chaîne vide masque volontairement le réseau. Le numéro WhatsApp international est converti en lien wa.me, commun au pied de page, au bouton flottant et à Contact. Les domaines HTTPS sont contrôlés au navigateur et au serveur, avec écriture réservée aux administrateurs. Le formulaire protège le brouillon, conserve la saisie en cas d’échec et ne soumet aucun autre réglage. Le CRM, l’IA et les automatisations ne sont pas modifiés.

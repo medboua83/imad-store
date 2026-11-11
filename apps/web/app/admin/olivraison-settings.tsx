@@ -100,7 +100,7 @@ export function OlivraisonSettings({ active = true }: { active?: boolean }) {
         }
     }
     return (
-        <section aria-labelledby="olivraison-title" className="olivraison-settings">
+        <section id="carrier-settings" tabIndex={-1} aria-labelledby="olivraison-title" className="olivraison-settings">
             <h2 id="olivraison-title">{t("Olivraison — automatisation des colis")}</h2>
             <p>
                 {t(
