@@ -69,13 +69,12 @@ export function HomeHero({
     // Replacing the play/pause SVG under the pointer can detach the mouseout target.
     // Check the actual pointer target as well, so hover never remains latched outside.
     useEffect(() => {
-        if (!hovered) return;
         const outside = (event: PointerEvent) => {
             if (!root.current?.contains(event.target as Node)) setHovered(false);
         };
         document.addEventListener("pointermove", outside, { passive: true });
         return () => document.removeEventListener("pointermove", outside);
-    }, [hovered]);
+    }, []);
 
     const move = (direction: number) => {
         setPaused(true);
