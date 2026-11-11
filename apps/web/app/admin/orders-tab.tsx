@@ -22,20 +22,23 @@ export function OrdersTab({
     onRefresh,
     filters,
     setFilters,
+    selected,
+    onSelect,
 }: {
     orders: AdminOrder[];
     total: number;
     onRefresh: () => Promise<void>;
     filters: OrderListFilters;
     setFilters: Dispatch<SetStateAction<OrderListFilters>>;
+    selected: string | null;
+    onSelect: (id: string | null) => void;
 }) {
     const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
     const { search, status, payment, from, to, sort } = filters;
     const setFilter = (key: keyof OrderListFilters, value: string) =>
         setFilters((previous) => ({ ...previous, [key]: value }));
-    const [selected, setSelected] = useState<string | null>(null),
-        [busy, setBusy] = useState(false),
+    const [busy, setBusy] = useState(false),
         [message, setMessage] = useState(""),
         [error, setError] = useState(false),
         [reloadRequired, setReloadRequired] = useState(false);
@@ -333,7 +336,7 @@ export function OrdersTab({
                             className="admin-button order-details-trigger"
                             aria-haspopup="dialog"
                             onClick={() => {
-                                setSelected(o.id);
+                                onSelect(o.id);
                                 if (!reloadRequired) setMessage("");
                             }}
                         >
@@ -372,7 +375,10 @@ export function OrdersTab({
                 ref={dialog}
                 className="order-detail-dialog"
                 aria-labelledby="order-detail-title"
-                onClose={() => setSelected(null)}
+                onCancel={(event) => {
+                    event.preventDefault();
+                    onSelect(null);
+                }}
             >
                 <header className="order-detail-header">
                     <div>
@@ -386,7 +392,7 @@ export function OrdersTab({
                     <button
                         className="admin-icon-button"
                         aria-label={t("Fermer les détails")}
-                        onClick={() => dialog.current?.close()}
+                        onClick={() => onSelect(null)}
                     >
                         <X size={20} />
                     </button>

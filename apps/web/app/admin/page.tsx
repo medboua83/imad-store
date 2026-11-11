@@ -157,6 +157,12 @@ function productFromLocation(tab: Tab) {
         ? values[0]
         : undefined;
 }
+function orderFromLocation(tab: Tab) {
+    const values = new URLSearchParams(window.location.search).getAll("order");
+    return tab === "orders" && values.length === 1 && /^[a-f0-9]{24}$/i.test(values[0])
+        ? values[0]
+        : null;
+}
 export default function AdminPage() {
     const { t, locale } = useAdminLocale();
     const [token, setToken] = useState<string | null>(null),
@@ -184,6 +190,7 @@ export default function AdminPage() {
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
     const [inventoryStock, setInventoryStock] = useState<InventoryStatus>("ALL");
     const [focusedProduct, setFocusedProduct] = useState<string>();
+    const [focusedOrder, setFocusedOrder] = useState<string | null>(null);
     const [analyticsDays, setAnalyticsDays] = useState(7);
     const readState = useRef<AdminReadState>({
         session: 0,
@@ -199,13 +206,18 @@ export default function AdminPage() {
             const tab = tabFromLocation();
             setActiveTab(tab);
             setFocusedProduct(productFromLocation(tab));
+            setFocusedOrder(orderFromLocation(tab));
             setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
             setMobileMenu(false);
             setActionMessage("");
         };
         const previousOrNext = () => {
             restoreTab();
-            requestAnimationFrame(() => mainTitle.current?.focus());
+            requestAnimationFrame(() => {
+                const anchor = tabFromLocation() === "commerce"
+                    ? document.getElementById(window.location.hash.slice(1)) : null;
+                (anchor || mainTitle.current)?.focus();
+            });
         };
         const task = setTimeout(() => {
             restoreTab();
@@ -325,20 +337,34 @@ export default function AdminPage() {
                 nav.current?.querySelector<HTMLButtonElement>("button")
             )?.focus();
     }, [mobileMenu]);
-    const selectTab = (tab: Tab, productId?: string) => {
+    const selectTab = (tab: Tab, productId?: string, orderId?: string) => {
         const url = new URL(window.location.href);
         if (tab === "overview") url.searchParams.delete("tab");
         else url.searchParams.set("tab", tab);
         if (tab === "products" && productId) url.searchParams.set("product", productId);
         else url.searchParams.delete("product");
+        if (tab === "orders" && orderId) url.searchParams.set("order", orderId);
+        else url.searchParams.delete("order");
+        url.hash = "";
         if (url.href !== window.location.href)
             window.history.pushState(null, "", url.pathname + url.search + url.hash);
         setActiveTab(tab);
         setFocusedProduct(productId);
+        setFocusedOrder(orderId || null);
         setOpenedTabs((tabs) => (tabs.includes(tab) ? tabs : [...tabs, tab]));
         requestAnimationFrame(() => mainTitle.current?.focus());
         setMobileMenu(false);
         setActionMessage("");
+    };
+    const selectOrder = (id: string | null) => {
+        const url = new URL(window.location.href);
+        if (id) url.searchParams.set("order", id);
+        else url.searchParams.delete("order");
+        if (url.href !== window.location.href) {
+            if (id) window.history.pushState(null, "", url.pathname + url.search + url.hash);
+            else window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+        }
+        setFocusedOrder(id);
     };
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
@@ -645,6 +671,10 @@ export default function AdminPage() {
                                         setOrderFilters({ ...initialOrderListFilters, status });
                                         selectTab("orders");
                                     }}
+                                    onOrder={(id) => {
+                                        setOrderFilters(initialOrderListFilters);
+                                        selectTab("orders", undefined, id);
+                                    }}
                                     onInventory={(stock) => {
                                         setInventoryStock(stock);
                                         selectTab("inventory");
@@ -658,6 +688,8 @@ export default function AdminPage() {
                                     onRefresh={refreshOrders}
                                     filters={orderFilters}
                                     setFilters={setOrderFilters}
+                                    selected={focusedOrder}
+                                    onSelect={selectOrder}
                                 />
                             )}
                             {activeTab === "inventory" && (

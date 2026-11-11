@@ -1889,3 +1889,21 @@
 .admin-app .commerce-settings .admin-social-field label { display: flex; gap: 8px; align-items: center; }
 .admin-social-field input { width: 100%; min-width: 0; box-sizing: border-box; }
 .admin-social-preview { overflow-wrap: anywhere; font-size: .875rem; width: fit-content; padding-block: 8px; color: #79551f; }
+
+/* Settings shortcuts jump within the page; every form stays mounted to protect drafts. */
+.admin-settings-navigation { padding-block-end: 24px; margin-block-end: 28px; border-bottom: 1px solid var(--admin-line); }
+.admin-settings-navigation > label { display: block; font-weight: 600; margin-bottom: 12px; }
+.admin-settings-navigation > select { display: none; }
+.admin-settings-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.admin-settings-shortcuts > a { display: flex; gap: 10px; align-items: center; min-height: 54px; padding: 12px; border: 1px solid var(--admin-line); border-radius: 10px; color: var(--admin-ink); background: #faf7f0; text-decoration: none; font-size: 13px; }
+.admin-settings-shortcuts > a > span { flex: 1; overflow-wrap: anywhere; }
+.admin-settings-shortcuts > a > svg { flex-shrink: 0; color: var(--admin-green); }
+.admin-settings-shortcuts > a:hover { border-color: var(--admin-green); }
+.admin-settings-shortcuts > a[aria-disabled="true"] { opacity: .5; cursor: wait; }
+.admin-app :is(#social-settings, #order-settings, #carrier-settings, #shipping-settings, #return-settings, #pixel-settings) { scroll-margin-block-start: 100px; }
+.admin-recent-order-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--admin-green); text-align: start; text-decoration: underline; text-underline-offset: 4px; }
+.admin-recent-order-link:focus-visible, .admin-settings-shortcuts > a:focus-visible { outline: 2px solid var(--admin-green); outline-offset: 3px; border-radius: 6px; }
+@media (max-width: 767px) {
+    .admin-settings-shortcuts { display: none; }
+    .admin-settings-navigation > select { display: block; width: 100%; min-width: 0; min-height: 48px; }
+}

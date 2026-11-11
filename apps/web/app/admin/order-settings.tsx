@@ -9,17 +9,29 @@ export function OrderSettings() {
     const { t } = useAdminLocale();
     const cache = useQueryClient();
     const [enabled, setEnabled] = useState(false);
+    const [baseline, setBaseline] = useState<boolean | null>(null);
     const [ready, setReady] = useState(false);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState("");
     const [failed, setFailed] = useState(false);
     const lock = useRef(false);
+    const dirty = baseline !== null && enabled !== baseline;
+    useEffect(() => {
+        if (!dirty && !busy) return;
+        const protect = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+        window.addEventListener("beforeunload", protect);
+        return () => window.removeEventListener("beforeunload", protect);
+    }, [dirty, busy]);
     useEffect(() => {
         let active = true;
         getSettings()
             .then((settings) => {
                 if (active) {
                     setEnabled(settings.directSiteConfirmation === true);
+                    setBaseline(settings.directSiteConfirmation === true);
                     setReady(true);
                 }
             })
@@ -34,13 +46,13 @@ export function OrderSettings() {
         };
     }, []);
     return (
-        <section aria-labelledby="order-settings-title">
+        <section id="order-settings" tabIndex={-1} aria-labelledby="order-settings-title">
             <h2 id="order-settings-title">{t("Gestion des commandes")}</h2>
             <form
                 className="commerce-settings"
                 onSubmit={async (e) => {
                     e.preventDefault();
-                    if (!ready || lock.current) return;
+                    if (!ready || !dirty || lock.current) return;
                     lock.current = true;
                     setBusy(true);
                     setMessage("");
@@ -49,6 +61,7 @@ export function OrderSettings() {
                         if (result.data.directSiteConfirmation !== enabled)
                             throw new Error("Unconfirmed setting");
                         setEnabled(result.data.directSiteConfirmation);
+                        setBaseline(result.data.directSiteConfirmation);
                         await cache.invalidateQueries({ queryKey: ["store-settings"] });
                         setFailed(false);
                         setMessage("Gestion des commandes enregistrée.");
@@ -63,6 +76,7 @@ export function OrderSettings() {
                     }
                 }}
             >
+                {dirty && <p className="commerce-draft-note" role="status">{t("Modifications non enregistrées")}</p>}
                 <fieldset disabled={!ready || busy}>
                     <legend>{t("Confirmation directe sur le site")}</legend>
                     <label className="admin-option-check">
@@ -91,7 +105,7 @@ export function OrderSettings() {
                         )}
                     </p>
                 </fieldset>
-                <button className="admin-button primary" disabled={!ready || busy}>
+                <button className="admin-button primary" disabled={!ready || busy || !dirty}>
                     {busy ? t("Enregistrement…") : t("Enregistrer")}
                 </button>
                 {message && (

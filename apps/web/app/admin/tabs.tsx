@@ -24,6 +24,7 @@ export function OverviewTab({
     orderTotal,
     productTotal,
     onOrders,
+    onOrder,
     onInventory,
 }: {
     orders: Order[];
@@ -31,6 +32,7 @@ export function OverviewTab({
     orderTotal: number;
     productTotal: number;
     onOrders: (status: "ALL" | "PENDING" | "CONFIRMED") => void;
+    onOrder: (id: string) => void;
     onInventory: (status: InventoryStatus) => void;
 }) {
     const { t, locale } = useAdminLocale();
@@ -192,7 +194,14 @@ export function OverviewTab({
                                     <Package size={19} />
                                 </span>
                                 <div>
-                                    <strong>#{o.id.slice(-8).toUpperCase()}</strong>
+                                    <button type="button" className="admin-recent-order-link"
+                                        onClick={() => onOrder(o.id)}
+                                        aria-label={t("Ouvrir la commande #{reference}", {
+                                            reference: o.id.slice(-8).toUpperCase(),
+                                        })}>
+                                        <strong><bdi>#{o.id.slice(-8).toUpperCase()}</bdi></strong>
+                                        <ArrowUpRight size={15} aria-hidden="true" />
+                                    </button>
                                     <span>
                                         {o.customerName || t("Client invité")} ·{" "}
                                         {o.city || t("Ville non renseignée")}
