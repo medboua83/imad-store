@@ -30,8 +30,19 @@
   align-items: center;
 }
 .hero-minimal .hero-carousel-controls {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 76px;
+  width: max-content;
   min-width: 0;
-  max-width: 100%;
+  max-width: calc(100% - 24px);
+  margin-inline: auto;
+  padding: 4px;
+  border: 1px solid #d9c8a8;
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: 0 4px 18px #382a181a;
+  z-index: 2;
 }
 /* Keep navigation available to the keyboard without displaying controls to pointer users. */
 .hero-minimal .hero-carousel-controls:not(:focus-within) {
@@ -69,14 +80,13 @@
   padding-block: 8px;
 }
 .hero-minimal .hero-pause-toggle {
-  position: absolute;
-  inset-inline-end: 12px;
-  top: 12px;
+  position: static;
   z-index: 2;
   opacity: 0;
   pointer-events: none;
 }
-.hero-minimal .hero-pause-toggle:focus-visible {
+.hero-minimal .hero-pause-toggle:focus-visible,
+.hero-minimal .hero-carousel-controls:focus-within .hero-pause-toggle {
   opacity: 1;
   pointer-events: auto;
 }
