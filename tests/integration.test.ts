@@ -2299,3 +2299,41 @@ test("Order history is admin-only and returns dates and sources without raw mess
         await prisma.order.delete({where:{id:order.id}});
     }
 });
+
+
+test("Store contacts are admin-only, scoped and normalized without changing commerce settings", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    const { defaultStoreContacts } = await import("@imad-store/shared");
+    try {
+        await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings" }, update: {
+            whatsappUrl: null, instagramUrl: null, facebookUrl: null, tiktokUrl: null,
+        } });
+        const before = (await request(app).get("/api/settings")).body.data;
+        for (const [key, value] of Object.entries(defaultStoreContacts)) assert.equal(before[key], value);
+        const body = { whatsappUrl: "+212 600 000 099", instagramUrl: "https://www.instagram.com/fixture/", facebookUrl: "", tiktokUrl: "https://www.tiktok.com/@fixture" };
+        assert.equal((await request(app).put("/api/settings").send(body)).status, 401);
+        const customer = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+        assert.equal((await request(app).put("/api/settings").set("Authorization", `Bearer ${customer}`).send(body)).status, 403);
+        for (const bad of ["javascript:alert(1)", "http://instagram.com/a", "https://instagram.com.evil.invalid/a", "https://instagram.com@evil.invalid/a", "https://evil.invalid/?instagram.com"]) {
+            assert.equal((await request(app).put("/api/settings").set(admin()).send({ instagramUrl: bad })).status, 400);
+        }
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ whatsappUrl: "0660000099" })).status, 400);
+        assert.equal((await request(app).put("/api/settings").set(admin()).send(body)).status, 200);
+        const read = (await request(app).get("/api/settings")).body.data;
+        assert.equal(read.whatsappUrl, "https://wa.me/212600000099");
+        assert.equal(read.instagramUrl, body.instagramUrl);
+        assert.equal(read.facebookUrl, "");
+        assert.equal(read.tiktokUrl, body.tiktokUrl);
+        for (const key of ["shippingCost", "freeShippingMin", "codEnabled", "directSiteConfirmation", "metaPixelId", "metaPixelEnabled"]) assert.equal(read[key], before[key]);
+        assert.equal((await request(app).put("/api/settings").set(admin()).send({ whatsappUrl: "" })).status, 200);
+        const hidden = (await request(app).get("/api/settings")).body.data;
+        assert.equal(hidden.whatsappUrl, "");
+        assert.equal(hidden.instagramUrl, body.instagramUrl);
+        const { readPublicStore } = await import("../backend/src/lib/public-store");
+        const combined = await readPublicStore("/settings");
+        assert.equal((combined.body as { data: { whatsappUrl: string } }).data.whatsappUrl, "");
+    } finally {
+        if (initial) await prisma.storeSettings.update({ where: { id: "settings" }, data: initial });
+        else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});

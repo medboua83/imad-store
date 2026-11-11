@@ -247,6 +247,10 @@ model OrderEvent {
 model StoreSettings {
   id              String  @id
   whatsappPhone   String  @default("212XXXXXXXXX")
+  whatsappUrl     String?
+  instagramUrl    String?
+  facebookUrl     String?
+  tiktokUrl       String?
   shippingCost    Float   @default(30)
   freeShippingMin Float   @default(500)
   deliveryMaxDays Int?

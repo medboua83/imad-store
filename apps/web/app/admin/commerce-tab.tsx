@@ -3,6 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { OlivraisonSettings } from "./olivraison-settings";
 import { OrderSettings } from "./order-settings";
+import { SocialSettings } from "./social-settings";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSettings, updateSettings, type StoreSettings } from "@/lib/api";
@@ -69,6 +70,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
     }, []);
     return (
         <section className="admin-panel">
+            <SocialSettings />
             <OrderSettings />
             <OlivraisonSettings active={active} />
             <h2>{t("Livraison et suivi publicitaire")}</h2>

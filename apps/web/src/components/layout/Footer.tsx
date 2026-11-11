@@ -3,19 +3,19 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getSettings } from "@/lib/api";
 import { publishedCategories } from "@/lib/catalog-navigation";
-import { storeWhatsAppUrl } from "@/lib/store-contact";
+import { useStoreContacts } from "@/lib/use-store-contacts";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { SocialIcon } from "../store/StoreIcons";
 import { PackageCheck } from "lucide-react";
 
-const socials = [
-    [storeWhatsAppUrl, "WhatsApp"],
-    ["https://www.instagram.com/imad.mode?igsi=em85MTVmanRpa29p", "Instagram"],
-    ["https://www.facebook.com/share/1Lwh3Akcuo/", "Facebook"],
-    ["https://www.tiktok.com/@imad_mode?_r=1&_t=ZS-99NC3oV9y44", "TikTok"],
-];
-
 export function Footer() {
+    const contacts = useStoreContacts();
+    const socials: [string | undefined, string][] = [
+        [contacts?.whatsappUrl, "WhatsApp"],
+        [contacts?.instagramUrl, "Instagram"],
+        [contacts?.facebookUrl, "Facebook"],
+        [contacts?.tiktokUrl, "TikTok"],
+    ];
     const { data = [] } = useQuery({
         queryKey: ["public-categories"],
         queryFn: getCategories,
@@ -43,22 +43,24 @@ export function Footer() {
                         className="footer-socials footer-social-icons"
                         aria-label="تابعونا على مواقع التواصل"
                     >
-                        {socials.map(([href, label]) => (
-                            <a
-                                key={label}
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                dir="ltr"
-                                data-network={label.toLowerCase()}
-                                aria-label={`${label} — نافذة جديدة`}
-                                title={label}
-                            >
-                                <span className="social-brand-icon" aria-hidden="true">
-                                    <SocialIcon network={label} />
-                                </span>
-                            </a>
-                        ))}
+                        {socials
+                            .filter(([href]) => Boolean(href))
+                            .map(([href, label]) => (
+                                <a
+                                    key={label}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    dir="ltr"
+                                    data-network={label.toLowerCase()}
+                                    aria-label={`${label} — نافذة جديدة`}
+                                    title={label}
+                                >
+                                    <span className="social-brand-icon" aria-hidden="true">
+                                        <SocialIcon network={label} />
+                                    </span>
+                                </a>
+                            ))}
                     </nav>
                 </div>
                 <nav className="footer-nav" aria-labelledby="footer-catalog-title">
@@ -82,16 +84,18 @@ export function Footer() {
                             {label}
                         </Link>
                     ))}
-                    <a
-                        href={storeWhatsAppUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="تواصلوا عبر واتساب — نافذة جديدة"
-                        className="footer-contact-button"
-                    >
-                        <SocialIcon network="WhatsApp" size={18} />
-                        تواصلوا عبر واتساب
-                    </a>
+                    {contacts?.whatsappUrl && (
+                        <a
+                            href={contacts.whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="تواصلوا عبر واتساب — نافذة جديدة"
+                            className="footer-contact-button"
+                        >
+                            <SocialIcon network="WhatsApp" size={18} />
+                            تواصلوا عبر واتساب
+                        </a>
+                    )}
                 </nav>
             </div>
             <div className="footer-bottom section-container">
