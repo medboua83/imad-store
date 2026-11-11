@@ -6,7 +6,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
 import { initialOrderListFilters } from "./order-list-context";
-import type { InventoryStatus } from "./product-utils";
+import { initialInventoryListFilters } from "./inventory-list-context";
 import { acceptAdminRead, startAdminRead, type AdminReadState } from "./read-version";
 import {
     ArrowUpRight,
@@ -188,7 +188,7 @@ export default function AdminPage() {
         [lastSync, setLastSync] = useState<Date | null>(null);
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
-    const [inventoryStock, setInventoryStock] = useState<InventoryStatus>("ALL");
+    const [inventoryFilters, setInventoryFilters] = useState(initialInventoryListFilters);
     const [focusedProduct, setFocusedProduct] = useState<string>();
     const [focusedOrder, setFocusedOrder] = useState<string | null>(null);
     const [analyticsDays, setAnalyticsDays] = useState(7);
@@ -235,7 +235,7 @@ export default function AdminPage() {
             readState.current.session++;
             productSnapshot.current = [];
             setOrderFilters(initialOrderListFilters);
-            setInventoryStock("ALL");
+            setInventoryFilters(initialInventoryListFilters);
             setAnalyticsDays(7);
             setToken(null);
             setOrders([]);
@@ -676,7 +676,7 @@ export default function AdminPage() {
                                         selectTab("orders", undefined, id);
                                     }}
                                     onInventory={(stock) => {
-                                        setInventoryStock(stock);
+                                        setInventoryFilters({ ...initialInventoryListFilters, stock });
                                         selectTab("inventory");
                                     }}
                                 />
@@ -694,7 +694,7 @@ export default function AdminPage() {
                             )}
                             {activeTab === "inventory" && (
                                 <InventoryTab products={products} total={productTotal}
-                                    stock={inventoryStock} onStock={setInventoryStock}
+                                    filters={inventoryFilters} onFilters={setInventoryFilters}
                                     onProduct={(id) => selectTab("products", id)} />
                             )}
                             {openedTabs.includes("products") && (

@@ -1,11 +1,20 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Catalogue et stock — 11 novembre 2026
+
+- [x] Reproduire la perte de recherche au retour d’une fiche et la recherche arabe sensible aux signes.
+- [x] Conserver le contexte du stock, faciliter la pagination et corriger l’espace des icônes en arabe.
+- [x] Rechercher plusieurs termes, accents et chiffres arabes dans un même variant.
+- [ ] Valider les scénarios mobile/ordinateur, français/arabe et absence d’écriture, puis publier.
+- [ ] Évolution future : filtrage/pagination serveur au-delà des cent premières fiches chargées ; le périmètre actuel reste affiché explicitement.
+
+
 ## Prévisualisation de la fiche produit — 11 novembre 2026
 
 - [x] Ajouter un aperçu en grand de la saisie courante, sans enregistrement ni publication automatique.
 - [x] Parcourir jusqu’à 25 photos et les associations par couleur ; conserver les originaux.
 - [x] Contrôles à 320/390/1440 px, brouillons, images indisponibles et retours de navigation : 18 tests navigateur locaux réussis.
-- [ ] Mettre à jour le dépôt puis publier avec sauvegarde.
+- [x] PR127 fusionnée, publication avec sauvegarde et recette réelle mobile/ordinateur vérifiées le 11 novembre 2026.
 
 
 ## Reprise et icônes sociales — 8 novembre 2026

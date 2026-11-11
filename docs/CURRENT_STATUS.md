@@ -1,5 +1,18 @@
 # Current Status — 2026-11-08
 
+## Recherche et navigation du catalogue — candidat du 11 novembre 2026
+
+Audit en production : une recherche « فُودان » retourne zéro résultat alors que « فودان » en retourne seize ; revenir depuis une fiche ouverte à partir du stock efface la recherche. Le décalage de direction entre un champ `dir=auto` et son conteneur arabe pouvait aussi placer le texte sous l’icône.
+
+Le candidat rend la recherche Produits/Stock tolérante aux accents, signes arabes, allongement et chiffres arabes/persans. Tous les termes doivent correspondre ; une couleur et une taille recherchées ensemble doivent appartenir au même variant. La recherche des produits comprend aussi les tailles, couleurs et catégories. Les noms, SKU, prix et données enregistrées ne sont pas normalisés ni réécrits.
+
+La recherche, le filtre et la page du stock sont conservés en mémoire dans la session administrative quand on ouvre une fiche ou utilise Retour/Avance. Un accès depuis une tâche de la vue d’ensemble repart volontairement sur la file demandée. Les contrôles de pagination sont présents avant et après les résultats ; changer de page place le focus et le défilement sur leur résumé. Un bouton efface la recherche et les filtres. Les champs réservent l’espace de l’icône des deux côtés pour les saisies françaises/arabes. Interface français/arabe ; aucune migration ni nouvelle dépendance. Tests et publication à consigner.
+
+## Production vérifiée — PR127, 11 novembre 2026
+
+La source 1f06b862ad022c3dae45e9d7dec32bee0d25389e est publiée, arbre identique à Master b641e57d75613b259bc3fda79ba9286895f9ecce. Sauvegarde privée vérifiée, compilation et activation réussies depuis le Terminal Mac du propriétaire. Les empreintes des fichiers JavaScript publics correspondent au VPS. CI : 269 tests navigateur et 126 PostgreSQL/unitaires réussis. Recette réelle en arabe à 1440×1000 et 390×844 : galerie, photos par couleur, deux boutons de prévisualisation, saisie provisoire avant enregistrement, fermeture et conservation des champs ; valeur initiale rétablie sans sauvegarde, aucun produit ni original modifié. Les réglages et contenus publics sont conservés. Le catalogue compte désormais neuf produits ; les variations depuis le relevé antérieur ne proviennent pas d’une écriture de ce déploiement. Aucun accès SSH dédié agent n’est resté actif ; les rapports et captures sont conservés sur DATA.
+
+
 ## Prévisualisation du produit avant enregistrement — candidat du 11 novembre 2026
 
 Deux boutons ouvrent un grand aperçu depuis la fiche et la section Photos. Il utilise directement la saisie courante : galerie jusqu’à 25 images, couverture, titre arabe/français, prix et prix barré, livraison offerte, tailles et photos associées aux couleurs. La présentation Mobile/Ordinateur et les boutons, vignettes et flèches du clavier permettent la vérification sans action sur le panier ni requête d’enregistrement. Les photos originales restent la source du grand aperçu ; les vignettes utilisent le mécanisme allégé existant avec repli sur l’original.

@@ -1,10 +1,12 @@
 "use client";
 
 import { ArrowUpRight, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Product } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
-import { inventoryStatus, inventoryVariants, type InventoryStatus } from "./product-utils";
+import { inventoryStatus, inventoryVariants } from "./product-utils";
+import { initialInventoryListFilters, type InventoryListFilters } from "./inventory-list-context";
+import { matchesCatalogueSearch } from "./catalogue-search";
 
 const pageSize = 30;
 const filters = [
@@ -14,27 +16,47 @@ const filters = [
 ] as const;
 
 export default function InventoryTab({
-    products, total, stock, onStock, onProduct,
+    products, total, filters: selection, onFilters, onProduct,
 }: {
     products: Product[];
     total: number;
-    stock: InventoryStatus;
-    onStock: (value: InventoryStatus) => void;
+    filters: InventoryListFilters;
+    onFilters: (value: InventoryListFilters) => void;
     onProduct: (id: string) => void;
 }) {
     const { t, locale } = useAdminLocale();
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(1);
+    const { search, page, stock } = selection;
+    const result = useRef<HTMLParagraphElement>(null);
+    const pageNavigation = useRef(false);
     const variants = useMemo(() => inventoryVariants(products), [products]);
-    const query = search.trim().toLocaleLowerCase();
     const matching = variants.filter(({ product, variant }) =>
         (stock === "ALL" || inventoryStatus(variant.stock) === stock) &&
-        [product.nameFr, product.nameAr, product.nameEn, variant.sku, variant.size,
-            variant.colorNameFr, variant.colorNameAr, variant.colorNameEn]
-            .some((value) => value?.toLocaleLowerCase().includes(query)),
+        matchesCatalogueSearch([product.nameFr, product.nameAr, product.nameEn,
+            product.category.nameFr, product.category.nameAr, product.category.nameEn,
+            variant.sku, variant.size, variant.color, variant.colorNameFr, variant.colorNameAr,
+            variant.colorNameEn], search),
     ).sort((a, b) => a.variant.stock - b.variant.stock);
     const pages = Math.max(1, Math.ceil(matching.length / pageSize));
     const current = Math.min(page, pages);
+    useEffect(() => {
+        if (!pageNavigation.current) return;
+        pageNavigation.current = false;
+        result.current?.focus({ preventScroll: true });
+        result.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    }, [current]);
+    function changePage(next: number) {
+        pageNavigation.current = true;
+        onFilters({ ...selection, page: next });
+    }
+    function pagination(label: string) {
+        return pages > 1 && <nav className="admin-inventory-pages" aria-label={t(label)}>
+            <button type="button" className="admin-button" disabled={current === 1}
+                onClick={() => changePage(current - 1)}>{t("Page précédente")}</button>
+            <span>{t("Page {page} sur {total}", { page: current, total: pages })}</span>
+            <button type="button" className="admin-button" disabled={current === pages}
+                onClick={() => changePage(current + 1)}>{t("Page suivante")}</button>
+        </nav>;
+    }
 
     return (
         <section className="admin-panel">
@@ -49,7 +71,7 @@ export default function InventoryTab({
             <div className="order-quick-filters" role="group" aria-label={t("État du stock")}>
                 {filters.map(([value, label]) => (
                     <button type="button" className="order-filter" key={value} aria-pressed={stock === value}
-                        onClick={() => { onStock(value); setPage(1); }}>
+                        onClick={() => onFilters({ ...selection, stock: value, page: 1 })}>
                         {t(label)}
                         <span>{value === "ALL" ? variants.length : variants.filter(
                             ({ variant }) => inventoryStatus(variant.stock) === value,
@@ -63,11 +85,22 @@ export default function InventoryTab({
                     <div>
                         <Search size={17} aria-hidden="true" />
                         <input type="search" dir="auto" placeholder={t("Produit, SKU, taille ou couleur")}
-                            value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+                            value={search} onChange={(e) => onFilters({ ...selection, search: e.target.value, page: 1 })} />
                     </div>
                 </label>
+                <button type="button" className="admin-text-button"
+                    disabled={!search && stock === "ALL" && current === 1}
+                    onClick={() => onFilters(initialInventoryListFilters)}>
+                    {t("Effacer la recherche et les filtres")}
+                </button>
             </div>
-            <p className="admin-muted" role="status">{t("{count} variante(s) trouvée(s)", { count: matching.length })}</p>
+            <p ref={result} className="admin-muted admin-inventory-results" role="status" tabIndex={-1}>
+                {t("{count} variante(s) trouvée(s)", { count: matching.length })}
+                {matching.length > 0 && <> · {t("Affichage")} <bdi dir="ltr">
+                    {(current - 1) * pageSize + 1}–{Math.min(current * pageSize, matching.length)}
+                </bdi></>}
+            </p>
+            {pagination("Navigation du stock, début")}
             {matching.length > 0 ? (
                 <ul className="admin-inventory-list">
                     {matching.slice((current - 1) * pageSize, current * pageSize).map(({ product, variant }) => {
@@ -95,15 +128,7 @@ export default function InventoryTab({
                     })}
                 </ul>
             ) : <p className="admin-empty">{t("Aucune variante dans cette sélection.")}</p>}
-            {pages > 1 && (
-                <div className="admin-inventory-pages">
-                    <button type="button" className="admin-button" disabled={current === 1}
-                        onClick={() => setPage(current - 1)}>{t("Page précédente")}</button>
-                    <span>{t("Page {page} sur {total}", { page: current, total: pages })}</span>
-                    <button type="button" className="admin-button" disabled={current === pages}
-                        onClick={() => setPage(current + 1)}>{t("Page suivante")}</button>
-                </div>
-            )}
+            {pagination("Navigation du stock, fin")}
         </section>
     );
 }

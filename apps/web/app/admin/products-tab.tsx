@@ -9,6 +9,7 @@ import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { getAdminProductBySlug, type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
 import { ProductPreview } from "./product-preview";
+import { matchesCatalogueSearch } from "./catalogue-search";
 import { ProductRecommendationEditor } from "./product-recommendations";
 import {
     type DraftVariant,
@@ -118,9 +119,11 @@ export function ProductsTab({
             (p) => focusedProduct ? p.id === focusedProduct :
                 (publication === "ALL" || p.status === publication) &&
                 stockMatches(p, stock) &&
-                [p.nameFr, p.nameAr, p.nameEn, p.slug, ...p.variants.map((v) => v.sku)].some((v) =>
-                    v.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
-                ),
+                (matchesCatalogueSearch([p.nameFr, p.nameAr, p.nameEn, p.slug,
+                    p.category.nameFr, p.category.nameAr, p.category.nameEn], search) ||
+                    p.variants.some(v => matchesCatalogueSearch([p.nameFr, p.nameAr, p.nameEn, p.slug,
+                        p.category.nameFr, p.category.nameAr, p.category.nameEn,
+                        v.sku, v.size, v.color, v.colorNameFr, v.colorNameAr, v.colorNameEn], search))),
         )
         .slice()
         .sort((a, b) =>
@@ -1161,7 +1164,7 @@ export function ProductsTab({
                                         dir="auto"
                                         type="search"
                                         value={search}
-                                        placeholder={t("Nom, adresse ou SKU")}
+                                        placeholder={t("Nom, adresse, SKU, taille ou couleur")}
                                         onChange={(e) => setSearch(e.target.value)}
                                     />
                                 </div>
