@@ -1,10 +1,17 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Sélection du bandeau — 11 novembre 2026
+
+- [x] Choix dans le catalogue, conservation de l’ordre et prévisualisation du brouillon.
+- [x] Lecture publique limitée à la sélection publiée et aux produits disponibles, sans substitution.
+- [x] Commandes discrètes, pause accessible, toucher et glissement mobile.
+- [ ] Terminer les tests serveur/navigateur et publier le candidat exact.
+
 ## Bandeau dynamique — 11 novembre 2026
 
 - [x] Garder le message et la navigation fixes, relier photo/nom/prix à la même fiche.
 - [x] Prévoir pause, clavier, réduction des animations et états catalogue vide/unique.
-- [ ] Valider mobile/ordinateur puis publier la version exacte testée.
+- [x] PR130 publiée : 19 UI locaux et trois répétitions réussis ; recette réelle mobile/ordinateur et empreintes HTTPS vérifiées. CI GitHub en attente au dernier contrôle.
 
 ## Association couleur–photo — 11 novembre 2026
 

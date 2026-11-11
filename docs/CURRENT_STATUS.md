@@ -1,5 +1,17 @@
 # Current Status — 2026-11-08
 
+## Choix et ordre du bandeau — candidat du 11 novembre 2026
+
+Contenu du site ajoute le mode automatique ou manuel, jusqu’à six produits choisis dans tout le catalogue de cette installation, une recherche et une pagination, des miniatures et des boutons de classement. Le passage temporaire au mode automatique conserve la liste et son ordre. L’enregistrement reste un brouillon avant publication, avec les protections de révision existantes ; aucune fiche produit n’est réenregistrée.
+
+Les options de lecture automatique et de commandes discrètes sont configurables. Le mode discret est la présentation par défaut : repères dorés, flèches révélées au survol/clavier, pause masquée au repos mais accessible au clavier, arrêt persistant au toucher et glissement horizontal sur la photo. Les défilements verticaux et le zoom restent natifs ; fondu court après changement seulement, sans animation avec réduction des mouvements. L’arrêt au survol, au clavier, hors écran et onglet caché est conservé.
+
+La sélection est stockée dans le JSON de contenu existant, sans migration ni dépendance. Un nouveau lecteur public /content/hero-products résout uniquement la liste publiée, dans son ordre, même hors des huit produits de l’accueil. Produits archivés, sans photo ou sans variante disponible sont ignorés sans remplacement automatique ; liste manuelle vide reste statique. La prévisualisation utilise les choix du brouillon, jamais une route publique vers le brouillon. Tests et publication à consigner.
+
+## Production vérifiée — PR130, 11 novembre 2026
+
+Source 4b34fb13efdc82a779677def66fe7c0413523ecc publiée, arbre identique à Master 64f0f0090cec4512470932595e3aee4c85a054c8. Validation locale : compilation/types, lint, 19 tests navigateur et trois répétitions pause/reprise réussis ; CI GitHub encore en attente sans job démarré au dernier contrôle. Sauvegarde et activation confirmées depuis le Terminal Mac, trois empreintes JS/CSS comparées en HTTPS. Recette réelle à 1440×1000 et 390×844 : rotation, pause persistante, flèches et lien vers Cap deuble ferrure à 280 MAD vérifiés. Réponses publiques réglages/contenu/catégories/catalogue identiques avant/après ; photos d’origine conservées, aucune commande créée. Rapports et captures sur DATA.
+
 ## Bandeau de produits dynamique — candidat du 11 novembre 2026
 
 Le titre et le bouton principal restent fixes. La photo originale, le nom, le prix et le lien vers la fiche changent ensemble dans une sélection de quatre produits maximum du catalogue disponible. L’image personnalisée du dashboard reste prioritaire, présentée comme une campagne sans attribution de prix erronée. Aucun déplacement automatique si la sélection est unique ou l’utilisateur préfère réduire les animations ; aperçu du contenu en pause initiale.

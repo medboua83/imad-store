@@ -142,7 +142,7 @@ export interface PaginatedResponse<T> {
     totalPages: number;
 }
 
-export { defaultSiteContent, homeSectionKeys } from "./site-content";
+export { defaultSiteContent, homeSectionKeys, MAX_HERO_PRODUCTS, usesManualHeroSelection } from "./site-content";
 export type { HomeSection } from "./site-content";
 export type { SiteContent } from "./site-content";
 

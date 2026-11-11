@@ -2337,3 +2337,43 @@ test("Store contacts are admin-only, scoped and normalized without changing comm
         else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
     }
 });
+
+test("Hero selection keeps drafts private, preserves order and never substitutes unavailable products", async () => {
+    const first = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+    const second = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+    const hidden = (await request(app).post("/api/products").set(admin()).send({ ...payload(), status: "DRAFT" })).body.data;
+    assert.ok(first?.id && second?.id && hidden?.id);
+    const initial = (await request(app).get("/api/content/admin").set(admin())).body.data;
+    const publicBefore = (await request(app).get("/api/content/hero-products")).body;
+    const ids = [second.id, hidden.id, first.id];
+    const content = { ...initial.draft, heroProductMode: "manual", heroProductIds: ids, heroAutoplay: false, heroMinimalControls: true,
+        deliveryText: "", returnsText: "", privacyText: "", businessAddress: "" };
+    assert.equal((await request(app).post("/api/content/draft").set(admin()).send({ expectedRevision: initial.revision, content })).status, 200);
+    assert.deepEqual((await request(app).get("/api/content/hero-products")).body, publicBefore);
+    assert.equal((await request(app).post("/api/content/publish").set(admin()).send({ expectedRevision: initial.revision + 1 })).status, 200);
+    const published = await request(app).get("/api/content/hero-products");
+    assert.equal(published.status, 200);
+    assert.deepEqual(published.body.data.map((p: any) => p.id), [second.id, first.id]);
+    const { readPublicStore } = await import("../backend/src/lib/public-store");
+    assert.deepEqual((await readPublicStore("/content/hero-products")).body, published.body);
+    assert.equal((await request(app).get("/api/content")).body.data.heroAutoplay, false);
+    await prisma.product.update({ where: { id: second.id }, data: { status: "ARCHIVED" } });
+    await prisma.productVariant.updateMany({ where: { productId: first.id }, data: { stock: 0 } });
+    assert.deepEqual((await request(app).get("/api/content/hero-products")).body.data, []);
+    const empty = { ...content, heroProductIds: [] };
+    assert.equal((await request(app).post("/api/content/draft").set(admin()).send({ expectedRevision: initial.revision + 2, content: empty })).status, 200);
+    assert.equal((await request(app).post("/api/content/publish").set(admin()).send({ expectedRevision: initial.revision + 3 })).status, 200);
+    assert.deepEqual((await request(app).get("/api/content")).body.data.heroProductIds, []);
+    assert.equal((await request(app).post("/api/content/rollback").set(admin()).send({ expectedRevision: initial.revision + 4 })).status, 200);
+    assert.deepEqual((await request(app).get("/api/content")).body.data.heroProductIds, ids);
+});
+
+test("Hero configuration rejects duplicate, excessive and foreign product references without changing revision", async () => {
+    const initial = (await request(app).get("/api/content/admin").set(admin())).body.data;
+    for (const ids of [[product.id, product.id], ["f".repeat(24)], ["invalid"], Array.from({ length: 7 }, (_, index) => index.toString(16).padStart(24, "0"))]) {
+        const result = await request(app).post("/api/content/draft").set(admin()).send({ expectedRevision: initial.revision, content: { ...initial.draft, heroProductIds: ids } });
+        assert.equal(result.status, 400, JSON.stringify(result.body));
+    }
+    assert.equal((await request(app).get("/api/content/admin").set(admin())).body.data.revision, initial.revision);
+    assert.equal((await request(app).post("/api/content/draft").send({ expectedRevision: initial.revision, content: initial.draft })).status, 401);
+});

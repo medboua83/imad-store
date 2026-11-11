@@ -6,6 +6,7 @@ import {
     catalogSections,
     isAmbiguousSize,
     MAX_PRODUCT_PHOTOS,
+    MAX_HERO_PRODUCTS,
     quantityDiscountError,
     validColorPhotos,
 } from "@imad-store/shared";
@@ -224,6 +225,13 @@ export async function getAdminProductBySlug(req: Request, res: Response) {
     res.json({ success: true, data: product });
 }
 export const readPublicProducts = (query: unknown) => list(query, false);
+export async function readHeroProducts(idsInput: unknown) {
+    const ids = z.array(objectIdSchema).max(MAX_HERO_PRODUCTS).parse(idsInput);
+    if (!ids.length) return [];
+    const products = await prisma.product.findMany({ where: { id: { in: ids }, status: "ACTIVE" }, include });
+    const eligible = new Map(products.filter(recommendable).map(p => [p.id, publicProduct(p)]));
+    return ids.flatMap(id => eligible.has(id) ? [eligible.get(id)!] : []);
+}
 async function findPublicProduct(slugInput: unknown) {
     const slug = slugSchema.parse(slugInput);
     const product = await prisma.product.findUnique({ where: { slug }, include });
