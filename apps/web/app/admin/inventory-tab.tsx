@@ -96,9 +96,9 @@ export default function InventoryTab({
             </div>
             <p ref={result} className="admin-muted admin-inventory-results" role="status" tabIndex={-1}>
                 {t("{count} variante(s) trouvée(s)", { count: matching.length })}
-                {matching.length > 0 && <> · {t("Affichage {from}–{to}", {
-                    from: (current - 1) * pageSize + 1, to: Math.min(current * pageSize, matching.length),
-                })}</>}
+                {matching.length > 0 && <> · {t("Affichage")} <bdi dir="ltr">
+                    {(current - 1) * pageSize + 1}–{Math.min(current * pageSize, matching.length)}
+                </bdi></>}
             </p>
             {pagination("Navigation du stock, début")}
             {matching.length > 0 ? (

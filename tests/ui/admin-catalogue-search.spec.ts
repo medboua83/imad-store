@@ -74,6 +74,20 @@ for (const width of [320, 390, 1440]) {
         await arabicSearch.fill("وِشاح ٤٠");
         await expect(rows.locator("li")).toHaveCount(30);
         await expect(results).toContainText("65");
+        // The numeric range must read left-to-right even inside the Arabic result summary.
+        const range = results.locator("bdi");
+        await expect(range).toHaveText("1–30");
+        const positions = await range.evaluate(element => {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT), nodes: Node[] = [];
+            while (walker.nextNode()) if (walker.currentNode.textContent?.trim()) nodes.push(walker.currentNode);
+            const box = (node: Node, offset: number) => {
+                const selection = document.createRange();
+                selection.setStart(node, offset); selection.setEnd(node, offset + 1);
+                return selection.getBoundingClientRect().left;
+            };
+            return { first: box(nodes[0], 0), last: box(nodes[nodes.length - 1], nodes[nodes.length - 1].textContent!.length - 1) };
+        });
+        expect(positions.first).toBeLessThan(positions.last);
         for (const value of ["ETE-031", "وِشاح ٤٠"]) {
             await arabicSearch.fill(value);
             const padding = await arabicSearch.evaluate(el => ({ left: parseFloat(getComputedStyle(el).paddingLeft), right: parseFloat(getComputedStyle(el).paddingRight) }));
