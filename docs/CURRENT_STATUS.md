@@ -2,7 +2,7 @@
 
 ## Navigation quotidienne du dashboard — candidat du 11 novembre 2026
 
-Les références des cinq dernières commandes ouvrent directement leur détail. Une adresse administrative `?tab=orders&order=...` conserve ce contexte au rechargement ; seules les références de 24 caractères hexadécimaux sont reconnues, uniquement parmi les commandes déjà autorisées et chargées. Le retour arrière ferme la fiche et une référence absente affiche un état indisponible, sans afficher une autre commande.
+Les références des cinq dernières commandes ouvrent directement leur détail. Une adresse administrative `?tab=orders&order=...` conserve ce contexte au rechargement ; seules les références de 24 caractères hexadécimaux sont reconnues, uniquement parmi les commandes déjà autorisées et chargées. Le retour arrière ferme la fiche et une référence absente affiche un état indisponible, sans afficher une autre commande. Le bouton et Échap ferment par la sélection contrôlée ; une ancienne notification native de fermeture ne peut pas annuler un retour vers la fiche.
 
 Les paramètres offrent six accès directs sur ordinateur et une liste compacte sur mobile. Les formulaires restent montés pour conserver les brouillons ; les ancres ne contaminent plus les autres rubriques. La confirmation directe possède maintenant une indication de brouillon et un avertissement avant rechargement. L’enregistrement reste explicite, désactivé sans changement, et un échec conserve le choix pour un nouvel essai.
 

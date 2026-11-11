@@ -375,7 +375,10 @@ export function OrdersTab({
                 ref={dialog}
                 className="order-detail-dialog"
                 aria-labelledby="order-detail-title"
-                onClose={() => onSelect(null)}
+                onCancel={(event) => {
+                    event.preventDefault();
+                    onSelect(null);
+                }}
             >
                 <header className="order-detail-header">
                     <div>
@@ -389,7 +392,7 @@ export function OrdersTab({
                     <button
                         className="admin-icon-button"
                         aria-label={t("Fermer les détails")}
-                        onClick={() => dialog.current?.close()}
+                        onClick={() => onSelect(null)}
                     >
                         <X size={20} />
                     </button>

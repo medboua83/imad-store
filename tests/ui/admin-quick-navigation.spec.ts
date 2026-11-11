@@ -126,3 +126,33 @@ test("Order deep links never expose an unrelated order", async ({ page }) => {
     await expect(page.getByRole("dialog")).not.toBeVisible();
     expect(writes).toEqual([]);
 });
+
+test("A delayed history close cannot dismiss a reopened order", async ({ page }) => {
+    const writes = await fixture(page);
+    // Native dialog close events are queued. Deliver one after Forward to exercise
+    // the same race consistently instead of relying on the runner's scheduling.
+    await page.addInitScript(() => {
+        const close = HTMLDialogElement.prototype.close;
+        HTMLDialogElement.prototype.close = function (value?: string) {
+            this.addEventListener("close", (event) => {
+                event.stopImmediatePropagation();
+                setTimeout(() => {
+                    this.dispatchEvent(new Event("close"));
+                    document.documentElement.setAttribute("data-test-close-delivered", "true");
+                }, 500);
+            }, { capture: true, once: true });
+            close.call(this, value);
+        };
+    });
+    await page.goto("/admin?tab=orders");
+    await page.getByRole("button", { name: /Voir les détails.*66666666/ }).click();
+    const details = page.getByRole("dialog");
+    await expect(details).toBeVisible();
+    await page.goBack();
+    await expect(details).not.toBeVisible();
+    await page.goForward();
+    await expect(page.locator("html")).toHaveAttribute("data-test-close-delivered", "true");
+    await expect(details).toBeVisible();
+    await expect(page).toHaveURL(url => url.searchParams.get("order") === order.id);
+    expect(writes).toEqual([]);
+});

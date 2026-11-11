@@ -1,6 +1,8 @@
 # Accès rapide aux réglages et aux commandes
 
-Les références de « Dernières commandes » ouvrent la fiche correspondante, sans action sur son statut. Le lien contient `tab=orders&order=...`, exige la session habituelle et ne donne accès qu’aux commandes présentes dans la liste autorisée. Une commande plus ancienne que les 100 chargées ou retirée affiche « Commande indisponible ». Aucun nouvel accès API n’est ajouté.
+Les références de « Dernières commandes » ouvrent la fiche correspondante, sans action sur son statut. Le lien contient `tab=orders&order=...`, exige la session habituelle et ne donne accès qu’aux commandes présentes dans la liste autorisée. La fermeture par le bouton ou Échap met à jour la référence sélectionnée ; un ancien événement natif de fermeture ne peut pas refermer une fiche rouverte par « Avancer ». Un test retarde volontairement cet événement pour vérifier ce cas.
+
+Une commande plus ancienne que les 100 chargées ou retirée affiche « Commande indisponible ». Aucun nouvel accès API n’est ajouté.
 
 Dans Paramètres, les raccourcis mènent aux réseaux sociaux/WhatsApp, à la confirmation des commandes, au transporteur, aux règles de livraison, aux délais et retours et à Meta Pixel. Sur mobile, une liste native remplace les six cartes. La navigation ne soumet aucun formulaire et ne remonte pas les composants ; les brouillons restent en mémoire.
 
