@@ -1,5 +1,13 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Prévisualisation de la fiche produit — 11 novembre 2026
+
+- [x] Ajouter un aperçu en grand de la saisie courante, sans enregistrement ni publication automatique.
+- [x] Parcourir jusqu’à 25 photos et les associations par couleur ; conserver les originaux.
+- [x] Contrôles à 320/390/1440 px, brouillons, images indisponibles et retours de navigation : 18 tests navigateur locaux réussis.
+- [ ] Mettre à jour le dépôt puis publier avec sauvegarde.
+
+
 ## Reprise et icônes sociales — 8 novembre 2026
 
 Le propriétaire reprend le travail après la pause et choisit des icônes sociales seules. Les quatre liens et couleurs sont conservés, avec nom au survol, nom accessible et zones tactiles de 52 px. Le candidat précédent 7041f10 a passé 233 UI, 116 PostgreSQL/unitaires et les contrôles de compilation/hébergement, sans publication. L’ajustement social doit être vérifié sur le nouveau code avant fusion et publication groupée. La production vérifiée reste 3a19504361fa (PR105).

@@ -700,6 +700,7 @@ export default function AdminPage() {
                             {openedTabs.includes("products") && (
                                 <div hidden={activeTab !== "products"}>
                                     <ProductsTab
+                                        active={activeTab === "products"}
                                         products={products}
                                         categories={categories}
                                         total={productTotal}
