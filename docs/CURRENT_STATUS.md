@@ -1,5 +1,14 @@
 # Current Status — 2026-11-08
 
+## Zoom de fiche produit au survol — candidat du 11 novembre 2026
+
+La photo principale peut être agrandie deux fois dans son cadre avec une souris précise. Le point de détail suit le curseur sans réafficher le formulaire à chaque mouvement ; sortie du cadre, changement de photo/couleur, échec d’image et ouverture du plein écran réinitialisent le zoom. Les miniatures et le bouton d’agrandissement restent indépendants. Les gestes tactiles ne déclenchent pas le survol, le défilement vertical et le pincement natif sont conservés ; le plein écran existant reste accessible au toucher et au clavier. La réduction des animations supprime la transition. Aucune image, URL de fichier, variante, donnée commerciale ou dépendance n’est réenregistrée. Tests et publication du candidat exact à consigner.
+
+## Production vérifiée — PR132, 11 novembre 2026
+
+Source d8e421c260f7b0278d87f3b89b6779dd0ebcb081 publiée, arbre identique à Master dc2847b732ec25652f935a61eea38e9102e4b8df. CI de la source : 292 tests navigateur et 129 tests serveur réussis. Sauvegarde privée et cinq empreintes JavaScript/CSS vérifiées en HTTPS ; réglages, contenu, catégories et catalogue inchangés avant/après. Recette réelle mobile et ordinateur : lecture automatique, commandes masquées au repos et au survol, reprise après survol, recherche produit et stock. Aucun ordre réel créé ni réglage marchand modifié. Rapports sur DATA dans outputs/startup-clean-hero-20261111.
+
+
 ## Démarrage et bandeau sans commandes visuelles — candidat du 11 novembre 2026
 
 Le démarrage chargeait de façon synchrone le SDK complet Google APIs, même sans configuration Google Sheets. Son import est désormais différé après vérification des identifiants, dans les trois opérations existantes, sans modifier leur contrat. Le test anti-données-démo reçoit un signal IPC de l’entrée serveur réelle, sans hériter du protocole de rapport enfant de Node, consomme les diagnostics, borne la requête de santé et inscrit l’écoute d’arrêt avant le signal avec recours à SIGKILL après deux secondes. Sa limite de disponibilité passe de huit à trente secondes pour un processus neuf sur stockage externe ; plafond global d’une minute. Les assertions santé et tables vides restent obligatoires. Une régression vérifie qu’une intégration Sheets non configurée ne charge pas le SDK.

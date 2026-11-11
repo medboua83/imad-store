@@ -1,5 +1,12 @@
 # Imad Store — Persistent Project Memory
 
+## Zoom au survol — candidat du 11 novembre 2026
+
+Le propriétaire demande un agrandissement de la photo de fiche lorsque la souris s’en approche. Implémentation localisée à ProductGallery et aux styles produit : grossissement 2× à point focal mobile, uniquement souris et capacité de survol précis. Le plein écran, les gestes tactiles, les originaux et les associations couleur–photo sont conservés. Réinitialisation sur sortie, image/couleur et dialogue ; aucun nouveau téléchargement ni nouvelle dépendance. Validation et mise en ligne à consigner dans la recette sur DATA.
+
+La PR132 précédente est publiée avec sauvegarde, 292 UI et 129 tests serveur réussis et cinq empreintes HTTPS conformes. Source active vérifiée : d8e421c260f7b0278d87f3b89b6779dd0ebcb081 ; Master dc2847b732ec25652f935a61eea38e9102e4b8df a le même arbre. Les données commerciales n’ont pas changé. L’accès direct SSH reste fermé ; publication propriétaire depuis le Terminal Mac avec un script vérifié, sans nouveau compte ni clé.
+
+
 ## Démarrage et bandeau sans commandes visuelles — candidat du 11 novembre 2026
 
 Le démarrage chargeait de façon synchrone le SDK complet Google APIs, même sans configuration Google Sheets. Son import est désormais différé après vérification des identifiants, dans les trois opérations existantes, sans modifier leur contrat. Le test anti-données-démo reçoit un signal IPC de l’entrée serveur réelle, sans hériter du protocole de rapport enfant de Node, consomme les diagnostics, borne la requête de santé et inscrit l’écoute d’arrêt avant le signal avec recours à SIGKILL après deux secondes. Sa limite de disponibilité passe de huit à trente secondes pour un processus neuf sur stockage externe ; plafond global d’une minute. Les assertions santé et tables vides restent obligatoires. Une régression vérifie qu’une intégration Sheets non configurée ne charge pas le SDK.

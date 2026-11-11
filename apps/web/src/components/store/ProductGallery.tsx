@@ -6,6 +6,7 @@ import {
     useRef,
     useState,
     type KeyboardEvent,
+    type PointerEvent,
     type TouchEvent,
 } from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
@@ -26,7 +27,41 @@ export function ProductGallery({ images, name, selected, onSelect }: {
     const trigger = useRef<HTMLButtonElement>(null);
     const swipe = useRef<{ x: number; y: number } | null>(null);
     const thumbnails = useRef<HTMLDivElement>(null);
+    const stage = useRef<HTMLDivElement>(null);
     const src = available[active];
+    const resetHoverZoom = useCallback(() => {
+        const frame = stage.current;
+        if (!frame) return;
+        frame.removeAttribute("data-hover-zoom");
+        frame.style.removeProperty("--photo-zoom-x");
+        frame.style.removeProperty("--photo-zoom-y");
+    }, []);
+    useEffect(() => {
+        resetHoverZoom();
+    }, [src, zoomOpen, resetHoverZoom]);
+    function hoverZoom(event: PointerEvent<HTMLDivElement>) {
+        const frame = event.currentTarget;
+        const photo = frame.querySelector<HTMLImageElement>(".gallery-photo");
+        if (
+            event.pointerType !== "mouse" ||
+            zoomOpen ||
+            !window.matchMedia("(hover: hover) and (pointer: fine)").matches ||
+            !photo?.complete ||
+            !photo.naturalWidth ||
+            (event.target instanceof Element && event.target.closest("button"))
+        ) {
+            resetHoverZoom();
+            return;
+        }
+        const box = frame.getBoundingClientRect();
+        if (!box.width || !box.height) return;
+        const percent = (value: number, size: number) =>
+            `${Math.max(0, Math.min(100, (value / size) * 100))}%`;
+        // Update only the image's focal point, without rendering the product form on every move.
+        frame.style.setProperty("--photo-zoom-x", percent(event.clientX - box.left, box.width));
+        frame.style.setProperty("--photo-zoom-y", percent(event.clientY - box.top, box.height));
+        frame.setAttribute("data-hover-zoom", "true");
+    }
     const revealThumbnail = useCallback((focus = false) => {
         const strip = thumbnails.current;
         const selected = strip?.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
@@ -153,7 +188,14 @@ export function ProductGallery({ images, name, selected, onSelect }: {
         );
     return (
         <div className="product-gallery refined-gallery">
-            <div className="gallery-stage" {...touchNavigation}>
+            <div
+                ref={stage}
+                className="gallery-stage"
+                onPointerMove={hoverZoom}
+                onPointerLeave={resetHoverZoom}
+                onPointerCancel={resetHoverZoom}
+                {...touchNavigation}
+            >
                 {src ? (
                     <Image
                         src={src}
@@ -178,6 +220,7 @@ export function ProductGallery({ images, name, selected, onSelect }: {
                         type="button"
                         onKeyDown={navigate}
                         onClick={() => {
+                            resetHoverZoom();
                             zoom.current?.showModal();
                             setZoomOpen(true);
                         }}

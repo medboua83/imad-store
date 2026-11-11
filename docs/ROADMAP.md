@@ -1,11 +1,18 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Zoom des photos produit — 11 novembre 2026
+
+- [x] Agrandir au survol de souris et suivre les détails dans le cadre existant, sans changer les originaux.
+- [x] Préserver toucher, navigation clavier, photos par couleur et réduction des animations.
+- [ ] Vérifier sur ordinateur et téléphone, puis publier la source testée.
+
+
 ## Démarrage et commandes masquées — 11 novembre 2026
 
 - [x] Différer le chargement Google Sheets quand la connexion n’est pas configurée.
 - [x] Borner l’attente de santé et l’arrêt du processus, conserver les assertions anti-démo.
 - [x] Masquer les commandes au pointeur, conserver lecture automatique et accès clavier/tactile.
-- [ ] Vérifier le candidat en local et dans GitHub, puis publier et contrôler les deux formats.
+- [x] PR132 publiée avec 292 UI et 129 tests serveur réussis ; empreintes HTTPS et recette mobile/ordinateur vérifiées.
 
 ## Sélection du bandeau — 11 novembre 2026
 
