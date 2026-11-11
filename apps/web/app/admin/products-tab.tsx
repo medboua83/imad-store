@@ -8,6 +8,7 @@ import { AdminProductPhoto } from "./admin-product-photo";
 import { Plus, Search, Package, RefreshCw, Copy, Trash2 } from "lucide-react";
 import { getAdminProductBySlug, type Product, type Category } from "@/lib/api";
 import { ProductPhotos } from "./product-photos";
+import { ProductPreview } from "./product-preview";
 import { ProductRecommendationEditor } from "./product-recommendations";
 import {
     type DraftVariant,
@@ -52,6 +53,7 @@ const freshVariant = (): DraftVariant => ({
     sku: "",
 });
 type Props = {
+    active?: boolean;
     products: Product[];
     total: number;
     categories: Category[];
@@ -64,6 +66,7 @@ type Props = {
 };
 type CreationRecovery = { slug: string; existing?: Product | null };
 export function ProductsTab({
+    active = true,
     products,
     total,
     categories,
@@ -436,9 +439,14 @@ export function ProductsTab({
                                 )}
                             </p>
                         </div>
-                        <span className="admin-tag">
-                            {dirty ? t("Modifications non enregistrées") : t("Fiche chargée")}
-                        </span>
+                        <div className="product-editor-heading-actions">
+                            <span className="admin-tag">
+                                {dirty ? t("Modifications non enregistrées") : t("Fiche chargée")}
+                            </span>
+                            <ProductPreview key={`preview-heading-${session}-${active}`}
+                                draft={form} images={images} variants={variants} categories={categories}
+                                disabled={busy} />
+                        </div>
                     </div>
                     <nav
                         className="product-editor-nav"
@@ -636,6 +644,9 @@ export function ProductsTab({
                             busy={disabled}
                             onBusy={setUploading}
                         />
+                        <ProductPreview key={`preview-photos-${session}-${active}`}
+                            draft={form} images={images} variants={variants} categories={categories}
+                            disabled={busy} label="Prévisualiser les photos" />
                     </div>
                     <fieldset disabled={disabled} className="product-pricing" id="product-pricing">
                         <legend>{t("3. Prix et offres")}</legend>

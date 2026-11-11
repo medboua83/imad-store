@@ -1,5 +1,12 @@
 # Imad Store — Persistent Project Memory
 
+## Prévisualisation du produit avant enregistrement — candidat du 11 novembre 2026
+
+Deux boutons ouvrent un grand aperçu depuis la fiche et la section Photos. Il utilise directement la saisie courante : galerie jusqu’à 25 images, couverture, titre arabe/français, prix et prix barré, livraison offerte, tailles et photos associées aux couleurs. La présentation Mobile/Ordinateur et les boutons, vignettes et flèches du clavier permettent la vérification sans action sur le panier ni requête d’enregistrement. Les photos originales restent la source du grand aperçu ; les vignettes utilisent le mécanisme allégé existant avec repli sur l’original.
+
+La fermeture par le bouton, Échap ou le changement de rubrique conserve la fiche en mémoire et restaure le défilement. Une image indisponible est signalée dans l’aperçu sans masquer les autres vues ni retirer le fichier de la fiche. Aucune route de prévisualisation publique, aucun partage social ni nouvelle permission. Recette locale réussie : 18 tests navigateur à 320/390/1440 px, compilation et contrôle de types. Les scénarios vérifient les 25 images, le repli sur image indisponible, les couleurs, les brouillons et le retour de navigation sans écriture. Publication à consigner après validation GitHub. Production précédente vérifiée : PR126, source 129549035c6486651e76951af677fecf966f4865, Master 8df02311c0c74dddef737e289f30dab9f77f64bb.
+
+
 ## Navigation quotidienne du dashboard — candidat du 11 novembre 2026
 
 Les références des cinq dernières commandes ouvrent directement leur détail. Une adresse administrative `?tab=orders&order=...` conserve ce contexte au rechargement ; seules les références de 24 caractères hexadécimaux sont reconnues, uniquement parmi les commandes déjà autorisées et chargées. Le retour arrière ferme la fiche et une référence absente affiche un état indisponible, sans afficher une autre commande. Le bouton et Échap ferment par la sélection contrôlée ; une ancienne notification native de fermeture ne peut pas annuler un retour vers la fiche.

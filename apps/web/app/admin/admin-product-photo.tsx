@@ -10,11 +10,13 @@ export function AdminProductPhoto({
     name,
     width = 64,
     height = 76,
+    eager = false,
 }: {
     images: string[];
     name: string;
     width?: number;
     height?: number;
+    eager?: boolean;
 }) {
     const { t } = useAdminLocale();
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
@@ -25,13 +27,14 @@ export function AdminProductPhoto({
             alt={name}
             width={width}
             height={height}
+            loading={eager ? "eager" : undefined}
             onError={() => setFailed((previous) => new Set([...previous, src]))}
         />
     ) : (
         <span
             className="admin-photo-unavailable"
             role="img"
-            aria-label={`${name} — ${images.length ? "Photo indisponible" : "Sans photo"}`}
+            aria-label={`${name} — ${t(images.length ? "Photo indisponible" : "Sans photo")}`}
         >
             <ImageOff size={22} aria-hidden="true" />
             <span>{images.length ? t("Photo indisponible") : t("Sans photo")}</span>
