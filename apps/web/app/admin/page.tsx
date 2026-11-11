@@ -129,7 +129,7 @@ const sections = [
     {
         id: "commerce" as Tab,
         label: "Paramètres",
-        description: "Gestion des commandes, livraison et Meta Pixel.",
+        description: "Commandes, réseaux sociaux, livraison et Meta Pixel.",
         icon: Settings2,
     },
     {

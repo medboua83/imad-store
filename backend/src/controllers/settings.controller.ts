@@ -1,10 +1,17 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import {
+    defaultStoreContacts,
+    normalizeStoreContact,
+    storeContacts,
+    type StoreContactKey,
+} from "@imad-store/shared";
 
 export async function readSettings() {
     const settings = (await prisma.storeSettings.findUnique({ where: { id: "settings" } })) || {
         id: "settings",
+        ...defaultStoreContacts,
         whatsappPhone: "212660560522",
         shippingCost: 30,
         freeShippingMin: 500,
@@ -26,6 +33,7 @@ export async function readSettings() {
         success: true,
         data: {
             ...settings,
+            ...storeContacts(settings),
             directSiteConfirmation: settings.directSiteConfirmation === true,
             whatsappAssistanceAvailable: Boolean(
                 !settings.directSiteConfirmation &&
@@ -42,13 +50,30 @@ export async function getSettings(_req: Request, res: Response) {
     res.json(await readSettings());
 }
 
+const contactField = (key: StoreContactKey) =>
+    z
+        .string()
+        .max(2048)
+        .refine(
+            (value) => normalizeStoreContact(key, value) !== null,
+            "Lien du réseau invalide. Utilisez son adresse HTTPS officielle.",
+        )
+        .transform((value) => normalizeStoreContact(key, value)!)
+        .optional();
 const settingsSchema = z.object({
+    whatsappUrl: contactField("whatsappUrl"),
+    instagramUrl: contactField("instagramUrl"),
+    facebookUrl: contactField("facebookUrl"),
+    tiktokUrl: contactField("tiktokUrl"),
     whatsappPhone: z.string().optional(),
     shippingCost: z.number().min(0).max(1000000).optional(),
     freeShippingMin: z.number().min(0).max(1000000).optional(),
     deliveryMaxDays: z.number().int().min(1).max(365).nullable().optional(),
     returnWindowDays: z.number().int().min(1).max(365).nullable().optional(),
-    returnFeePayer: z.enum(["STORE", "CUSTOMER", "BY_REASON", "DELIVERY_TRY_ON"]).nullable().optional(),
+    returnFeePayer: z
+        .enum(["STORE", "CUSTOMER", "BY_REASON", "DELIVERY_TRY_ON"])
+        .nullable()
+        .optional(),
     codEnabled: z.boolean().optional(),
     directSiteConfirmation: z.boolean().optional(),
     metaPixelEnabled: z.boolean().optional(),

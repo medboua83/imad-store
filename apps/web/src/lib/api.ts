@@ -255,6 +255,10 @@ export const trackOrder = async (orderId: string) => {
 export interface StoreSettings {
     id: string;
     whatsappPhone: string;
+    whatsappUrl?: string | null;
+    instagramUrl?: string | null;
+    facebookUrl?: string | null;
+    tiktokUrl?: string | null;
     shippingCost: number;
     freeShippingMin: number;
     deliveryMaxDays?: number | null;

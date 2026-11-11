@@ -1882,3 +1882,10 @@
     color: #8b3026;
     background: #f8e5dc;
 }
+
+.admin-social-settings { padding-bottom: 28px; margin-bottom: 28px; border-bottom: 1px solid #dfd3bc; }
+.admin-social-settings > p { color: #716550; line-height: 1.7; max-width: 75ch; }
+.admin-social-field { min-width: 0; display: grid; gap: 8px; }
+.admin-app .commerce-settings .admin-social-field label { display: flex; gap: 8px; align-items: center; }
+.admin-social-field input { width: 100%; min-width: 0; box-sizing: border-box; }
+.admin-social-preview { overflow-wrap: anywhere; font-size: .875rem; width: fit-content; padding-block: 8px; color: #79551f; }

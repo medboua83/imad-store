@@ -1,5 +1,12 @@
 # Imad Store — Persistent Project Memory
 
+## Réseaux sociaux et WhatsApp configurables — candidat du 11 novembre 2026
+
+Paramètres ajoute un formulaire distinct français/arabe pour WhatsApp, Instagram, Facebook et TikTok. Les URL historiques restent les valeurs par défaut ; une chaîne vide masque volontairement le réseau. Le numéro WhatsApp international est converti en lien wa.me, commun au pied de page, au bouton flottant et à Contact. Les domaines HTTPS sont contrôlés au navigateur et au serveur, avec écriture réservée aux administrateurs. Le formulaire protège le brouillon, conserve la saisie en cas d’échec et ne soumet aucun autre réglage. Le CRM, l’IA et les automatisations ne sont pas modifiés.
+
+Migration PostgreSQL additive uniquement, quatre colonnes texte facultatives dans store_settings ; aucune réécriture des liens existants. La publication doit appliquer la migration avant l’activation du nouveau serveur. Tests et publication à consigner séparément. La production précédente vérifiée est 438d59dc6f36 (PR124, dashboard et stock).
+
+
 ## Reprise et icônes sociales — 8 novembre 2026
 
 Le propriétaire reprend le travail après la pause et choisit des icônes sociales seules. Les quatre liens et couleurs sont conservés, avec nom au survol, nom accessible et zones tactiles de 52 px. Le candidat précédent 7041f10 a passé 233 UI, 116 PostgreSQL/unitaires et les contrôles de compilation/hébergement, sans publication. L’ajustement social doit être vérifié sur le nouveau code avant fusion et publication groupée. La production vérifiée reste 3a19504361fa (PR105).

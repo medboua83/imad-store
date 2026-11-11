@@ -1,3 +1,4 @@
+export * from "./store-contact";
 // ─── Locales ────────────────────────────────────────────────────────────────
 /** A variant represents one size, never a list of numeric pointures. */
 export function isAmbiguousSize(size?: string | null): boolean {
