@@ -82,6 +82,13 @@ for (const width of [320, 390, 1440]) {
         expect(state.product.images).toEqual(images);
         expect(state.product.variants.map(v => v.stock)).toEqual([5, 4, 2]);
         await page.getByRole("button", { name: "Modifier Article photo", exact: true }).click();
+        await card("Marron").getByRole("button", { name: "Choisir une photo pour Marron", exact: true }).click();
+        await card("Marron").getByRole("button", { name: "Associer la photo 25 à Marron", exact: true }).click();
+        await expect(page.getByText("Fiche chargée", { exact: true })).toBeVisible();
+        await card("Marron").getByRole("button", { name: "Effacer l’association de Marron", exact: true }).click();
+        await expect(card("Marron").getByRole("button", { name: "Choisir une photo pour Marron", exact: true })).toBeFocused();
+        await expect(card("Marron").getByText("Photo à associer", { exact: true })).toBeVisible();
+        expect(state.writes).toHaveLength(1);
         await page.getByLabel("Langue de l’administration / لغة لوحة الإدارة").selectOption("ar");
         await page.getByRole("button", { name: "اختيار صورة للون أسود", exact: true }).click();
         await editor.scrollIntoViewIfNeeded();

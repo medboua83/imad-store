@@ -83,7 +83,7 @@ export function ProductColorPhotos({ images, variants, value, disabled, onChange
                                 aria-label={t("Associer la photo {number} à {name}", { number: position + 1, name })}
                                 aria-pressed={src === image}
                                 onKeyDown={event => escape(event, key)}
-                                onClick={() => onChange([...value.filter(link => link.colorKey !== key), { colorKey: key, image: src }])}>
+                                onClick={() => { if (src !== image) onChange([...value.filter(link => link.colorKey !== key), { colorKey: key, image: src }]); }}>
                                 <span className="color-photo-choice-image"><ProductPhoto images={[src]} name="" thumbnail sizes="90px" className="object-contain" /></span>
                                 <span>{position === 0 ? t("Couverture") : t("Photo {0}", { "0": position + 1 })}</span>
                                 {src === image && <Check size={16} aria-hidden="true" />}
@@ -92,7 +92,7 @@ export function ProductColorPhotos({ images, variants, value, disabled, onChange
                     </div>
                     {image && <button type="button" className="admin-text-button color-photo-clear"
                         aria-label={t("Effacer l’association de {name}", { name })}
-                        onClick={() => onChange(value.filter(link => link.colorKey !== key))}>
+                        onClick={() => { onChange(value.filter(link => link.colorKey !== key)); close(key); }}>
                         {t("Effacer l’association")}
                     </button>}
                 </section>;
