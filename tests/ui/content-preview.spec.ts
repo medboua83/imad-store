@@ -90,6 +90,7 @@ for (const width of [390, 1440]) {
             preview.getByRole("heading", { name: "معاينة غير منشورة", exact: true }),
         ).toBeVisible();
         await expect(preview.locator(".catalog-card")).toContainText("منتج المعاينة");
+        await expect(preview.locator(".hero-carousel-controls")).toHaveCount(0);
         await expect(
             preview.getByText("مجموعتنا الجديدة قيد التحضير.", { exact: true }),
         ).toHaveCount(0);

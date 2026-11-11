@@ -1,11 +1,17 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Bandeau dynamique — 11 novembre 2026
+
+- [x] Garder le message et la navigation fixes, relier photo/nom/prix à la même fiche.
+- [x] Prévoir pause, clavier, réduction des animations et états catalogue vide/unique.
+- [ ] Valider mobile/ordinateur puis publier la version exacte testée.
+
 ## Association couleur–photo — 11 novembre 2026
 
 - [x] Diagnostiquer les couleurs sans association sur une fiche existante.
 - [x] Remplacer le choix caché par numéro par des cartes et miniatures près de la galerie.
 - [x] Préserver les associations lors d’un renommage complet, sans copier une photo à un nouveau groupe ou autre code couleur.
-- [ ] Valider création, 25 photos, effacement, prévisualisation et sauvegarde unique sur mobile/ordinateur, puis publier.
+- [x] PR129 publiée avec 276 UI et 126 tests serveur réussis ; choix et aperçu vérifiés en production sur mobile/ordinateur sans réenregistrer de produit.
 
 
 ## Catalogue et stock — 11 novembre 2026

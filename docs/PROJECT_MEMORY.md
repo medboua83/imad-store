@@ -1,5 +1,15 @@
 # Imad Store — Persistent Project Memory
 
+## Bandeau de produits dynamique — candidat du 11 novembre 2026
+
+Le titre et le bouton principal restent fixes. La photo originale, le nom, le prix et le lien vers la fiche changent ensemble dans une sélection de quatre produits maximum du catalogue disponible. L’image personnalisée du dashboard reste prioritaire, présentée comme une campagne sans attribution de prix erronée. Aucun déplacement automatique si la sélection est unique ou l’utilisateur préfère réduire les animations ; aperçu du contenu en pause initiale.
+
+Défilement toutes les sept secondes avec commandes précédent/suivant, compteur et pause/reprise. Arrêt au survol, à la navigation clavier, hors écran ou onglet caché ; les actions manuelles mettent l’automatisme en pause. Seule la photo active est montée, la première conserve son préchargement. Photos, tarifs, stocks et réglages ne sont pas réenregistrés ; aucune dépendance ni migration nouvelle. Tests mobile/ordinateur et publication à consigner après validation.
+
+## Production vérifiée — PR129, 11 novembre 2026
+
+Source 39e1507fc0e3b09e8c2e24a65a67e59d96947659 publiée, arbre identique à Master 62de49cbae948ef08d8c1e37451131ee168808d2. CI : 276 tests navigateur et 126 tests serveur réussis. Sauvegarde privée, compilation et activation vérifiées depuis le Terminal Mac du propriétaire. Trois empreintes JS/CSS comparées en HTTPS, santé et protection admin vérifiées. Recette réelle en arabe à 1440×1000 et 390×844 : choix des photos par couleur et aperçu Noir → photo 4 réussis. Choix provisoire effacé et fiche fermée sans sauvegarde ; aucun original, prix ou stock modifié. Catalogue et catégories ont évolué entre les relevés par les actions du propriétaire, pas par ce déploiement. Rapports et captures conservés sur DATA ; aucun nouvel accès SSH créé.
+
 ## Choix visuel des photos par couleur — candidat du 11 novembre 2026
 
 Le produit public « Abaya gatifa avec chaîne » présente quatre couleurs et quatre photos, mais aucune association ; toutes les couleurs utilisent donc la couverture. L’ancien choix par numéro était placé après l’intégralité des variantes, peu visible dans une fiche longue.

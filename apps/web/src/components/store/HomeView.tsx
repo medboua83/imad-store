@@ -8,6 +8,7 @@ import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { CatalogSectionLinks } from "./CatalogSectionLinks";
+import { HomeHero, type HeroSlide } from "./HomeHero";
 function DraftPreviewLink(props: ComponentProps<typeof Link>) {
     const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
     return (
@@ -37,6 +38,31 @@ export function HomeView({
     const useCatalogue = !content.heroImage || content.heroImage === "/images/hero-1.png";
     const catalogueImages = featured?.images ?? ["/images/catalogue-test/abaya.webp"];
     const heroImages = useCatalogue ? catalogueImages : [content.heroImage, ...catalogueImages];
+    const heroProducts = [featured, ...products].filter(
+        (product, index, list): product is Product =>
+            Boolean(product?.images[0]) &&
+            list.findIndex((entry) => entry?.id === product?.id) === index,
+    );
+    const productSlides: HeroSlide[] = heroProducts.map((product) => ({
+        id: product.id,
+        images: product.images,
+        name: product.nameAr || product.nameFr,
+        href: `/products/${product.slug}`,
+        price: product.price,
+    }));
+    const slides: HeroSlide[] = (
+        useCatalogue && productSlides.length
+            ? productSlides
+            : [
+                  {
+                      id: "collection",
+                      images: heroImages,
+                      name: "اكتشفوا مجموعة IMAD Mode",
+                      href: "/shop",
+                  },
+                  ...productSlides,
+              ]
+    ).slice(0, 4);
     const homeSections = content.homeSections ?? homeSectionKeys;
     const blocks: Record<HomeSection, ReactNode> = {
         collections: (
@@ -49,7 +75,10 @@ export function HomeView({
                 <div className="section-heading">
                     <h2 id="home-collections-title">تسوقوا حسب الفئة</h2>
                 </div>
-                <CatalogSectionLinks sections={availableCatalogSections(categories)} newTab={preview} />
+                <CatalogSectionLinks
+                    sections={availableCatalogSections(categories)}
+                    newTab={preview}
+                />
                 <nav aria-label="فئات المتجر" className="collection-grid">
                     {publishedCategories(categories).map((c) => {
                         const visual = categoryVisual(c, products);
@@ -120,12 +149,7 @@ export function HomeView({
         banners: content.banners.length ? (
             <section aria-label="إعلانات المتجر" className="section-container banner-grid">
                 {content.banners.map((banner, i) => (
-                    <ViewLink
-                        prefetch={false}
-                        href={banner.href}
-                        key={i}
-                        className="campaign-card"
-                    >
+                    <ViewLink prefetch={false} href={banner.href} key={i} className="campaign-card">
                         <div className="relative aspect-[2/1]">
                             <ProductPhoto
                                 images={[banner.image]}
@@ -167,7 +191,7 @@ export function HomeView({
     };
     return (
         <div className="storefront-home">
-            <section className="editorial-hero">
+            <HomeHero slides={slides} preview={preview}>
                 <div className="hero-copy">
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>
@@ -183,16 +207,7 @@ export function HomeView({
                         )}
                     </div>
                 </div>
-                <div className="hero-visual">
-                    <ProductPhoto
-                        images={heroImages}
-                        name={useCatalogue && featured ? featured.nameAr || featured.nameFr : ""}
-                        preload
-                        sizes="(max-width: 767px) calc(45vw - 12px), 336px"
-                        className="hero-photo"
-                    />
-                </div>
-            </section>
+            </HomeHero>
             {homeSections.map((section) => (
                 <Fragment key={section}>{blocks[section]}</Fragment>
             ))}
