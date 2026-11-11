@@ -66,6 +66,17 @@ export function HomeHero({
         return () => window.clearInterval(timer);
     }, [playing, slides.length]);
 
+    // Replacing the play/pause SVG under the pointer can detach the mouseout target.
+    // Check the actual pointer target as well, so hover never remains latched outside.
+    useEffect(() => {
+        if (!hovered) return;
+        const outside = (event: PointerEvent) => {
+            if (!root.current?.contains(event.target as Node)) setHovered(false);
+        };
+        document.addEventListener("pointermove", outside, { passive: true });
+        return () => document.removeEventListener("pointermove", outside);
+    }, [hovered]);
+
     const move = (direction: number) => {
         setPaused(true);
         setIndex((current) => (current + direction + slides.length) % slides.length);
@@ -76,10 +87,25 @@ export function HomeHero({
         <section
             ref={root}
             className="home-hero-carousel"
+            data-rotation-state={
+                paused
+                    ? "paused"
+                    : reducedMotion
+                      ? "reduced-motion"
+                      : hovered
+                        ? "hovered"
+                        : !visible
+                          ? "hidden-tab"
+                          : !inView
+                            ? "offscreen"
+                            : "playing"
+            }
             aria-label="مختارات IMAD Mode"
             aria-roledescription="عارض المنتجات"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            onPointerEnter={(event) => {
+                if (event.pointerType !== "touch") setHovered(true);
+            }}
+            onPointerLeave={() => setHovered(false)}
             onFocusCapture={(event) => {
                 if (event.target.matches(":focus-visible")) setPaused(true);
             }}
