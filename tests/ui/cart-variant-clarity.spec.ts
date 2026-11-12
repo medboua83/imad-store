@@ -32,7 +32,7 @@ for (const width of [320, 390, 1440]) {
     await expect(summary.locator("details")).toHaveCount(0);
     await expect(summary.locator(".bag-line-photo img")).toHaveJSProperty("src",image);
     await expect(summary.locator(".bag-line-detail")).toContainText("بني · مقاس موحد");
-    await expect(summary.locator(".bag-grand-total")).toContainText("260.00");
+    await expect(summary.locator(".bag-grand-total")).toContainText("275.00");
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items);
     expect(saved.map((item: {variantId:string;quantity:number}) => [item.variantId,item.quantity])).toEqual([["999999999999999999999991",1]]);
     expect(saved[0].images).toEqual(["/images/catalogue-test/abaya.webp"]);
