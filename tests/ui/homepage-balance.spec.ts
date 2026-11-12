@@ -29,6 +29,14 @@ for (const width of [320, 390, 1440]) {
         const cta = page.locator('.hero-actions a[href="#collections"]');
         const collections = page.locator("#collections");
         const hero = page.locator(".editorial-hero");
+        const frame = page.locator(".home-hero-carousel");
+        // The inherited inner width used to leave a 48px empty strip beside the photo.
+        const frameBox = (await frame.boundingBox())!;
+        const heroBox = (await hero.boundingBox())!;
+        const innerFrame = await frame.evaluate((el) => ({ left: el.clientLeft, width: el.clientWidth }));
+        expect(Math.abs(heroBox.x - frameBox.x - innerFrame.left)).toBeLessThan(1);
+        expect(Math.abs(heroBox.width - innerFrame.width)).toBeLessThan(1);
+        await expect(hero.locator(".hero-eyebrow bdi")).toHaveText("IMAD Mode");
         await expect(hero.getByRole("link")).toHaveCount(1);
         await expect(cta).toHaveAccessibleName("تصفحوا المجموعة");
         await expect(cta).toBeInViewport({ ratio: 1 });

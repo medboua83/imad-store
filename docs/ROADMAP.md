@@ -1,10 +1,17 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Bandeau éditorial — 12 novembre 2026
+
+- [x] Corriger le retrait hérité de la photo et mettre en valeur les originaux sans recadrage destructif.
+- [x] Ajouter une hiérarchie brun profond/ivoire/doré, avec marque configurable et CTA lisible.
+- [ ] Vérifier les petits écrans, l’aperçu du dashboard et le carrousel, puis publier le candidat exact.
+
+
 ## Zoom des photos produit — 11 novembre 2026
 
 - [x] Agrandir au survol de souris et suivre les détails dans le cadre existant, sans changer les originaux.
 - [x] Préserver toucher, navigation clavier, photos par couleur et réduction des animations.
-- [ ] Vérifier sur ordinateur et téléphone, puis publier la source testée.
+- [x] PR133 publiée : 299 UI/129 serveur, quatre empreintes HTTPS et recette réelle mobile/ordinateur vérifiées.
 
 
 ## Démarrage et commandes masquées — 11 novembre 2026

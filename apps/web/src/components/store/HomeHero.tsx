@@ -156,7 +156,7 @@ export function HomeHero({
             name={active.name}
             preload={activeIndex === 0}
             eager={activeIndex !== 0}
-            sizes="(max-width: 767px) calc(45vw - 12px), 336px"
+            sizes="(max-width: 767px) 48vw, 352px"
             className={`hero-photo${hasAdvanced ? " hero-photo-arrival" : ""}`}
           />
           {multiple && minimalControls && (
