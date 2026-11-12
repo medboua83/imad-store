@@ -87,7 +87,7 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "Aperçu du brouillon", exact: true }).click();
         const preview = page.locator(".admin-content-panel section:has(.storefront-home)");
         await expect(
-            preview.getByRole("heading", { name: "معاينة غير منشورة", exact: true }),
+            preview.getByRole("heading", { name: "منتج المعاينة", level: 1, exact: true }),
         ).toBeVisible();
         await expect(preview.locator(".catalog-card")).toContainText("منتج المعاينة");
         await expect(preview.locator(".hero-carousel-controls")).toHaveCount(0);
@@ -237,9 +237,12 @@ test("Home section order and visibility persist in the private draft", async ({ 
     await expect(preview.locator(".featured-section + #collections")).toHaveCount(1);
     await expect(preview.locator(".home-shopping-guide")).toHaveCount(0);
     await page.getByRole("checkbox", { name: "Catégories de l’accueil", exact: true }).uncheck();
-    await expect(preview.locator(".hero-actions a")).toHaveAttribute("href", "/shop");
+    await expect(preview.locator(".hero-collection-link")).toHaveAttribute("href", "/shop");
+    await expect(preview.locator(".hero-product-link")).toHaveAttribute("href", "/products/preview-only");
     await page.getByRole("button", { name: "Enregistrer le brouillon", exact: true }).click();
     await expect(page.getByRole("button", { name: "Publier", exact: true })).toBeEnabled();
-    await expect(page.getByRole("checkbox", { name: "Catégories de l’accueil", exact: true })).not.toBeChecked();
+    await expect(
+        page.getByRole("checkbox", { name: "Catégories de l’accueil", exact: true }),
+    ).not.toBeChecked();
     expect(writes).toEqual(["/api/content/draft"]);
 });

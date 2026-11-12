@@ -13,6 +13,10 @@ for (const width of [320, 390, 1440]) {
     const link = hero.locator(".hero-product-link");
     await expect(photo).toHaveAttribute("src", /sac.webp/);
     await expect(link).toHaveAttribute("href", "/products/fixture-sabot");
+    await expect(hero.locator("h1")).toHaveText("صابو تجريبي");
+    await expect(link).toHaveAccessibleName("اكتشفوا هذا المنتج");
+    await expect(hero.locator(".hero-color-swatch")).toHaveCount(2);
+    await expect(hero.getByRole("img", { name: "بني", exact: true })).toBeVisible();
     await expect(hero.locator(".hero-slide-count")).toHaveText("1 / 3");
     const height = (await hero.boundingBox())!.height;
     // Controls are revealed by keyboard focus, never by pointer hover.
@@ -30,6 +34,11 @@ for (const width of [320, 390, 1440]) {
     };
     await choose(2);
     await expect(photo).toHaveAttribute("src", /abaya.webp/);
+    await expect(hero.locator("h1")).toHaveText("موديل للمقارنة");
+    await expect(hero.locator(".hero-color-swatch")).toHaveCount(1);
+    await expect(hero.getByRole("img", { name: "بني", exact: true })).toHaveCount(0);
+    await expect(hero.locator(".hero-copy-arrival")).toHaveCSS("animation-name", "none");
+    await expect(photo).toHaveCSS("animation-name", "none");
     await expect(link).toHaveAttribute("href", "/products/fixture-premium");
     await expect(hero.locator(".hero-product-price")).toContainText("300");
     await expect(hero.locator(".hero-slide-count")).toHaveText("2 / 3");
@@ -69,6 +78,10 @@ test("Automatic hero rotation pauses for hover, keyboard and explicit pause", as
   await expect(summary).toHaveAttribute("aria-live", "off");
   await page.clock.fastForward(7500);
   await expect(count).toHaveText("2 / 3");
+  await expect(hero.locator("h1")).toHaveText("موديل للمقارنة");
+  await expect(hero.locator(".hero-product-price")).toContainText("300");
+  await expect(hero.locator(".hero-photo-arrival")).toHaveCSS("animation-duration", "0.6s");
+  await expect(hero.locator(".hero-copy-arrival")).toHaveCSS("animation-duration", "0.5s");
   await hero.hover();
   await page.clock.fastForward(15000);
   await expect(count).toHaveText("2 / 3");

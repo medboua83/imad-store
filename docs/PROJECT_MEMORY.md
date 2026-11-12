@@ -1,5 +1,13 @@
 # Imad Store — Persistent Project Memory
 
+## Vitrine synchronisée — candidat du 12 novembre 2026
+
+Le propriétaire demande de remplir le panneau brun du bandeau par le produit réellement affiché : titre, prix, couleurs et découverte de la fiche, avec une transition élégante. Toutes ces données doivent rester liées à une seule diapositive, sans réenregistrer les produits ni créer de promesse commerciale. Les couleurs proviennent uniquement de variantes vendables et en stock ; aucune sélection de variante ni ajout panier dans le bandeau. Les liens d’aperçu ouvrent un nouvel onglet. Les contenus génériques servent aux campagnes/états sans produit ; l’interface administrative l’explique. La lecture automatique et les commandes masquées restent les réglages existants.
+
+## Production vérifiée — PR134, 12 novembre 2026
+
+Source 7165174dc017eaa5249202c1efa1fc17a2858eb5 publiée via InstaBox, PR134 fusionnée dans Master d65657f780b1652a19982fc3bc3a93292be4f75d. 27 UI locaux, 299 UI et 129 serveur GitHub réussis. Sauvegarde privée vérifiée, service actif, quatre fichiers conformes sur le domaine HTTPS depuis le VPS avec validation TLS normale. Catalogue/réglages/contenu/catégories inchangés ; contrôles responsive 320/390/1440 réussis. Le réseau du Mac a interrompu la seconde vérification HTTPS locale, effectuée alors depuis le VPS ; rendu réel vérifié dans le navigateur. Aucun produit ou original modifié, aucune commande créée ni nouvel accès. Rapports sur DATA dans outputs/premium-home-hero-20261112.
+
 ## Bandeau plus attirant — candidat du 12 novembre 2026
 
 Conserver les images actuelles et le comportement du carrousel. Piste implémentée : photo entière bord à bord, fond brun profond côté texte, titre ivoire et bouton champagne doré, marque configurable dans une signature discrète, résumé produit lisible. Corriger le retrait de largeur hérité qui laissait une bande vide de 48 px à gauche de la photo. Aucun remplacement d’image, changement du catalogue ou nouvelle promesse sur la livraison/retour ; le fond et les éléments décoratifs sont en CSS. Tester les petits écrans et l’aperçu du dashboard avant publication.

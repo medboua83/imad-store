@@ -935,6 +935,8 @@ export const adminArabic: Record<string, string> = {
     Terminé: "مكتمل",
     "Texte d’introduction": "النص التعريفي",
     "Titre de la sélection": "عنوان المجموعة المختارة",
+    "Dans le bandeau produit, le nom, le prix et les couleurs viennent de la fiche affichée. Le titre d’accueil et l’introduction servent à la photo de campagne ou au catalogue vide.":
+        "في عرض المنتجات، يأتي الاسم والسعر والألوان من بطاقة المنتج المعروض. يُستخدم عنوان الصفحة الرئيسية والنص التعريفي لصورة الحملة أو عند عدم توفر منتجات.",
     "Titre d’accueil": "عنوان الصفحة الرئيسية",
     Toutes: "الكل",
     "Transmis au webhook": "أُرسل إلى Webhook",

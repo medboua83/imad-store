@@ -1,5 +1,13 @@
 # Current Status — 2026-11-08
 
+## Vitrine du produit dans le bandeau — candidat du 12 novembre 2026
+
+Le nom, le prix en MAD, le prix barré seulement lorsqu’il dépasse le prix courant, la description existante sur ordinateur, les couleurs disponibles dédoublonnées et le bouton vers la fiche proviennent de la même diapositive active. Le résumé clair séparé est retiré ; un lien discret mène à la collection. Les variantes sans stock ou aux tailles ambiguës ne sont pas présentées comme disponibles. Les campagnes personnalisées et catalogues vides conservent le titre/introduction du dashboard et un lien boutique, sans prix ni couleurs attribués à tort. Le dashboard explique ce comportement en français/arabe. Fondu doux sans zoom/translation, sans animation avec réduction des mouvements ; rotation, pause, clavier, toucher, sélection et ordre existants conservés. Photos originales, données commerciales, dépendances et schéma inchangés. Validation et publication de la source exacte à consigner.
+
+## Production vérifiée — PR134, 12 novembre 2026
+
+Source 7165174dc017eaa5249202c1efa1fc17a2858eb5 publiée via InstaBox, PR134 fusionnée dans Master d65657f780b1652a19982fc3bc3a93292be4f75d. 27 UI locaux, 299 UI et 129 serveur GitHub réussis. Sauvegarde privée vérifiée, service actif, quatre fichiers conformes sur le domaine HTTPS depuis le VPS avec validation TLS normale. Catalogue/réglages/contenu/catégories inchangés ; contrôles responsive 320/390/1440 réussis. Le réseau du Mac a interrompu la seconde vérification HTTPS locale, effectuée alors depuis le VPS ; rendu réel vérifié dans le navigateur. Aucun produit ou original modifié, aucune commande créée ni nouvel accès. Rapports sur DATA dans outputs/premium-home-hero-20261112.
+
 ## Bandeau éditorial doré — candidat du 12 novembre 2026
 
 Le propriétaire demande une présentation d’accueil plus attirante avec les photos actuelles. Le candidat conserve les contenus et réglages du dashboard, les photos originales, les liens, les prix et le défilement automatique masqué. Panneau brun profond, titre ivoire, signature de marque issue du contenu, bouton champagne/doré, cadre et résumé du produit plus soignés. La largeur héritée `calc(100% - 48px)` du bloc intérieur est corrigée pour aligner la photo avec les bords du bandeau ; le format conserve deux colonnes, le produit entier et une hauteur mobile compacte. Aucun nouveau fichier image, police, dépendance, promesse commerciale ou champ de configuration. Validation et publication du candidat exact à consigner.
