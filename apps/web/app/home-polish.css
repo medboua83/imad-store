@@ -1,5 +1,6 @@
 /* Catalogue-aware layouts and original photo frames. No image or commerce changes. */
 .home-hero-carousel {
+  container-type: inline-size;
   position: relative;
   max-width: 1000px;
   margin-inline: auto;
@@ -431,6 +432,31 @@
   }
   .hero-product-content {
     gap: 10px;
+  }
+  /* The admin preview can be narrow even on a wide screen. Size its copy
+     from the actual banner, rather than from the browser viewport. */
+  @container (max-width: 767px) {
+    .store-shell .storefront-home .hero-showcase-copy {
+      padding: 20px;
+    }
+    .store-shell .storefront-home .hero-showcase-copy h1 {
+      font-size: 24px;
+    }
+    .hero-product-description {
+      display: none;
+    }
+    .hero-product-content {
+      gap: 8px;
+    }
+    .hero-copy .hero-product-price {
+      font-size: 28px;
+    }
+    .hero-price-row {
+      gap: 4px 8px;
+    }
+    .hero-price-row del {
+      font-size: 12px;
+    }
   }
 }
 .store-shell .storefront-home .collection-section > .catalog-sections {
