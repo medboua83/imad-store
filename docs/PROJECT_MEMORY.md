@@ -1,3 +1,15 @@
+## Validation locale des cartes d’accueil — 12 novembre 2026
+
+Compilation et lint réussis (un avertissement préexistant dans commerce-tab), 26 tests navigateur ciblés réussis à 320/390/1440 px. Les trois nouveaux tests vérifient les photos originales chargées, les montants/offres/livraison, les options visibles, les actions alignées et la navigation vers la bonne fiche. Les 23 régressions couvrent catégories, sections, bandeau et aperçu privé. Vérifications GitHub et publication encore en attente lors de cette révision.
+
+## Produits de l’accueil — candidat du 12 novembre 2026
+
+Présentation limitée à l’accueil et son aperçu : cartes sans contour extérieur, cadre photo doré discret, originaux entiers sans recadrage, titres et prix hiérarchisés, couleurs/tailles/offres conservées, bouton brun/ivoire lisible et aligné. Le compteur de variantes redondant est masqué dans ces cartes seulement. Grille centrée jusqu’à quatre produits par rangée sur ordinateur, deux sur mobile. Aucun produit, photo, tarif, stock, réglage, dépendance ou schéma modifié. Tests et publication de la source exacte à consigner.
+
+## Production vérifiée — PR136, 12 novembre 2026
+
+Source 8bd482bf33d039a316d194083cec5519af632549 publiée via la session root InstaBox préexistante ; arbre identique à Master 206c0dda4b8860928a92710ff6738681c4f4b599. 32 UI locaux, 307 UI GitHub et 129 serveur réussis ; runtime et audit réussis. Sauvegarde privée et cinq empreintes HTTPS vérifiées, quatre ensembles publics inchangés. Cinq photos chargées et alignées à 1440 px ; lecture automatique mobile à 390 px, pause/reprise, liens et sélection dorée Femme/Homme vérifiés. Photos originales conservées. Rapports sur DATA : outputs/home-category-carousel-20261112. Aucun nouvel accès ni commande.
+
 ## Validation locale des catégories — 12 novembre 2026
 
 - Compilation Next et lint réussis (un avertissement préexistant dans commerce-tab).

@@ -1,3 +1,9 @@
+## Produits de l’accueil — 12 novembre 2026
+
+- [x] Alléger les cadres, préserver les originaux et hiérarchiser titres, prix et options.
+- [x] Garder deux colonnes mobiles et des actions alignées, avec offres/livraison visibles.
+- [ ] Tester mobile/ordinateur et publier le candidat exact après vérifications.
+
 # Roadmap — stabilité, performance et facilité d’utilisation
 
 ## Catégories et boutons de section — 12 novembre 2026
@@ -5,7 +11,7 @@
 - [x] Conserver les photos, placer les noms dessous et aligner cinq catégories sur ordinateur.
 - [x] Ajouter glissement natif mobile, lecture conditionnelle et commandes accessibles sans clones.
 - [x] Contraster Femme/Homme et conserver l’état doré seulement dans la section ouverte.
-- [ ] Tester mobile/ordinateur, pause/reprise, toucher et liens, puis publier le candidat exact.
+- [x] PR136 publiée : 307 UI/129 serveur, sauvegarde, HTTPS, données et recette réelle vérifiés.
 
 ## Vitrine du bandeau — 12 novembre 2026
 
