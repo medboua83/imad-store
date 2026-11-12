@@ -1,4 +1,18 @@
+## Validation locale des catégories — 12 novembre 2026
+
+- Compilation Next et lint réussis (un avertissement préexistant dans commerce-tab).
+- 32 tests navigateur réussis : 320/390/1440 px, défilement RTL/LTR, toucher natif, pause/reprise, onglet masqué, hors écran, animations réduites, liens et filtres Femme/Homme, aperçu du dashboard et bandeau existant.
+- Vérifications GitHub et publication de ce lot encore en attente au moment de cette révision. Photos et données marchandes inchangées.
+
 # Imad Store — Persistent Project Memory
+
+## Catégories de l’accueil — candidat du 12 novembre 2026
+
+Demande validée : noms sous les photos originales, bordure dorée fine, cinq cartes sur ordinateur, trois cartes et une partie de la suivante sur mobile. Lecture automatique mobile seulement quand il y a débordement, navigation native en arabe et pause à l’interaction. Préférer un aller-retour aux limites sans clones de liens plutôt qu’un saut ou des duplications pour une fausse boucle infinie. Les boutons Femme/Homme doivent être très visibles sur fond brun, sans présélection à l’accueil ; l’état sélectionné doré est porté par aria-current dans la boutique. Conserver les sources categoryVisual existantes, les sections publiées et les liens de l’aperçu privé en nouvel onglet. Tester pause/reprise, RTL/LTR, toucher natif, non-débordement et navigation de section avant publication.
+
+## Production vérifiée — PR135, 12 novembre 2026
+
+Source 7cc8fa548de14faaf91c7892509ba67f5e641cda publiée via InstaBox, arbre identique à Master a935abe2537c35431107c3591b452baa033db8bc. 29 UI ciblés, 301 UI GitHub et 129 tests serveur réussis ; runtime et audit des dépendances réussis. Sauvegarde privée vérifiée, service actif, quatre fichiers conformes sur le domaine HTTPS avec validation TLS normale, quatre comparaisons publiques inchangées. Rendu réel à 320/390/1440 : titre/prix/couleurs/photo synchronisés, lecture automatique et commandes masquées, CTA vers la bonne fiche. Photos conservées, aucune commande créée ni donnée commerciale réenregistrée. Rapports sur DATA dans outputs/hero-product-showcase-20261112.
 
 ## Vitrine synchronisée — candidat du 12 novembre 2026
 

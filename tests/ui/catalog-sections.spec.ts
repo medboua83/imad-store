@@ -9,6 +9,8 @@ for (const width of [390, 1440]) {
         await sections.getByRole("link", { name: /Femme/ }).click();
         await expect(page).toHaveURL(/\/shop\?section=women$/);
         await expect(sections.getByRole("link", { name: /Femme/ })).toHaveAttribute("aria-current", "page");
+        await expect(sections.getByRole("link", { name: /Femme/ })).toHaveCSS("background-color", "rgb(220, 193, 138)");
+        await expect(sections.getByRole("link", { name: /Femme/ })).toHaveCSS("color", "rgb(46, 36, 25)");
         await expect(categoryRail.getByRole("link", { name: /معاطف نسائية/ })).toBeVisible();
         await expect(categoryRail.getByRole("link", { name: /صابو رجالي/ })).toHaveCount(0);
         await expect(page.locator(".catalog-card")).toHaveCount(1);

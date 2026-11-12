@@ -13,6 +13,7 @@ import type { Product, Category } from "@/lib/api";
 import { categoryVisual } from "./category-visuals";
 import { ProductCard } from "./ProductCard";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
+import { HomeCategoryRail } from "./HomeCategoryRail";
 import { CatalogSectionLinks } from "./CatalogSectionLinks";
 import { HomeHero, type HeroSlide } from "./HomeHero";
 import { sellableVariants } from "@/lib/product-presentation";
@@ -108,42 +109,23 @@ export function HomeView({
             >
                 <div className="section-heading">
                     <h2 id="home-collections-title">تسوقوا حسب الفئة</h2>
+                    <ViewLink prefetch={false} href="/shop" className="text-link">
+                        شاهدوا الكل <ArrowUpLeft size={16} aria-hidden="true" />
+                    </ViewLink>
                 </div>
                 <CatalogSectionLinks
                     sections={availableCatalogSections(categories)}
                     newTab={preview}
                 />
-                <nav aria-label="فئات المتجر" className="collection-grid">
-                    {publishedCategories(categories).map((c) => {
-                        const visual = categoryVisual(c, products);
-                        return (
-                            <ViewLink
-                                prefetch={false}
-                                className="collection-tile"
-                                key={c.id}
-                                href={`/shop?category=${c.slug}`}
-                            >
-                                <span className="collection-photo">
-                                    {visual.src ? (
-                                        <ProductPhoto
-                                            images={visual.sources}
-                                            name=""
-                                            sizes="(max-width: 359px) 48px, 56px"
-                                        />
-                                    ) : (
-                                        <span className="category-photo-empty" aria-hidden="true">
-                                            IMAD
-                                        </span>
-                                    )}
-                                </span>
-                                <span className="collection-name">
-                                    <span>{c.nameAr || c.nameFr}</span>
-                                    <ArrowUpLeft size={16} aria-hidden="true" />
-                                </span>
-                            </ViewLink>
-                        );
-                    })}
-                </nav>
+                <HomeCategoryRail
+                    preview={preview}
+                    items={publishedCategories(categories).map((c) => ({
+                        id: c.id,
+                        name: c.nameAr || c.nameFr,
+                        href: `/shop?category=${c.slug}`,
+                        images: categoryVisual(c, products).sources,
+                    }))}
+                />
             </section>
         ),
         featured: (

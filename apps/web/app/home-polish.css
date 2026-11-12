@@ -415,19 +415,17 @@
   object-position: center;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections {
-  justify-content: flex-start;
-  margin-block: 0 10px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  width: min(100%, 400px);
+  gap: 12px;
+  margin: 0 auto 20px;
 }
 .store-shell .storefront-home .collection-section > .catalog-sections > a {
-  padding-inline: 12px;
-  border-color: #e3d9c6;
-  border-radius: 999px;
-  background: transparent;
-  font-size: 14px;
-}
-.store-shell .storefront-home .collection-section > .catalog-sections > a:hover {
-  border-color: #ac8540;
-  background: #f2e7d2;
+  min-height: 48px;
+  padding-inline: 14px;
+  font-size: 16px;
 }
 .store-shell .storefront-home #collections {
   scroll-margin-block-start: var(--store-header-offset, 140px);
@@ -658,4 +656,135 @@
   padding: 3px 8px;
   font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+/* Native horizontal rail on small screens; the original category files are untouched. */
+.store-shell .storefront-home .home-category-rail .collection-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--category-desktop-columns), minmax(0, 170px));
+  justify-content: center;
+  gap: 24px;
+  padding-block: 4px;
+}
+.store-shell .storefront-home .home-category-rail .collection-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  min-height: 0;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  text-align: center;
+}
+.store-shell .storefront-home .home-category-rail .collection-tile:hover {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.store-shell .storefront-home .home-category-rail .collection-photo {
+  flex: none;
+  inline-size: 96px;
+  aspect-ratio: 1;
+  border: 1px solid #cdb582;
+  border-radius: 14px;
+  background: #f6efdf;
+}
+.store-shell .storefront-home .home-category-rail .collection-photo img {
+  object-fit: cover;
+  object-position: center top;
+  transform: none;
+}
+.store-shell .storefront-home .home-category-rail .collection-tile:hover .collection-photo {
+  border-color: #8e651e;
+}
+.store-shell .storefront-home .home-category-rail .collection-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.8em;
+  width: 100%;
+  flex: none;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #3b2e1c;
+}
+.home-category-rail .collection-grid:focus-visible,
+.home-category-rail .collection-tile:focus-visible {
+  outline: 2px solid #a77e2e;
+  outline-offset: -2px;
+}
+.category-rail-controls {
+  display: none;
+}
+@media (max-width: 767px) {
+  .store-shell .storefront-home .collection-section .section-heading h2 {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+  .store-shell .storefront-home .collection-section .section-heading .text-link {
+    min-height: 44px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .store-shell .storefront-home .home-category-rail .collection-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+  .store-shell .storefront-home .home-category-rail[data-many="true"] .collection-grid {
+    justify-content: flex-start;
+  }
+  .home-category-rail .collection-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .store-shell .storefront-home .home-category-rail .collection-tile {
+    flex: 0 0 calc((100% - 24px) / 3.35);
+    scroll-snap-align: start;
+    gap: 10px;
+  }
+  .store-shell .storefront-home .home-category-rail .collection-photo {
+    inline-size: clamp(64px, 21vw, 82px);
+    border-radius: 12px;
+  }
+  .store-shell .storefront-home .home-category-rail .collection-name {
+    font-size: 12px;
+  }
+  .category-rail-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 8px;
+  }
+  .category-rail-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d7c499;
+    border-radius: 50%;
+    color: #78551f;
+    background: transparent;
+  }
+  .category-rail-controls button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .category-rail-controls button:focus-visible {
+    outline: 2px solid #98722d;
+    outline-offset: 2px;
+  }
 }
