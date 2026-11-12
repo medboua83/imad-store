@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/server-api";
 import { collectionShareMetadata, storefrontShareMetadata } from "@/lib/share-metadata";
-import { ArrowUpLeft, Check, ChevronDown, LayoutGrid, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpLeft, Check, ChevronDown, LayoutGrid, Search, X } from "lucide-react";
+import { CatalogFilters } from "@/components/store/CatalogFilters";
 import { ProductCard } from "@/components/store/ProductCard";
 import { CatalogSectionLinks } from "@/components/store/CatalogSectionLinks";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
@@ -180,34 +181,20 @@ export default async function ShopPage({
                     })}
                 </nav>
             </div>
-            {invalid && (
-                <p id="catalog-filter-error" role="alert" className="shop-filter-error">
-                    تعذر تطبيق هذه الفلاتر. صححوا الفلاتر، بما فيها نطاق السعر، ثم اعرضوا النتائج
-                    مجدداً. لم يتم عرض منتجات خارج شروط البحث.
-                </p>
-            )}
-            <details
-                key={JSON.stringify(raw)}
-                id="catalog-search"
-                className="filter-panel catalog-filter-panel"
-                open={value("filters") === "open" || invalid}
-            >
-                <summary>
-                    <SlidersHorizontal size={19} aria-hidden="true" />
-                    <span>البحث والفلاتر</span>
-                    {active.length > 0 && (
-                        <span className="active-filter-count">{active.length}</span>
-                    )}
-                    <span className="filter-result-count">
-                        المقاس، اللون والسعر
-                    </span>
-                </summary>
+            <div className="catalog-tools-row">
+            <CatalogFilters key={JSON.stringify(raw)} count={active.length}
+                initialOpen={value("filters") === "open" || invalid}>
                 <form
                     action={`/shop${resultAnchor}`}
                     method="get"
                     className="shop-filters catalog-filter-form"
                     aria-describedby={invalid ? "catalog-filter-error" : undefined}
                 >
+                    {invalid && (
+                        <p id="catalog-filter-error" role="alert" className="shop-filter-error">
+                            تعذر تطبيق هذه الفلاتر. صححوا الفلاتر، بما فيها نطاق السعر، ثم اعرضوا النتائج مجدداً. لم يتم عرض منتجات خارج شروط البحث.
+                        </p>
+                    )}
                     {sectionKey && <input type="hidden" name="section" value={sectionKey} />}
                     <div className="filter-form-heading">
                         <h2>اختاروا التفاصيل المناسبة</h2>
@@ -336,29 +323,8 @@ export default async function ShopPage({
                         <Link href={clearFiltersHref}>مسح الفلاتر</Link>
                     </div>
                 </form>
-            </details>
-            {result && active.length > 0 && (
-                <nav className="active-filter-chips" aria-label="الفلاتر المطبقة">
-                    {active.map((key) => (
-                        <Link
-                            key={key}
-                            href={queryLink({ [key]: null }) + resultAnchor}
-                            aria-label={`إزالة الفلتر: ${chipLabel(key)}`}
-                        >
-                            {key === "color" && /^#[0-9a-f]{6}$/i.test(selectedColor) && (
-                                <span className="filter-color-swatch" style={{ backgroundColor: selectedColor }} aria-hidden="true" />
-                            )}
-                            <span>{chipLabel(key)}</span>
-                            <X size={14} aria-hidden="true" />
-                        </Link>
-                    ))}
-                    <Link className="clear-all-filters" href={clearFiltersHref}>
-                        مسح الكل
-                    </Link>
-                </nav>
-            )}
+            </CatalogFilters>
             {result && (
-                <>
                     <div id="catalog-results" className="catalog-results-heading">
                         <div>
                             <h2>{category ? "المنتجات" : section?.nameAr || "كل القطع"}</h2>
@@ -406,6 +372,31 @@ export default async function ShopPage({
                             </Link>
                         </div>
                     </div>
+            )}
+            </div>
+            {result && active.length > 0 && (
+                <nav className="active-filter-chips" aria-label="الفلاتر المطبقة">
+                    {active.map((key) => (
+                        <Link
+                            key={key}
+                            href={queryLink({ [key]: null }) + resultAnchor}
+                            aria-label={`إزالة الفلتر: ${chipLabel(key)}`}
+                        >
+                            {key === "color" && /^#[0-9a-f]{6}$/i.test(selectedColor) && (
+                                <span className="filter-color-swatch" style={{ backgroundColor: selectedColor }} aria-hidden="true" />
+                            )}
+                            <span>{chipLabel(key)}</span>
+                            <X size={14} aria-hidden="true" />
+                        </Link>
+                    ))}
+                    <Link className="clear-all-filters" href={clearFiltersHref}>
+                        مسح الكل
+                    </Link>
+                </nav>
+            )}
+
+            {result && (
+                <>
                     {result.data.length ? (
                         <div className="catalog-grid">
                             {result.data.map((p, index) => (

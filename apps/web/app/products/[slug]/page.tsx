@@ -6,7 +6,7 @@ import { ProductSuggestions } from "@/components/store/ProductSuggestions";
 import { ArrowRight, PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
-import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
+import { productDescription, descriptionBlocks, sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
 import { isAmbiguousSize } from "@imad-store/shared";
@@ -127,7 +127,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 {!!colors.length && <div><dt>الألوان</dt><dd>{colors.join(" · ")}</dd></div>}
                 {!!sizes.length && <div><dt>المقاسات</dt><dd><bdi>{sizes.map(sizeLabel).join(" · ")}</bdi></dd></div>}
               </dl>
-              {descriptionParagraphs(description).map((paragraph, index) => <p key={index} className="product-description" dir="auto">{paragraph}</p>)}
+              {descriptionBlocks(description).map((block, index) => block.type === "list" ? (
+                <ul key={index} className="product-description-list" dir="auto">
+                  {block.lines.map((line, item) => <li key={item}>{line}</li>)}
+                </ul>
+              ) : <p key={index} className="product-description" dir="auto">{block.lines[0]}</p>)}
             </details>
             <details>
               <summary>التوصيل والاستبدال</summary>

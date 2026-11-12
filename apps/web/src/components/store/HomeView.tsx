@@ -16,7 +16,7 @@ import { availableCatalogSections, publishedCategories } from "@/lib/catalog-nav
 import { HomeCategoryRail } from "./HomeCategoryRail";
 import { CatalogSectionLinks } from "./CatalogSectionLinks";
 import { HomeHero, type HeroSlide } from "./HomeHero";
-import { sellableVariants } from "@/lib/product-presentation";
+import { cleanProductText, sellableVariants } from "@/lib/product-presentation";
 import { isAvailableHeroProduct } from "@/lib/hero-selection";
 function DraftPreviewLink(props: ComponentProps<typeof Link>) {
     const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
@@ -68,9 +68,9 @@ export function HomeView({
         href: `/products/${product.slug}`,
         price: product.price,
         compareAtPrice: product.compareAtPrice,
-        description: (product.descriptionAr || product.descriptionFr || product.descriptionEn || "")
+        description: cleanProductText(product.descriptionAr || product.descriptionFr || product.descriptionEn || "")
             .replace(/\s+/g, " ")
-            .trim(),
+            .trim().slice(0, 180),
         colors: [
             ...new Map(
                 sellableVariants(product.variants)

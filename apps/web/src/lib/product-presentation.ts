@@ -7,8 +7,16 @@ type ProductCopy = {
   descriptionFr?: string;
   descriptionEn?: string;
 };
+/** Display-only WhatsApp/Markdown cleanup; never render merchant copy as HTML. */
+export function cleanProductText(text: string): string {
+  return text
+    .replace(/^\s{0,3}(?:>\s*)+/gm, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/(^|[\s(])(\*{1,2}|_{1,2})(\S(?:.*?\S)?)\2(?=$|[\s).,!،؛؟:])/gm, "$1$3")
+    .trim();
+}
 export function productDescription(product: ProductCopy): string {
-  return (
+  return cleanProductText(
     [product.descriptionAr, product.descriptionFr, product.descriptionEn]
       .find((text) => text?.trim())
       ?.trim() ||
@@ -17,7 +25,7 @@ export function productDescription(product: ProductCopy): string {
 }
 /** Keep the merchant's wording; only introduce readable paragraph boundaries. */
 export function descriptionParagraphs(text: string): string[] {
-  return text
+  return cleanProductText(text)
     .split(/\n+/)
     .filter((part) => part.trim())
     .flatMap((part) => {
@@ -31,6 +39,18 @@ export function descriptionParagraphs(text: string): string[] {
       }
       return paragraphs;
     });
+}
+export function descriptionBlocks(text: string): { type: "paragraph" | "list"; lines: string[] }[] {
+  const blocks: { type: "paragraph" | "list"; lines: string[] }[] = [];
+  for (const line of descriptionParagraphs(text)) {
+    const item = line.match(/^\s*[-•*]\s+(.+)$/);
+    if (item) {
+      const last = blocks.at(-1);
+      if (last?.type === "list") last.lines.push(item[1]);
+      else blocks.push({ type: "list", lines: [item[1]] });
+    } else blocks.push({ type: "paragraph", lines: [line] });
+  }
+  return blocks;
 }
 export const sellableVariants = <T extends { size?: string | null }>(variants: T[]) =>
   variants.filter((variant) => !isAmbiguousSize(variant.size));
