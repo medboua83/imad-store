@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { defaultSiteContent } from "@imad-store/shared";
 
-for (const width of [390, 768, 1024, 1440]) {
+for (const width of [320, 390, 768, 1024, 1440]) {
   test(`Hero preview keeps long merchandise copy, real promotion and available colors usable at ${width}px`, async ({
     page,
   }, info) => {

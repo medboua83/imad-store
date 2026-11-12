@@ -40,12 +40,12 @@ for (const width of [320, 390, 1440]) {
         expect(Math.abs(heroBox.x - frameBox.x - innerFrame.left)).toBeLessThan(1);
         expect(Math.abs(heroBox.width - innerFrame.width)).toBeLessThan(1);
         await expect(hero.locator(".hero-eyebrow bdi")).toHaveText("IMAD Mode");
-        await expect(hero.getByRole("link")).toHaveCount(2);
+        await expect(hero.getByRole("link")).toHaveCount(width < 768 ? 1 : 2);
         await expect(hero.locator("h1")).toHaveText("صابو تجريبي");
         await expect(hero.locator(".hero-product-link")).toHaveAccessibleName("اكتشفوا هذا المنتج");
         await expect(hero.locator(".hero-product-link")).toBeInViewport({ ratio: 1 });
-        await expect(cta).toHaveAccessibleName("شاهدوا المجموعة كاملة");
         if (width >= 768) {
+            await expect(cta).toHaveAccessibleName("شاهدوا المجموعة كاملة");
             await expect(cta).toBeInViewport({ ratio: 1 });
             expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
         } else await expect(cta).toBeHidden();
