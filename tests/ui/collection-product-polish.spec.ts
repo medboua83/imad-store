@@ -17,9 +17,9 @@ for (const width of [320, 390, 1440]) {
         await expect(dialog.getByRole("button", { name: "إغلاق الفلاتر" })).toBeFocused();
         await expect(page.locator('form.catalog-filter-form')).toHaveCount(1);
         expect(await page.evaluate(() => document.body.style.overflow)).toBe("hidden");
-        await dialog.press("Shift+Tab");
+        await page.keyboard.press("Shift+Tab");
         await expect(dialog.getByRole("link", { name: "مسح الفلاتر" })).toBeFocused();
-        await dialog.press("Tab");
+        await page.keyboard.press("Tab");
         await expect(dialog.getByRole("button", { name: "إغلاق الفلاتر" })).toBeFocused();
         await dialog.locator('[name="maxPrice"]').fill("300");
         await page.screenshot({ path: info.outputPath(`filters-${width}.png`) });
