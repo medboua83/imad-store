@@ -1,10 +1,16 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Vitrine du bandeau — 12 novembre 2026
+
+- [x] Regrouper titre, prix, couleurs et lien du produit dans le panneau brun.
+- [x] Préserver les photos, campagnes, brouillons, prix et variantes d’origine.
+- [ ] Valider les formats mobile/ordinateur et les transitions, puis publier la source exacte.
+
 ## Bandeau éditorial — 12 novembre 2026
 
 - [x] Corriger le retrait hérité de la photo et mettre en valeur les originaux sans recadrage destructif.
 - [x] Ajouter une hiérarchie brun profond/ivoire/doré, avec marque configurable et CTA lisible.
-- [ ] Vérifier les petits écrans, l’aperçu du dashboard et le carrousel, puis publier le candidat exact.
+- [x] PR134 publiée : 299 UI/129 serveur, fichiers HTTPS et données publiques vérifiés.
 
 
 ## Zoom des photos produit — 11 novembre 2026

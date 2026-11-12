@@ -11,18 +11,25 @@ export type HeroSlide = {
   name: string;
   href: string;
   price?: number;
+  compareAtPrice?: number;
+  description?: string;
+  colors?: { value: string; label: string }[];
 };
 
-/** Only the current original photo is mounted; the copy and layout stay stable. */
+/** Photo and merchandise copy always resolve from the same active slide. */
 export function HomeHero({
   slides,
   children,
+  brand,
+  collectionHref,
   preview = false,
   autoplay = true,
   minimalControls = true,
 }: {
   slides: HeroSlide[];
   children: ReactNode;
+  brand: string;
+  collectionHref: string;
   preview?: boolean;
   autoplay?: boolean;
   minimalControls?: boolean;
@@ -73,6 +80,17 @@ export function HomeHero({
     }, 7000);
     return () => window.clearInterval(timer);
   }, [playing, slides.length]);
+
+  // Warm only the next original while rotating; do not fetch every slide at startup.
+  useEffect(() => {
+    if (!playing || preview) return;
+    const source = slides[(activeIndex + 1) % slides.length]?.images[0];
+    if (!source) return;
+    const nextPhoto = new window.Image();
+    nextPhoto.decoding = "async";
+    nextPhoto.fetchPriority = "low";
+    nextPhoto.src = source;
+  }, [activeIndex, playing, preview, slides]);
 
   // Replacing the play/pause SVG under the pointer can detach the mouseout target.
   // Check the actual pointer target as well, so hover never remains latched outside.
@@ -148,7 +166,102 @@ export function HomeHero({
         التنقل والإيقاف عند استخدامها بلوحة المفاتيح.
       </p>
       <div className="editorial-hero">
-        {children}
+        {active.price !== undefined ? (
+          <div className="hero-copy hero-showcase-copy">
+            <p className="hero-eyebrow">
+              <span aria-hidden="true" />
+              <bdi>{brand}</bdi>
+            </p>
+            <div
+              className="hero-product-summary"
+              aria-live={playing ? "off" : "polite"}
+              aria-atomic="true"
+            >
+              <div
+                key={active.id}
+                className={`hero-product-content${hasAdvanced ? " hero-copy-arrival" : ""}`}
+              >
+                <h1 dir="auto">{active.name}</h1>
+                {active.description && (
+                  <p className="hero-product-description" dir="auto">
+                    {active.description}
+                  </p>
+                )}
+                <div className="hero-price-row">
+                  <span className="hero-product-price" dir="ltr">
+                    {new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" }).format(
+                      active.price,
+                    )}
+                  </span>
+                  {active.compareAtPrice !== undefined && active.compareAtPrice > active.price && (
+                    <del dir="ltr">
+                      {new Intl.NumberFormat("fr-MA", {
+                        style: "currency",
+                        currency: "MAD",
+                      }).format(active.compareAtPrice)}
+                    </del>
+                  )}
+                </div>
+                {!!active.colors?.length && (
+                  <div className="hero-product-colors" role="group" aria-label="الألوان المتوفرة">
+                    <span className="hero-colors-label">الألوان</span>
+                    {active.colors.slice(0, 4).map((color) => (
+                      <span
+                        key={color.value}
+                        className="hero-color-swatch"
+                        role="img"
+                        aria-label={color.label}
+                        title={color.label}
+                      >
+                        {/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color.value) ? (
+                          <i style={{ backgroundColor: color.value }} aria-hidden="true" />
+                        ) : (
+                          <span>{color.label}</span>
+                        )}
+                      </span>
+                    ))}
+                    {active.colors.length > 4 && (
+                      <span
+                        className="hero-colors-more"
+                        aria-label={`${active.colors.length - 4} ألوان إضافية`}
+                      >
+                        <bdi>+{active.colors.length - 4}</bdi>
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="hero-actions">
+                  <Link
+                    prefetch={false}
+                    href={active.href}
+                    className="btn-primary hero-product-link"
+                    target={preview ? "_blank" : undefined}
+                    rel={preview ? "noopener noreferrer" : undefined}
+                  >
+                    اكتشفوا هذا المنتج <ArrowUpLeft size={18} aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+            {collectionHref.startsWith("#") ? (
+              <a className="hero-collection-link" href={collectionHref}>
+                شاهدوا المجموعة كاملة
+              </a>
+            ) : (
+              <Link
+                prefetch={false}
+                className="hero-collection-link"
+                href={collectionHref}
+                target={preview ? "_blank" : undefined}
+                rel={preview ? "noopener noreferrer" : undefined}
+              >
+                شاهدوا المجموعة كاملة
+              </Link>
+            )}
+          </div>
+        ) : (
+          children
+        )}
         <div className="hero-visual">
           <ProductPhoto
             key={active.id}
@@ -171,32 +284,8 @@ export function HomeHero({
           )}
         </div>
       </div>
-      <div className="hero-carousel-bar">
-        <div
-          className="hero-product-summary"
-          aria-live={playing ? "off" : "polite"}
-          aria-atomic="true"
-        >
-          <Link
-            prefetch={false}
-            href={active.href}
-            className="hero-product-link"
-            target={preview ? "_blank" : undefined}
-            rel={preview ? "noopener noreferrer" : undefined}
-          >
-            <span>{active.name}</span>
-            <ArrowUpLeft size={16} aria-hidden="true" />
-          </Link>
-          {active.price !== undefined && (
-            <span className="hero-product-price" dir="ltr">
-              {new Intl.NumberFormat("fr-MA", {
-                style: "currency",
-                currency: "MAD",
-              }).format(active.price)}
-            </span>
-          )}
-        </div>
-        {multiple && (
+      {multiple && (
+        <div className="hero-carousel-bar">
           <div
             className="hero-carousel-controls"
             role="group"
@@ -253,8 +342,8 @@ export function HomeHero({
               </button>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

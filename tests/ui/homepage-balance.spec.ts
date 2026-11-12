@@ -26,19 +26,25 @@ for (const width of [320, 390, 1440]) {
             "object-fit",
             "contain",
         );
-        const cta = page.locator('.hero-actions a[href="#collections"]');
+        const cta = page.locator('.hero-collection-link[href="#collections"]');
         const collections = page.locator("#collections");
         const hero = page.locator(".editorial-hero");
         const frame = page.locator(".home-hero-carousel");
         // The inherited inner width used to leave a 48px empty strip beside the photo.
         const frameBox = (await frame.boundingBox())!;
         const heroBox = (await hero.boundingBox())!;
-        const innerFrame = await frame.evaluate((el) => ({ left: el.clientLeft, width: el.clientWidth }));
+        const innerFrame = await frame.evaluate((el) => ({
+            left: el.clientLeft,
+            width: el.clientWidth,
+        }));
         expect(Math.abs(heroBox.x - frameBox.x - innerFrame.left)).toBeLessThan(1);
         expect(Math.abs(heroBox.width - innerFrame.width)).toBeLessThan(1);
         await expect(hero.locator(".hero-eyebrow bdi")).toHaveText("IMAD Mode");
-        await expect(hero.getByRole("link")).toHaveCount(1);
-        await expect(cta).toHaveAccessibleName("تصفحوا المجموعة");
+        await expect(hero.getByRole("link")).toHaveCount(2);
+        await expect(hero.locator("h1")).toHaveText("صابو تجريبي");
+        await expect(hero.locator(".hero-product-link")).toHaveAccessibleName("اكتشفوا هذا المنتج");
+        await expect(hero.locator(".hero-product-link")).toBeInViewport({ ratio: 1 });
+        await expect(cta).toHaveAccessibleName("شاهدوا المجموعة كاملة");
         await expect(cta).toBeInViewport({ ratio: 1 });
         expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
         await expect(hero.locator("img")).toHaveCount(1);
@@ -49,11 +55,11 @@ for (const width of [320, 390, 1440]) {
         const visual = (await hero.locator(".hero-visual").boundingBox())!;
         expect(Math.abs(copy.y - visual.y)).toBeLessThan(1);
         expect(Math.abs(visual.x + visual.width - copy.x)).toBeLessThan(1);
-        expect((await hero.boundingBox())!.height).toBeLessThan(width < 768 ? 250 : 475);
+        expect((await hero.boundingBox())!.height).toBeLessThan(width < 768 ? 390 : 500);
         const featuredY = await page
             .locator(".featured-section")
             .evaluate((el) => el.getBoundingClientRect().top + scrollY);
-        if (width < 768) expect(featuredY).toBeLessThan(850);
+        if (width < 768) expect(featuredY).toBeLessThan(900);
         await page.screenshot({ path: info.outputPath(`home-top-${width}.png`) });
         // Revisit an already active hash after scrolling away: this was broken with router links.
         for (let repeat = 0; repeat < 2; repeat++) {

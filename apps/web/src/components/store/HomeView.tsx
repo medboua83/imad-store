@@ -1,7 +1,7 @@
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Fragment, type ComponentProps, type ReactNode } from "react";
-import { ArrowDown, ArrowUpLeft } from "lucide-react";
+import { ArrowUpLeft } from "lucide-react";
 import {
     homeSectionKeys,
     MAX_HERO_PRODUCTS,
@@ -15,6 +15,7 @@ import { ProductCard } from "./ProductCard";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
 import { CatalogSectionLinks } from "./CatalogSectionLinks";
 import { HomeHero, type HeroSlide } from "./HomeHero";
+import { sellableVariants } from "@/lib/product-presentation";
 import { isAvailableHeroProduct } from "@/lib/hero-selection";
 function DraftPreviewLink(props: ComponentProps<typeof Link>) {
     const localAnchor = typeof props.href === "string" && props.href.startsWith("#");
@@ -65,6 +66,23 @@ export function HomeView({
         name: product.nameAr || product.nameFr,
         href: `/products/${product.slug}`,
         price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        description: (product.descriptionAr || product.descriptionFr || product.descriptionEn || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        colors: [
+            ...new Map(
+                sellableVariants(product.variants)
+                    .filter((v) => v.stock > 0)
+                    .map((v) => [
+                        v.color.trim().toLowerCase(),
+                        {
+                            value: v.color.trim(),
+                            label: v.colorNameAr || v.colorNameFr || v.colorNameEn || v.color,
+                        },
+                    ]),
+            ).values(),
+        ],
     }));
     const slides: HeroSlide[] = (
         (manual || useCatalogue) && productSlides.length
@@ -210,6 +228,8 @@ export function HomeView({
             <HomeHero
                 key={slides.map((slide) => slide.id).join("|")}
                 slides={slides}
+                brand={content.businessName || "IMAD Mode"}
+                collectionHref={homeSections.includes("collections") ? "#collections" : "/shop"}
                 preview={preview}
                 autoplay={content.heroAutoplay ?? true}
                 minimalControls={content.heroMinimalControls ?? true}
@@ -222,15 +242,9 @@ export function HomeView({
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>
                     <div className="hero-actions">
-                        {homeSections.includes("collections") ? (
-                            <a href="#collections" className="btn-primary">
-                                تصفحوا المجموعة <ArrowDown size={16} aria-hidden="true" />
-                            </a>
-                        ) : (
-                            <ViewLink href="/shop" className="btn-primary">
-                                تصفحوا المجموعة <ArrowUpLeft size={16} aria-hidden="true" />
-                            </ViewLink>
-                        )}
+                        <ViewLink href="/shop" className="btn-primary hero-product-link">
+                            تصفحوا المجموعة <ArrowUpLeft size={16} aria-hidden="true" />
+                        </ViewLink>
                     </div>
                 </div>
             </HomeHero>

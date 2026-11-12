@@ -172,6 +172,9 @@ export default function ContentTab() {
                 <>
                     <fieldset className="content-edit-fields" disabled={busy}>
                         <legend className="sr-only">{t("Contenu du site")}</legend>
+                        <p className="text-sm opacity-80 mb-4">
+                            {t("Dans le bandeau produit, le nom, le prix et les couleurs viennent de la fiche affichée. Le titre d’accueil et l’introduction servent à la photo de campagne ou au catalogue vide.")}
+                        </p>
                         <div className="grid md:grid-cols-2 gap-4">
                             {(
                                 [
