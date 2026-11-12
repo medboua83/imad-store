@@ -29,7 +29,7 @@ export function productVariantImages(
     product: { images: string[]; colorPhotos?: ProductColorPhoto[] | null },
     variant?: ProductColor,
 ): string[] {
-    const key = variant && productColorKey(variant);
+    const key = variant && product.colorPhotos?.length ? productColorKey(variant) : undefined;
     const mapped = product.colorPhotos?.find(
         (link) => link.colorKey === key && product.images.includes(link.image),
     )?.image;

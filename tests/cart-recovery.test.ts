@@ -114,3 +114,11 @@ test("Selected colour photos survive recovery and never substitute another colou
   assert.equal(restored.items[0].quantity,item.quantity);
   assert.deepEqual(productVariantImages({...product,colorPhotos:[{colorKey:"#804000|marron",image:"/uploads/missing.webp"}]},variant),product.images);
 });
+
+test("Unmapped legacy products do not require unused colour metadata during cart refresh", async () => {
+  const { productVariantImages } = await import("../packages/shared/src/product-color-photos");
+  const legacyVariant = { colorNameFr: "Noir" } as Parameters<typeof productVariantImages>[1];
+  const images = [item.image];
+  for (const colorPhotos of [undefined, null, []])
+    assert.deepEqual(productVariantImages({images,colorPhotos},legacyVariant),images);
+});
