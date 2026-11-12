@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useCartStore } from "@/store/cart.store";
 import { createOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
-import { ProductPhoto } from "@/components/store/ProductPhoto";
 import {
     ArrowLeft,
     ArrowRight,
@@ -569,37 +568,11 @@ export default function CheckoutPage() {
                                 <ChevronDown size={18} aria-hidden="true" />
                             </summary>
                             <div className="checkout-summary-content">
-                                <details className="checkout-item-disclosure">
-                                    <summary>
-                                        <span className="checkout-mini-photo">
-                                            {items[0] && (
-                                                <ProductPhoto
-                                                    images={items[0].images ?? [items[0].image]}
-                                                    name=""
-                                                    sizes="52px"
-                                                    className="object-contain"
-                                                />
-                                            )}
-                                        </span>
-                                        <span>
-                                            <strong>
-                                                {items[0]?.nameAr || items[0]?.nameFr}
-                                                {items.length > 1 ? ` + ${items.length - 1}` : ""}
-                                            </strong>
-                                            <small>عرض وتعديل المنتجات</small>
-                                        </span>
-                                        <ChevronDown size={18} aria-hidden="true" />
-                                    </summary>
-                                    <div>
-                                        {items.map((item) => (
-                                            <CartLine
-                                                key={item.variantId}
-                                                item={item}
-                                                disabled={busy}
-                                            />
-                                        ))}
-                                    </div>
-                                </details>
+                                <div className="checkout-summary-items" aria-label="منتجات الطلب وتعديل الكمية">
+                                    {items.map((item) => (
+                                        <CartLine key={item.variantId} item={item} disabled={busy} />
+                                    ))}
+                                </div>
                                 <CartDeliveryBenefit
                                     subtotal={total()}
                                     shipping={shipping}

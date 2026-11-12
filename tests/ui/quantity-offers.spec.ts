@@ -87,8 +87,8 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
         await expect(
-            page.getByRole("button", { name: "الكمية في السلة", exact: true }),
-        ).toBeDisabled();
+            page.getByRole("button", { name: "عرض السلة", exact: true }),
+        ).toBeEnabled();
         await page.getByRole("button", { name: "بني", exact: true }).click();
         await expect(three).toBeEnabled();
         await three.click();
@@ -140,7 +140,6 @@ for (const width of [390, 1440]) {
         await page.reload();
         await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
         if (width < 768) await summary.locator(".checkout-order-disclosure > summary").click();
-        await page.getByText("عرض وتعديل المنتجات", { exact: true }).click();
         await summary.getByRole("button", { name: "حذف صابو تجريبي", exact: true }).last().click();
         await expect(summary.locator(".bag-grand-total")).toContainText("230.00");
         await expect(summary.locator(".bag-totals .quantity-saving")).toHaveCount(0);

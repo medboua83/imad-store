@@ -40,7 +40,7 @@ for (const width of [320, 390, 1440]) {
     if (width < 768) await page.locator(".checkout-order-disclosure > summary").click();
     const summaryBenefit = summary.getByRole("status", { name: "حالة التوصيل", exact: true });
     await expect(summaryBenefit).toContainText("التوصيل مجاني لطلبكم");
-    await page.locator(".checkout-item-disclosure > summary").click();
+    await expect(summary.locator(".checkout-summary-items .bag-line")).toBeVisible();
     await summary.getByRole("button", { name: "تقليل كمية صابو تجريبي", exact: true }).click();
     await expect(summaryBenefit).toContainText("100.00 MAD");
     await expect(summary.locator(".bag-grand-total")).toContainText("445.00");

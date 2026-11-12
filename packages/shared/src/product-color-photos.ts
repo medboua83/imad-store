@@ -23,3 +23,15 @@ export function validColorPhotos(
     const gallery = new Set(images);
     return links.filter(({ colorKey, image }) => colors.has(colorKey) && gallery.has(image));
 }
+
+/** A mapped variant must never fall back to a different colour when its photo fails. */
+export function productVariantImages(
+    product: { images: string[]; colorPhotos?: ProductColorPhoto[] | null },
+    variant?: ProductColor,
+): string[] {
+    const key = variant && product.colorPhotos?.length ? productColorKey(variant) : undefined;
+    const mapped = product.colorPhotos?.find(
+        (link) => link.colorKey === key && product.images.includes(link.image),
+    )?.image;
+    return mapped ? [mapped] : [...product.images];
+}

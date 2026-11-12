@@ -6,7 +6,7 @@ import { ProductSuggestions } from "@/components/store/ProductSuggestions";
 import { ArrowRight, PackageCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-api";
-import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes } from "@/lib/product-presentation";
+import { productDescription, descriptionParagraphs, sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
 import { isAmbiguousSize } from "@imad-store/shared";
@@ -32,7 +32,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const requestedColor = typeof raw.color === "string" && raw.color.length <= 80 ? raw.color : undefined;
   const hasRequestedOptions = Boolean(raw.size || raw.color);
   const matchingVariant = variants.find((v) => v.stock > 0 &&
-    (!raw.size || (v.size || "").toLowerCase() === requestedSize?.toLowerCase()) &&
+    (!raw.size || (requestedSize !== undefined && sizeKey(v.size) === sizeKey(requestedSize))) &&
     (!raw.color || v.color.toLowerCase() === requestedColor?.toLowerCase()));
   const optionsUnavailable = hasRequestedOptions && !matchingVariant;
   const initialVariant = matchingVariant ?? (!hasRequestedOptions ? variants[0] : undefined);
@@ -125,7 +125,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
               <dl className="product-facts">
                 <div><dt>الفئة</dt><dd>{product.category.nameAr || product.category.nameFr}</dd></div>
                 {!!colors.length && <div><dt>الألوان</dt><dd>{colors.join(" · ")}</dd></div>}
-                {!!sizes.length && <div><dt>المقاسات</dt><dd><bdi>{sizes.join(" · ")}</bdi></dd></div>}
+                {!!sizes.length && <div><dt>المقاسات</dt><dd><bdi>{sizes.map(sizeLabel).join(" · ")}</bdi></dd></div>}
               </dl>
               {descriptionParagraphs(description).map((paragraph, index) => <p key={index} className="product-description" dir="auto">{paragraph}</p>)}
             </details>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { cartStorage, recoverCart } from "../lib/cart-recovery";
-import { isAmbiguousSize, priceCart, type QuantityDiscount } from "@imad-store/shared";
+import { isAmbiguousSize, priceCart, productVariantImages, type QuantityDiscount } from "@imad-store/shared";
 import { getProduct, ProductVariant, Product } from "../lib/api";
 import { trackCart } from "../lib/store-analytics";
 
@@ -75,8 +75,8 @@ export const useCartStore = create<CartStore>()(
                                               price: product.price,
                                               quantityDiscounts: product.quantityDiscounts ?? [],
                                               freeShipping: Boolean(product.freeShipping),
-                                              image: product.images[0] ?? "",
-                                              images: [...product.images],
+                                              image: productVariantImages(product, variant)[0] ?? "",
+                                              images: productVariantImages(product, variant),
                                               quantity: Math.min(
                                                   variant.stock,
                                                   i.quantity + Math.floor(quantity),
@@ -94,8 +94,8 @@ export const useCartStore = create<CartStore>()(
                             nameFr: product.nameFr,
                             nameAr: product.nameAr,
                             nameEn: product.nameEn,
-                            image: product.images[0] ?? "",
-                            images: [...product.images],
+                            image: productVariantImages(product, variant)[0] ?? "",
+                            images: productVariantImages(product, variant),
                             colorNameFr: variant.colorNameFr,
                             colorNameAr: variant.colorNameAr,
                             colorNameEn: variant.colorNameEn,
@@ -195,8 +195,8 @@ export const useCartStore = create<CartStore>()(
                                 colorNameAr: variant?.colorNameAr ?? item.colorNameAr,
                                 colorNameEn: variant?.colorNameEn ?? item.colorNameEn,
                                 freeShipping: Boolean(product?.freeShipping),
-                                image: product ? (product.images[0] ?? "") : item.image,
-                                images: product ? [...product.images] : item.images,
+                                image: product ? (productVariantImages(product, variant)[0] ?? "") : item.image,
+                                images: product ? productVariantImages(product, variant) : item.images,
                             };
                         }),
                     }));

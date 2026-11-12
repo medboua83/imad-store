@@ -1,3 +1,11 @@
+## Panier et variantes — candidat du 12 novembre 2026
+
+Priorités issues de l’audit réel : conserver la photo associée à la couleur dans le panier, au rechargement et dans la commande ; éviter les doublons d’affichage Unique/unique sans fusionner les SKU ni leurs stocks ; proposer un accès actif au panier et son montant lorsque la dernière pièce y est déjà ; afficher les lignes et les variantes dès la première ouverture du résumé. Les libellés Standard et Unique restent distincts (قياسي / مقاس موحد). Les couleurs différentes portant le même nom gardent leurs valeurs, distinguées par un numéro de choix dans le filtre. Aucune teinte ou correspondance photo n’est inventée : seuls les liens existants vers une image de la galerie sont utilisés. Une photo de couleur défaillante ne bascule pas sur une autre couleur. Prix des lots, frais de livraison, données marchandes et schéma conservés. Validation et publication à consigner.
+
+## Production vérifiée — PR137, 12 novembre 2026
+
+Source 1787687de2c009a42b0b8c8d07768a63aad1acf4 publiée, arbre identique à Master 9041216d715280ed18832f26c51a518aa4174db8. 26 UI locaux, 310 UI GitHub et 129 serveur réussis. Sauvegarde privée vérifiée, cinq fichiers HTTPS conformes avec validation TLS normale et quatre comparaisons publiques inchangées. Recette réelle 320/390/1440 px : photos originales, actions alignées, montants et navigation vérifiés. Aucun produit, tarif, stock ou réglage réenregistré ; aucune commande ni nouvel accès. Rapports : outputs/home-featured-products-20261112.
+
 ## Validation locale des cartes d’accueil — 12 novembre 2026
 
 Compilation et lint réussis (un avertissement préexistant dans commerce-tab), 26 tests navigateur ciblés réussis à 320/390/1440 px. Les trois nouveaux tests vérifient les photos originales chargées, les montants/offres/livraison, les options visibles, les actions alignées et la navigation vers la bonne fiche. Les 23 régressions couvrent catégories, sections, bandeau et aperçu privé. Vérifications GitHub et publication encore en attente lors de cette révision.

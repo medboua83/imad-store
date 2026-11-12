@@ -1,4 +1,5 @@
 "use client";
+import { sizeLabel } from "@/lib/product-presentation";
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -30,7 +31,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     {name}
                 </Link>
                 <p className="bag-line-variant">
-                    {[item.colorNameAr || item.colorNameFr, item.size].filter(Boolean).join(" · ")}
+                    {[item.colorNameAr || item.colorNameFr, item.size ? sizeLabel(item.size) : undefined].filter(Boolean).join(" · ")}
                 </p>
                 <p className="bag-unit-price">
                     {unitPrice < item.price && <del dir="ltr">{item.price.toFixed(2)} MAD </del>}

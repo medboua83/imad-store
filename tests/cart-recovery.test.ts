@@ -101,3 +101,24 @@ test("Unavailable browser storage never prevents using an in-memory basket", asy
     else delete (globalThis as any).window;
   }
 });
+
+test("Selected colour photos survive recovery and never substitute another colour on failure", async () => {
+  const { productVariantImages } = await import("../packages/shared/src/product-color-photos");
+  const variant = {color:"#804000",colorNameFr:"Marron",colorNameAr:"بني",colorNameEn:"Brown"};
+  const mapped = "/images/catalogue-test/abaya.webp";
+  const product = {images:[item.image,mapped],colorPhotos:[{colorKey:"#804000|marron",image:mapped}]};
+  assert.deepEqual(productVariantImages(product,variant),[mapped]);
+  const restored = recoverCart({items:[{...item,image:mapped,images:productVariantImages(product,variant)}]});
+  assert.deepEqual(restored.items[0].images,[mapped]);
+  assert.equal(restored.items[0].variantId,item.variantId);
+  assert.equal(restored.items[0].quantity,item.quantity);
+  assert.deepEqual(productVariantImages({...product,colorPhotos:[{colorKey:"#804000|marron",image:"/uploads/missing.webp"}]},variant),product.images);
+});
+
+test("Unmapped legacy products do not require unused colour metadata during cart refresh", async () => {
+  const { productVariantImages } = await import("../packages/shared/src/product-color-photos");
+  const legacyVariant = { colorNameFr: "Noir" } as Parameters<typeof productVariantImages>[1];
+  const images = [item.image];
+  for (const colorPhotos of [undefined, null, []])
+    assert.deepEqual(productVariantImages({images,colorPhotos},legacyVariant),images);
+});

@@ -2,8 +2,8 @@ import { Check, ChevronUp, Minus, Plus, ShoppingBag, MessageCircle } from "lucid
 import { useState } from "react";
 import Link from "next/link";
 import type { Product } from "@/lib/api";
-import { isAmbiguousSize, productColorKey, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
-import { orderedSizes } from "@/lib/product-presentation";
+import { isAmbiguousSize, priceCart, productColorKey, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
+import { orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { useCartStore } from "@/store/cart.store";
 export function ProductOptions({
     product,
@@ -23,7 +23,13 @@ export function ProductOptions({
         .reduce((sum, item) => sum + item.quantity, 0);
     const tiers = quantityDiscounts(product.price, product.quantityDiscounts);
     const variant = variants.find((v) => v.id === id);
+    function remainingStock(candidate: Product["variants"][number]) {
+        return Math.max(0, candidate.stock - (cart.find((item) => item.variantId === candidate.id)?.quantity ?? 0));
+    }
     const stock = variant?.stock || 0;
+    const selectedInCart = cart.find((item) => item.variantId === id);
+    const cartLineTotal = priceCart(cart).lines.find((line) => line.item.variantId === id)?.total;
+    const alreadyInCart = stock > 0 && (selectedInCart?.quantity ?? 0) >= stock;
     const available = Math.max(
         0,
         stock - (cart.find((item) => item.variantId === id)?.quantity ?? 0),
@@ -104,8 +110,9 @@ export function ProductOptions({
                                     onClick={() =>
                                         selectVariant(
                                             matches.find(
-                                                (v) => v.size === variant?.size && v.stock > 0,
-                                            ) || matches.find((v) => v.stock > 0),
+                                                (v) => sizeKey(v.size) === sizeKey(variant?.size) && remainingStock(v) > 0,
+                                            ) || matches.find((v) => remainingStock(v) > 0)
+                                                || matches.find((v) => v.stock > 0),
                                             true,
                                         )
                                     }
@@ -128,19 +135,24 @@ export function ProductOptions({
                 </fieldset>
                 <fieldset className="variant-fieldset">
                     <legend>
-                        المقاس <span>{variant?.size || "مقاس موحد"}</span>
+                        المقاس <span>{sizeLabel(variant?.size)}</span>
                     </legend>
                     <div className="size-options">
                         {sizes.map((size) => {
-                            const match = variants.find(
-                                (v) => productColorKey(v) === selectedColor && (v.size || "") === size,
+                            const matches = variants.filter(
+                                (v) => productColorKey(v) === selectedColor && sizeKey(v.size) === sizeKey(size),
                             );
-                            const label = size || "مقاس موحد";
+                            // Prefer a real available SKU; never combine stock from separate variants.
+                            const match = matches.find((v) => v.id === id && remainingStock(v) > 0)
+                                ?? matches.find((v) => remainingStock(v) > 0)
+                                ?? matches.find((v) => v.id === id && v.stock > 0)
+                                ?? matches.find((v) => v.stock > 0) ?? matches[0];
+                            const label = sizeLabel(size);
                             return (
                                 <button
                                     type="button"
                                     key={size}
-                                    aria-pressed={!!variant && (variant.size || "") === size}
+                                    aria-pressed={!!variant && sizeKey(variant.size) === sizeKey(size)}
                                     disabled={!match?.stock}
                                     aria-label={`${label}${match?.stock ? "" : " — غير متوفر لهذا اللون"}`}
                                     onClick={() => selectVariant(match)}
@@ -312,7 +324,7 @@ export function ProductOptions({
                 <div className="product-purchase-bar">
                     <div className="purchase-summary">
                         <p className="purchase-price" dir="ltr">
-                            {available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
+                            {alreadyInCart ? (cartLineTotal ?? product.price).toFixed(2) : available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
                             <span>MAD</span>
                         </p>
                         <p className="purchase-selection" aria-live="polite" aria-atomic="true">
@@ -328,14 +340,14 @@ export function ProductOptions({
                                     {variant.size && (
                                         <>
                                             {" "}
-                                            · <bdi>{variant.size}</bdi>
+                                            · <bdi>{sizeLabel(variant.size)}</bdi>
                                         </>
                                     )}
-                                    {available > 0 && (
+                                    {(available > 0 || alreadyInCart) && (
                                         <>
                                             {" "}
-                                            · <bdi>{selectedQuantity}</bdi>{" "}
-                                            {selectedQuantity === 1 ? "قطعة" : "قطع"}
+                                            · <bdi>{alreadyInCart ? selectedInCart?.quantity : selectedQuantity}</bdi>{" "}
+                                            {alreadyInCart ? "قطعة في سلتكم" : selectedQuantity === 1 ? "قطعة" : "قطع"}
                                         </>
                                     )}
                                 </>
@@ -350,18 +362,15 @@ export function ProductOptions({
                     <button
                         type="button"
                         className="btn-primary w-full"
-                        disabled={!variant || !available || quantityInvalid}
+                        disabled={!variant || (!available && !alreadyInCart) || quantityInvalid}
                         onClick={() => {
-                            if (variant && available && !quantityInvalid)
+                            if (alreadyInCart) useCartStore.getState().openCart();
+                            else if (variant && available && !quantityInvalid)
                                 useCartStore.getState().addItem(product, variant, selectedQuantity);
                         }}
                     >
                         <ShoppingBag size={19} aria-hidden="true" />
-                        {available
-                            ? "إضافة إلى السلة"
-                            : stock
-                              ? "الكمية في السلة"
-                              : "غير متوفر حالياً"}
+                        {alreadyInCart ? "عرض السلة" : available ? "إضافة إلى السلة" : "غير متوفر حالياً"}
                     </button>
                 </div>
             </div>
@@ -450,7 +459,7 @@ export function ProductOptions({
                 <span>
                     {stock ? "متوفر الآن" : "غير متوفر حالياً"}
                     {variant
-                        ? ` · ${variant.colorNameAr || variant.colorNameFr || variant.colorNameEn}${variant.size ? ` / ${variant.size}` : ""}`
+                        ? ` · ${variant.colorNameAr || variant.colorNameFr || variant.colorNameEn}${variant.size ? ` / ${sizeLabel(variant.size)}` : ""}`
                         : ""}
                 </span>
             </div>
