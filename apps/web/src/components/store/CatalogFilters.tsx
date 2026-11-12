@@ -39,16 +39,10 @@ export function CatalogFilters({ children, count, initialOpen }: {
             </button>
             <dialog ref={dialog} id="catalog-search" className="catalog-filter-dialog"
                 aria-labelledby="catalog-filter-title" onKeyDown={trapDialogFocus}
-                onClose={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}
-                onClick={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    if (event.clientX < rect.left || event.clientX > rect.right ||
-                        event.clientY < rect.top || event.clientY > rect.bottom) dialog.current?.close();
-                }}>
+                onClose={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); }}>
                 <header className="catalog-filter-dialog-heading">
                     <h2 id="catalog-filter-title">البحث والفلاتر</h2>
-                    <button type="button" aria-label="إغلاق الفلاتر" autoFocus
+                    <button type="button" aria-label="إغلاق الفلاتر"
                         onClick={() => dialog.current?.close()}><X size={20} aria-hidden="true" /></button>
                 </header>
                 {children}
