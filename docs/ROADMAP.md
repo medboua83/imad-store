@@ -1,9 +1,14 @@
+## Bandeau sans bande vide — 12 novembre 2026
+
+- [x] Rééquilibrer portrait et texte en préservant les originaux.
+- [ ] Valider les titres longs et le rendu réel mobile/ordinateur puis publier.
+
 ## Catégories et fiches produit — 12 novembre 2026
 
 - [x] Compacter les en-têtes et regrouper filtres/tri sans perdre les conditions serveur.
 - [x] Préparer un dialogue accessible avec un formulaire et conservation du brouillon.
 - [x] Mettre en valeur les portraits mobiles et nettoyer les marqueurs de texte à l’affichage.
-- [ ] Tester mobile/ordinateur, vérifier GitHub puis publier la source exacte.
+- [x] PR139 publiée : 326 UI, 130 serveur, sauvegarde, 28 fichiers HTTPS et données publiques vérifiés.
 
 ## Panier et variantes — 12 novembre 2026
 

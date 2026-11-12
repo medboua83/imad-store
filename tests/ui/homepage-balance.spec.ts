@@ -55,7 +55,7 @@ for (const width of [320, 390, 1440]) {
         const visual = (await hero.locator(".hero-visual").boundingBox())!;
         expect(Math.abs(copy.y - visual.y)).toBeLessThan(1);
         expect(Math.abs(visual.x + visual.width - copy.x)).toBeLessThan(1);
-        expect((await hero.boundingBox())!.height).toBeLessThan(width < 768 ? 390 : 500);
+        expect((await hero.boundingBox())!.height).toBeLessThan(width < 768 ? 390 : 550);
         const featuredY = await page
             .locator(".featured-section")
             .evaluate((el) => el.getBoundingClientRect().top + scrollY);

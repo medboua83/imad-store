@@ -1,3 +1,11 @@
+## Alignement du portrait du bandeau — 12 novembre 2026
+
+Correction ciblée de la bande beige sous la photo : colonne portrait élargie à 400 px maximum sur tablette/ordinateur, espacements et taille du titre du panneau produit ajustés. Le format 3:4 et object-fit:contain gardent les photos originales entières ; aucune donnée marchande, réglage de rotation, dépendance ou migration modifié. Le mobile conserve sa disposition. Régression avec titre long, remise et six couleurs à 768/1024/1440 px ; recette mobile à 390 px. Résultats et publication à consigner sur DATA dans outputs/hero-photo-height-20261112.
+
+## Production vérifiée — PR139
+
+Source bc22b646f13c3a9073b34c1e4ea031e0836bb280 publiée, arbre identique à Master 977dec5c13cb3d2170431f546169873525c339e3. 326 tests navigateur et 130 serveur GitHub réussis. Sauvegarde privée, 28 fichiers HTTPS et quatre ensembles publics inchangés vérifiés ; recette réelle à 390 et 1440 px, photos originales conservées. Rapports : outputs/collection-product-clarity-20261112.
+
 ## Catégories et fiches plus lisibles — candidat du 12 novembre 2026
 
 Deuxième lot de l’audit public : en-tête de catégorie compact, barre filtres/tri regroupée, formulaire GET unique dans un dialogue natif avec fermeture Échap, focus restauré et actions accessibles au défilement. Le brouillon des filtres reste intact à la fermeture et au redimensionnement ; les conditions sont toujours contrôlées par le serveur. Galerie mobile plus haute pour les portraits, image entière, miniatures discrètes et action d’achat fixe conservée. Nettoyage visuel des marqueurs WhatsApp/Markdown et listes lisibles, sans HTML exécuté, réécriture du texte marchand ni modification des variantes. Accroche du bandeau nettoyée et limitée en longueur. Photos originales, catalogue, stocks, prix et réglages conservés. Mesures réelles et coordonnées commerciales restent à fournir ; aucune donnée inventée. Tests et publication de la source exacte à consigner.

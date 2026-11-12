@@ -414,6 +414,25 @@
   object-fit: contain;
   object-position: center;
 }
+/* The portrait used to stop at 469px while merchandise copy grew past it.
+   Reserve enough width for the original 3:4 photo and keep the copy compact. */
+@media (min-width: 768px) {
+  .store-shell .storefront-home .editorial-hero {
+    --home-hero-photo-width: min(48%, 400px);
+  }
+  .store-shell .storefront-home .hero-showcase-copy {
+    padding: clamp(24px, 3vw, 36px);
+  }
+  .store-shell .storefront-home .hero-showcase-copy .hero-eyebrow {
+    margin-bottom: 10px;
+  }
+  .store-shell .storefront-home .hero-showcase-copy h1 {
+    font-size: clamp(28px, 3vw, 40px);
+  }
+  .hero-product-content {
+    gap: 10px;
+  }
+}
 .store-shell .storefront-home .collection-section > .catalog-sections {
   display: grid;
   grid-auto-flow: column;

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { defaultSiteContent } from "@imad-store/shared";
 
-for (const width of [390, 1440]) {
+for (const width of [390, 768, 1024, 1440]) {
   test(`Hero preview keeps long merchandise copy, real promotion and available colors usable at ${width}px`, async ({
     page,
   }, info) => {
@@ -90,6 +90,16 @@ for (const width of [390, 1440]) {
     );
     await expect(hero.locator(".hero-photo")).toHaveCSS("object-fit", "contain");
     await expect(hero.locator(".hero-carousel-bar")).toHaveCount(0);
+    await page.evaluate(() => document.fonts.ready);
+    if (width >= 768) {
+      // A long title/description used to make the brown panel taller than the portrait.
+      // The exposed beige strip must not return when a merchant changes the text.
+      const frame = (await hero.locator(".editorial-hero").boundingBox())!;
+      const visual = (await hero.locator(".hero-visual").boundingBox())!;
+      expect(Math.abs(frame.y + frame.height - visual.y - visual.height)).toBeLessThan(1);
+      const copy = hero.locator(".hero-copy");
+      expect(await copy.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+    }
     expect(writes).toEqual([]);
     await hero.screenshot({ path: info.outputPath(`showcase-long-${width}.png`) });
   });
