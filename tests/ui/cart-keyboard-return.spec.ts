@@ -11,14 +11,14 @@ for (const width of [390, 1440]) {
       await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
       const dialog = page.getByRole("dialog");
       await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
-      await expect(page.locator(".product-purchase-bar button")).toBeDisabled();
+      await expect(page.locator(".product-purchase-bar button")).toHaveText("عرض السلة");
       if (dismiss === "escape") await dialog.getByRole("button", { name: "إغلاق السلة", exact: true }).press("Escape");
       else await dialog.getByRole("button", { name: dismiss === "close" ? "إغلاق السلة" : "متابعة التسوق", exact: true }).click();
       await expect(dialog).not.toBeVisible();
       await info.attach("focus-after-dismiss", { body: JSON.stringify(await page.evaluate(() => ({
         tag: document.activeElement?.tagName, class: document.activeElement?.className,
       }))), contentType: "application/json" });
-      const trigger = page.locator(".site-header .cart-toggle");
+      const trigger = page.getByRole("button", { name: "عرض السلة", exact: true });
       await expect(trigger).toBeFocused();
       if (dismiss === "escape") await page.screenshot({ path: info.outputPath(`basket-focus-return-${width}.png`) });
       await trigger.press("Enter");

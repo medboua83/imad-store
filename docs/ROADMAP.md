@@ -1,8 +1,16 @@
+## Panier et variantes — 12 novembre 2026
+
+- [x] Corriger le choix des photos dans le panier et le renouvellement des données.
+- [x] Clarifier les tailles et garder les références/teintes séparées.
+- [x] Rendre l’action utile lorsque la dernière pièce est dans le panier.
+- [x] Retirer l’ouverture imbriquée du résumé de commande.
+- [ ] Tester mobile/ordinateur, vérifier GitHub puis publier la source exacte.
+
 ## Produits de l’accueil — 12 novembre 2026
 
 - [x] Alléger les cadres, préserver les originaux et hiérarchiser titres, prix et options.
 - [x] Garder deux colonnes mobiles et des actions alignées, avec offres/livraison visibles.
-- [ ] Tester mobile/ordinateur et publier le candidat exact après vérifications.
+- [x] PR137 publiée et vérifiée : 310 UI / 129 serveur, sauvegarde, HTTPS et recette réelle.
 
 # Roadmap — stabilité, performance et facilité d’utilisation
 

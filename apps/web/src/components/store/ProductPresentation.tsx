@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { productColorKey } from "@imad-store/shared";
+import { productVariantImages } from "@imad-store/shared";
 import type { Product } from "@/lib/api";
 import { ProductGallery } from "./ProductGallery";
 import { ProductOptions } from "./ProductOptions";
@@ -20,8 +20,7 @@ export function ProductPresentation({
     children: ReactNode;
 }) {
     function photoFor(variant?: Product["variants"][number]) {
-        const key = variant && productColorKey(variant);
-        return product.colorPhotos?.find((link) => link.colorKey === key)?.image ?? product.images[0];
+        return productVariantImages(product, variant)[0];
     }
     const [variantId, setVariantId] = useState(initialVariant?.id ?? "");
     const [photo, setPhoto] = useState(() => photoFor(initialVariant));

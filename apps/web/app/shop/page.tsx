@@ -8,7 +8,7 @@ import { CatalogSectionLinks } from "@/components/store/CatalogSectionLinks";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
 import { categoryImageSources } from "@/components/store/category-visuals";
 import { availableCatalogSections, publishedCategories } from "@/lib/catalog-navigation";
-import { orderedSizes } from "@/lib/product-presentation";
+import { orderedSizes, sizeKey, sizeLabel, distinctColorLabels } from "@/lib/product-presentation";
 import { catalogSectionKeys, catalogSections } from "@imad-store/shared";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ searchParams }: {
@@ -82,7 +82,7 @@ export default async function ShopPage({
     );
     const sort = value("sort") || "newest";
     const selectedColor = value("color");
-    const colors = result?.filterOptions?.colors ?? [];
+    const colors = distinctColorLabels(result?.filterOptions?.colors ?? []);
     const colorLabel = colors.find((color) => color.value === selectedColor)?.label;
     const resultAnchor = category ? "#catalog-results" : "";
     const chipLabel = (key: (typeof filterKeys)[number]) =>
@@ -94,7 +94,7 @@ export default async function ShopPage({
             maxPrice: `حتى ${value(key)} MAD`,
             availability: "المتوفر فقط",
             sort: sortLabels[value(key)] || value(key),
-            size: `المقاس: ${value(key)}`,
+            size: `المقاس: ${sizeLabel(value(key))}`,
             color: `اللون: ${colorLabel || selectedColor}`,
         })[key];
     const suggestedSizes = result?.filterOptions?.sizes;
@@ -248,10 +248,10 @@ export default async function ShopPage({
                     <label>
                         المقاس
                         {suggestedSizes ? (
-                            <select className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" defaultValue={value("size")}>
+                            <select className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" defaultValue={sizes.find(size => sizeKey(size) === sizeKey(value("size"))) ?? value("size")}>
                                 <option value="">جميع المقاسات</option>
-                                {value("size") && !sizes.includes(value("size")) && <option value={value("size")}>{value("size")} — المقاس المحدد</option>}
-                                {sizes.map(size => <option key={size} value={size}>{size}</option>)}
+                                {value("size") && !sizes.some(size => sizeKey(size) === sizeKey(value("size"))) && <option value={value("size")}>{sizeLabel(value("size"))} — المقاس المحدد</option>}
+                                {sizes.map(size => <option key={size} value={size}>{sizeLabel(size)}</option>)}
                             </select>
                         ) : (
                             <input className="store-input" name="size" aria-label="المقاس" aria-describedby="catalog-size-help" maxLength={40}

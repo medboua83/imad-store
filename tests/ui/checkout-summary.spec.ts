@@ -32,7 +32,9 @@ for (const viewport of [{width:320,height:740}, {width:390,height:844}, {width:1
     await expect(disclosure).toHaveAttribute("open");
     await expect(disclosure.locator(".bag-grand-total")).toBeVisible();
     await expect(disclosure.locator(".bag-grand-total")).toContainText("400.00");
-    await page.getByText("عرض وتعديل المنتجات", {exact:true}).click();
+    await expect(disclosure.locator("details")).toHaveCount(0);
+    await expect(disclosure.locator(".bag-line")).toHaveCount(1);
+    await expect(disclosure.locator(".bag-line-detail")).toContainText("أسود · 40");
     await disclosure.getByRole("button", {name:"تقليل كمية صابو تجريبي",exact:true}).click();
     await expect(disclosure.locator(".bag-grand-total")).toContainText("230.00");
     await toggle.click();

@@ -42,6 +42,16 @@ const product = {
     variant("333333333333333333333334", "أسود", "40 41 42 43 44", 9),
   ],
 };
+const oneSizeProduct = {
+  ...product, slug: "fixture-one-size", freeShipping: false,
+  images: ["/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp"],
+  variants: [variant("999999999999999999999990", "أسود", "Unique", 0),
+    variant("999999999999999999999991", "بني", "unique", 1),
+    variant("999999999999999999999992", "أسود", "unique", 2),
+    variant("999999999999999999999993", "بني", "Standard", 2),
+    variant("999999999999999999999994", "بني", "Unique", 2)],
+  colorPhotos: [{colorKey: productColorKey(variant("", "بني", "unique", 1)), image: "/images/catalogue-test/abaya.webp"}],
+};
 const recommended = (id, slug, nameAr, price) => ({ ...product, id, slug, nameAr, nameFr: nameAr, nameEn: nameAr, price,
   variants: [ { ...variant(id.slice(0,23)+"1", "أسود", "M", 6), productId:id } ] });
 const premium = recommended("444444444444444444444444", "fixture-premium", "موديل للمقارنة", 300);
@@ -104,6 +114,13 @@ createServer((req, res) => {
       res.writeHead(400);
       return res.end(JSON.stringify({ success: false }));
     }
+    if (search === "one-size-fixture") {
+      const size = url.searchParams.get("size");
+      const data = !size || oneSizeProduct.variants.some(v => v.stock > 0 && v.size.toLowerCase() === size.toLowerCase()) ? [oneSizeProduct] : [];
+      return res.end(JSON.stringify({success:true,data,total:data.length,page:1,totalPages:1,filterOptions:{
+        sizes:["Unique","unique","Standard"], colors:[{value:"#804000",label:"بني"},{value:"#804001",label:"بني"}],
+      }}));
+    }
     if (search === "size-race") {
       return res.end(JSON.stringify({success:true,data:[{...product,slug:"fixture-sold-size"}],total:1,page:1,totalPages:1,filterOptions:{sizes:["40","44"]}}));
     }
@@ -144,6 +161,7 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-recommendations/recommendations") data = {upsell:[premium],crossSell:[accessory]};
   else if (pathname === "/api/products/fixture-second-source/recommendations") data = {upsell:[],crossSell:[accessory,premium,product]};
   else if (pathname.endsWith("/recommendations")) data = {upsell:[],crossSell:[]};
+  else if (pathname === "/api/products/fixture-one-size") data = oneSizeProduct;
   else if (pathname === "/api/products/fixture-sold-size") data = {...product,slug:"fixture-sold-size",variants:product.variants.map(v => v.size === "40" ? {...v,stock:0} : v)};
   else if (pathname === "/api/products/fixture-sabot") data = product;
   else if (pathname === "/api/products/fixture-gallery-long") data = {

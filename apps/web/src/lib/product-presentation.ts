@@ -35,9 +35,29 @@ export function descriptionParagraphs(text: string): string[] {
 export const sellableVariants = <T extends { size?: string | null }>(variants: T[]) =>
   variants.filter((variant) => !isAmbiguousSize(variant.size));
 
+/** Display normalization only: SKU, raw size and stock remain unchanged. */
+export const sizeKey = (size?: string | null) => (size || "").trim().toLowerCase();
+export function sizeLabel(size?: string | null): string {
+  const key = sizeKey(size);
+  if (!key || ["unique", "one size", "taille unique"].includes(key)) return "مقاس موحد";
+  if (key === "standard") return "قياسي";
+  return /^(?:x{0,3}[sl]|m|[2-4]xl)$/i.test(key) ? key.toUpperCase() : (size || "").trim();
+}
+/** Keep distinct colour values, even when the merchant gave them the same name. */
+export function distinctColorLabels(options: { value: string; label: string }[]) {
+  const totals = new Map<string, number>();
+  const seen = new Map<string, number>();
+  for (const option of options) totals.set(option.label, (totals.get(option.label) || 0) + 1);
+  return options.map(option => {
+    if ((totals.get(option.label) || 0) < 2) return option;
+    const number = (seen.get(option.label) || 0) + 1;
+    seen.set(option.label, number);
+    return { ...option, label: `${option.label} — خيار ${number}` };
+  });
+}
 export function orderedSizes(variants: { size?: string | null }[]): string[] {
   const clothing = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "XXL", "3XL", "XXXL", "4XL"];
-  return [...new Set(variants.map((v) => v.size || ""))].sort((a, b) => {
+  return [...new Map(variants.map((v) => [sizeKey(v.size), v.size || ""])).values()].sort((a, b) => {
     const first = clothing.indexOf(a.toUpperCase()),
       second = clothing.indexOf(b.toUpperCase());
     if (first >= 0 && second >= 0) return first - second;

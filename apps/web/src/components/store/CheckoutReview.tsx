@@ -2,6 +2,7 @@
 import type { useShipping } from "@/hooks/useShipping";
 import type { CartItem } from "@/store/cart.store";
 import { CartTotals } from "./CartTotals";
+import { sizeLabel } from "@/lib/product-presentation";
 import { ProductPhoto } from "./ProductPhoto";
 import { shippingCityLabel, priceCart } from "@imad-store/shared";
 
@@ -45,7 +46,7 @@ export function CheckoutReview({
                         <div>
                             <strong>{item.nameAr || item.nameFr}</strong>
                             <p>
-                                {[item.colorNameAr || item.colorNameFr, item.size]
+                                {[item.colorNameAr || item.colorNameFr, item.size ? sizeLabel(item.size) : undefined]
                                     .filter(Boolean)
                                     .join(" · ")}
                             </p>

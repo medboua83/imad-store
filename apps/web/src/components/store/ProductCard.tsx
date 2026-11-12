@@ -2,7 +2,7 @@ import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
-import { sellableVariants, orderedSizes } from "@/lib/product-presentation";
+import { sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { productColorKey, quantityDiscounts } from "@imad-store/shared";
 import { productDetailsHref } from "@/lib/catalog-return";
 
@@ -30,7 +30,7 @@ export function ProductCard({
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
     const variants = sellableVariants(p.variants).filter(
-        (v) => (!preferredSize || (v.size || "").toLowerCase() === preferredSize.toLowerCase()) &&
+        (v) => (!preferredSize || sizeKey(v.size) === sizeKey(preferredSize)) &&
             (!preferredColor || v.color.toLowerCase() === preferredColor.toLowerCase()),
     );
     const available = variants.some((v) => v.stock > 0);
@@ -114,7 +114,7 @@ export function ProductCard({
                     <p className="product-size-preview">
                         المقاسات:{" "}
                         <bdi>
-                            {sizes.slice(0, 4).join(" · ")}
+                            {sizes.slice(0, 4).map(sizeLabel).join(" · ")}
                             {sizes.length > 4 ? ` +${sizes.length - 4}` : ""}
                         </bdi>
                     </p>
