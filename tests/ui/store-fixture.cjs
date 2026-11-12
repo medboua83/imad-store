@@ -164,6 +164,10 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-one-size") data = oneSizeProduct;
   else if (pathname === "/api/products/fixture-sold-size") data = {...product,slug:"fixture-sold-size",variants:product.variants.map(v => v.size === "40" ? {...v,stock:0} : v)};
   else if (pathname === "/api/products/fixture-sabot") data = product;
+  else if (pathname === "/api/products/fixture-readable") data = {
+    ...product, slug: "fixture-readable", images: ["/images/catalogue-test/abaya.webp"],
+    descriptionAr: "> *عنوان القطعة*\n> وصف القطعة الأصلي.\n- لون بني\n- طول 90 cm\n5 > 3\n<script>window.untrustedProductCopy=true</script>",
+  };
   else if (pathname === "/api/products/fixture-gallery-long") data = {
     ...product, slug: "fixture-gallery-long",
     images: Array.from({length:25}, (_,i) => `/images/catalogue-test/sac.webp?gallery=${i+1}`),

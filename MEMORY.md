@@ -1,2 +1,10 @@
+## Catégories et fiches plus lisibles — candidat du 12 novembre 2026
+
+Deuxième lot de l’audit public : en-tête de catégorie compact, barre filtres/tri regroupée, formulaire GET unique dans un dialogue natif avec fermeture Échap, focus restauré et actions accessibles au défilement. Le brouillon des filtres reste intact à la fermeture et au redimensionnement ; les conditions sont toujours contrôlées par le serveur. Galerie mobile plus haute pour les portraits, image entière, miniatures discrètes et action d’achat fixe conservée. Nettoyage visuel des marqueurs WhatsApp/Markdown et listes lisibles, sans HTML exécuté, réécriture du texte marchand ni modification des variantes. Accroche du bandeau nettoyée et limitée en longueur. Photos originales, catalogue, stocks, prix et réglages conservés. Mesures réelles et coordonnées commerciales restent à fournir ; aucune donnée inventée. Tests et publication de la source exacte à consigner.
+
+## Production vérifiée — PR138, 12 novembre 2026
+
+Source 5fccbfeb4fc60245f312bffc49a387802be3da45 publiée, arbre identique à Master a9ba889c6c31702fc1905f3f3659f534909c6db9. Neuf tests de récupération, 319 tests navigateur locaux et GitHub, 129 tests serveur réussis. Sauvegarde privée vérifiée, 28 fichiers HTTPS conformes et quatre jeux publics inchangés. Recette réelle 390/1440 px : photo marron conservée après rechargement, taille et filtre normalisés, dernière pièce ouvrant le panier sans doublon, résumé sans volet imbriqué. Panier de vérification remis à vide, aucune commande. Dashboard authentifié en arabe accessible après rechargement. Contrôle de déploiement des chemins encodés corrigé après un retour arrière automatique sûr. Rapports sur DATA : outputs/cart-variant-clarity-20261112.
+
 - [Admin login page fixed - posts to /api/auth/login and stores token in localStorage](apps/web/app/admin/page.tsx.md) — Fixed template literal syntax, JSX bracket mismatches, and conditional rendering to enable proper admin authentication flow.
 - Premier contact WhatsApp déployé et testé le 19 octobre 2026 : voir `docs/WHATSAPP_ORDER_CAPTURE_2026-10-19.md`. Les états de mode test et de mise en service y sont distingués.

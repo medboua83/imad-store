@@ -90,6 +90,7 @@ for (const width of [320, 390, 1440]) {
     await page.goto("/shop?filters=open&search=size-no-options&category=mens-clogs&size=44");
     await expect(page.getByRole("textbox", { name: "المقاس", exact: true })).toHaveValue("44");
     await expect(page.locator(".catalog-card")).toHaveCount(1);
+    await page.getByRole("button", { name: "إغلاق الفلاتر", exact: true }).click();
     await page.getByRole("link", { name: "إزالة الفلتر: المقاس: 44", exact: true }).click();
     await expect(page).toHaveURL(url => !url.searchParams.has("size"));
     expect(new URL(page.url()).searchParams.get("size")).toBeNull();
@@ -103,7 +104,7 @@ for (const width of [320, 390, 1440]) {
     expect(new URL(page.url()).searchParams.get("size")).toBe("44");
     await expect(page.locator(".shop-pagination")).toContainText("2 / 3");
     await page.goto("/shop?size=40&size=44");
-    await expect(page.getByRole("main").getByRole("alert")).toContainText("صححوا الفلاتر");
+    await expect(page.locator("#catalog-filter-error")).toContainText("صححوا الفلاتر");
     await expect(page.locator(".catalog-card")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

@@ -70,8 +70,8 @@ for (const width of [320, 1440]) {
             url.hash === "#catalog-results",
         );
 
+        await page.getByRole("button", { name: "البحث والفلاتر", exact: true }).click();
         const filters = page.locator("#catalog-search");
-        await filters.locator("summary").click();
         await expect(filters.locator("input[name=category]")).toHaveValue("mens-clogs");
         await filters.locator("input[name=maxPrice]").fill("300");
         await page.screenshot({ path: info.outputPath(`collection-filters-${width}.png`) });

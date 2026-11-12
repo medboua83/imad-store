@@ -1,7 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { productShareMetadata, resolvePublicOrigin, storefrontShareMetadata } from "../apps/web/src/lib/share-metadata";
-import { descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
+import { cleanProductText, descriptionBlocks, descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
+test("Copied formatting is cleaned without inventing or executing product content", () => {
+  const copy = "> *كاب بالفرو*\n> وصف القطعة.\n- لون بني\n- طول 90 cm\n5 > 3\nSKU_A_B";
+  assert.equal(cleanProductText(copy), "كاب بالفرو\nوصف القطعة.\n- لون بني\n- طول 90 cm\n5 > 3\nSKU_A_B");
+  assert.deepEqual(descriptionBlocks(copy), [
+    {type:"paragraph",lines:["كاب بالفرو"]}, {type:"paragraph",lines:["وصف القطعة."]},
+    {type:"list",lines:["لون بني", "طول 90 cm"]}, {type:"paragraph",lines:["5 > 3"]},
+    {type:"paragraph",lines:["SKU_A_B"]},
+  ]);
+  assert.equal(cleanProductText("<script>test</script>"), "<script>test</script>");
+});
 test("Size presentation follows numeric and clothing order, without duplicates", () => {
   assert.deepEqual(orderedSizes(["43","40","42","41","44","40"].map(size=>({size}))), ["40","41","42","43","44"]);
   assert.deepEqual(orderedSizes(["XL","M","XS","L","S"].map(size=>({size}))), ["XS","S","M","L","XL"]);

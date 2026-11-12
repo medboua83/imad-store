@@ -1,10 +1,17 @@
+## Catégories et fiches produit — 12 novembre 2026
+
+- [x] Compacter les en-têtes et regrouper filtres/tri sans perdre les conditions serveur.
+- [x] Préparer un dialogue accessible avec un formulaire et conservation du brouillon.
+- [x] Mettre en valeur les portraits mobiles et nettoyer les marqueurs de texte à l’affichage.
+- [ ] Tester mobile/ordinateur, vérifier GitHub puis publier la source exacte.
+
 ## Panier et variantes — 12 novembre 2026
 
 - [x] Corriger le choix des photos dans le panier et le renouvellement des données.
 - [x] Clarifier les tailles et garder les références/teintes séparées.
 - [x] Rendre l’action utile lorsque la dernière pièce est dans le panier.
 - [x] Retirer l’ouverture imbriquée du résumé de commande.
-- [ ] Tester mobile/ordinateur, vérifier GitHub puis publier la source exacte.
+- [x] PR138 publiée et vérifiée : 319 UI, 129 serveur, sauvegarde et 28 fichiers HTTPS conformes.
 
 ## Produits de l’accueil — 12 novembre 2026
 
