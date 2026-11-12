@@ -215,6 +215,10 @@ export function HomeView({
                 minimalControls={content.heroMinimalControls ?? true}
             >
                 <div className="hero-copy">
+                    <p className="hero-eyebrow">
+                        <span aria-hidden="true" />
+                        <bdi>{content.businessName || "IMAD Mode"}</bdi>
+                    </p>
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>
                     <div className="hero-actions">

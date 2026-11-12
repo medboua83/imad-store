@@ -1,5 +1,12 @@
 # Imad Store — Persistent Project Memory
 
+## Bandeau plus attirant — candidat du 12 novembre 2026
+
+Conserver les images actuelles et le comportement du carrousel. Piste implémentée : photo entière bord à bord, fond brun profond côté texte, titre ivoire et bouton champagne doré, marque configurable dans une signature discrète, résumé produit lisible. Corriger le retrait de largeur hérité qui laissait une bande vide de 48 px à gauche de la photo. Aucun remplacement d’image, changement du catalogue ou nouvelle promesse sur la livraison/retour ; le fond et les éléments décoratifs sont en CSS. Tester les petits écrans et l’aperçu du dashboard avant publication.
+
+La PR133 est publiée via InstaBox, source active 9e0a2812bfab17826b43d80a70f8cd4bab793b96, Master 0282f8cca5888ec665d3f63d7fb2bae257eaf65f de même arbre. 299 UI/129 serveur et quatre empreintes HTTPS conformes. L’accès SSH direct reste fermé ; la session root préexistante du terminal InstaBox a répondu et permis le transfert vérifié puis la publication, sans création d’accès. Le Mac a eu des délais IPv6 ; la vérification HTTPS en IPv4 a réussi avec validation de certificat conservée. Photos originales et données commerciales conservées ; aucun test de commande réelle.
+
+
 ## Zoom au survol — candidat du 11 novembre 2026
 
 Le propriétaire demande un agrandissement de la photo de fiche lorsque la souris s’en approche. Implémentation localisée à ProductGallery et aux styles produit : grossissement 2× à point focal mobile, uniquement souris et capacité de survol précis. Le plein écran, les gestes tactiles, les originaux et les associations couleur–photo sont conservés. Réinitialisation sur sortie, image/couleur et dialogue ; aucun nouveau téléchargement ni nouvelle dépendance. Validation et mise en ligne à consigner dans la recette sur DATA.

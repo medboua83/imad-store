@@ -1,5 +1,14 @@
 # Current Status — 2026-11-08
 
+## Bandeau éditorial doré — candidat du 12 novembre 2026
+
+Le propriétaire demande une présentation d’accueil plus attirante avec les photos actuelles. Le candidat conserve les contenus et réglages du dashboard, les photos originales, les liens, les prix et le défilement automatique masqué. Panneau brun profond, titre ivoire, signature de marque issue du contenu, bouton champagne/doré, cadre et résumé du produit plus soignés. La largeur héritée `calc(100% - 48px)` du bloc intérieur est corrigée pour aligner la photo avec les bords du bandeau ; le format conserve deux colonnes, le produit entier et une hauteur mobile compacte. Aucun nouveau fichier image, police, dépendance, promesse commerciale ou champ de configuration. Validation et publication du candidat exact à consigner.
+
+## Production vérifiée — PR133, 12 novembre 2026
+
+Source 9e0a2812bfab17826b43d80a70f8cd4bab793b96 publiée, arbre identique à Master 0282f8cca5888ec665d3f63d7fb2bae257eaf65f. 299 tests navigateur et 129 tests serveur réussis. Publication via la session root InstaBox demandée : transfert compressé et SHA256 vérifié, sauvegarde privée vérifiée, compilation isolée, service actif et quatre empreintes publiques HTTPS conformes. Recette sur la vraie fiche Écharpe : zoom souris 2×, suivi du curseur, retour normal, photo par couleur et dialogue dans le format mobile vérifiés. Les gestes tactiles sont aussi couverts par les tests Chrome isolés. Catalogue, réglages, catégories et contenu publics identiques au relevé de préparation ; aucune commande créée ni donnée marchande réenregistrée, aucune nouvelle clé. Rapports et preuve réelle sur DATA dans outputs/product-hover-zoom-20261111.
+
+
 ## Zoom de fiche produit au survol — candidat du 11 novembre 2026
 
 La photo principale peut être agrandie deux fois dans son cadre avec une souris précise. Le point de détail suit le curseur sans réafficher le formulaire à chaque mouvement ; sortie du cadre, changement de photo/couleur, échec d’image et ouverture du plein écran réinitialisent le zoom. Les miniatures et le bouton d’agrandissement restent indépendants. Les gestes tactiles ne déclenchent pas le survol, le défilement vertical et le pincement natif sont conservés ; le plein écran existant reste accessible au toucher et au clavier. La réduction des animations supprime la transition. Aucune image, URL de fichier, variante, donnée commerciale ou dépendance n’est réenregistrée. Tests et publication du candidat exact à consigner.
