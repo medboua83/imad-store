@@ -269,7 +269,7 @@ export function HomeHero({
             name={active.name}
             preload={activeIndex === 0}
             eager={activeIndex !== 0}
-            sizes="(max-width: 767px) 48vw, 352px"
+            sizes="(max-width: 833px) 48vw, 400px"
             className={`hero-photo${hasAdvanced ? " hero-photo-arrival" : ""}`}
           />
           {multiple && minimalControls && (
