@@ -91,7 +91,7 @@ for (const width of [390, 768, 1024, 1440]) {
     await expect(hero.locator(".hero-photo")).toHaveCSS("object-fit", "contain");
     await expect(hero.locator(".hero-carousel-bar")).toHaveCount(0);
     await page.evaluate(() => document.fonts.ready);
-    if (width >= 768) {
+    {
       // A long title/description used to make the brown panel taller than the portrait.
       // The exposed beige strip must not return when a merchant changes the text.
       const frame = (await hero.locator(".editorial-hero").boundingBox())!;

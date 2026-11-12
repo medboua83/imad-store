@@ -644,15 +644,25 @@
 
 @media (max-width: 767px) {
   .store-shell .storefront-home .hero-showcase-copy {
-    min-height: 306px;
-    padding: 14px 12px;
+    min-height: 0;
+    padding: 10px 12px;
+  }
+  /* The page header and category section already provide brand/collection navigation.
+     Keep the narrow portrait row focused on this product and its discovery action. */
+  .hero-showcase-copy :is(.hero-eyebrow, .hero-collection-link),
+  .hero-showcase-copy .hero-colors-label {
+    display: none;
   }
   .store-shell .storefront-home .hero-showcase-copy h1 {
     font-size: clamp(19px, 5.1vw, 28px);
     line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .hero-product-content {
-    gap: 10px;
+    gap: 6px;
   }
   .hero-product-description {
     display: none;

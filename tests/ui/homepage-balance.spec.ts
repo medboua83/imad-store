@@ -45,8 +45,10 @@ for (const width of [320, 390, 1440]) {
         await expect(hero.locator(".hero-product-link")).toHaveAccessibleName("اكتشفوا هذا المنتج");
         await expect(hero.locator(".hero-product-link")).toBeInViewport({ ratio: 1 });
         await expect(cta).toHaveAccessibleName("شاهدوا المجموعة كاملة");
-        await expect(cta).toBeInViewport({ ratio: 1 });
-        expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        if (width >= 768) {
+            await expect(cta).toBeInViewport({ ratio: 1 });
+            expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        } else await expect(cta).toBeHidden();
         await expect(hero.locator("img")).toHaveCount(1);
         await expect(hero.locator(".hero-photo")).toHaveAttribute("src", /sac.webp/);
         await expect(hero.locator(".hero-photo")).toHaveCSS("object-fit", "contain");
@@ -62,7 +64,7 @@ for (const width of [320, 390, 1440]) {
         if (width < 768) expect(featuredY).toBeLessThan(900);
         await page.screenshot({ path: info.outputPath(`home-top-${width}.png`) });
         // Revisit an already active hash after scrolling away: this was broken with router links.
-        for (let repeat = 0; repeat < 2; repeat++) {
+        for (let repeat = 0; repeat < (width >= 768 ? 2 : 0); repeat++) {
             await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
             await cta.click();
             await expect
@@ -74,7 +76,7 @@ for (const width of [320, 390, 1440]) {
                 await collections.evaluate((el) => el.getBoundingClientRect().top),
             ).toBeGreaterThan(70);
         }
-        await expect(collections).toBeFocused();
+        if (width >= 768) await expect(collections).toBeFocused();
         const sections = collections.getByRole("navigation", { name: "أقسام المتجر" });
         await expect(sections.getByRole("link", { name: /Femme/ })).toHaveAttribute(
             "href",

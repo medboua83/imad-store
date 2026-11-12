@@ -1,6 +1,6 @@
 ## Alignement du portrait du bandeau — 12 novembre 2026
 
-Correction ciblée de la bande beige sous la photo : colonne portrait élargie à 400 px maximum sur tablette/ordinateur, espacements et taille du titre du panneau produit ajustés. Le format 3:4 et object-fit:contain gardent les photos originales entières ; aucune donnée marchande, réglage de rotation, dépendance ou migration modifié. Le mobile conserve sa disposition. Régression avec titre long, remise et six couleurs à 768/1024/1440 px ; recette mobile à 390 px. Résultats et publication à consigner sur DATA dans outputs/hero-photo-height-20261112.
+Correction ciblée de la bande beige sous la photo : colonne portrait élargie à 400 px maximum sur tablette/ordinateur, espacements et taille du titre du panneau produit ajustés. Le format 3:4 et object-fit:contain gardent les photos originales entières ; aucune donnée marchande, réglage de rotation, dépendance ou migration modifié. Sur mobile, les deux colonnes restent ; la signature répétée et le lien secondaire sont masqués, le nom est limité à deux lignes avec son texte complet conservé dans le document et la fiche, et la hauteur minimale artificielle est retirée. Prix, pastilles et bouton de découverte restent visibles. Régression avec titre long, remise et six couleurs à 768/1024/1440 px ; recette mobile à 390 px. Résultats et publication à consigner sur DATA dans outputs/hero-photo-height-20261112.
 
 ## Production vérifiée — PR139
 
