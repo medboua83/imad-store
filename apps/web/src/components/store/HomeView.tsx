@@ -129,11 +129,11 @@ export function HomeView({
             </section>
         ),
         featured: (
-            <section className="section-container featured-section">
+            <section className="section-container featured-section home-featured-products" aria-labelledby="home-featured-title">
                 <div className="section-heading">
                     <div>
                         <p className="eyebrow">اختاروا قطعتكم القادمة</p>
-                        <h2>{content.featuredTitle}</h2>
+                        <h2 id="home-featured-title">{content.featuredTitle}</h2>
                     </div>
                     <ViewLink prefetch={false} href="/shop" className="text-link">
                         كل المنتجات <ArrowUpLeft size={18} aria-hidden="true" />
