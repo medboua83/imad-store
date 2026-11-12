@@ -408,6 +408,9 @@
 }
 .store-shell .storefront-home .hero-visual {
   min-height: 0;
+  /* Resolve against the grid row after text layout, rather than leaving a
+     separate fixed-height box above an exposed strip of the parent background. */
+  height: 100%;
   aspect-ratio: 3 / 4;
   background: radial-gradient(ellipse at center, #fff8e8, #e8dcc4);
 }
@@ -649,7 +652,8 @@
   }
   /* The page header and category section already provide brand/collection navigation.
      Keep the narrow portrait row focused on this product and its discovery action. */
-  .hero-showcase-copy :is(.hero-eyebrow, .hero-collection-link),
+  .store-shell .storefront-home .hero-showcase-copy .hero-eyebrow,
+  .hero-showcase-copy .hero-collection-link,
   .hero-showcase-copy .hero-colors-label {
     display: none;
   }
@@ -686,6 +690,10 @@
   }
   .hero-color-swatch {
     padding: 2px;
+    font-size: 10px;
+  }
+  .hero-showcase-copy .hero-product-link svg {
+    display: none;
   }
   .hero-color-swatch i {
     width: 12px;
