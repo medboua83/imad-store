@@ -1,5 +1,6 @@
 /* Keep the original catalogue and photos; shorten the path to the product grid. */
 .catalog-tools-row {
+    scroll-margin-block-start: calc(var(--store-header-offset, 110px) + 12px);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -85,7 +86,7 @@
     .refined-shop .shop-collection-photo { flex-basis: 60px; }
     .store-shell .shop-navigation-rails > .catalog-sections { margin-bottom: 6px; gap: 6px; }
     .store-shell .shop-navigation-rails > .catalog-sections a { padding-inline: 12px; font-size: 13px; }
-    .store-shell .shop-navigation-rails > .catalog-sections small { display: none; }
+    .store-shell .shop-navigation-rails > .catalog-sections small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .refined-shop .shop-category-rail { padding-bottom: 4px; }
     .catalog-tools-row { flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
     .catalog-filter-trigger { padding-inline: 10px; gap: 6px; font-size: 12px; }

@@ -31,7 +31,7 @@ export function CatalogFilters({ children, count, initialOpen }: {
     return (
         <div className="catalog-filter-panel">
             <button ref={trigger} type="button" className="catalog-filter-trigger"
-                aria-haspopup="dialog" aria-expanded={open} aria-controls="catalog-search"
+                aria-label="البحث والفلاتر" aria-haspopup="dialog" aria-expanded={open} aria-controls="catalog-search"
                 onClick={show}>
                 <SlidersHorizontal size={18} aria-hidden="true" />
                 البحث والفلاتر

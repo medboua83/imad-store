@@ -181,7 +181,7 @@ export default async function ShopPage({
                     })}
                 </nav>
             </div>
-            <div className="catalog-tools-row">
+            <div id="catalog-results" className="catalog-tools-row">
             <CatalogFilters key={JSON.stringify(raw)} count={active.length}
                 initialOpen={value("filters") === "open" || invalid}>
                 <form
@@ -325,7 +325,7 @@ export default async function ShopPage({
                 </form>
             </CatalogFilters>
             {result && (
-                    <div id="catalog-results" className="catalog-results-heading">
+                    <div className="catalog-results-heading">
                         <div>
                             <h2>{category ? "المنتجات" : section?.nameAr || "كل القطع"}</h2>
                             <p role="status">
