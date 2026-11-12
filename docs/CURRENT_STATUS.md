@@ -1,4 +1,18 @@
+## Validation locale des catégories — 12 novembre 2026
+
+- Compilation Next et lint réussis (un avertissement préexistant dans commerce-tab).
+- 32 tests navigateur réussis : 320/390/1440 px, défilement RTL/LTR, toucher natif, pause/reprise, onglet masqué, hors écran, animations réduites, liens et filtres Femme/Homme, aperçu du dashboard et bandeau existant.
+- Vérifications GitHub et publication de ce lot encore en attente au moment de cette révision. Photos et données marchandes inchangées.
+
 # Current Status — 2026-11-08
+
+## Catégories compactes et accès Femme/Homme — candidat du 12 novembre 2026
+
+Les photos et leurs sources existantes sont conservées. Le nom passe sous chaque carré à bordure dorée ; cinq catégories peuvent tenir sur une rangée sur ordinateur. Le mobile présente trois liens complets et une partie du suivant, avec glissement natif et commandes accessibles. Déplacement automatique toutes les six secondes seulement en cas de débordement, avec retour progressif aux limites sans clones. Pause persistante au toucher, au clavier et après action manuelle, pause au survol, hors écran et onglet caché ; réduction des mouvements et aperçu privé sans lecture automatique. Les liens ne changent pas et un accès Tout voir mène à la boutique. Femme/Homme ont un fond brun contrasté, deux largeurs identiques sur l’accueil, aucune présélection et un état doré dans la section ouverte. Aucun changement de photos, produits, stocks, contenu enregistré, dépendance ni migration. Tests et publication de la source exacte à consigner.
+
+## Production vérifiée — PR135, 12 novembre 2026
+
+Source 7cc8fa548de14faaf91c7892509ba67f5e641cda publiée via InstaBox, arbre identique à Master a935abe2537c35431107c3591b452baa033db8bc. 29 UI ciblés, 301 UI GitHub et 129 tests serveur réussis ; runtime et audit des dépendances réussis. Sauvegarde privée vérifiée, service actif, quatre fichiers conformes sur le domaine HTTPS avec validation TLS normale, quatre comparaisons publiques inchangées. Rendu réel à 320/390/1440 : titre/prix/couleurs/photo synchronisés, lecture automatique et commandes masquées, CTA vers la bonne fiche. Photos conservées, aucune commande créée ni donnée commerciale réenregistrée. Rapports sur DATA dans outputs/hero-product-showcase-20261112.
 
 ## Vitrine du produit dans le bandeau — candidat du 12 novembre 2026
 

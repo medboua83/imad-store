@@ -87,25 +87,31 @@ for (const width of [320, 390, 1440]) {
         for (const section of await sections.getByRole("link").all()) {
             const box = await section.boundingBox();
             expect(box!.height).toBeGreaterThanOrEqual(44);
-            expect(box!.width).toBeLessThan(130);
+            expect(box!.width).toBeGreaterThanOrEqual(110);
+            await expect(section).not.toHaveAttribute("aria-current", "page");
         }
         const categoryGrid = collections.getByRole("navigation", { name: "فئات المتجر" });
-        await expect(categoryGrid).toHaveCSS("--collection-columns", width < 768 ? "2" : "4");
+        if (width < 768) await expect(categoryGrid).toHaveCSS("overflow-x", "auto");
         const categoryLinks = categoryGrid.getByRole("link");
-        await expect(categoryLinks).toHaveCount(2);
-        await expect(categoryLinks.last()).toHaveAttribute("href", "/shop?category=manteau-femme");
+        await expect(categoryLinks).toHaveCount(5);
+        await expect(
+            categoryGrid.getByRole("link", { name: "معاطف نسائية", exact: true }),
+        ).toHaveAttribute("href", "/shop?category=manteau-femme");
         for (const link of await categoryLinks.all()) {
             const photo = link.locator(".collection-photo");
             await expect(photo).toHaveCSS("aspect-ratio", "1 / 1");
             await expect(photo.locator("img")).toHaveCSS("object-fit", "cover");
             const bounds = await link.boundingBox();
             const image = await photo.boundingBox();
-            expect(image!.width).toBe(width < 360 ? 48 : 56);
+            if (width < 768) {
+                expect(image!.width).toBeGreaterThanOrEqual(64);
+                expect(image!.width).toBeLessThanOrEqual(82);
+            } else expect(image!.width).toBe(96);
             expect(image!.height).toBe(image!.width);
-            expect(bounds!.height).toBeLessThanOrEqual(76);
+            expect(bounds!.height).toBeLessThanOrEqual(160);
             expect(image!.x + image!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width);
             const label = await link.locator(".collection-name").boundingBox();
-            expect(label!.x + label!.width).toBeLessThanOrEqual(image!.x);
+            expect(label!.y).toBeGreaterThanOrEqual(image!.y + image!.height + 5);
         }
         if (width > 767) {
             for (const selector of [".collection-grid", ".featured-section .catalog-grid"]) {

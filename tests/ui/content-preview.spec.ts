@@ -91,6 +91,7 @@ for (const width of [390, 1440]) {
         ).toBeVisible();
         await expect(preview.locator(".catalog-card")).toContainText("منتج المعاينة");
         await expect(preview.locator(".hero-carousel-controls")).toHaveCount(0);
+        await expect(preview.locator(".home-category-rail")).toHaveAttribute("data-rotation-state", width < 768 ? "no-overflow" : "desktop");
         await expect(
             preview.getByText("مجموعتنا الجديدة قيد التحضير.", { exact: true }),
         ).toHaveCount(0);

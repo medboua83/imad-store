@@ -1,10 +1,17 @@
 # Roadmap — stabilité, performance et facilité d’utilisation
 
+## Catégories et boutons de section — 12 novembre 2026
+
+- [x] Conserver les photos, placer les noms dessous et aligner cinq catégories sur ordinateur.
+- [x] Ajouter glissement natif mobile, lecture conditionnelle et commandes accessibles sans clones.
+- [x] Contraster Femme/Homme et conserver l’état doré seulement dans la section ouverte.
+- [ ] Tester mobile/ordinateur, pause/reprise, toucher et liens, puis publier le candidat exact.
+
 ## Vitrine du bandeau — 12 novembre 2026
 
 - [x] Regrouper titre, prix, couleurs et lien du produit dans le panneau brun.
 - [x] Préserver les photos, campagnes, brouillons, prix et variantes d’origine.
-- [ ] Valider les formats mobile/ordinateur et les transitions, puis publier la source exacte.
+- [x] PR135 publiée : 301 UI/129 serveur, fichiers HTTPS, données et recette réelle vérifiés.
 
 ## Bandeau éditorial — 12 novembre 2026
 
