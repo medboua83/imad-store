@@ -267,6 +267,7 @@ export interface StoreSettings {
     metaPixelEnabled?: boolean;
     metaPixelId?: string | null;
     metaPixelMadPerUsd?: number | null;
+    metaDomainVerification?: string | null;
     codEnabled: boolean;
     directSiteConfirmation?: boolean;
     whatsappAssistanceAvailable?: boolean;

@@ -261,6 +261,7 @@ model StoreSettings {
   metaPixelEnabled Boolean @default(false)
   metaPixelId      String?
   metaPixelMadPerUsd Float?
+  metaDomainVerification String?
 
   @@map("store_settings")
 }

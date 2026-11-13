@@ -170,3 +170,5 @@ export * from "./shipping-address";
 export * from "./quantity-pricing";
 export * from "./catalog-sections";
 export * from "./product-color-photos";
+
+export * from "./meta-domain-verification";

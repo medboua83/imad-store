@@ -38,6 +38,7 @@ const result = spawnSync(
         "tests/share-metadata.test.ts",
         "tests/olivraison-api.test.ts",
         "tests/meta-pixel.test.ts",
+        "tests/meta-domain-verification.test.ts",
         "tests/analytics-client.test.ts",
         "tests/category-visuals.test.ts",
         "tests/store-template.test.ts",

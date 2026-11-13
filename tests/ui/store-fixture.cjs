@@ -68,8 +68,23 @@ const extraHomeCategories = ["alpha", "beta", "gamma"].map((name, i) => ({
   productImages: ["/images/catalogue-test/abaya.webp"],
 }));
 const catalogueAttempts = new Map();
+let metaDomainVerification = null;
 createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
+  // Disposable UI fixture state only; never included in the application server.
+  if (req.url === "/__fixture/meta-domain" && req.method === "PUT") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const value = JSON.parse(body).value;
+        if (value !== null && (typeof value !== "string" || value.length > 512)) throw new Error();
+        metaDomainVerification = value;
+        res.end(JSON.stringify({success:true}));
+      } catch { res.writeHead(400); res.end("{}"); }
+    });
+    return;
+  }
   if (req.method !== "GET") {
     res.writeHead(405);
     return res.end("{}");
@@ -78,7 +93,7 @@ createServer((req, res) => {
   const pathname = url.pathname;
   let data;
   if (pathname === "/api/settings")
-    data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false };
+    data = { shippingCost: 45, freeShippingMin: 500, codEnabled: true, metaPixelEnabled: false, metaDomainVerification };
   else if (pathname === "/api/content") data = defaultSiteContent;
   else if (pathname === "/api/categories") data = [category, coatCategory, ...extraHomeCategories, {...category, id:"111111111111111111111112", slug:"empty-category", nameAr:"مجموعة فارغة", nameFr:"Collection vide", publishedCount:0}];
   else if (pathname === "/api/products") {

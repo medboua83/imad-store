@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import {
     defaultStoreContacts,
+    normalizeMetaDomainVerification,
     normalizeStoreContact,
     storeContacts,
     type StoreContactKey,
@@ -19,6 +20,7 @@ export async function readSettings() {
         directSiteConfirmation: false,
         metaPixelEnabled: false,
         metaPixelId: null,
+        metaDomainVerification: null,
     };
     const integration = await prisma.deskcommIntegration.findUnique({
         where: { id: "deskcomm" },
@@ -61,6 +63,9 @@ const contactField = (key: StoreContactKey) =>
         .transform((value) => normalizeStoreContact(key, value)!)
         .optional();
 const settingsSchema = z.object({
+    metaDomainVerification: z.string().max(512).nullable()
+        .refine((value) => normalizeMetaDomainVerification(value) !== null, "Code de vérification Meta invalide")
+        .transform((value) => normalizeMetaDomainVerification(value) || null).optional(),
     whatsappUrl: contactField("whatsappUrl"),
     instagramUrl: contactField("instagramUrl"),
     facebookUrl: contactField("facebookUrl"),

@@ -10,6 +10,7 @@ const destinations = [
     { id: "carrier-settings", label: "Société de livraison", icon: Truck },
     { id: "shipping-settings", label: "Règles de livraison", icon: Truck, needsRules: true },
     { id: "return-settings", label: "Délais et retours", icon: RotateCcw, needsRules: true },
+    { id: "meta-domain-settings", label: "Vérification du domaine Meta", icon: Share2 },
     { id: "pixel-settings", label: "Meta Pixel", icon: CreditCard, needsRules: true },
 ];
 
