@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 for (const width of [390, 1440]) {
-    test(`Meta domain setting edits independently, retries and clears at ${width}px`, async ({ page }) => {
+    test(`Meta domain setting edits independently, retries and clears at ${width}px`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 1000 });
         await page.addInitScript(() => localStorage.setItem("adminToken", "isolated-meta-domain"));
         let settings = { shippingCost: 30, freeShippingMin: 500, codEnabled: true,
@@ -37,6 +37,8 @@ for (const width of [390, 1440]) {
         await section.getByRole("button", { name: "Enregistrer le code Meta", exact: true }).click();
         await expect(section.getByText("Code Meta enregistré. La validation finale se fait dans Meta.")).toBeVisible();
         expect(writes).toEqual([{ metaDomainVerification: code }, { metaDomainVerification: code }]);
+        await field.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: info.outputPath(`meta-domain-fr-${width}.png`) });
         await page.reload();
         await expect(field).toHaveValue(code);
         await field.fill("Other_Meta_Domain_1234567890");
@@ -49,10 +51,11 @@ for (const width of [390, 1440]) {
         expect(settings.metaPixelId).toBe("123456789");
         expect(settings.metaPixelEnabled).toBe(true);
         expect(settings.shippingCost).toBe(30);
-        await page.getByRole("button", { name: "العربية", exact: true }).click();
+        await page.getByLabel("Langue de l’administration").selectOption("ar");
         await expect(section.getByRole("heading", { name: "التحقق من نطاق المتجر لدى Meta" })).toBeVisible();
         await expect(section.getByLabel("الرمز أو وسم التحقق المقدم من Meta", { exact: true })).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await page.screenshot({ path: info.outputPath(`meta-domain-ar-${width}.png`) });
     });
 }
 
