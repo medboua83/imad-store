@@ -1,3 +1,11 @@
+## Vérification du domaine Meta configurable — 13 novembre 2026
+
+Rubrique indépendante dans Réglages, en français/arabe, acceptant code ou balise Meta stricte et n'envoyant que metaDomainVerification. Chargement, brouillon conservé après erreur, contrôle d'accusé de réception et suppression par champ vide. Le Pixel et les autres réglages restent séparés. Une colonne PostgreSQL nullable est ajoutée par migration additive ; aucun code réel n'est prérempli. Balise React rendue dans le head serveur, sans script ni validation de domaine automatique ; le propriétaire termine dans Meta. Contrôles API, HTML brut avec/sans crawler, modification/effacement et UI mobile/ordinateur à consigner. Dossier DATA : outputs/meta-domain-settings-20261113.
+
+## Production vérifiée — PR140, 12 novembre 2026
+
+Source 08a8cac6a7ebb049f674d62a3ee84aee47649b27 publiée, arbre identique à Master f86b0e2c4e5ae203ac0bb0e7f872618c5e5deaa3. 329 UI/130 serveur GitHub, sauvegarde privée, 29 fichiers HTTPS conformes et quatre ensembles publics inchangés. Recette publique ordinateur/mobile : cadre aligné, originaux entiers. Rapports : outputs/hero-photo-height-20261112.
+
 ## Alignement du portrait du bandeau — 12 novembre 2026
 
 Correction ciblée de la bande beige sous la photo : colonne portrait élargie à 400 px maximum sur tablette/ordinateur, espacements et taille du titre du panneau produit ajustés. Le format 3:4 et object-fit:contain gardent les photos originales entières ; aucune donnée marchande, réglage de rotation, dépendance ou migration modifié. Sur mobile, les deux colonnes restent ; la signature répétée et le lien secondaire sont masqués, le nom est limité à deux lignes avec son texte complet conservé dans le document et la fiche, et la hauteur minimale artificielle est retirée. Prix, pastilles et bouton de découverte restent visibles. Régression avec titre long, remise et six couleurs à 768/1024/1440 px ; recette mobile à 390 px. Résultats et publication à consigner sur DATA dans outputs/hero-photo-height-20261112.

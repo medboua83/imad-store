@@ -3,6 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { OlivraisonSettings } from "./olivraison-settings";
 import { OrderSettings } from "./order-settings";
+import { MetaDomainSettings } from "./meta-domain-settings";
 import { SocialSettings } from "./social-settings";
 import { SettingsNavigation } from "./settings-navigation";
 import { useEffect, useRef, useState } from "react";
@@ -73,6 +74,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
         <section className="admin-panel">
             <SettingsNavigation rulesReady={ready} />
             <SocialSettings />
+            <MetaDomainSettings />
             <OrderSettings />
             <OlivraisonSettings active={active} />
             <h2>{t("Livraison et suivi publicitaire")}</h2>

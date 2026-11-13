@@ -18,7 +18,8 @@ import "./catalog-product-polish.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 
-import { requestSiteOrigin } from "@/lib/server-api";
+import { normalizeMetaDomainVerification } from "@imad-store/shared";
+import { publicSettings, requestSiteOrigin } from "@/lib/server-api";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -29,10 +30,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Await before producing <head>: ownership crawlers must not require client JavaScript
+  // or streamed body metadata. This optional feature must not block an unavailable store.
+  const settings = await publicSettings().catch(() => null);
+  const verification = normalizeMetaDomainVerification(settings?.metaDomainVerification) || "";
   return (
     <html lang="ar" dir="rtl" data-scroll-behavior="smooth">
       <head>
+        {verification && <meta name="facebook-domain-verification" content={verification} />}
         <link
           rel="preload"
           href="/fonts/900a7f3430df5f05.woff2"

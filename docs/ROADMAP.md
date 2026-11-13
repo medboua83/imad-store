@@ -1,7 +1,12 @@
+## Réglages de vérification Meta — 13 novembre 2026
+
+- [x] Préparer champ indépendant, validation stricte, traduction et rendu head serveur.
+- [ ] Vérifier migration additive, tests, publication et réglages réels inchangés.
+
 ## Bandeau sans bande vide — 12 novembre 2026
 
 - [x] Rééquilibrer portrait et texte en préservant les originaux.
-- [ ] Valider les titres longs et le rendu réel mobile/ordinateur puis publier.
+- [x] PR140 publiée et vérifiée : 329 UI/130 serveur, sauvegarde, HTTPS et recette responsive.
 
 ## Catégories et fiches produit — 12 novembre 2026
 

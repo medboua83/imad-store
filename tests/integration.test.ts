@@ -2414,3 +2414,36 @@ test("Hero configuration rejects duplicate, excessive and foreign product refere
     assert.equal((await request(app).get("/api/content/admin").set(admin())).body.data.revision, initial.revision);
     assert.equal((await request(app).post("/api/content/draft").send({ expectedRevision: initial.revision, content: initial.draft })).status, 401);
 });
+
+
+test("Meta domain verification is an admin-only partial setting, normalized and removable", async () => {
+    const initial = await prisma.storeSettings.findUnique({ where: { id: "settings" } });
+    try {
+        const before = (await request(app).get("/api/settings")).body.data;
+        assert.equal((await request(app).put("/api/settings").send({ metaDomainVerification: "fixture_token" })).status, 401);
+        const code = "Fixture_Domain_1234567890";
+        const saved = await request(app).put("/api/settings").set(admin()).send({
+            metaDomainVerification: `<meta name="facebook-domain-verification" content="${code}" />`,
+        });
+        assert.equal(saved.status, 200);
+        const read = (await request(app).get("/api/settings")).body.data;
+        assert.equal(read.metaDomainVerification, code);
+        for (const key of ["shippingCost", "freeShippingMin", "metaPixelId", "metaPixelEnabled", "metaPixelMadPerUsd", "whatsappUrl"])
+            assert.equal(read[key], before[key]);
+        await request(app).put("/api/settings").set(admin()).send({ shippingCost: 31 }).expect(200);
+        assert.equal((await request(app).get("/api/settings")).body.data.metaDomainVerification, code);
+        const next = "Other_Domain_0987654321";
+        await request(app).put("/api/settings").set(admin()).send({ metaDomainVerification: next }).expect(200);
+        for (const value of ["<script>alert(1)</script>", "a".repeat(129), `<meta name="facebook-domain-verification" content="bad" onload="bad">`])
+            await request(app).put("/api/settings").set(admin()).send({ metaDomainVerification: value }).expect(400);
+        assert.equal((await request(app).get("/api/settings")).body.data.metaDomainVerification, next);
+        await request(app).put("/api/settings").set(admin()).send({ metaDomainVerification: " " }).expect(200);
+        assert.equal((await request(app).get("/api/settings")).body.data.metaDomainVerification, null);
+        await request(app).put("/api/settings").set(admin()).send({ metaDomainVerification: code }).expect(200);
+        await request(app).put("/api/settings").set(admin()).send({ metaDomainVerification: null }).expect(200);
+        assert.equal((await request(app).get("/api/settings")).body.data.metaDomainVerification, null);
+    } finally {
+        if (initial) { const { id, ...data } = initial; await prisma.storeSettings.update({ where: { id }, data }); }
+        else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});

@@ -1908,3 +1908,14 @@
     .admin-settings-shortcuts { display: none; }
     .admin-settings-navigation > select { display: block; width: 100%; min-width: 0; min-height: 48px; }
 }
+
+/* A verification tag stays readable inside narrow admin panels. */
+#meta-domain-settings :is(fieldset, textarea) { min-width: 0; max-width: 100%; }
+#meta-domain-settings :is(p, code) { overflow-wrap: anywhere; }
+#meta-domain-settings textarea {
+    width: 100%; box-sizing: border-box; resize: vertical;
+    padding: 12px; border: 1px solid var(--admin-line); border-radius: 8px;
+    background: var(--admin-surface, #fff); color: var(--admin-text, #30291f);
+    font: inherit; line-height: 1.6;
+}
+#meta-domain-settings textarea:focus-visible { outline: 2px solid #94702e; outline-offset: 2px; }
