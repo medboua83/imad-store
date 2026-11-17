@@ -58,7 +58,10 @@ export default function CheckoutPage() {
     const submissionError = useRef<HTMLParagraphElement>(null);
     const [submissionErrorVersion, setSubmissionErrorVersion] = useState(0);
     useEffect(() => {
-        if (submissionErrorVersion > 0) submissionError.current?.focus();
+        if (submissionErrorVersion > 0 && submissionError.current) {
+            submissionError.current.focus({ preventScroll: true });
+            submissionError.current.scrollIntoView({ block: "start", behavior: "instant" });
+        }
     }, [submissionErrorVersion]);
     function announceSubmissionError(message: string) {
         setError(message);
