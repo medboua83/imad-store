@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import {
     catalogSectionKeys,
+    catalogColorValues,
     catalogSections,
     isAmbiguousSize,
     MAX_PRODUCT_PHOTOS,
@@ -108,7 +109,7 @@ async function list(queryInput: unknown, admin: boolean) {
             status: z.enum(["ACTIVE", "DRAFT", "ARCHIVED"]).optional(),
             search: z.string().trim().max(120).optional(),
             size: z.string().max(40).refine(v => !isAmbiguousSize(v), "Une seule taille par filtre").optional(),
-            color: z.string().min(1).max(80).optional(),
+            color: z.string().min(1).max(806).refine(value => !!catalogColorValues(value), "Filtre couleur invalide").optional(),
             includeFilters: z.enum(["0", "1"]).optional(),
             ids: z.string().max(199).transform(v => v.split(",")).pipe(z.array(objectIdSchema).min(1).max(8)).optional(),
             minPrice: z.coerce.number().min(0).max(1000000).optional(),
@@ -136,7 +137,11 @@ async function list(queryInput: unknown, admin: boolean) {
         where.variants = { some: { stock: { gt: 0 },
             // PostgreSQL case-insensitive matching uses ILIKE: escape wildcard characters.
             ...(query.size ? { size: { equals: literalLike(query.size), mode: "insensitive" } } : {}),
-            ...(query.color ? { color: { equals: literalLike(query.color), mode: "insensitive" } } : {}),
+            ...(query.color ? query.color.startsWith("group:")
+                ? { OR: catalogColorValues(query.color)!.map(color => ({
+                    color: { equals: literalLike(color), mode: "insensitive" },
+                })) }
+                : { color: { equals: literalLike(query.color), mode: "insensitive" } } : {}),
         } };
     if (query.minPrice !== undefined || query.maxPrice !== undefined)
         where.price = {

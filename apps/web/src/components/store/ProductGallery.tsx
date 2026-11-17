@@ -10,11 +10,12 @@ import {
     type TouchEvent,
 } from "react";
 import { trapDialogFocus } from "../layout/dialog-focus";
-export function ProductGallery({ images, name, selected, onSelect }: {
+export function ProductGallery({ images, name, selected, onSelect, notice }: {
     images: string[];
     name: string;
     selected?: string;
     onSelect: (image: string) => void;
+    notice?: string;
 }) {
     const [failed, setFailed] = useState<Set<string>>(() => new Set());
     const available = [...new Set(images.filter((src) => src && !failed.has(src)))];
@@ -28,7 +29,7 @@ export function ProductGallery({ images, name, selected, onSelect }: {
     const swipe = useRef<{ x: number; y: number } | null>(null);
     const thumbnails = useRef<HTMLDivElement>(null);
     const stage = useRef<HTMLDivElement>(null);
-    const src = available[active];
+    const src = selected && failed.has(selected) ? undefined : available[active];
     const resetHoverZoom = useCallback(() => {
         const frame = stage.current;
         if (!frame) return;
@@ -231,6 +232,7 @@ export function ProductGallery({ images, name, selected, onSelect }: {
                     </button>
                 )}
             </div>
+            {notice && <p className="gallery-color-notice" role="status">{notice}</p>}
             {available.length > 1 && (
                 <div className="gallery-tools">
                     <div

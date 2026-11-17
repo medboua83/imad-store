@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-for (const width of [390, 1440]) {
+for (const width of [1440]) {
     test(`Floating WhatsApp contact respects store navigation at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 844 });
         await page.goto("/");

@@ -1,3 +1,7 @@
+## Corrections de couleurs et contact mobile — 17 novembre 2026
+
+Le correctif source correspond aux fichiers applicatifs de la version publiée `priority-colours-20261117`, vérifiés par empreintes avant copie. Les associations photo-couleur existantes sont conservées, les images générales sont signalées, les groupes de teintes préservent chaque SKU et leur filtre est traité jusqu'aux cartes et à la fiche. WhatsApp quitte la superposition mobile pour la case contact du dock. Le test unitaire est inclus dans le lanceur d'intégration et les tests navigateur couvrent les trois régressions. Les archives, journaux et sauvegardes restent privés sur le VPS. Détails et limites : `docs/PRIORITY_COLOURS_2026-11-17.md`.
+
 ## Vérification du domaine Meta configurable — 13 novembre 2026
 
 Rubrique indépendante dans Réglages, en français/arabe, acceptant code ou balise Meta stricte et n'envoyant que metaDomainVerification. Chargement, brouillon conservé après erreur, contrôle d'accusé de réception et suppression par champ vide. Le Pixel et les autres réglages restent séparés. Une colonne PostgreSQL nullable est ajoutée par migration additive ; aucun code réel n'est prérempli. Balise React rendue dans le head serveur, sans script ni validation de domaine automatique ; le propriétaire termine dans Meta. Contrôles API, HTML brut avec/sans crawler, modification/effacement et UI mobile/ordinateur à consigner. Dossier DATA : outputs/meta-domain-settings-20261113.

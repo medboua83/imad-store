@@ -43,7 +43,7 @@ export default function StoreLayoutWrapper({ children }: { children: React.React
             <a className="skip-link" href="#main-content">
                 الانتقال إلى المحتوى
             </a>
-            <Navbar />
+            <Navbar whatsappUrl={contacts?.whatsappUrl} />
             <CartDrawer />
             <main id="main-content">{children}</main>
             {showWhatsApp && contacts?.whatsappUrl && (

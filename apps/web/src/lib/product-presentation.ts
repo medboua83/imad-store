@@ -63,16 +63,21 @@ export function sizeLabel(size?: string | null): string {
   if (key === "standard") return "قياسي";
   return /^(?:x{0,3}[sl]|m|[2-4]xl)$/i.test(key) ? key.toUpperCase() : (size || "").trim();
 }
-/** Keep distinct colour values, even when the merchant gave them the same name. */
+/** Group display labels only; each underlying colour/SKU remains unchanged. */
 export function distinctColorLabels(options: { value: string; label: string }[]) {
-  const totals = new Map<string, number>();
-  const seen = new Map<string, number>();
-  for (const option of options) totals.set(option.label, (totals.get(option.label) || 0) + 1);
-  return options.map(option => {
-    if ((totals.get(option.label) || 0) < 2) return option;
-    const number = (seen.get(option.label) || 0) + 1;
-    seen.set(option.label, number);
-    return { ...option, label: `${option.label} — خيار ${number}` };
+  const groups = new Map<string, { label: string; values: Set<string> }>();
+  for (const option of options) {
+    const label = option.label.normalize("NFKC").trim().replace(/\s+/g, " ").replace(/باج/g, "بيج");
+    const key = label.toLocaleLowerCase();
+    const group = groups.get(key) ?? { label, values: new Set<string>() };
+    group.values.add(option.value);
+    groups.set(key, group);
+  }
+  return [...groups.values()].flatMap(({ label, values }) => {
+    const entries = [...values].sort();
+    if (entries.length > 1 && entries.length <= 100 && entries.every(value => /^#[0-9a-f]{6}$/i.test(value)))
+      return [{ label, value: `group:${entries.join(",")}` }];
+    return entries.map(value => ({ value, label: entries.length > 1 ? `${label} (${value})` : label }));
   });
 }
 export function orderedSizes(variants: { size?: string | null }[]): string[] {

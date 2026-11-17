@@ -1,5 +1,12 @@
 export type ProductColorPhoto = { colorKey: string; image: string };
 
+/** Existing exact-colour links keep their meaning; groups are bounded hex unions. */
+export function catalogColorValues(value: string): string[] | undefined {
+    if (!value.startsWith("group:")) return value.length > 0 && value.length <= 80 ? [value] : undefined;
+    if (value.length > 806 || !/^group:#[0-9a-f]{6}(,#[0-9a-f]{6}){1,99}$/i.test(value)) return;
+    return [...new Set(value.slice(6).toLowerCase().split(","))];
+}
+
 type ProductColor = {
     color: string;
     colorNameFr: string;
