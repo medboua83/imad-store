@@ -47,4 +47,4 @@ jobs:
               run: |
                   IMAD_HOSTING_MODE=combined NEXT_PUBLIC_API_URL=/api npm run build
                   npm run test:hosted
-            - run: npm audit --audit-level=high
+            - run: npm audit --audit-level=low
