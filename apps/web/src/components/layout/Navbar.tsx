@@ -25,7 +25,6 @@ import { availableCatalogSections, publishedCategories } from "@/lib/catalog-nav
 import { CatalogSectionLinks } from "../store/CatalogSectionLinks";
 import { catalogSections } from "@imad-store/shared";
 import { StoreSearch } from "./StoreSearch";
-import { useStoreContacts } from "@/lib/use-store-contacts";
 import { SocialIcon } from "../store/StoreIcons";
 const dockLinks = [
     ["/", "الرئيسية", House],
@@ -37,8 +36,7 @@ const links = [
     ["/shop", "المتجر"],
     ["/contact", "تواصلوا معنا"],
 ];
-export function Navbar() {
-    const contacts = useStoreContacts();
+export function Navbar({ whatsappUrl }: { whatsappUrl?: string }) {
     const header = useRef<HTMLElement>(null);
     useEffect(() => {
         const element = header.current;
@@ -294,8 +292,8 @@ export function Navbar() {
             </header>
             {!path.startsWith("/products/") && !path.startsWith("/checkout") && (
                 <nav className="mobile-dock" aria-label="التنقل السريع">
-                    {dockLinks.map(([href, label, Icon]) => href === "/contact" && contacts?.whatsappUrl ? (
-                        <a key="whatsapp" className="mobile-dock-whatsapp" href={contacts.whatsappUrl}
+                    {dockLinks.map(([href, label, Icon]) => href === "/contact" && whatsappUrl ? (
+                        <a key="whatsapp" className="mobile-dock-whatsapp" href={whatsappUrl}
                             target="_blank" rel="noopener noreferrer" aria-label="مساعدة عبر واتساب — نافذة جديدة">
                             <SocialIcon network="WhatsApp" size={20} />
                             <span>واتساب</span>

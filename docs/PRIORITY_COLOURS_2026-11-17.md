@@ -21,4 +21,6 @@ npx playwright test tests/ui/priority-colour-fixes.spec.ts
 IMAD_HOSTING_MODE=standalone npx playwright test -c playwright.priority.config.ts tests/ui/priority-colour-fixes.spec.ts
 ```
 
+The first full CI run passed 333 browser scenarios and exposed four delivery-error regressions: a new settings-query observer in the mobile menu changed the retry timing used by the basket. The menu now receives the already-resolved WhatsApp URL from its layout instead of subscribing to settings again. Existing delivery-error assertions are retained. This follow-up changes only the two layout components beyond the initial deployed manifest and requires its own CI/deployment verification.
+
 No schema, merchant settings, product data, npm dependencies or lockfile changes are required. Missing photo-colour mappings still require a verified merchant association.
