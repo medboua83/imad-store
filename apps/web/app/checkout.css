@@ -1055,6 +1055,41 @@
     outline: 2px solid #9d762f;
     outline-offset: 3px;
 }
+.order-receipt-dialog {
+    margin: auto;
+    width: min(640px, calc(100vw - 24px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 1px solid #e3ddd3;
+    border-radius: 16px;
+    color: #30291d;
+    background: #fffefa;
+    text-align: start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.order-receipt-dialog::backdrop { background: #241e16aa; }
+.order-receipt-header { position: sticky; top: 0; z-index: 1; background: #fffefa; display: flex; align-items: center; gap: 12px; padding: 20px; border-bottom: 1px solid #e3ddd3; }
+.order-receipt-header > svg { color: #8b6b35; flex-shrink: 0; }
+.order-receipt-header h2 { font-size: 20px; margin: 0; }
+.order-receipt-header p { font-size: 13px; margin: 6px 0 0; }
+.order-receipt-close { margin-inline-start: auto; min-width: 44px; min-height: 44px; display: grid; place-items: center; flex-shrink: 0; }
+.order-receipt-body { padding: 20px; font-size: 14px; line-height: 1.8; }
+.order-receipt-body h3 { font-size: 16px; margin-block: 20px 8px; }
+.order-receipt-items { list-style: none; padding: 0; margin: 0; }
+.order-receipt-items li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-bottom: 1px solid #e9e4dc; padding-block: 16px; }
+.order-receipt-items li > div:nth-child(2) { flex: 1; min-width: 140px; overflow-wrap: anywhere; }
+.order-receipt-items li > strong { margin-inline-start: auto; white-space: nowrap; }
+.order-receipt-items p { margin-block: 2px; }
+.order-receipt-photo { position: relative; flex: 0 0 64px; width: 64px; height: 86px; overflow: hidden; border-radius: 6px; }
+.order-receipt-body address { font-style: normal; margin-block: 16px; overflow-wrap: anywhere; }
+.order-receipt-totals { margin-block: 20px; }
+.order-receipt-totals > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; }
+.order-receipt-totals dd { margin: 0; text-align: end; }
+.order-receipt-totals .order-receipt-shipping { border-block: 1px solid #e3ddd3; font-weight: 600; }
+.order-receipt-totals .order-receipt-total { background: #f4efe3; padding: 14px 10px; font-weight: 700; border-radius: 8px; }
+.order-receipt-body > .btn-primary { display: flex; justify-content: center; margin-top: 18px; }
+.checkout-success > .text-link { display: block; margin: 20px auto; }
 
 /* A short viewport needs one scroll surface, with the close control outside it. */
 @media (max-height: 600px) {

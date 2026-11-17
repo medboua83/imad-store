@@ -72,6 +72,13 @@ async function fixture(page: Page, direct = true, failOnce = false) {
             result.data = {
                 id: "444444444444444444444444",
                 totalAmount: body.expectedTotal,
+                shippingCost: settings.shippingCost,
+                street: body.customer.street,
+                city: body.customer.city,
+                items: [{ id: "receipt-line", quantity: 1, unitPrice: 100,
+                    product: { ...product, images: ["/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp"], colorPhotos: [{colorKey: "#000000|noir", image: "/images/catalogue-test/abaya.webp"}] },
+                    variant: product.variants[0],
+                }],
                 status: direct ? "CONFIRMED" : "PENDING",
                 confirmationMethod: direct ? "SITE" : null,
                 confirmedAt: direct ? "2026-10-22T08:00:00.000Z" : null,
@@ -194,6 +201,35 @@ test("delivery charges stay visible and a changed fee requires a new review befo
     await expect.poll(() => requests.length).toBe(1);
     expect(requests[0].body.expectedTotal).toBe(145);
 });
+
+for (const width of [320, 390, 1440]) {
+    test(`Final confirmation popup keeps saved products and delivery fees after clearing the basket at ${width}px`, async ({page}, info) => {
+        await page.setViewportSize({width, height: 844});
+        const {requests} = await fixture(page, false);
+        await fillCheckout(page);
+        await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+        expect(requests).toHaveLength(0);
+        await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+        const popup = page.getByRole("dialog", {name: "وصلنا طلبكم، شكراً لكم."});
+        await expect(popup).toBeVisible();
+        await expect(popup).toContainText("منتج تجريبي");
+        await expect(popup).toContainText("أسود · 42");
+        await expect(popup).toContainText("TEST-UI");
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
+        await expect(popup.locator(".order-receipt-total")).toContainText("130.00 MAD");
+        await expect(popup.locator(".order-receipt-items img")).toHaveAttribute("src", /abaya\.webp/);
+        await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items.length)).toBe(0);
+        expect(await popup.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        await page.screenshot({path: info.outputPath(`confirmation-popup-${width}.png`)});
+        await page.keyboard.press("Escape");
+        await expect(popup).not.toBeVisible();
+        const reopen = page.getByRole("button", {name: "عرض تفاصيل الطلب", exact: true});
+        await expect(reopen).toBeFocused();
+        await reopen.click();
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
+        expect(requests).toHaveLength(1);
+    });
+}
 for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
     test(`Checkout submits the validated phone without separators: ${phone}`, async ({ page }) => {
         const { requests } = await fixture(page, false);

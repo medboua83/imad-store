@@ -2,6 +2,7 @@
 import { CheckoutCityInput } from "./city-input";
 import { checkoutPhoneDigits, formatCheckoutPhone } from "./phone-input";
 import { CheckoutReview } from "@/components/store/CheckoutReview";
+import { OrderReceipt } from "@/components/store/OrderReceipt";
 import { metaPurchase } from "@/lib/meta-pixel";
 import {
     shippingFee,
@@ -13,13 +14,12 @@ import {
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart.store";
-import { createOrder } from "@/lib/api";
+import { createOrder, type AdminOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
 import {
     ArrowLeft,
     ArrowRight,
     Check,
-    CheckCircle2,
     ChevronDown,
     PackageCheck,
     ShoppingBag,
@@ -76,11 +76,10 @@ export default function CheckoutPage() {
         desktop.addEventListener("change", update);
         return () => desktop.removeEventListener("change", update);
     }, []);
-    const [orderId, setOrderId] = useState("");
+    const [receipt, setReceipt] = useState<AdminOrder | null>(null);
     const key = useRef("");
     const submissionLock = useRef(false);
     const [review, setReview] = useState<string | null>(null);
-    const [confirmedOnSite, setConfirmedOnSite] = useState(false);
     const direct = shipping.settings?.directSiteConfirmation === true;
     function reviewSignature(cart = items, amount = shipping.total) {
         return JSON.stringify({
@@ -199,8 +198,7 @@ export default function CheckoutPage() {
             );
             metaPurchase(order.id, order.totalAmount);
             if (!order.id) throw new Error("Order receipt unavailable");
-            setOrderId(order.id);
-            setConfirmedOnSite(order.confirmationMethod === "SITE");
+            setReceipt(order);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });
         } catch (failure) {
@@ -356,27 +354,7 @@ export default function CheckoutPage() {
             </div>
         );
     }
-    if (orderId)
-        return (
-            <section className="page-shell checkout-success" role="status">
-                <span className="checkout-success-icon">
-                    <CheckCircle2 size={38} aria-hidden="true" />
-                </span>
-                <p className="eyebrow">IMAD MODE</p>
-                <h1>وصلنا طلبكم، شكراً لكم.</h1>
-                <p>
-                    رقم الطلب <strong dir="ltr">{orderId.slice(-8).toUpperCase()}</strong>
-                </p>
-                <p>
-                    {confirmedOnSite
-                        ? "تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."
-                        : "سيتواصل معكم فريقنا لتأكيد التفاصيل."}
-                </p>
-                <Link href="/shop" className="btn-primary">
-                    العودة إلى المتجر <ArrowLeft size={18} aria-hidden="true" />
-                </Link>
-            </section>
-        );
+    if (receipt) return <OrderReceipt order={receipt} />;
     return (
         <section className={`page-shell checkout-page checkout-workspace${reviewReady ? " checkout-review-step" : ""}`}>
             <Link href="/shop" className="checkout-back">

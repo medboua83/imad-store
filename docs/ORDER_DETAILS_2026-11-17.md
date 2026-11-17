@@ -18,6 +18,10 @@ Dashboard réel authentifié inspecté en lecture seule : taille/couleur déjà 
 
 Validation ciblée : 54 tests navigateur à 320/390/1440 px, compilation et types réussis. Les tests de soumission existants suivent maintenant les deux actions distinctes réviser/confirmer ; les assertions de contenu, prix, absence de double écriture et conservation des informations sont conservées. Trois tests supplémentaires vérifient la photo chargée de la variante, le SKU, la taille/couleur et les montants admin sans écriture. QA visuelle et CI complète à consigner avant publication.
 
+## Confirmation après enregistrement
+
+Ajout demandé ensuite par l'utilisateur : popup de reçu après création réussie. Le reçu conserve la réponse serveur avant de vider le panier : produits, photos associées, taille/couleur, SKU, quantités, prix unitaires et totaux, adresse, frais enregistrés et montant total. Aucun recalcul depuis un panier vide ou des réglages modifiés après achat. Les données manquantes ne deviennent pas une livraison gratuite supposée. Fermeture Échap/bouton et réouverture sans nouvel envoi. Tests avec API fictive uniquement ; ne pas créer de commande réelle pour contrôler ce popup.
+
 ## Intégration précédente
 
 PR142 fusionnée dans Master au commit 0fecf9f8fe6f329aaa9eb86c9680a747bd790e61. Les 337 tests UI, 135 tests serveur et compilations passent. Le contrôle npm audit reste rouge pour des dépendances préexistantes, sans modification du verrou de dépendances par cette PR. Ne pas présenter la CI comme entièrement verte.
