@@ -3,7 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
 import { productVariantImages } from "@imad-store/shared";
 
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
 import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
@@ -11,6 +11,7 @@ import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
+import { orderWhatsAppLink } from "./order-whatsapp";
 const actionLabels: Record<string, string> = {
     CONFIRMED: "Confirmer",
     SHIPPED: "Marquer expédiée",
@@ -18,6 +19,9 @@ const actionLabels: Record<string, string> = {
     CANCELLED: "Annuler la commande",
 };
 const steps = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
+const subscribeOrigin = () => () => {};
+const browserOrigin = () => window.location.origin;
+const serverOrigin = () => "";
 export function OrdersTab({
     orders,
     total,
@@ -440,6 +444,8 @@ function OrderDetails({
     refresh: React.ReactNode;
 }) {
     const { t, locale } = useAdminLocale();
+    const origin = useSyncExternalStore(subscribeOrigin, browserOrigin, serverOrigin);
+    const whatsapp = origin ? orderWhatsAppLink(o, origin) : null;
     const amounts = orderAmounts(o),
         step = steps.indexOf(o.status);
     const address = [
@@ -506,6 +512,12 @@ function OrderDetails({
                             t("Téléphone non renseigné")}
                     </p>
                     {o.customerEmail && <p>{o.customerEmail}</p>}
+                    {whatsapp && (
+                        <p><a className="admin-button" href={whatsapp} target="_blank" rel="noreferrer">
+                            {t("Contacter sur WhatsApp")}
+                        </a></p>
+                    )}
+                    {whatsapp && <p className="admin-scope">{t("Récapitulatif et liens des photos préremplis. Vérifiez le message puis envoyez-le dans WhatsApp.")}</p>}
                     <address>
                         {address.length ? address.join(", ") : t("Adresse non renseignée")}
                     </address>
