@@ -41,7 +41,7 @@ for (const width of [320, 390, 1440]) {
     const phone = page.getByRole("textbox", { name: "رقم الهاتف", exact: true });
     const city = page.locator("#checkout-city");
     const address = page.getByRole("textbox", { name: "عنوان التوصيل", exact: true });
-    const submit = page.getByRole("button", { name: "تأكيد الطلب", exact: true });
+    const submit = page.getByRole("button", { name: "مراجعة الطلب", exact: true });
     await expect(page.locator(".checkout-field-error")).toHaveCount(0);
     await expect(submit).toBeEnabled();
     await submit.click();
@@ -77,7 +77,10 @@ for (const width of [320, 390, 1440]) {
     await name.fill("Client fictif");
     await expect(page.locator(".checkout-field-error")).toHaveCount(0);
     await submit.click();
+    expect(orders).toBe(0);
+    await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
     await expect.poll(() => orders).toBe(1);
+    await page.getByRole("button", { name: "تعديل المعلومات", exact: true }).click();
     await expect(name).toHaveValue("Client fictif");
     await expect(phone).toHaveValue("06 00 00 00 99");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

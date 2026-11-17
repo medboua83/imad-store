@@ -34,7 +34,7 @@ async function prepare(page: Page) {
         return route.abort("failed");
     });
     await page.goto("/checkout?stats_test=1");
-    await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeEnabled();
     return requests;
 }
 for (const width of [320, 390, 1440]) {
@@ -113,7 +113,8 @@ for (const width of [320, 390, 1440]) {
         await page
             .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
             .fill("Adresse fictive de test 1");
-        await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
         await expect.poll(() => requests.length).toBe(1);
         expect(requests[0].customer).toMatchObject({
             phone: "+212612345678",
@@ -121,6 +122,7 @@ for (const width of [320, 390, 1440]) {
             street: "Adresse fictive de test 1",
         });
         expect(requests[0].expectedTotal).toBe(230);
+        await page.getByRole("button", { name: "تعديل المعلومات", exact: true }).click();
         await expect(phone).toHaveValue("+212 6 12 34 56 78");
     });
     test(`Invalid input is explained on blur and clears while correcting at ${width}px`, async ({

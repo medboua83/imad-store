@@ -131,7 +131,7 @@ for (const width of [390, 1440]) {
             .fill("Adresse fictive de test 1");
         const city = page.locator("#checkout-city");
         await city.fill("Tanger");
-        await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeEnabled();
+        await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeEnabled();
         await city.fill("Rabat");
         await city.press("Enter");
         await expect(city).toBeFocused();
@@ -145,7 +145,8 @@ for (const width of [390, 1440]) {
         await city.fill("Tanger");
         await city.press("Enter");
         await expect(city).toBeFocused();
-        await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
         await expect.poll(() => orders).toBe(1);
     });
 }

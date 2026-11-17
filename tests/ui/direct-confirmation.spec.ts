@@ -164,7 +164,8 @@ test("standard checkout has no customer AI option", async ({ page }) => {
     const { requests } = await fixture(page, false);
     await fillCheckout(page, "+212600000099");
     await expect(page.locator('input[name="aiServiceConsent"]')).toHaveCount(0);
-    await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.confirmationMode).toBeUndefined();
@@ -174,7 +175,8 @@ for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
     test(`Checkout submits the validated phone without separators: ${phone}`, async ({ page }) => {
         const { requests } = await fixture(page, false);
         await fillCheckout(page, phone);
-        await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
         await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
         expect(requests).toHaveLength(1);
         expect(requests[0].body.customer.phone).toBe(
@@ -202,7 +204,8 @@ test("delivery fields use official cities and preserve local delivery phone", as
         path: info.outputPath("carrier-compatible-checkout.png"),
         fullPage: true,
     });
-    await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.customer).toMatchObject({

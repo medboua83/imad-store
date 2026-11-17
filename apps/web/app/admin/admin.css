@@ -1607,6 +1607,21 @@
   padding: 16px 0;
   border-bottom: 1px solid #e4e0da;
 }
+.admin-app .order-item-photo {
+  position: relative;
+  width: 80px;
+  height: 104px;
+  flex: 0 0 80px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f4f1ec;
+}
+.admin-app .order-item-description { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.admin-app .order-line-items li > strong { white-space: nowrap; }
+@media (max-width: 500px) {
+  .admin-app .order-line-items li { flex-wrap: wrap; gap: 12px; }
+  .admin-app .order-line-items li > strong { width: 100%; text-align: end; }
+}
 .admin-app .order-line-items p {
   margin: 5px 0;
   color: #7a6e59;

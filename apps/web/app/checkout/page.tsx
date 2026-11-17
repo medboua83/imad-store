@@ -86,7 +86,7 @@ export default function CheckoutPage() {
             items: cart.map((i) => [i.productId, i.variantId, i.price, i.quantity]),
         });
     }
-    const reviewReady = direct && review !== null && review === reviewSignature();
+    const reviewReady = review !== null && review === reviewSignature();
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
         let active = true;
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
                 );
                 return;
             }
-            if (direct && review !== reviewSignature(cart, confirmedTotal)) {
+            if (review !== reviewSignature(cart, confirmedTotal)) {
                 setReview(reviewSignature(cart, confirmedTotal));
                 requestAnimationFrame(() =>
                     document.getElementById("checkout-final-review")?.focus(),
@@ -375,7 +375,7 @@ export default function CheckoutPage() {
             </section>
         );
     return (
-        <section className="page-shell checkout-page checkout-workspace">
+        <section className={`page-shell checkout-page checkout-workspace${reviewReady ? " checkout-review-step" : ""}`}>
             <Link href="/shop" className="checkout-back">
                 <ArrowRight size={16} aria-hidden="true" />
                 العودة إلى المتجر
@@ -383,8 +383,8 @@ export default function CheckoutPage() {
             <div className="checkout-heading">
                 <div>
                     <p className="eyebrow">IMAD · الخطوة الأخيرة</p>
-                    <h1>طلبكم، بكل وضوح.</h1>
-                    <p>راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب.</p>
+                    <h1>{reviewReady ? "راجعوا الطلب والتوصيل." : "طلبكم، بكل وضوح."}</h1>
+                    <p>{reviewReady ? "تأكدوا من تفاصيل منتجاتكم ورسوم التوصيل قبل تأكيد الطلب." : "راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب."}</p>
                 </div>
                 <span className="checkout-cod-badge">
                     <PackageCheck size={20} aria-hidden="true" />
@@ -397,8 +397,11 @@ export default function CheckoutPage() {
                         <Check size={16} aria-hidden="true" />
                         الحقيبة
                     </li>
-                    <li aria-current="step">
-                        <span>2</span>التفاصيل والتأكيد
+                    <li aria-current={!reviewReady ? "step" : undefined}>
+                        <span>2</span>التفاصيل
+                    </li>
+                    <li aria-current={reviewReady ? "step" : undefined}>
+                        <span>3</span>مراجعة الطلب والتوصيل
                     </li>
                 </ol>
             )}
@@ -443,6 +446,7 @@ export default function CheckoutPage() {
                                 </button>
                             </p>
                         )}
+                        <div hidden={reviewReady}>
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
                                 <span>01</span>معلومات التواصل
@@ -498,20 +502,23 @@ export default function CheckoutPage() {
                             <Link href="/returns">الاستبدال والإرجاع</Link> و
                             <Link href="/privacy">الخصوصية</Link>.
                         </p>
+                        </div>
                         {reviewReady && (
                             <CheckoutReview
                                 customer={form}
                                 items={items}
                                 subtotal={total()}
                                 shipping={shipping}
+                                direct={direct}
                                 onEdit={() => {
                                     setReview(null);
-                                    document.getElementById("checkout-fullName")?.focus();
+                                    requestAnimationFrame(() => document.getElementById("checkout-fullName")?.focus());
                                 }}
                             />
                         )}
                         <div className="checkout-submit-bar">
                             <p>
+                                <span className="checkout-visible-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span>
                                 <span>المبلغ عند الاستلام</span>
                                 <strong dir="ltr">
                                     {invalidItems || shipping.error || shipping.total === null
@@ -523,11 +530,7 @@ export default function CheckoutPage() {
                             <button type="submit" className="btn-primary" disabled={blocked}>
                                 {busy
                                     ? "جارٍ التحقق والحفظ…"
-                                    : direct
-                                      ? reviewReady
-                                          ? "أؤكد طلبي"
-                                          : "مراجعة الطلب"
-                                      : "تأكيد الطلب"}
+                                    : reviewReady ? "أؤكد طلبي" : "مراجعة الطلب"}
                                 <ArrowLeft size={18} aria-hidden="true" />
                             </button>
                         </div>
@@ -535,7 +538,7 @@ export default function CheckoutPage() {
                             ستظهر لكم رسالة التأكيد بعد تسجيل الطلب بنجاح.
                         </p>
                     </form>
-                    <aside className="checkout-summary checkout-review" aria-label="ملخص الطلب">
+                    <aside hidden={reviewReady} className="checkout-summary checkout-review" aria-label="ملخص الطلب">
                         <details
                             className="checkout-order-disclosure"
                             open={summaryOpen}

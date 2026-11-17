@@ -114,14 +114,14 @@ for (const width of [390, 1440]) {
         .getByRole("textbox", { name: "عنوان التوصيل", exact: true })
         .fill("Rue fictive de test 1");
       const review = page.getByRole("region", { name: "راجعوا طلبكم قبل التأكيد النهائي" });
-      if (direct) {
+      {
         await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
         await expect(review).toBeVisible();
         expect(orders).toHaveLength(0);
       }
       renamed = true;
       const submit = page.getByRole("button", {
-        name: direct ? "أؤكد طلبي" : "تأكيد الطلب",
+        name: "أؤكد طلبي",
         exact: true,
       });
       await submit.click();
@@ -136,7 +136,7 @@ for (const width of [390, 1440]) {
         "اختبار واجهة فقط",
       );
       await page.screenshot({ path: info.outputPath(`checkout-detail-review-${width}.png`) });
-      if (direct) {
+      {
         await expect(review).toHaveCount(0);
         await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
         await expect(review).toContainText("أسود محدث");

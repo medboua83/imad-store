@@ -56,6 +56,6 @@ test("A compact summary never advertises a total when delivery settings fail", a
   await page.reload();
   await expect(page.locator(".checkout-compact-total")).toContainText("بانتظار رسوم التوصيل");
   await expect(page.locator(".checkout-compact-total")).not.toContainText("400.00");
-  await expect(page.getByRole("button", {name:"تأكيد الطلب",exact:true})).toBeDisabled();
+  await expect(page.getByRole("button", {name:"مراجعة الطلب",exact:true})).toBeDisabled();
   expect(orders()).toBe(0);
 });

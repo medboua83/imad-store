@@ -1,5 +1,7 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
+import { ProductPhoto } from "@/components/store/ProductPhoto";
+import { productVariantImages } from "@imad-store/shared";
 
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
@@ -525,7 +527,19 @@ function OrderDetails({
                     <ul className="order-line-items">
                         {o.items.map((i) => (
                             <li key={i.id}>
-                                <div>
+                                <div className="order-item-photo">
+                                    <ProductPhoto
+                                        images={productVariantImages(
+                                            { images: i.product?.images ?? [], colorPhotos: i.product?.colorPhotos },
+                                            i.variant ? { color: i.variant.color ?? "", colorNameFr: i.variant.colorNameFr ?? "", colorNameAr: i.variant.colorNameAr ?? "", colorNameEn: i.variant.colorNameEn ?? "" } : undefined,
+                                        )}
+                                        name={i.product?.nameFr || i.product?.nameAr || t("Article indisponible")}
+                                        sizes="80px"
+                                        className="object-contain"
+                                        thumbnail
+                                    />
+                                </div>
+                                <div className="order-item-description">
                                     <strong>
                                         {i.product?.nameFr ||
                                             i.product?.nameAr ||
@@ -534,12 +548,13 @@ function OrderDetails({
                                     </strong>
                                     <p>
                                         {[
-                                            i.variant?.colorNameFr || i.variant?.colorNameAr,
-                                            i.variant?.size,
+                                            (i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn) && `${t("Couleur")} : ${i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn}`,
+                                            i.variant?.size && `${t("Taille")} : ${i.variant.size}`,
                                         ]
                                             .filter(Boolean)
                                             .join(" · ") || t("Variante non renseignée")}
                                     </p>
+                                    {i.variant?.sku && <p>{t("Référence produit")} : <bdi>{i.variant.sku}</bdi></p>}
                                     <span>
                                         {i.quantity}
                                         {t(" × ")}

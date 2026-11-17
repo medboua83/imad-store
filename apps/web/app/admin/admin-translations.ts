@@ -1,4 +1,7 @@
 export const adminArabic: Record<string, string> = {
+    "Couleur": "اللون",
+    "Taille": "المقاس",
+    "Référence produit": "مرجع المنتج",
     "Vérification du domaine Meta": "التحقق من نطاق المتجر لدى Meta",
     "Ce code prouve le contrôle de votre domaine auprès de Meta. Il est indépendant du Pixel et du compte publicitaire.": "يُستخدم هذا الرمز لإثبات التحكم في نطاق المتجر لدى Meta. وهو مستقل عن البيكسل والحساب الإعلاني.",
     "Impossible de charger le code Meta. Réessayez.": "تعذر تحميل رمز Meta. يرجى المحاولة مجددًا.",

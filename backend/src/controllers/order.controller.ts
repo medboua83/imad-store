@@ -78,8 +78,8 @@ const createOrderSchema = z
 const ORDER_INCLUDE = {
     items: {
         include: {
-            product: { select: { nameFr: true, nameAr: true, nameEn: true, images: true } },
-            variant: { select: { colorNameFr: true, colorNameAr: true, size: true } },
+            product: { select: { nameFr: true, nameAr: true, nameEn: true, images: true, colorPhotos: true } },
+            variant: { select: { color: true, colorNameFr: true, colorNameAr: true, colorNameEn: true, size: true, sku: true } },
         },
     },
 };
