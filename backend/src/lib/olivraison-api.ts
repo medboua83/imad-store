@@ -62,14 +62,26 @@ export function packagePayload(order: any, city: string, pickupAddress: unknown)
     throw new CarrierError(
       "Commande hors paiement à la livraison en attente : vérifier le montant à encaisser.",
     );
+  const description = order.items.map((item: any) => {
+    const variant = item.variant;
+    const details = [
+      `${item.quantity} × ${item.product?.nameFr || item.product?.nameAr || item.product?.nameEn || "Produit"}`,
+      variant?.size?.trim() ? `Taille: ${variant.size.trim()}` : undefined,
+      (variant?.colorNameFr || variant?.colorNameAr || variant?.colorNameEn)?.trim()
+        ? `Couleur: ${(variant.colorNameFr || variant.colorNameAr || variant.colorNameEn).trim()}` : undefined,
+      variant?.sku?.trim() ? `Réf: ${variant.sku.trim()}` : undefined,
+      Number.isFinite(item.unitPrice) ? `Prix unitaire: ${item.unitPrice.toFixed(2)} MAD` : undefined,
+    ];
+    return details.filter(Boolean).join(" · ");
+  }).join("; ");
+  // Never silently drop a size, colour or an entire line from a parcel.
+  if (!description || description.length > 1000)
+    throw new CarrierError("Détail des articles incompatible avec Olivraison : vérifier la description du colis (1000 caractères maximum).");
   return {
     orderId: order.id,
     partnerTrackingID: order.id,
     price: Math.round(order.totalAmount * 100) / 100,
-    description: order.items
-      .map((i: any) => `${i.quantity} × ${i.product?.nameFr || "Produit"}`)
-      .join("; ")
-      .slice(0, 1000),
+    description,
     destination: { name, phone, city, streetAddress },
     pickup_address: pickupAddress,
     inventory: false,

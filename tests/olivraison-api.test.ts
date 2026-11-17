@@ -38,6 +38,19 @@ test("Olivraison requires an exact unambiguous carrier city, with explicit Arabi
   assert.equal(resolveCity("الرباط", [{ name: "Rabat" }], { الرباط: "Rabat" }), "Rabat");
   assert.throws(() => resolveCity("inconnue", [{ name: "Rabat" }], {}), CarrierError);
 });
+test("Olivraison includes every purchased size, colour, reference, quantity and saved unit price", () => {
+  const payload = packagePayload({ ...order, items: [
+    { quantity: 2, unitPrice: 100, product: { nameFr: "Abaya" }, variant: { size: "XL", colorNameFr: "Beige", sku: "AB-XL" } },
+    { quantity: 1, unitPrice: 50, product: { nameAr: "حقيبة" }, variant: { colorNameAr: "أسود" } },
+    { quantity: 1, product: { nameFr: "Accessoire" }, variant: {} },
+  ] }, "Rabat", {});
+  assert.equal(payload.description, "2 × Abaya · Taille: XL · Couleur: Beige · Réf: AB-XL · Prix unitaire: 100.00 MAD; 1 × حقيبة · Couleur: أسود · Prix unitaire: 50.00 MAD; 1 × Accessoire");
+  assert.equal(payload.price, order.totalAmount);
+});
+test("Olivraison never truncates purchased item details when the description is too long", () => {
+  assert.throws(() => packagePayload({ ...order, items: [{quantity: 1, product: {nameFr: "x".repeat(1001)}}] }, "Rabat", {}), CarrierError);
+  assert.throws(() => packagePayload({ ...order, items: [] }, "Rabat", {}), CarrierError);
+});
 test("Olivraison document links cannot escape the fixed HTTPS carrier origin", () => {
   assert.equal(documentUrl("/files/a.pdf"), "https://partners.olivraison.com/files/a.pdf");
   for (const url of [
