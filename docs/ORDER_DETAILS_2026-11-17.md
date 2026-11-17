@@ -20,6 +20,8 @@ Validation ciblée : 54 tests navigateur à 320/390/1440 px, compilation et type
 
 ## Confirmation après enregistrement
 
+Clarification finale : l'envoi doit être confirmé depuis un popup AVANT enregistrement. La révision s'ouvre désormais dans un dialogue natif avec produits, variantes, frais et total, bouton explicite « أؤكد طلبي », édition et fermeture sans création. Le bouton déclenche le formulaire existant ; les contrôles de fraîcheur, montant, stock et idempotence restent exécutés. La fermeture et l'édition sont bloquées pendant l'envoi. Une erreur réseau reste lisible et focalisée dans le dialogue ; une modification de prix/frais ramène à une nouvelle révision.
+
 Ajout demandé ensuite par l'utilisateur : popup de reçu après création réussie. Le reçu conserve la réponse serveur avant de vider le panier : produits, photos associées, taille/couleur, SKU, quantités, prix unitaires et totaux, adresse, frais enregistrés et montant total. Aucun recalcul depuis un panier vide ou des réglages modifiés après achat. Les données manquantes ne deviennent pas une livraison gratuite supposée. Fermeture Échap/bouton et réouverture sans nouvel envoi. Tests avec API fictive uniquement ; ne pas créer de commande réelle pour contrôler ce popup.
 
 ## Intégration précédente

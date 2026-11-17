@@ -208,7 +208,16 @@ for (const width of [320, 390, 1440]) {
         const {requests} = await fixture(page, false);
         await fillCheckout(page);
         await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+        const confirmation = page.getByRole("dialog", {name: "مراجعة الطلب والتوصيل", exact: true});
+        await expect(confirmation).toBeVisible();
+        await expect(confirmation.locator(".checkout-confirm-actions")).toContainText("30.00 MAD");
+        expect(await confirmation.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
         expect(requests).toHaveLength(0);
+        await page.keyboard.press("Escape");
+        await expect(confirmation).not.toBeVisible();
+        expect(requests).toHaveLength(0);
+        await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+        await expect(confirmation).toBeVisible();
         await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
         const popup = page.getByRole("dialog", {name: "وصلنا طلبكم، شكراً لكم."});
         await expect(popup).toBeVisible();

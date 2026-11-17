@@ -1090,6 +1090,14 @@
 .order-receipt-totals .order-receipt-total { background: #f4efe3; padding: 14px 10px; font-weight: 700; border-radius: 8px; }
 .order-receipt-body > .btn-primary { display: flex; justify-content: center; margin-top: 18px; }
 .checkout-success > .text-link { display: block; margin: 20px auto; }
+.checkout-confirm-dialog .order-receipt-header h2 { font-size: 20px; }
+.checkout-confirm-actions { position: sticky; bottom: -20px; background: #fffefa; border-top: 1px solid #e3ddd3; display: flex; align-items: center; gap: 14px; margin: 18px -20px -20px; padding: 14px 20px; }
+.checkout-confirm-actions > p { margin: 0; flex: 0 1 45%; min-width: 0; }
+.checkout-confirm-actions span, .checkout-confirm-actions small { display: block; font-size: 11px; }
+.checkout-confirm-actions strong { display: block; font-size: 18px; }
+.checkout-confirm-actions > button { flex: 1; min-width: 0; padding-inline: 12px; min-height: 48px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; gap: 10px; }
+.checkout-confirm-actions bdi { white-space: nowrap; }
+.checkout-confirm-dialog .checkout-final-review { scroll-margin-top: 100px; }
 
 /* A short viewport needs one scroll surface, with the close control outside it. */
 @media (max-height: 600px) {

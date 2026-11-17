@@ -24,6 +24,7 @@ import {
     PackageCheck,
     ShoppingBag,
     Truck,
+    X,
 } from "lucide-react";
 import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
@@ -58,10 +59,12 @@ export default function CheckoutPage() {
     const submissionError = useRef<HTMLParagraphElement>(null);
     const [submissionErrorVersion, setSubmissionErrorVersion] = useState(0);
     useEffect(() => {
-        if (submissionErrorVersion > 0 && submissionError.current) {
-            submissionError.current.focus({ preventScroll: true });
-            submissionError.current.scrollIntoView({ block: "start", behavior: "instant" });
-        }
+        if (submissionErrorVersion <= 0) return;
+        const frame = requestAnimationFrame(() => {
+            submissionError.current?.focus({ preventScroll: true });
+            submissionError.current?.scrollIntoView({ block: "start", behavior: "instant" });
+        });
+        return () => cancelAnimationFrame(frame);
     }, [submissionErrorVersion]);
     function announceSubmissionError(message: string) {
         setError(message);
@@ -80,6 +83,7 @@ export default function CheckoutPage() {
     const key = useRef("");
     const submissionLock = useRef(false);
     const [review, setReview] = useState<string | null>(null);
+    const reviewDialog = useRef<HTMLDialogElement>(null);
     const direct = shipping.settings?.directSiteConfirmation === true;
     function reviewSignature(cart = items, amount = shipping.total) {
         return JSON.stringify({
@@ -89,6 +93,16 @@ export default function CheckoutPage() {
         });
     }
     const reviewReady = review !== null && review === reviewSignature();
+    useEffect(() => {
+        const dialog = reviewDialog.current;
+        if (reviewReady && dialog && !dialog.open) dialog.showModal();
+        if (!reviewReady && dialog?.open) dialog.close();
+    }, [reviewReady]);
+    function editReview() {
+        if (busy) return;
+        setReview(null);
+        requestAnimationFrame(() => document.getElementById("checkout-fullName")?.focus());
+    }
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
         let active = true;
@@ -404,7 +418,7 @@ export default function CheckoutPage() {
                         className="checkout-form checkout-details-form"
                         aria-busy={busy}
                     >
-                        {error && (
+                        {error && !reviewReady && (
                             <p
                                 ref={submissionError}
                                 role="alert"
@@ -484,20 +498,31 @@ export default function CheckoutPage() {
                             <Link href="/privacy">الخصوصية</Link>.
                         </p>
                         </div>
-                        {reviewReady && (
+                        <dialog ref={reviewDialog} className="order-receipt-dialog checkout-confirm-dialog"
+                            aria-label="مراجعة الطلب والتوصيل"
+                            onCancel={(event) => { event.preventDefault(); if (!busy) editReview(); }}>
+                            <header className="order-receipt-header">
+                                <h2>راجعوا الطلب والتوصيل.</h2>
+                                <button type="button" className="order-receipt-close" disabled={busy} aria-label="إغلاق المراجعة وتعديل الطلب" onClick={editReview}><X size={22} /></button>
+                            </header>
+                        {reviewReady && <div className="order-receipt-body">
                             <CheckoutReview
                                 customer={form}
                                 items={items}
                                 subtotal={total()}
                                 shipping={shipping}
                                 direct={direct}
-                                onEdit={() => {
-                                    setReview(null);
-                                    requestAnimationFrame(() => document.getElementById("checkout-fullName")?.focus());
-                                }}
+                                disabled={busy}
+                                onEdit={editReview}
                             />
-                        )}
-                        <div className="checkout-submit-bar">
+                            {error && <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">{error}</p>}
+                            <div className="checkout-confirm-actions">
+                                <p><span>رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${shipping.total.toFixed(2)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
+                                <button type="submit" className="btn-primary" disabled={blocked}>{busy ? "جارٍ التحقق والحفظ…" : "أؤكد طلبي"}<ArrowLeft size={18} aria-hidden="true" /></button>
+                            </div>
+                        </div>}
+                        </dialog>
+                        <div className="checkout-submit-bar" hidden={reviewReady}>
                             <p>
                                 <span className="checkout-visible-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span>
                                 <span>المبلغ عند الاستلام</span>

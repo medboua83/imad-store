@@ -13,6 +13,7 @@ export function CheckoutReview({
     shipping,
     onEdit,
     direct,
+    disabled = false,
 }: {
     customer: { fullName: string; phone: string; city: string; address: string };
     items: CartItem[];
@@ -20,6 +21,7 @@ export function CheckoutReview({
     shipping: ReturnType<typeof useShipping>;
     onEdit: () => void;
     direct: boolean;
+    disabled?: boolean;
 }) {
     return (
         <section
@@ -82,7 +84,7 @@ export function CheckoutReview({
                     <p dir="ltr">{customer.phone}</p>
                     <address>{customer.address}، {shippingCityLabel(customer.city)}</address>
                 </div>
-                <button type="button" className="text-link" onClick={onEdit}>تعديل المعلومات</button>
+                <button type="button" className="text-link" onClick={onEdit} disabled={disabled}>تعديل المعلومات</button>
             </div>
             <CartTotals subtotal={subtotal} shipping={shipping} />
             <p>
