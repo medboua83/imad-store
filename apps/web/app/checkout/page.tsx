@@ -2,6 +2,7 @@
 import { CheckoutCityInput } from "./city-input";
 import { checkoutPhoneDigits, formatCheckoutPhone } from "./phone-input";
 import { CheckoutReview } from "@/components/store/CheckoutReview";
+import { OrderReceipt } from "@/components/store/OrderReceipt";
 import { metaPurchase } from "@/lib/meta-pixel";
 import {
     shippingFee,
@@ -13,17 +14,17 @@ import {
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart.store";
-import { createOrder } from "@/lib/api";
+import { createOrder, type AdminOrder } from "@/lib/api";
 import { useShipping } from "@/hooks/useShipping";
 import {
     ArrowLeft,
     ArrowRight,
     Check,
-    CheckCircle2,
     ChevronDown,
     PackageCheck,
     ShoppingBag,
     Truck,
+    X,
 } from "lucide-react";
 import { CartLine } from "@/components/store/CartLine";
 import { CartTotals } from "@/components/store/CartTotals";
@@ -58,7 +59,12 @@ export default function CheckoutPage() {
     const submissionError = useRef<HTMLParagraphElement>(null);
     const [submissionErrorVersion, setSubmissionErrorVersion] = useState(0);
     useEffect(() => {
-        if (submissionErrorVersion > 0) submissionError.current?.focus();
+        if (submissionErrorVersion <= 0) return;
+        const frame = requestAnimationFrame(() => {
+            submissionError.current?.focus({ preventScroll: true });
+            submissionError.current?.scrollIntoView({ block: "start", behavior: "instant" });
+        });
+        return () => cancelAnimationFrame(frame);
     }, [submissionErrorVersion]);
     function announceSubmissionError(message: string) {
         setError(message);
@@ -73,11 +79,11 @@ export default function CheckoutPage() {
         desktop.addEventListener("change", update);
         return () => desktop.removeEventListener("change", update);
     }, []);
-    const [orderId, setOrderId] = useState("");
+    const [receipt, setReceipt] = useState<AdminOrder | null>(null);
     const key = useRef("");
     const submissionLock = useRef(false);
     const [review, setReview] = useState<string | null>(null);
-    const [confirmedOnSite, setConfirmedOnSite] = useState(false);
+    const reviewDialog = useRef<HTMLDialogElement>(null);
     const direct = shipping.settings?.directSiteConfirmation === true;
     function reviewSignature(cart = items, amount = shipping.total) {
         return JSON.stringify({
@@ -86,7 +92,17 @@ export default function CheckoutPage() {
             items: cart.map((i) => [i.productId, i.variantId, i.price, i.quantity]),
         });
     }
-    const reviewReady = direct && review !== null && review === reviewSignature();
+    const reviewReady = review !== null && review === reviewSignature();
+    useEffect(() => {
+        const dialog = reviewDialog.current;
+        if (reviewReady && dialog && !dialog.open) dialog.showModal();
+        if (!reviewReady && dialog?.open) dialog.close();
+    }, [reviewReady]);
+    function editReview() {
+        if (busy) return;
+        setReview(null);
+        requestAnimationFrame(() => document.getElementById("checkout-fullName")?.focus());
+    }
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
         let active = true;
@@ -164,7 +180,7 @@ export default function CheckoutPage() {
                 );
                 return;
             }
-            if (direct && review !== reviewSignature(cart, confirmedTotal)) {
+            if (review !== reviewSignature(cart, confirmedTotal)) {
                 setReview(reviewSignature(cart, confirmedTotal));
                 requestAnimationFrame(() =>
                     document.getElementById("checkout-final-review")?.focus(),
@@ -196,8 +212,7 @@ export default function CheckoutPage() {
             );
             metaPurchase(order.id, order.totalAmount);
             if (!order.id) throw new Error("Order receipt unavailable");
-            setOrderId(order.id);
-            setConfirmedOnSite(order.confirmationMethod === "SITE");
+            setReceipt(order);
             clearCart();
             window.scrollTo({ top: 0, behavior: "instant" });
         } catch (failure) {
@@ -353,29 +368,9 @@ export default function CheckoutPage() {
             </div>
         );
     }
-    if (orderId)
-        return (
-            <section className="page-shell checkout-success" role="status">
-                <span className="checkout-success-icon">
-                    <CheckCircle2 size={38} aria-hidden="true" />
-                </span>
-                <p className="eyebrow">IMAD MODE</p>
-                <h1>وصلنا طلبكم، شكراً لكم.</h1>
-                <p>
-                    رقم الطلب <strong dir="ltr">{orderId.slice(-8).toUpperCase()}</strong>
-                </p>
-                <p>
-                    {confirmedOnSite
-                        ? "تم تأكيد طلبكم مباشرة على الموقع. لا يلزم تأكيد إضافي عبر واتساب."
-                        : "سيتواصل معكم فريقنا لتأكيد التفاصيل."}
-                </p>
-                <Link href="/shop" className="btn-primary">
-                    العودة إلى المتجر <ArrowLeft size={18} aria-hidden="true" />
-                </Link>
-            </section>
-        );
+    if (receipt) return <OrderReceipt order={receipt} />;
     return (
-        <section className="page-shell checkout-page checkout-workspace">
+        <section className={`page-shell checkout-page checkout-workspace${reviewReady ? " checkout-review-step" : ""}`}>
             <Link href="/shop" className="checkout-back">
                 <ArrowRight size={16} aria-hidden="true" />
                 العودة إلى المتجر
@@ -383,8 +378,8 @@ export default function CheckoutPage() {
             <div className="checkout-heading">
                 <div>
                     <p className="eyebrow">IMAD · الخطوة الأخيرة</p>
-                    <h1>طلبكم، بكل وضوح.</h1>
-                    <p>راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب.</p>
+                    <h1>{reviewReady ? "راجعوا الطلب والتوصيل." : "طلبكم، بكل وضوح."}</h1>
+                    <p>{reviewReady ? "تأكدوا من تفاصيل منتجاتكم ورسوم التوصيل قبل تأكيد الطلب." : "راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب."}</p>
                 </div>
                 <span className="checkout-cod-badge">
                     <PackageCheck size={20} aria-hidden="true" />
@@ -397,8 +392,11 @@ export default function CheckoutPage() {
                         <Check size={16} aria-hidden="true" />
                         الحقيبة
                     </li>
-                    <li aria-current="step">
-                        <span>2</span>التفاصيل والتأكيد
+                    <li aria-current={!reviewReady ? "step" : undefined}>
+                        <span>2</span>التفاصيل
+                    </li>
+                    <li aria-current={reviewReady ? "step" : undefined}>
+                        <span>3</span>مراجعة الطلب والتوصيل
                     </li>
                 </ol>
             )}
@@ -420,7 +418,7 @@ export default function CheckoutPage() {
                         className="checkout-form checkout-details-form"
                         aria-busy={busy}
                     >
-                        {error && (
+                        {error && !reviewReady && (
                             <p
                                 ref={submissionError}
                                 role="alert"
@@ -443,6 +441,7 @@ export default function CheckoutPage() {
                                 </button>
                             </p>
                         )}
+                        <div hidden={reviewReady}>
                         <fieldset className="checkout-field-section" disabled={busy}>
                             <legend>
                                 <span>01</span>معلومات التواصل
@@ -498,20 +497,34 @@ export default function CheckoutPage() {
                             <Link href="/returns">الاستبدال والإرجاع</Link> و
                             <Link href="/privacy">الخصوصية</Link>.
                         </p>
-                        {reviewReady && (
+                        </div>
+                        <dialog ref={reviewDialog} className="order-receipt-dialog checkout-confirm-dialog"
+                            aria-label="مراجعة الطلب والتوصيل"
+                            onCancel={(event) => { event.preventDefault(); if (!busy) editReview(); }}>
+                            <header className="order-receipt-header">
+                                <h2>راجعوا الطلب والتوصيل.</h2>
+                                <button type="button" className="order-receipt-close" disabled={busy} aria-label="إغلاق المراجعة وتعديل الطلب" onClick={editReview}><X size={22} /></button>
+                            </header>
+                        {reviewReady && <div className="order-receipt-body">
                             <CheckoutReview
                                 customer={form}
                                 items={items}
                                 subtotal={total()}
                                 shipping={shipping}
-                                onEdit={() => {
-                                    setReview(null);
-                                    document.getElementById("checkout-fullName")?.focus();
-                                }}
+                                direct={direct}
+                                disabled={busy}
+                                onEdit={editReview}
                             />
-                        )}
-                        <div className="checkout-submit-bar">
+                            {error && <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">{error}</p>}
+                            <div className="checkout-confirm-actions">
+                                <p><span>رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${shipping.total.toFixed(2)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
+                                <button type="submit" className="btn-primary" disabled={blocked}>{busy ? "جارٍ التحقق والحفظ…" : "أؤكد طلبي"}<ArrowLeft size={18} aria-hidden="true" /></button>
+                            </div>
+                        </div>}
+                        </dialog>
+                        <div className="checkout-submit-bar" hidden={reviewReady}>
                             <p>
+                                <span className="checkout-visible-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span>
                                 <span>المبلغ عند الاستلام</span>
                                 <strong dir="ltr">
                                     {invalidItems || shipping.error || shipping.total === null
@@ -523,11 +536,7 @@ export default function CheckoutPage() {
                             <button type="submit" className="btn-primary" disabled={blocked}>
                                 {busy
                                     ? "جارٍ التحقق والحفظ…"
-                                    : direct
-                                      ? reviewReady
-                                          ? "أؤكد طلبي"
-                                          : "مراجعة الطلب"
-                                      : "تأكيد الطلب"}
+                                    : reviewReady ? "أؤكد طلبي" : "مراجعة الطلب"}
                                 <ArrowLeft size={18} aria-hidden="true" />
                             </button>
                         </div>
@@ -535,7 +544,7 @@ export default function CheckoutPage() {
                             ستظهر لكم رسالة التأكيد بعد تسجيل الطلب بنجاح.
                         </p>
                     </form>
-                    <aside className="checkout-summary checkout-review" aria-label="ملخص الطلب">
+                    <aside hidden={reviewReady} className="checkout-summary checkout-review" aria-label="ملخص الطلب">
                         <details
                             className="checkout-order-disclosure"
                             open={summaryOpen}

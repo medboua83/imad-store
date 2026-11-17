@@ -85,7 +85,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       prisma.olivraisonShipment.findFirst({ where: { ...owned, lockedUntil: { gt: new Date() } } }),
       prisma.order.findUnique({
         where: { id: candidate!.id },
-        include: { items: { include: { product: true } } },
+        include: { items: { include: { product: true, variant: true } } },
       }),
     ]);
     if (!current?.enabled || !lease) throw new CarrierError("Automatisation suspendue");

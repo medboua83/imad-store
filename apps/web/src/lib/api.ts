@@ -345,8 +345,8 @@ export interface AdminOrder {
         id: string;
         quantity: number;
         unitPrice: number;
-        product?: { nameFr?: string; nameAr?: string; nameEn?: string } | null;
-        variant?: { colorNameFr?: string; colorNameAr?: string; size?: string } | null;
+        product?: { nameFr?: string; nameAr?: string; nameEn?: string; images?: string[]; colorPhotos?: { colorKey: string; image: string }[] | null } | null;
+        variant?: { color?: string; colorNameFr?: string; colorNameAr?: string; colorNameEn?: string; size?: string; sku?: string } | null;
     }[];
     status: string;
     paymentMethod: string;

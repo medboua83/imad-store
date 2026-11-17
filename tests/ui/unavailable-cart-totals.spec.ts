@@ -68,7 +68,7 @@ for (const width of [320, 390, 1440])
       await expect(page.locator(".checkout-summary .bag-grand-total")).toContainText(
         "راجعوا الحقيبة",
       );
-      await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeDisabled();
       await review.click();
       const dialog = page.locator(".cart-dialog");
       await expect(dialog.locator(".bag-stock-error")).toContainText("غير متوفر");
@@ -93,7 +93,7 @@ for (const width of [320, 390, 1440])
       if (mixed) {
         await expect(page.locator(".checkout-compact-total")).toContainText("95.00");
         await expect(page.locator(".checkout-submit-bar strong")).toContainText("95.00");
-        await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeEnabled();
+        await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeEnabled();
       } else await expect(page.locator(".checkout-empty")).toBeVisible();
       expect(orders).toBe(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

@@ -984,6 +984,38 @@
     background: #faf8f1;
     scroll-margin-top: 24px;
 }
+.checkout-review-step .checkout-layout { display: block; max-width: 760px; margin-inline: auto; }
+.checkout-review-step .checkout-details-form { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.checkout-review-step .checkout-final-review { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.checkout-review-step .checkout-heading { max-width: 760px; margin-inline: auto; }
+.checkout-review-step .checkout-final-review h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.checkout-review-step .checkout-final-review li { padding-block: 16px; gap: 20px; }
+.checkout-review-step .checkout-final-review ul { margin-block: 0 8px; }
+.checkout-review-step .bag-totals { font-size: 14px; }
+.checkout-review-step .bag-grand-total { background: #f4efe3; padding: 14px 10px; border-radius: 8px; }
+.checkout-review-step .checkout-mini-photo { position: relative; width: 84px; height: 112px; flex: 0 0 84px; overflow: hidden; border-radius: 8px; }
+.checkout-review-address { display: flex; justify-content: space-between; gap: 20px; padding-block: 16px; border-bottom: 1px solid #e9e4dc; }
+.checkout-review-address h3 { font-size: 16px; margin: 0 0 10px; }
+.checkout-review-address p, .checkout-review-address address { font-size: 14px; }
+.checkout-review-address > button { flex-shrink: 0; align-self: center; }
+.checkout-submit-bar .checkout-visible-shipping { display: block; font-size: 13px; color: #554731; margin-bottom: 6px; }
+.checkout-visible-shipping bdi { margin-inline-start: 8px; white-space: nowrap; }
+.checkout-workspace [hidden] { display: none !important; }
+@media (max-width: 767px) {
+    .checkout-submit-bar > p > .checkout-visible-shipping { font-size: 12px; }
+    .checkout-review-step .checkout-submit-bar > .btn-primary { font-size: 16px; }
+    .checkout-submit-bar { gap: 12px; }
+    .checkout-review-step .checkout-final-review li { gap: 12px; }
+    .checkout-review-step .checkout-final-review li > strong { margin-inline-start: auto; }
+    .checkout-review-step .checkout-final-review li > div:nth-child(2) { min-width: 150px; }
+    .checkout-review-step .checkout-back { display: none; }
+    .checkout-review-step .checkout-heading { margin-bottom: 12px; }
+    .checkout-review-step .checkout-heading p:last-child { line-height: 1.6; }
+    .checkout-review-step .checkout-steps { margin-bottom: 8px; padding-bottom: 12px; }
+    .checkout-review-step .checkout-review-address p { margin-block: 2px; }
+    .checkout-review-step .checkout-steps { gap: 12px; font-size: 10px; }
+    .checkout-review-step .checkout-final-review > p { font-size: 13px; line-height: 1.8; }
+}
 .checkout-final-review h2 {
     font-size: 1.25rem;
     margin-bottom: 14px;
@@ -1023,6 +1055,49 @@
     outline: 2px solid #9d762f;
     outline-offset: 3px;
 }
+.order-receipt-dialog {
+    margin: auto;
+    width: min(640px, calc(100vw - 24px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 1px solid #e3ddd3;
+    border-radius: 16px;
+    color: #30291d;
+    background: #fffefa;
+    text-align: start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.order-receipt-dialog::backdrop { background: #241e16aa; }
+.order-receipt-header { position: sticky; top: 0; z-index: 1; background: #fffefa; display: flex; align-items: center; gap: 12px; padding: 20px; border-bottom: 1px solid #e3ddd3; }
+.order-receipt-header > svg { color: #8b6b35; flex-shrink: 0; }
+.order-receipt-header h2 { font-size: 20px; margin: 0; }
+.order-receipt-header p { font-size: 13px; margin: 6px 0 0; }
+.order-receipt-close { margin-inline-start: auto; min-width: 44px; min-height: 44px; display: grid; place-items: center; flex-shrink: 0; }
+.order-receipt-body { padding: 20px; font-size: 14px; line-height: 1.8; }
+.order-receipt-body h3 { font-size: 16px; margin-block: 20px 8px; }
+.order-receipt-items { list-style: none; padding: 0; margin: 0; }
+.order-receipt-items li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-bottom: 1px solid #e9e4dc; padding-block: 16px; }
+.order-receipt-items li > div:nth-child(2) { flex: 1; min-width: 140px; overflow-wrap: anywhere; }
+.order-receipt-items li > strong { margin-inline-start: auto; white-space: nowrap; }
+.order-receipt-items p { margin-block: 2px; }
+.order-receipt-photo { position: relative; flex: 0 0 64px; width: 64px; height: 86px; overflow: hidden; border-radius: 6px; }
+.order-receipt-body address { font-style: normal; margin-block: 16px; overflow-wrap: anywhere; }
+.order-receipt-totals { margin-block: 20px; }
+.order-receipt-totals > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; }
+.order-receipt-totals dd { margin: 0; text-align: end; }
+.order-receipt-totals .order-receipt-shipping { border-block: 1px solid #e3ddd3; font-weight: 600; }
+.order-receipt-totals .order-receipt-total { background: #f4efe3; padding: 14px 10px; font-weight: 700; border-radius: 8px; }
+.order-receipt-body > .btn-primary { display: flex; justify-content: center; margin-top: 18px; }
+.checkout-success > .text-link { display: block; margin: 20px auto; }
+.checkout-confirm-dialog .order-receipt-header h2 { font-size: 20px; }
+.checkout-confirm-actions { position: sticky; bottom: 0; background: #fffefa; border-top: 1px solid #e3ddd3; display: flex; align-items: center; gap: 14px; margin: 18px -20px -20px; padding: 14px 20px; }
+.checkout-confirm-actions > p { margin: 0; flex: 0 1 45%; min-width: 0; }
+.checkout-confirm-actions span, .checkout-confirm-actions small { display: block; font-size: 11px; }
+.checkout-confirm-actions strong { display: block; font-size: 18px; }
+.checkout-confirm-actions > button { flex: 1; min-width: 0; padding-inline: 12px; min-height: 48px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; gap: 10px; }
+.checkout-confirm-actions bdi { white-space: nowrap; }
+.checkout-confirm-dialog .checkout-final-review { scroll-margin-top: 100px; }
 
 /* A short viewport needs one scroll surface, with the close control outside it. */
 @media (max-height: 600px) {

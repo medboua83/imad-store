@@ -71,7 +71,14 @@ async function fixture(page: Page, direct = true, failOnce = false) {
             await new Promise((resolve) => setTimeout(resolve, 150));
             result.data = {
                 id: "444444444444444444444444",
-                totalAmount: 130,
+                totalAmount: body.expectedTotal,
+                shippingCost: settings.shippingCost,
+                street: body.customer.street,
+                city: body.customer.city,
+                items: [{ id: "receipt-line", quantity: 1, unitPrice: 100,
+                    product: { ...product, images: ["/images/catalogue-test/sac.webp", "/images/catalogue-test/abaya.webp"], colorPhotos: [{colorKey: "#000000|noir", image: "/images/catalogue-test/abaya.webp"}] },
+                    variant: product.variants[0],
+                }],
                 status: direct ? "CONFIRMED" : "PENDING",
                 confirmationMethod: direct ? "SITE" : null,
                 confirmedAt: direct ? "2026-10-22T08:00:00.000Z" : null,
@@ -164,17 +171,80 @@ test("standard checkout has no customer AI option", async ({ page }) => {
     const { requests } = await fixture(page, false);
     await fillCheckout(page, "+212600000099");
     await expect(page.locator('input[name="aiServiceConsent"]')).toHaveCount(0);
-    await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.confirmationMode).toBeUndefined();
     expect(requests[0].body.aiServiceConsent).toBe(false);
 });
+
+test("delivery charges stay visible and a changed fee requires a new review before any order", async ({ page }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    const {settings, requests} = await fixture(page, false);
+    await fillCheckout(page);
+    await expect(page.locator(".checkout-visible-shipping")).toContainText("30.00 MAD");
+    await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+    const review = page.locator("#checkout-final-review");
+    await expect(review).toContainText("30.00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("130.00");
+    expect(requests).toHaveLength(0);
+    settings.shippingCost = 45;
+    await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+    await expect(page.locator(".checkout-submission-error")).toContainText("تغيرت رسوم التوصيل");
+    expect(requests).toHaveLength(0);
+    await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+    await expect(review).toContainText("45.00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("145.00");
+    expect(requests).toHaveLength(0);
+    await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+    await expect.poll(() => requests.length).toBe(1);
+    expect(requests[0].body.expectedTotal).toBe(145);
+});
+
+for (const width of [320, 390, 1440]) {
+    test(`Final confirmation popup keeps saved products and delivery fees after clearing the basket at ${width}px`, async ({page}, info) => {
+        await page.setViewportSize({width, height: 844});
+        const {requests} = await fixture(page, false);
+        await fillCheckout(page);
+        await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+        const confirmation = page.getByRole("dialog", {name: "مراجعة الطلب والتوصيل", exact: true});
+        await expect(confirmation).toBeVisible();
+        await expect(confirmation.locator(".checkout-confirm-actions")).toContainText("30.00 MAD");
+        expect(await confirmation.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        expect(requests).toHaveLength(0);
+        await page.keyboard.press("Escape");
+        await expect(confirmation).not.toBeVisible();
+        expect(requests).toHaveLength(0);
+        await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+        await expect(confirmation).toBeVisible();
+        await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+        const popup = page.getByRole("dialog", {name: "وصلنا طلبكم، شكراً لكم."});
+        await expect(popup).toBeVisible();
+        await expect(popup).toContainText("منتج تجريبي");
+        await expect(popup).toContainText("أسود · 42");
+        await expect(popup).toContainText("TEST-UI");
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
+        await expect(popup.locator(".order-receipt-total")).toContainText("130.00 MAD");
+        await expect(popup.locator(".order-receipt-items img")).toHaveAttribute("src", /abaya\.webp/);
+        await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items.length)).toBe(0);
+        expect(await popup.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+        await page.screenshot({path: info.outputPath(`confirmation-popup-${width}.png`)});
+        await page.keyboard.press("Escape");
+        await expect(popup).not.toBeVisible();
+        const reopen = page.getByRole("button", {name: "عرض تفاصيل الطلب", exact: true});
+        await expect(reopen).toBeFocused();
+        await reopen.click();
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
+        expect(requests).toHaveLength(1);
+    });
+}
 for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
     test(`Checkout submits the validated phone without separators: ${phone}`, async ({ page }) => {
         const { requests } = await fixture(page, false);
         await fillCheckout(page, phone);
-        await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+        await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
         await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
         expect(requests).toHaveLength(1);
         expect(requests[0].body.customer.phone).toBe(
@@ -202,7 +272,8 @@ test("delivery fields use official cities and preserve local delivery phone", as
         path: info.outputPath("carrier-compatible-checkout.png"),
         fullPage: true,
     });
-    await page.getByRole("button", { name: "تأكيد الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "مراجعة الطلب", exact: true }).click();
+    await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
     await expect(page.getByText("سيتواصل معكم فريقنا لتأكيد التفاصيل.")).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0].body.customer).toMatchObject({

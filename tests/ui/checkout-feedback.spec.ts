@@ -51,9 +51,10 @@ for (const width of [390, 1440]) {
         });
         await page.goto("/checkout");
         await fill(page);
-        const submit = page.getByRole("button", { name: "تأكيد الطلب", exact: true });
+        const submit = page.getByRole("button", { name: /^(مراجعة الطلب|أؤكد طلبي)$/, exact: true });
         await expect(submit).toBeEnabled();
         await submit.click();
+        await page.getByRole("button", { name: "أؤكد طلبي", exact: true }).click();
         const error = page.locator(".checkout-submission-error");
         await expect(error).toContainText("تعذر الاتصال");
         await expect(error).toBeFocused();
@@ -68,14 +69,14 @@ for (const width of [390, 1440]) {
                 }),
             )
             .toBe(true);
-        await expect(page.getByRole("textbox", { name: "الاسم الكامل", exact: true })).toHaveValue(
+        await expect(page.locator('#checkout-fullName')).toHaveValue(
             "اختبار واجهة — لا شحن",
         );
-        await expect(page.getByRole("textbox", { name: "رقم الهاتف", exact: true })).toHaveValue(
+        await expect(page.locator('input[name="phone"]')).toHaveValue(
             "06 00 00 00 99",
         );
         await expect(page.locator("#checkout-city")).toHaveValue("طنجة");
-        await expect(page.getByRole("textbox", { name: "عنوان التوصيل", exact: true })).toHaveValue(
+        await expect(page.locator('#checkout-address')).toHaveValue(
             "Adresse fictive de test 1",
         );
         await expect(submit).toBeEnabled();
@@ -158,7 +159,7 @@ for (const width of [390, 1440]) {
         await page.goto("/checkout");
         const review = page.getByRole("button", { name: "مراجعة الحقيبة", exact: true });
         await expect(review).toBeVisible();
-        await expect(page.getByRole("button", { name: "تأكيد الطلب", exact: true })).toBeDisabled();
+        await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeDisabled();
         await review.click();
         const dialog = page.locator(".cart-dialog");
         await expect(dialog).toBeVisible();

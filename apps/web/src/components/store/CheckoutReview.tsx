@@ -12,12 +12,16 @@ export function CheckoutReview({
     subtotal,
     shipping,
     onEdit,
+    direct,
+    disabled = false,
 }: {
     customer: { fullName: string; phone: string; city: string; address: string };
     items: CartItem[];
     subtotal: number;
     shipping: ReturnType<typeof useShipping>;
     onEdit: () => void;
+    direct: boolean;
+    disabled?: boolean;
 }) {
     return (
         <section
@@ -27,11 +31,6 @@ export function CheckoutReview({
             id="checkout-final-review"
         >
             <h2 id="checkout-review-title">راجعوا طلبكم قبل التأكيد النهائي</h2>
-            <p>{customer.fullName}</p>
-            <p dir="ltr">{customer.phone}</p>
-            <address>
-                {customer.address}، {shippingCityLabel(customer.city)}
-            </address>
             <ul>
                 {priceCart(items).lines.map(({ item, unitPrice, total, allocations }) => (
                     <li key={item.variantId}>
@@ -78,14 +77,19 @@ export function CheckoutReview({
                     </li>
                 ))}
             </ul>
+            <div className="checkout-review-address">
+                <div>
+                    <h3>عنوان التوصيل</h3>
+                    <p>{customer.fullName}</p>
+                    <p dir="ltr">{customer.phone}</p>
+                    <address>{customer.address}، {shippingCityLabel(customer.city)}</address>
+                </div>
+                <button type="button" className="text-link" onClick={onEdit} disabled={disabled}>تعديل المعلومات</button>
+            </div>
             <CartTotals subtotal={subtotal} shipping={shipping} />
             <p>
-                بالضغط على «أؤكد طلبي»، تؤكدون الطلب مباشرة على الموقع. لن نطلب تأكيده مرة أخرى عبر
-                واتساب. الدفع عند الاستلام.
+                {direct ? "بالضغط على «أؤكد طلبي»، تؤكدون الطلب مباشرة على الموقع. لن نطلب تأكيده مرة أخرى عبر واتساب. الدفع عند الاستلام." : "بالضغط على «أؤكد طلبي»، ترسلون طلبكم بالمبلغ أعلاه شاملاً رسوم التوصيل. الدفع عند الاستلام."}
             </p>
-            <button type="button" className="text-link" onClick={onEdit}>
-                تعديل المعلومات
-            </button>
         </section>
     );
 }
