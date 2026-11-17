@@ -1,3 +1,11 @@
+## Couleurs et contact mobile — 17 novembre 2026
+
+- [x] Synchroniser galerie et variante avec les associations photo-couleur connues.
+- [x] Regrouper les couleurs et conserver les références, tailles, stocks et URL exactes.
+- [x] Appliquer le filtre regroupé au serveur, aux cartes et à la fiche produit.
+- [x] Intégrer WhatsApp à la navigation mobile sans recouvrir le catalogue.
+- [x] Conserver deux tests unitaires et les régressions navigateur dans le dépôt.
+
 ## Réglages de vérification Meta — 13 novembre 2026
 
 - [x] Préparer champ indépendant, validation stricte, traduction et rendu head serveur.

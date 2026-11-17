@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
-import { productColorKey, quantityDiscounts } from "@imad-store/shared";
+import { catalogColorValues, productColorKey, quantityDiscounts } from "@imad-store/shared";
 import { productDetailsHref } from "@/lib/catalog-return";
 
 const squarePhotoCategories = new Set(["mens-clogs", "womens-shoes", "bags"]);
@@ -29,9 +29,10 @@ export function ProductCard({
 }) {
     const Heading = headingLevel === 3 ? "h3" : "h2";
     const name = p.nameAr || p.nameFr;
+    const preferredColors = preferredColor ? (catalogColorValues(preferredColor) ?? []).map(color => color.toLowerCase()) : undefined;
     const variants = sellableVariants(p.variants).filter(
         (v) => (!preferredSize || sizeKey(v.size) === sizeKey(preferredSize)) &&
-            (!preferredColor || v.color.toLowerCase() === preferredColor.toLowerCase()),
+            (!preferredColors || preferredColors.includes(v.color.toLowerCase())),
     );
     const available = variants.some((v) => v.stock > 0);
     const offered = available ? variants.filter((v) => v.stock > 0) : variants;

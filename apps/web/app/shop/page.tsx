@@ -84,7 +84,8 @@ export default async function ShopPage({
     const sort = value("sort") || "newest";
     const selectedColor = value("color");
     const colors = distinctColorLabels(result?.filterOptions?.colors ?? []);
-    const colorLabel = colors.find((color) => color.value === selectedColor)?.label;
+    const colorLabel = colors.find((color) => color.value === selectedColor ||
+        (color.value.startsWith("group:") && color.value.slice(6).split(",").includes(selectedColor.toLowerCase())))?.label;
     const resultAnchor = category ? "#catalog-results" : "";
     const chipLabel = (key: (typeof filterKeys)[number]) =>
         ({
@@ -251,7 +252,8 @@ export default async function ShopPage({
                             اللون
                             <select className="store-input" name="color" defaultValue={selectedColor}>
                                 <option value="">جميع الألوان</option>
-                                {selectedColor && !colorLabel && <option value={selectedColor}>{selectedColor}</option>}
+                                {selectedColor && !colors.some(color => color.value === selectedColor) &&
+                                    <option value={selectedColor}>{colorLabel ? `${colorLabel} — درجة محددة` : selectedColor}</option>}
                                 {colors.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                             </select>
                         </label>

@@ -35,6 +35,7 @@
 }
 @media (max-width: 767px) {
     .store-shell .store-whatsapp-float {
+        display: none;
         inset-inline-start: max(12px, env(safe-area-inset-right));
         bottom: calc(74px + env(safe-area-inset-bottom));
         width: 46px;
@@ -43,6 +44,12 @@
     .compact-product-shell .store-whatsapp-float {
         display: none;
     }
+}
+.gallery-color-notice {
+    margin: 10px 0;
+    color: #514532;
+    font-size: 0.875rem;
+    line-height: 1.7;
 }
 .store-shell .site-header {
     background: #fcfaf6f5;

@@ -9,7 +9,7 @@ import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-a
 import { productDescription, descriptionBlocks, sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
-import { isAmbiguousSize } from "@imad-store/shared";
+import { catalogColorValues, isAmbiguousSize } from "@imad-store/shared";
 import { catalogReturnPath, productDetailsHref } from "@/lib/catalog-return";
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -29,11 +29,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const raw = await searchParams;
   const returnTo = catalogReturnPath(raw.returnTo);
   const requestedSize = typeof raw.size === "string" && raw.size.length <= 40 && !isAmbiguousSize(raw.size) ? raw.size : undefined;
-  const requestedColor = typeof raw.color === "string" && raw.color.length <= 80 ? raw.color : undefined;
+  const requestedColor = typeof raw.color === "string" && catalogColorValues(raw.color) ? raw.color : undefined;
+  const requestedColors = requestedColor ? catalogColorValues(requestedColor)!.map(color => color.toLowerCase()) : [];
   const hasRequestedOptions = Boolean(raw.size || raw.color);
   const matchingVariant = variants.find((v) => v.stock > 0 &&
     (!raw.size || (requestedSize !== undefined && sizeKey(v.size) === sizeKey(requestedSize))) &&
-    (!raw.color || v.color.toLowerCase() === requestedColor?.toLowerCase()));
+    (!raw.color || requestedColors.includes(v.color.toLowerCase())));
   const optionsUnavailable = hasRequestedOptions && !matchingVariant;
   const initialVariant = matchingVariant ?? (!hasRequestedOptions ? variants[0] : undefined);
   const inStock = variants.some((v) => v.stock > 0);
