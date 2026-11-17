@@ -18,6 +18,7 @@ jobs:
                   node-version: 22
                   cache: npm
             - run: npm ci
+            - run: npm run test:security
             - run: npm --prefix backend run prisma:generate
             - name: Start isolated PostgreSQL
               run: |
@@ -46,4 +47,4 @@ jobs:
               run: |
                   IMAD_HOSTING_MODE=combined NEXT_PUBLIC_API_URL=/api npm run build
                   npm run test:hosted
-            - run: npm audit --audit-level=high
+            - run: npm audit --audit-level=low

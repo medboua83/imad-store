@@ -1,0 +1,9 @@
+{
+  "name": "@imad-store/glob-compat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build-tool glob compatibility using the maintained glob matcher instead of vulnerable picomatch",
+  "main": "index.cjs",
+  "dependencies": { "glob": "14.0.6" },
+  "engines": { "node": ">=22" }
+}
