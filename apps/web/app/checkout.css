@@ -991,6 +991,8 @@
 .checkout-review-step .checkout-final-review h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .checkout-review-step .checkout-final-review li { padding-block: 16px; gap: 20px; }
 .checkout-review-step .checkout-final-review ul { margin-block: 0 8px; }
+.checkout-review-step .bag-totals { font-size: 14px; }
+.checkout-review-step .bag-grand-total { background: #f4efe3; padding: 14px 10px; border-radius: 8px; }
 .checkout-review-step .checkout-mini-photo { position: relative; width: 84px; height: 112px; flex: 0 0 84px; overflow: hidden; border-radius: 8px; }
 .checkout-review-address { display: flex; justify-content: space-between; gap: 20px; padding-block: 16px; border-bottom: 1px solid #e9e4dc; }
 .checkout-review-address h3 { font-size: 16px; margin: 0 0 10px; }
@@ -1000,7 +1002,8 @@
 .checkout-visible-shipping bdi { margin-inline-start: 8px; white-space: nowrap; }
 .checkout-workspace [hidden] { display: none !important; }
 @media (max-width: 767px) {
-    .checkout-submit-bar > p > .checkout-visible-shipping { font-size: 11px; }
+    .checkout-submit-bar > p > .checkout-visible-shipping { font-size: 12px; }
+    .checkout-review-step .checkout-submit-bar > .btn-primary { font-size: 16px; }
     .checkout-submit-bar { gap: 12px; }
     .checkout-review-step .checkout-final-review li { gap: 12px; }
     .checkout-review-step .checkout-final-review li > strong { margin-inline-start: auto; }

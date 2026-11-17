@@ -71,7 +71,7 @@ async function fixture(page: Page, direct = true, failOnce = false) {
             await new Promise((resolve) => setTimeout(resolve, 150));
             result.data = {
                 id: "444444444444444444444444",
-                totalAmount: 130,
+                totalAmount: body.expectedTotal,
                 status: direct ? "CONFIRMED" : "PENDING",
                 confirmationMethod: direct ? "SITE" : null,
                 confirmedAt: direct ? "2026-10-22T08:00:00.000Z" : null,
@@ -170,6 +170,29 @@ test("standard checkout has no customer AI option", async ({ page }) => {
     expect(requests).toHaveLength(1);
     expect(requests[0].body.confirmationMode).toBeUndefined();
     expect(requests[0].body.aiServiceConsent).toBe(false);
+});
+
+test("delivery charges stay visible and a changed fee requires a new review before any order", async ({ page }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    const {settings, requests} = await fixture(page, false);
+    await fillCheckout(page);
+    await expect(page.locator(".checkout-visible-shipping")).toContainText("30.00 MAD");
+    await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+    const review = page.locator("#checkout-final-review");
+    await expect(review).toContainText("30.00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("130.00");
+    expect(requests).toHaveLength(0);
+    settings.shippingCost = 45;
+    await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+    await expect(page.locator(".checkout-submission-error")).toContainText("تغيرت رسوم التوصيل");
+    expect(requests).toHaveLength(0);
+    await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
+    await expect(review).toContainText("45.00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("145.00");
+    expect(requests).toHaveLength(0);
+    await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
+    await expect.poll(() => requests.length).toBe(1);
+    expect(requests[0].body.expectedTotal).toBe(145);
 });
 for (const phone of ["06.12.34.56.78", "+212 (612) 34.56-78"]) {
     test(`Checkout submits the validated phone without separators: ${phone}`, async ({ page }) => {
