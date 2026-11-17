@@ -533,7 +533,7 @@ function OrderDetails({
                                             { images: i.product?.images ?? [], colorPhotos: i.product?.colorPhotos },
                                             i.variant ? { color: i.variant.color ?? "", colorNameFr: i.variant.colorNameFr ?? "", colorNameAr: i.variant.colorNameAr ?? "", colorNameEn: i.variant.colorNameEn ?? "" } : undefined,
                                         )}
-                                        name={i.product?.nameFr || i.product?.nameAr || t("Article indisponible")}
+                                        name={(locale === "ar" ? i.product?.nameAr : i.product?.nameFr) || i.product?.nameFr || i.product?.nameAr || t("Article indisponible")}
                                         sizes="80px"
                                         className="object-contain"
                                         thumbnail
@@ -541,14 +541,14 @@ function OrderDetails({
                                 </div>
                                 <div className="order-item-description">
                                     <strong>
-                                        {i.product?.nameFr ||
+                                        {(locale === "ar" ? i.product?.nameAr : i.product?.nameFr) || i.product?.nameFr ||
                                             i.product?.nameAr ||
                                             i.product?.nameEn ||
                                             t("Article indisponible")}
                                     </strong>
                                     <p>
                                         {[
-                                            (i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn) && `${t("Couleur")} : ${i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn}`,
+                                            (i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn) && `${t("Couleur")} : ${(locale === "ar" ? i.variant?.colorNameAr : i.variant?.colorNameFr) || i.variant?.colorNameFr || i.variant?.colorNameAr || i.variant?.colorNameEn}`,
                                             i.variant?.size && `${t("Taille")} : ${i.variant.size}`,
                                         ]
                                             .filter(Boolean)

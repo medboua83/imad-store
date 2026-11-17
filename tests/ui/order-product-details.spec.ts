@@ -35,5 +35,10 @@ for (const width of [320, 390, 1440]) {
     await page.screenshot({path: info.outputPath(`order-products-${width}.png`)});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(writes).toBe(0);
+    await page.getByRole("combobox", {name: "Langue de l’administration / لغة لوحة الإدارة"}).selectOption("ar");
+    await expect(lines).toContainText("اللون : بني");
+    await expect(lines).toContainText("المقاس : XL");
+    await expect(lines.getByRole("img", {name: "عباية تجريبية", exact: true})).toHaveAttribute("src", /abaya\.webp/);
+    expect(writes).toBe(0);
   });
 }
