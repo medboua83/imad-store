@@ -82,6 +82,8 @@ for (const width of [320, 390, 1440]) {
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toHaveCount(0);
     await page.screenshot({ path: info.outputPath(`size-unavailable-${width}.png`) });
     await page.getByRole("link", { name: "عرض المقاسات الأخرى", exact: true }).click();
+    await expect(page).toHaveURL(url => !url.searchParams.has("size"));
+    await expect(page.locator(".product-options")).toBeVisible();
     await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeEnabled();
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
