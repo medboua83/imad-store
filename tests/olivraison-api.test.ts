@@ -38,13 +38,16 @@ test("Olivraison requires an exact unambiguous carrier city, with explicit Arabi
   assert.equal(resolveCity("الرباط", [{ name: "Rabat" }], { الرباط: "Rabat" }), "Rabat");
   assert.throws(() => resolveCity("inconnue", [{ name: "Rabat" }], {}), CarrierError);
 });
-test("Olivraison includes every purchased size, colour, reference, quantity and saved unit price", () => {
+test("Olivraison keeps every purchased item, quantity, size and colour without SKU or unit price", () => {
   const payload = packagePayload({ ...order, items: [
     { quantity: 2, unitPrice: 100, product: { nameFr: "Abaya" }, variant: { size: "XL", colorNameFr: "Beige", sku: "AB-XL" } },
     { quantity: 1, unitPrice: 50, product: { nameAr: "حقيبة" }, variant: { colorNameAr: "أسود" } },
     { quantity: 1, product: { nameFr: "Accessoire" }, variant: {} },
   ] }, "Rabat", {});
-  assert.equal(payload.description, "2 × Abaya · Taille: XL · Couleur: Beige · Réf: AB-XL · Prix unitaire: 100.00 MAD; 1 × حقيبة · Couleur: أسود · Prix unitaire: 50.00 MAD; 1 × Accessoire");
+  assert.equal(payload.description, "2 × Abaya · Taille: XL · Couleur: Beige; 1 × حقيبة · Couleur: أسود; 1 × Accessoire");
+  assert.ok(!JSON.stringify(payload).includes("AB-XL"));
+  assert.ok(!JSON.stringify(payload).includes("Prix unitaire"));
+  assert.ok(!Object.hasOwn(payload, "items"));
   assert.equal(payload.price, order.totalAmount);
 });
 test("Olivraison never truncates purchased item details when the description is too long", () => {

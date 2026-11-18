@@ -18,19 +18,22 @@ test("WhatsApp draft preserves purchased details, totals and exact colour photo"
     assert.equal(url.origin, "https://wa.me");
     assert.equal(url.pathname, "/212612345678");
     const text = url.searchParams.get("text")!;
-    for (const value of ["fixture-order", "Abaya & été", "Taille : XL", "Couleur : Marron", "AB-XL", "Quantité : 2", "240,00", "40,00", "Rabat", "Adresse de test", "https://imadmode.com/brown.webp"]) assert.ok(text.includes(value), value);
+    for (const value of ["Abaya & été", "الإسم : Client fictif", "المقاس : XL", "اللون : Marron", "الكمية : 2", "240,00", "40,00", "https://imadmode.com/brown.webp"]) assert.ok(text.includes(value), value);
     assert.ok(!text.includes("general.webp"));
     assert.ok(!text.includes("/admin"));
+    assert.ok(!text.includes("AB-XL"));
+    assert.ok(text.indexOf("ثمن المنتجات") < text.indexOf("ثمن التوصيل"));
+    assert.ok(text.indexOf("ثمن التوصيل") < text.indexOf("المجموع"));
     assert.equal(order.status, "PENDING");
 });
 
 test("Missing delivery fees are not invented; free delivery stays zero", () => {
     const text = new URL(orderWhatsAppLink({ ...order, shippingCost: undefined }, "https://imadmode.com")!).searchParams.get("text")!;
-    assert.ok(text.includes("Frais de livraison : non renseignés"));
-    assert.ok(text.includes("reste à vérifier"));
+    assert.ok(text.includes("ثمن التوصيل : غير محدد"));
+    assert.ok(text.includes("يرجى التحقق"));
     const free = new URL(orderWhatsAppLink({ ...order, shippingCost: 0, totalAmount: 200 }, "https://imadmode.com")!).searchParams.get("text")!;
-    assert.ok(free.includes("Frais de livraison : 0,00"));
-    assert.ok(!free.includes("reste à vérifier"));
+    assert.ok(free.includes("ثمن التوصيل : 0,00"));
+    assert.ok(!free.includes("يرجى التحقق"));
 });
 
 test("Legacy contact/address fallbacks and international phones; malformed phones have no link", () => {
@@ -40,7 +43,7 @@ test("Legacy contact/address fallbacks and international phones; malformed phone
     for (const phone of ["", "not a number", "123", "https://example.com"]) assert.equal(orderWhatsAppLink({ ...order, customerPhone: phone }, "https://imadmode.com"), null);
     const link = orderWhatsAppLink({ ...order, customerPhone: null, city: null, street: null, items: [], address: { phone: "+33612345678", street: "Rue fictive", city: "Paris" } }, "https://imadmode.com")!;
     assert.equal(new URL(link).pathname, "/33612345678");
-    assert.ok(new URL(link).searchParams.get("text")!.includes("Rue fictive, Paris"));
+    assert.ok(new URL(link).searchParams.get("text")!.includes("تفاصيل المنتجات غير متوفرة"));
 });
 
 test("Every article is included, optional variants stay absent and invalid photo schemes are omitted", () => {
@@ -50,7 +53,7 @@ test("Every article is included, optional variants stay absent and invalid photo
     }] }, "https://imadmode.com")!;
     const text = new URL(link).searchParams.get("text")!;
     assert.ok(text.includes("Sac test"));
-    assert.ok(text.includes("Quantité : 1"));
-    assert.equal(text.split("Taille :").length, 2);
+    assert.ok(text.includes("الكمية : 1"));
+    assert.equal(text.split("المقاس :").length, 2);
     assert.ok(!text.includes("javascript:"));
 });

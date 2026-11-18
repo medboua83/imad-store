@@ -25,8 +25,8 @@ export function CartTotals({
                 <dt>قيمة المنتجات</dt>
                 <dd dir="ltr">{subtotal.toFixed(2)} MAD</dd>
             </div>
-            <div>
-                <dt>التوصيل</dt>
+            <div className="bag-shipping-row">
+                <dt>رسوم التوصيل</dt>
                 <dd>
                     {needsReview ? (
                         "بعد مراجعة الحقيبة"

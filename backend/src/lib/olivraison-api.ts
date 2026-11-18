@@ -69,8 +69,6 @@ export function packagePayload(order: any, city: string, pickupAddress: unknown)
       variant?.size?.trim() ? `Taille: ${variant.size.trim()}` : undefined,
       (variant?.colorNameFr || variant?.colorNameAr || variant?.colorNameEn)?.trim()
         ? `Couleur: ${(variant.colorNameFr || variant.colorNameAr || variant.colorNameEn).trim()}` : undefined,
-      variant?.sku?.trim() ? `Réf: ${variant.sku.trim()}` : undefined,
-      Number.isFinite(item.unitPrice) ? `Prix unitaire: ${item.unitPrice.toFixed(2)} MAD` : undefined,
     ];
     return details.filter(Boolean).join(" · ");
   }).join("; ");
