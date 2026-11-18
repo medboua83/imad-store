@@ -14,7 +14,7 @@ export function cleanProductText(text: string): string {
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/(^|[\s(])(\*{1,2}|_{1,2})(\S(?:.*?\S)?)\2(?=$|[\s).,!،؛؟:])/gm, "$1$3")
     // Drop recognisable editorial prefaces, not product facts or arbitrary lines.
-    .replace(/^\s*(?:هاهي|ها\s+هي)\s+(?:ال\s*)?ad\s*copy\b[^\n]*(?:\n|$)/gim, "")
+    .replace(/^\s*(?:هاهي|ها\s+هي)\s+(?:ال\u0640*\s*)?ad\s*copy\b[^\n]*(?:\n|$)/gim, "")
     .replace(/^\s*(?:ad\s*copy|النص\s+للموقع)\s*[:：]\s*/gim, "")
     .replace(/^\s*الموديل\s+(?:الأول|الثاني|الثالث)\s*[-–—:]\s*/gm, "")
     .trim();

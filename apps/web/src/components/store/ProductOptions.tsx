@@ -78,7 +78,8 @@ export function ProductOptions({
             next.stock - (cart.find((item) => item.variantId === next.id)?.quantity ?? 0),
         );
         onVariantChange(next, colorClicked);
-        chooseQuantity(Math.max(1, Math.min(selectedQuantity, remaining)));
+        // A pending size must not erase a previously requested quantity.
+        chooseQuantity(Math.max(1, Math.min(quantity, remaining)));
     }
     return (
         <div className="product-options refined-options" id="product-options" tabIndex={-1}>
