@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 const images = ["sac", "abaya", "chale"].map((name) => `/images/catalogue-test/${name}.webp`);
 
@@ -6,6 +7,7 @@ for (const width of [390, 1440]) {
     test(`Product colors change the active photo on a ${width}px screen`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/products/fixture-color-photos");
+        await chooseSizeIfRequired(page);
         const photo = page.locator(".gallery-stage img");
         const color = (name: string) => page.getByRole("button", { name, exact: true });
         const show = (index: number) =>
@@ -13,21 +15,27 @@ for (const width of [390, 1440]) {
 
         await show(2);
         await color("بني").click();
+        await chooseSizeIfRequired(page);
         await show(1);
         await expect(color("44")).toHaveAttribute("aria-pressed", "true");
         await expect(color("عرض الصورة 2")).toHaveAttribute("aria-pressed", "true");
         await color("45").click();
+        await chooseSizeIfRequired(page);
         await show(1);
         await color("أزرق").click();
+        await chooseSizeIfRequired(page);
         await show(0);
         await color("أسود").press("Enter");
+        await chooseSizeIfRequired(page);
         await show(2);
         await color("تكبير صورة المنتج").click();
+        await chooseSizeIfRequired(page);
         await expect(page.locator(".gallery-dialog img")).toHaveJSProperty(
             "src", new URL(images[2], page.url()).href,
         );
         await page.keyboard.press("Escape");
         await page.goto("/products/fixture-color-photos?size=44");
+        await chooseSizeIfRequired(page);
         await show(1);
         await expect(color("بني")).toHaveAttribute("aria-pressed", "true");
     });
@@ -57,6 +65,7 @@ test("The dashboard saves one photo for all sizes of a color and clears removed 
         return route.fulfill({ json: { success: true, data, total: data.length } });
     });
     await page.goto("/admin?tab=products");
+    await chooseSizeIfRequired(page);
     const edit = page.getByRole("button", { name: "Modifier Article couleurs", exact: true });
     const save = page.getByRole("button", { name: "Enregistrer le produit", exact: true });
     const saved = page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true });

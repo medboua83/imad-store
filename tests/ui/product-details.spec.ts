@@ -1,16 +1,19 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 for (const width of [390, 1440])
   test(`Product size, colour, photos and persisted cart at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/products/fixture-sabot");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("heading", { name: "صابو تجريبي", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "40 41 42 43 44", exact: true })).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "44 — غير متوفر لهذا اللون", exact: true }),
     ).toBeDisabled();
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -28,6 +31,7 @@ for (const width of [390, 1440])
     await expect(page.getByRole("dialog")).toContainText("الأسعار والتوفر محدثان");
     await expect(page.getByRole("dialog")).toContainText("230.00");
     await page.reload();
+    await chooseSizeIfRequired(page);
     await expect(
       page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }),
     ).toBeVisible();
@@ -45,10 +49,12 @@ test("Delivery and returns show configured fees and never invent missing deadlin
   page,
 }) => {
   await page.goto("/delivery");
+  await chooseSizeIfRequired(page);
   await expect(page.locator(".policy-page")).toContainText("45.00 MAD");
   await expect(page.locator(".policy-page")).toContainText("500.00 MAD");
   await expect(page.locator(".policy-page")).toContainText("لم يُنشر أجل توصيل محدد بعد");
   await page.goto("/returns");
+  await chooseSizeIfRequired(page);
   await expect(page.locator(".policy-steps li")).toHaveCount(3);
   await expect(page.locator(".policy-page")).toContainText("لم تُنشر بعد مدة");
 });

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 async function mockAdmin(page: Page, reads: string[] = []) {
     const writes: string[] = [];
@@ -162,6 +163,7 @@ for (const viewport of [
         await page.goto(
             "/products/fixture-manual?returnTo=%2Fshop%3Fcategory%3Dmens-clogs%23catalog-results",
         );
+        await chooseSizeIfRequired(page);
         const buy = page.getByRole("button", { name: "إضافة إلى السلة", exact: true });
         await expect(buy).toBeEnabled();
         const box = await buy.boundingBox();
@@ -178,6 +180,7 @@ for (const viewport of [
         expect(quantity!.y + quantity!.height).toBeLessThanOrEqual(viewport.height);
         expect(quantity!.x >= box!.x + box!.width || quantity!.x + quantity!.width <= box!.x).toBe(true);
         await page.getByRole("button", { name: "بني", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
         await expect(page.locator(".purchase-price")).toContainText("630.00");
         const after = await buy.boundingBox();

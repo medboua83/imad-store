@@ -1,0 +1,11 @@
+# Choix de taille, textes publics et confirmation —18 novembre2026
+
+Pour un article proposant plusieurs tailles distinctes, la couleur/photo initiale reste affichée mais aucune taille n'est présentée comme choisie. L'action « اختاروا المقاس » déplace le focus vers les tailles sans ajouter d'article. Le prix unitaire de base reste lisible ; quantités, disponibilité et offres liées à une variante ne sont activées qu'après choix explicite. Un changement de couleur ou de photo conserve une taille déjà choisie si elle reste compatible ; une taille de repli différente exige un nouveau choix. Les produits proposant une seule taille réelle gardent leur achat direct. Les paniers enregistrés restent disponibles.
+
+Les préfaces éditoriales identifiables (« هاهي ال ad copy… », libellé « النص للموقع » et préfixe ordinal « الموديل الأول ») sont retirées à l'affichage, après nettoyage Markdown. Les faits du descriptif sont conservés et le contenu ne devient jamais du HTML exécuté. Le même nettoyage dessert accueil, fiche et métadonnées. Aucune réécriture automatique du catalogue ou des mesures produit ; la base marchande reste inchangée.
+
+Le message WhatsApp arabe garde produits, variantes, prix, frais, total et photos. Une commande confirmée sur site (méthode SITE), ou déjà CONFIRMED, sert à coordonner la livraison sans demander une seconde confirmation de commande. Les messages SHIPPED/DELIVERED/CANCELLED correspondent à leur état. Seule une commande encore en attente sans confirmation SITE conserve la question de confirmation. La politique de confirmation et les statuts côté serveur ne changent pas, aucun envoi automatique n'est ajouté.
+
+Les régressions d'achat existantes sélectionnent maintenant une taille par les vrais contrôles UI. Une suite distincte sans ce helper vérifie l'absence d'ajout implicite à320/390/1440px, le focus, le changement de couleur vers une autre taille et le cas à taille unique. Les tests de textes préservent les faits et les métadonnées ; les tests WhatsApp couvrent les états. Tous les appels de commande des tests utilisent les fixtures locales. Aucun colis ou message client réel n'est créé par ces contrôles.
+
+Validation complète GitHub et contrôles de production à consigner séparément avant publication.

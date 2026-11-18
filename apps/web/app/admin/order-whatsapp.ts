@@ -42,6 +42,15 @@ export function orderWhatsAppLink(order: AdminOrder, origin: string): string | n
     lines.push(`ثمن التوصيل : ${amounts.shipping == null ? "غير محدد (يرجى التحقق)" : money(amounts.shipping)}`);
     lines.push(`المجموع : ${money(order.totalAmount)}`);
     if (!amounts.reconciled) lines.push("المجموع المعتمد هو المبلغ المسجل؛ يرجى التحقق من تفاصيل المبالغ.");
-    lines.push("", "هل تؤكدون الطلب بهذه المعلومات والمبلغ شامل التوصيل؟");
+    const closing = order.status === "CANCELLED"
+        ? "هذا الطلب ملغى. تواصلوا معنا إذا احتجتم إلى المساعدة."
+        : order.status === "DELIVERED"
+          ? "تم تسجيل طلبكم كمُسلَّم. نحن رهن إشارتكم لأي استفسار."
+          : order.status === "SHIPPED"
+            ? "تم شحن طلبكم. تواصلوا معنا لأي استفسار بخصوص التوصيل."
+            : order.confirmationMethod === "SITE" || order.status === "CONFIRMED"
+              ? "طلبكم مؤكد. نتواصل معكم بخصوص التوصيل فقط؛ يرجى إبلاغنا بأي ملاحظة."
+              : "هل تؤكدون الطلب بهذه المعلومات والمبلغ شامل التوصيل؟";
+    lines.push("", closing);
     return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
 }

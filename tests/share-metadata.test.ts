@@ -1,7 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { productShareMetadata, resolvePublicOrigin, storefrontShareMetadata } from "../apps/web/src/lib/share-metadata";
-import { cleanProductText, descriptionBlocks, descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
+import { cleanProductText, productDescription, descriptionBlocks, descriptionParagraphs, orderedSizes } from "../apps/web/src/lib/product-presentation";
+
+test("Editorial prefaces are removed while the actual product copy remains intact", () => {
+  const input = "هاهي ال ad copy بالعربية للموديلات بجوج 👇\nالموديل الأول – روبة واسعة ومريحة\nالنص للموقع:\nروبة واسعة بقماش ناعم.\n- الطول 120 cm\n- اللون أسود";
+  assert.equal(cleanProductText(input), "روبة واسعة ومريحة\nروبة واسعة بقماش ناعم.\n- الطول 120 cm\n- اللون أسود");
+  assert.equal(cleanProductText("كتاب عن ad copy وكتابة الإعلانات."), "كتاب عن ad copy وكتابة الإعلانات.");
+  assert.equal(cleanProductText("> *هاهي ال ad copy بالعربية 👇*\n> *روبة واسعة*"), "روبة واسعة");
+  assert.equal(cleanProductText("هاهي الـ ad copy بالعربية للموديلات بجوج 👇\nروبة واسعة"), "روبة واسعة");
+  assert.match(productDescription({nameAr:"روبة", descriptionAr:"هاهي ال ad copy بالعربية 👇"}), /^روبة\./);
+});
 test("Copied formatting is cleaned without inventing or executing product content", () => {
   const copy = "> *كاب بالفرو*\n> وصف القطعة.\n- لون بني\n- طول 90 cm\n5 > 3\nSKU_A_B";
   assert.equal(cleanProductText(copy), "كاب بالفرو\nوصف القطعة.\n- لون بني\n- طول 90 cm\n5 > 3\nSKU_A_B");

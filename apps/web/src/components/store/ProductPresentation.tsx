@@ -5,6 +5,7 @@ import { isAmbiguousSize, productColorKey, productVariantImages } from "@imad-st
 import type { Product } from "@/lib/api";
 import { ProductGallery } from "./ProductGallery";
 import { ProductOptions } from "./ProductOptions";
+import { orderedSizes, sizeKey } from "@/lib/product-presentation";
 
 export function ProductPresentation({
     product,
@@ -24,7 +25,10 @@ export function ProductPresentation({
     }
     const [variantId, setVariantId] = useState(initialVariant?.id ?? "");
     const [photo, setPhoto] = useState(() => photoFor(initialVariant));
+    const [chosenSize, setChosenSize] = useState<string | null>(null);
     const variant = product.variants.find((entry) => entry.id === variantId);
+    const sizeConfirmed = orderedSizes(product.variants.filter(entry => !isAmbiguousSize(entry.size))).length <= 1
+        || (chosenSize !== null && chosenSize === sizeKey(variant?.size));
     const selectedColor = variant && productColorKey(variant);
     const photoColors = new Set((product.colorPhotos ?? [])
         .filter((link) => link.image === photo && product.images.includes(link.image))
@@ -60,6 +64,11 @@ export function ProductPresentation({
                     <ProductOptions
                         product={product}
                         variantId={variantId}
+                        sizeConfirmed={sizeConfirmed}
+                        onSizeChoose={(variant) => {
+                            setChosenSize(sizeKey(variant.size));
+                            setVariantId(variant.id);
+                        }}
                         onVariantChange={(variant, colorClicked) => {
                             setVariantId(variant.id);
                             if (colorClicked) setPhoto(photoFor(variant));

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 async function admin(page: Page) {
     const writes: string[] = [],
@@ -62,6 +63,7 @@ for (const width of [390, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         const { writes } = await admin(page);
         await page.goto("/admin?tab=orders");
+        await chooseSizeIfRequired(page);
         const search = page.getByRole("searchbox", {
             name: "Rechercher une commande",
             exact: true,
@@ -107,6 +109,7 @@ for (const width of [390, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         const { writes, periods } = await admin(page);
         await page.goto("/admin?tab=analytics");
+        await chooseSizeIfRequired(page);
         const period = page.getByLabel("Période", { exact: true });
         await period.selectOption("90");
         await expect.poll(() => periods.at(-1)).toBe("90");
@@ -124,6 +127,7 @@ test("A new admin session clears the previous order search and analytics period"
         success: true, data: { accessToken: "new-isolated-session", refreshToken: "new-isolated-refresh" },
     } }));
     await page.goto("/admin?tab=orders");
+    await chooseSizeIfRequired(page);
     await page.getByRole("searchbox", { name: "Rechercher une commande", exact: true }).fill("Rabat");
     await section(page, "Statistiques");
     await page.getByLabel("Période", { exact: true }).selectOption("90");
@@ -143,6 +147,7 @@ for (const width of [320, 390, 1280]) {
     }, info) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/products/fixture-gallery-long");
+        await chooseSizeIfRequired(page);
         const strip = page.locator(".gallery-thumbnails");
         const next = page
             .locator(".gallery-caption")

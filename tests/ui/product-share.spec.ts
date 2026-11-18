@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
   test(`Product link copy is canonical and preserves the purchase at ${width}px`, async ({
@@ -17,6 +18,7 @@ for (const width of [320, 390, 1440]) {
       });
     });
     await page.goto("/products/fixture-manual?stats_test=1&utm_source=test#details");
+    await chooseSizeIfRequired(page);
     const share = page.getByRole("button", { name: "مشاركة المنتج", exact: true });
     await expect(share).toBeVisible();
     await expect(share).toHaveAttribute("aria-busy", "false");
@@ -33,6 +35,7 @@ for (const width of [320, 390, 1440]) {
     await expect(page.locator(".purchase-price")).toContainText("400.00");
     await page.screenshot({ path: info.outputPath(`product-share-${width}.png`) });
     await page.goto("/products/fixture-premium?utm_source=other");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "مشاركة المنتج", exact: true }).click();
     expect(await page.evaluate(() => (window as any).__copiedProduct)).toBe(
       new URL("/products/fixture-premium", page.url()).href,
@@ -66,6 +69,7 @@ test("Native sharing uses the product title and URL and cancellation never copie
     });
   });
   await page.goto("/products/fixture-manual?utm_source=test");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "مشاركة المنتج", exact: true }).click();
   await expect(page.getByRole("status", { name: "حالة مشاركة المنتج", exact: true })).toHaveText(
     "تم إلغاء المشاركة.",
@@ -91,6 +95,7 @@ test("A pending native share prevents repeats and does not claim delivery", asyn
     });
   });
   await page.goto("/products/fixture-manual");
+  await chooseSizeIfRequired(page);
   const share = page.getByRole("button", { name: "مشاركة المنتج", exact: true });
   await share.click();
   await expect(share).toBeDisabled();
@@ -124,6 +129,7 @@ test("Blocked sharing and clipboard offer a selectable link without false succes
     });
   });
   await page.goto("/products/fixture-manual?stats_test=1");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "مشاركة المنتج", exact: true }).click();
   const field = page.getByRole("textbox", { name: "رابط المنتج", exact: true });
   await expect(field).toHaveValue(new URL("/products/fixture-manual", page.url()).href);

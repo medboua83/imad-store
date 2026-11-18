@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [390, 1440]) {
   for (const dismiss of ["escape", "close", "continue"]) {
@@ -7,6 +8,7 @@ for (const width of [390, 1440]) {
       let orders = 0;
       await page.route("**/api/orders", route => { orders++; return route.abort(); });
       await page.goto("/products/fixture-manual?stats_test=1");
+      await chooseSizeIfRequired(page);
       await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
       await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
       const dialog = page.getByRole("dialog");
@@ -37,6 +39,7 @@ for (const width of [390, 1440]) {
     let orders = 0;
     await page.route("**/api/orders", route => { orders++; return route.abort(); });
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     const add = page.getByRole("button", { name: "إضافة إلى السلة", exact: true });
     await add.click();
     const dialog = page.getByRole("dialog");

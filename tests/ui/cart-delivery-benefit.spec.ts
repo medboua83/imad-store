@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
   test(`Delivery benefit follows offers, eligible items and threshold at ${width}px`, async ({
@@ -11,7 +12,9 @@ for (const width of [320, 390, 1440]) {
       return route.abort();
     });
     await page.goto("/products/fixture-paid-shipping?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const dialog = page.locator(".cart-dialog");
@@ -23,6 +26,7 @@ for (const width of [320, 390, 1440]) {
     await page.screenshot({ path: info.outputPath(`delivery-progress-${width}.png`) });
     await dialog.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
     await page.goto("/products/fixture-accessory?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     await expect(dialog.locator(".bag-grand-total")).toContainText("450.00");
     await expect(benefit).toContainText("التوصيل مجاني لطلبكم");
@@ -52,10 +56,12 @@ for (const width of [320, 390, 1440]) {
       await route.fulfill({ response, json: body });
     });
     await page.reload();
+    await chooseSizeIfRequired(page);
     if (width < 768) await page.locator(".checkout-order-disclosure > summary").click();
     await expect(summaryBenefit).toContainText("0.01 MAD");
     threshold = 400;
     await page.reload();
+    await chooseSizeIfRequired(page);
     if (width < 768) await page.locator(".checkout-order-disclosure > summary").click();
     await expect(summaryBenefit).toContainText("التوصيل مجاني لطلبكم");
     await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
@@ -105,6 +111,7 @@ for (const width of [320, 390, 1440]) {
       return route.abort();
     });
     await page.goto("/checkout?stats_test=1");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "مراجعة الحقيبة", exact: true })).toBeVisible();
     await expect(page.locator(".checkout-summary .store-delivery-benefit")).toHaveCount(0);
     await page.getByRole("button", { name: "مراجعة الحقيبة", exact: true }).click();
@@ -116,6 +123,7 @@ for (const width of [320, 390, 1440]) {
     await dialog.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
     await page.route("**/api/settings", (route) => route.abort());
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     await expect(dialog.locator(".bag-footer")).toContainText("تعذر تحميل رسوم التوصيل");
     await expect(dialog.locator(".store-delivery-benefit")).toHaveCount(0);
@@ -134,6 +142,7 @@ for (const width of [320, 390, 1440]) {
       await route.fulfill({ response, json: body });
     });
     await page.reload();
+    await chooseSizeIfRequired(page);
     await page.locator(".site-header .cart-toggle").click();
     await expect(dialog).toContainText("الطلب بالدفع عند الاستلام متوقف مؤقتاً");
     await expect(dialog.locator(".store-delivery-benefit")).toHaveCount(0);

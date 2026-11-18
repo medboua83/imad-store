@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const viewport of [
     { width: 1366, height: 768 },
@@ -10,6 +11,7 @@ for (const viewport of [
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto("/products/fixture-manual");
+        await chooseSizeIfRequired(page);
         const buy = page.getByRole("button", { name: "إضافة إلى السلة", exact: true });
         await expect(buy).toBeEnabled();
         const box = await buy.boundingBox();
@@ -45,6 +47,7 @@ for (const viewport of [
         expect(target!.width).toBeGreaterThanOrEqual(44);
         expect(target!.height).toBeGreaterThanOrEqual(44);
         await brown.click();
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
         await expect(page.locator(".purchase-price")).toContainText("630.00");
         await page.getByText("تفاصيل السعر والعروض", { exact: true }).click();

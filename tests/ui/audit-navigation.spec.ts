@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 for (const width of [390,1440]) test(`Conversion funnel remains readable at ${width}px`, async({page},info)=>{
     await page.setViewportSize({width,height:900});
     await page.addInitScript(()=>localStorage.setItem("adminToken","isolated-fixture"));
@@ -8,6 +9,7 @@ for (const width of [390,1440]) test(`Conversion funnel remains readable at ${wi
         await route.fulfill({json:{success:true,data,total:0,unread:0}});
     });
     await page.goto("/admin");
+    await chooseSizeIfRequired(page);
     if(width<768) await page.getByRole("button",{name:"Navigation",exact:true}).click();
     await page.getByRole("button",{name:"Statistiques",exact:true}).click();
     await expect(page.getByRole("region",{name:"Parcours de conversion"})).toContainText("Avec ajout au panier");
@@ -21,6 +23,7 @@ for (const width of [390, 1440])
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto("/shop");
+        await chooseSizeIfRequired(page);
         await expect(page.locator(".catalog-grid a").first()).toBeVisible();
         await expect(page.locator('a[href*="empty-category"]')).toHaveCount(0);
         if (width === 390)
@@ -30,8 +33,10 @@ for (const width of [390, 1440])
         );
         await page.screenshot({ path: info.outputPath(`catalogue-${width}.png`), fullPage: true });
         await page.goto("/products/fixture-sabot");
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await page.goto("/checkout");
+        await chooseSizeIfRequired(page);
         const city = page.locator("#checkout-city");
         await city.fill("طنج");
         await page.getByRole("option", { name: /طنجة/ }).click();
