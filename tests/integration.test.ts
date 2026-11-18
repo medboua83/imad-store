@@ -114,6 +114,7 @@ test("Product facts and verified measurements persist without altering stock; dr
     const created = await request(app).post("/api/products").set(admin()).send({...input, variants:input.variants.map(v=>({...v,size:"M"})), productInformation:info});
     assert.equal(created.status,201);
     const p=created.body.data;
+    try {
     assert.equal((await request(app).get(`/api/products/${p.slug}`)).body.data.productInformation.sizeGuide,undefined);
     const verified={...info,sizeGuide:{...info.sizeGuide,verified:true}};
     assert.equal((await request(app).put(`/api/products/${p.id}`).set(admin()).send({productInformation:verified})).status,200);
@@ -124,6 +125,7 @@ test("Product facts and verified measurements persist without altering stock; dr
     for(const bad of [{...verified,sizeGuide:{...verified.sizeGuide,rows:[{size:"XL",chest:90}]}},{...verified,sizeGuide:{...verified.sizeGuide,rows:[{size:"M",chest:-1}]}}]) assert.equal((await request(app).put(`/api/products/${p.id}`).set(admin()).send({productInformation:bad})).status,400);
     assert.equal((await request(app).put(`/api/products/${p.id}`).send({productInformation:verified})).status,401);
     assert.deepEqual((await prisma.product.findUnique({where:{id:p.id}})).productInformation,verified);
+    } finally { await prisma.product.delete({where:{id:p.id}}); }
 });
 test("Oversized product collections stop at their bounds before validating each element", async () => {
     const response = await request(app).post("/api/products").set(admin()).send({
