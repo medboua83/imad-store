@@ -1,3 +1,4 @@
+import { ProductSizeGuide } from "./ProductSizeGuide";
 import { Check, ChevronUp, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
 import { useRef, useState } from "react";
 import Link from "next/link";
@@ -454,16 +455,7 @@ export function ProductOptions({
                     </>
                 )}
             </details>
-            <details className="size-advice">
-                <summary>كيف تختارون المقاس المناسب؟</summary>
-                <p>اختاروا مقاساً واحداً ثم اللون المطلوب. يظهر توفر كل مقاس حسب اللون المختار.</p>
-                <p>
-                    {/shoes|clogs/.test(product.category.slug)
-                        ? "قيسوا طول القدم من الكعب إلى أطول إصبع، وتواصلوا معنا لمقارنته بقياسات هذا الموديل قبل الطلب."
-                        : "تواصلوا معنا للحصول على قياسات هذا الموديل قبل الطلب، خاصة إذا كان اختياركم بين مقاسين."}
-                </p>
-                <Link href="/contact">مساعدة في اختيار المقاس</Link>
-            </details>
+            <ProductSizeGuide product={product} selectedSize={sizeConfirmed ? variant?.size : null} />
             <div className="selected-variant-note" role="status">
                 <span
                     className={`stock-indicator ${stock ? "" : "stock-empty"}`}

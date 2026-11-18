@@ -10,6 +10,9 @@ import {
     MAX_HERO_PRODUCTS,
     quantityDiscountError,
     validColorPhotos,
+    productInformationError,
+    publicProductInformation,
+    type ProductInformation,
 } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
 import { AppError } from "../middleware/error.middleware";
@@ -55,6 +58,7 @@ const productSchema = z.object({
     }).strict()).max(5).optional(),
     freeShipping: z.boolean().optional(),
     recommendationSettings: recommendationSettingsSchema.optional(),
+    productInformation: z.custom<ProductInformation>((value) => value !== null && !productInformationError(value), "Informations ou mesures produit invalides.").optional(),
     images: z
         .array(z.string().max(2000).refine(isPublishableImage, "Image non prise en charge"))
         .max(MAX_PRODUCT_PHOTOS, `Maximum ${MAX_PRODUCT_PHOTOS} photos par produit.`),
@@ -67,6 +71,9 @@ export function isFixture(slug: string) {
     return slug.startsWith("test-19a-") || slug === "demo-bag-sample";
 }
 function assertPublishable(product: any) {
+    const guide = publicProductInformation(product.productInformation)?.sizeGuide;
+    if (guide?.verified && guide.rows.some((row: any) => !product.variants.some((variant: any) => !isAmbiguousSize(variant.size) && (variant.size || "").trim().toLowerCase() === row.size.trim().toLowerCase())))
+        throw new AppError("Les tailles du guide doivent correspondre aux variantes de ce produit.", 400);
     const discountError = quantityDiscountError(product.price, product.quantityDiscounts);
     if (discountError) throw new AppError(discountError, 400);
     if (product.compareAtPrice != null && product.compareAtPrice <= product.price) throw new AppError("Le prix initial doit dépasser le prix promotionnel.", 400);
@@ -91,7 +98,7 @@ function assertPublishable(product: any) {
 const include = { category: true, variants: true };
 function publicProduct(product: any) {
     const { recommendationSettings: _settings, ...visible } = product;
-    return { ...visible, variants: product.variants.filter((v: any) => !isAmbiguousSize(v.size)) };
+    return { ...visible, productInformation: publicProductInformation(product.productInformation), variants: product.variants.filter((v: any) => !isAmbiguousSize(v.size)) };
 }
 function assertSizes(variants: any[], previous: any[] = []) {
     for (const variant of variants) {

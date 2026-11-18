@@ -9,7 +9,7 @@ import { publicProduct, publicSettings, requestSiteOrigin } from "@/lib/server-a
 import { productDescription, descriptionBlocks, sellableVariants, orderedSizes, sizeKey, sizeLabel } from "@/lib/product-presentation";
 import { ProductShare } from "@/components/store/ProductShare";
 import { productShareMetadata } from "@/lib/share-metadata";
-import { catalogColorValues, isAmbiguousSize } from "@imad-store/shared";
+import { catalogColorValues, isAmbiguousSize, publicProductInformation } from "@imad-store/shared";
 import { catalogReturnPath, productDetailsHref } from "@/lib/catalog-return";
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -40,6 +40,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const inStock = variants.some((v) => v.stock > 0);
   const settings = await publicSettings();
   const description = productDescription(product);
+  const information = publicProductInformation(product.productInformation);
   const colors = [...new Set(variants.map(v => v.colorNameAr || v.colorNameFr || v.colorNameEn).filter(Boolean))];
   const sizes = orderedSizes(variants).filter(Boolean);
   const structured = {
@@ -128,6 +129,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 {!!colors.length && <div><dt>الألوان</dt><dd>{colors.join(" · ")}</dd></div>}
                 {!!sizes.length && <div><dt>المقاسات</dt><dd><bdi>{sizes.map(sizeLabel).join(" · ")}</bdi></dd></div>}
               </dl>
+              {information && [information.composition, information.fit, information.care].some(value => value?.trim()) && <dl className="product-facts product-information-facts">
+                {information.composition?.trim() && <div><dt>الخامة والتركيب</dt><dd dir="auto">{information.composition}</dd></div>}
+                {information.fit?.trim() && <div><dt>القصة والتفاصيل</dt><dd dir="auto">{information.fit}</dd></div>}
+                {information.care?.trim() && <div><dt>العناية بالقطعة</dt><dd dir="auto">{information.care}</dd></div>}
+              </dl>}
               {descriptionBlocks(description).map((block, index) => block.type === "list" ? (
                 <ul key={index} className="product-description-list" dir="auto">
                   {block.lines.map((line, item) => <li key={item}>{line}</li>)}

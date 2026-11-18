@@ -5,6 +5,13 @@
     padding: 24px;
     border-color: #ded4bf;
 }
+.product-information-editor { min-width: 0; }
+.product-information-editor > label { display: grid; gap: 8px; margin-block: 14px; }
+.product-information-editor textarea { min-height: 80px; width: 100%; padding: 10px; border: 1px solid #bfb39e; border-radius: 6px; }
+.product-information-editor select,.measurement-editor-row input { min-height: 44px; width: 100%; padding: 8px; border: 1px solid #bfb39e; border-radius: 6px; }
+.product-information-editor input[type=checkbox] { width: 20px; height: 20px; }
+.measurement-editor-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 12px; margin-block: 16px; min-width: 0; }
+.measurement-editor-row label { display: grid; gap: 6px; min-width: 0; }
 .admin-app .product-editor-heading,
 .admin-app .product-editor-nav,
 .admin-app .product-editor-footer {
@@ -55,9 +62,10 @@
     grid-column: 1;
     grid-row: 6;
 }
+.admin-app .product-editor > .product-information-editor { grid-column: 1; grid-row: 7; padding: 22px; border: 1px solid #e1d8c6; border-radius: 16px; }
 .admin-app .product-editor > .product-recommendation-editor {
     grid-column: 1;
-    grid-row: 7;
+    grid-row: 8;
 }
 .admin-app .product-editor-summary {
     grid-column: 2;
@@ -177,7 +185,7 @@
     color: #746447;
 }
 .admin-app .product-editor-footer {
-    grid-row: 8;
+    grid-row: 9;
     position: sticky;
     bottom: 0;
     z-index: 5;
@@ -210,11 +218,12 @@
     .admin-app .product-editor > .product-variants {
         grid-row: 7;
     }
+    .admin-app .product-editor > .product-information-editor { grid-row: 8; }
     .admin-app .product-editor > .product-recommendation-editor {
-        grid-row: 8;
+        grid-row: 9;
     }
     .admin-app .product-editor-footer {
-        grid-row: 9;
+        grid-row: 10;
     }
     .product-editor-summary > img {
         float: right;

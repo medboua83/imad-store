@@ -1,0 +1,2 @@
+SET lock_timeout = '5s';
+ALTER TABLE "products" ADD COLUMN "productInformation" JSONB;
