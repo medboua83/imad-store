@@ -38,8 +38,8 @@ test("A single real size needs no redundant size confirmation", async ({page}) =
 test("A product description and its metadata omit editorial instructions without removing facts", async ({page}) => {
     await page.goto("/products/fixture-editorial");
     const copy = await page.locator(".product-description").allTextContents();
-    expect(copy.join(" ")).not.toMatch(/ad copy|النص للموقع|الموديل الأول/);
+    expect(copy.join(" ")).not.toMatch(/ad copy|للموقع|للإعلانات|الموديل الأول|المنتج الآخر/);
     expect(copy.join(" ")).toContain("روبة واسعة بقماش ناعم");
-    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute("content", /ad copy/);
-    expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toContain("ad copy");
+    await expect(page.locator('meta[name="description"]')).not.toHaveAttribute("content", /ad copy|للإعلانات|المنتج الآخر/);
+    expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toMatch(/ad copy|للإعلانات|المنتج الآخر/);
 });
