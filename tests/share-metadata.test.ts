@@ -9,6 +9,9 @@ test("Editorial prefaces are removed while the actual product copy remains intac
   assert.equal(cleanProductText("كتاب عن ad copy وكتابة الإعلانات."), "كتاب عن ad copy وكتابة الإعلانات.");
   assert.equal(cleanProductText("> *هاهي ال ad copy بالعربية 👇*\n> *روبة واسعة*"), "روبة واسعة");
   assert.equal(cleanProductText("هاهي الـ ad copy بالعربية للموديلات بجوج 👇\nروبة واسعة"), "روبة واسعة");
+  const draft = "هاهي الـ ad copy بالعربية للموديلات بجوج 👇\n*الموديل الأول - روبة واسعة*\n*للموقع :*\n*روبة واسعة*\nقماش ناعم ودافئ.\n- كول دائري\n*للإعلانات / تيك توك :*\nصيغة الإعلان\n*كسوة بالطيات*\nجيوب للمنتج الآخر.";
+  assert.equal(cleanProductText(draft), "روبة واسعة\nقماش ناعم ودافئ.\n- كول دائري");
+  assert.equal(cleanProductText("للإعلانات :\nوصف كتاب عن كتابة الإعلانات."), "للإعلانات :\nوصف كتاب عن كتابة الإعلانات.");
   assert.match(productDescription({nameAr:"روبة", descriptionAr:"هاهي ال ad copy بالعربية 👇"}), /^روبة\./);
 });
 test("Copied formatting is cleaned without inventing or executing product content", () => {

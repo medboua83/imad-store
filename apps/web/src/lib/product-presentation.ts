@@ -9,10 +9,21 @@ type ProductCopy = {
 };
 /** Display-only WhatsApp/Markdown cleanup; never render merchant copy as HTML. */
 export function cleanProductText(text: string): string {
-  return text
+  let cleaned = text
     .replace(/^\s{0,3}(?:>\s*)+/gm, "")
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
-    .replace(/(^|[\s(])(\*{1,2}|_{1,2})(\S(?:.*?\S)?)\2(?=$|[\s).,!،؛؟:])/gm, "$1$3")
+    .replace(/(^|[\s(])(\*{1,2}|_{1,2})(\S(?:.*?\S)?)\2(?=$|[\s).,!،؛؟:])/gm, "$1$3");
+  // An explicit website section in a recognised editorial draft is the public copy.
+  // Stop at its ads section so social variants and another model cannot leak into it.
+  if (/^\s*(?:هاهي|ها\s+هي)\s+(?:ال\u0640*\s*)?ad\s*copy\b/im.test(cleaned)) {
+    const website = /^\s*(?:النص\s+)?للموقع\s*[:：][^\S\n]*(?:\n|$)/m.exec(cleaned);
+    if (website) {
+      const section = cleaned.slice(website.index + website[0].length);
+      const ads = section.search(/^\s*للإعلانات(?:\s*\/[^\n:：]*)?\s*[:：]/m);
+      if (ads >= 0 && section.slice(0, ads).trim()) cleaned = section.slice(0, ads);
+    }
+  }
+  return cleaned
     // Drop recognisable editorial prefaces, not product facts or arbitrary lines.
     .replace(/^\s*(?:هاهي|ها\s+هي)\s+(?:ال\u0640*\s*)?ad\s*copy\b[^\n]*(?:\n|$)/gim, "")
     .replace(/^\s*(?:ad\s*copy|النص\s+للموقع)\s*[:：]\s*/gim, "")
