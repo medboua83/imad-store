@@ -57,3 +57,16 @@ test("Every article is included, optional variants stay absent and invalid photo
     assert.equal(text.split("المقاس :").length, 2);
     assert.ok(!text.includes("javascript:"));
 });
+
+test("Confirmed/site orders coordinate delivery without asking to confirm the order again", () => {
+    for (const patch of [{confirmationMethod:"SITE"}, {status:"CONFIRMED"}, {status:"SHIPPED"}, {status:"DELIVERED"}, {status:"CANCELLED", confirmationMethod:"SITE"}]) {
+        const text = new URL(orderWhatsAppLink({...order,...patch}, "https://imadmode.com")!).searchParams.get("text")!;
+        assert.ok(!text.includes("هل تؤكدون الطلب"));
+        if (patch.status === "CANCELLED") assert.ok(text.includes("هذا الطلب ملغى"));
+        else if (patch.status === "SHIPPED") assert.ok(text.includes("تم شحن طلبكم"));
+        else if (patch.status === "DELIVERED") assert.ok(text.includes("كمُسلَّم"));
+        else assert.ok(text.includes("طلبكم مؤكد"));
+    }
+    const pending = new URL(orderWhatsAppLink(order,"https://imadmode.com")!).searchParams.get("text")!;
+    assert.ok(pending.includes("هل تؤكدون الطلب"));
+});

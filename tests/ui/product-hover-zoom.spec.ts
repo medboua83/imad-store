@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [1024, 1440])
     test(`Hover zoom follows the pointer without moving the product layout at ${width}px`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 1000 });
         await page.goto("/products/fixture-gallery");
+        await chooseSizeIfRequired(page);
         const stage = page.locator(".gallery-stage");
         const photo = stage.locator("img");
         await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
@@ -33,6 +35,7 @@ for (const width of [1024, 1440])
 test("A color change resets the zoom and keeps the correct original photo", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto("/products/fixture-color-photos");
+    await chooseSizeIfRequired(page);
     const stage = page.locator(".gallery-stage");
     const photo = stage.locator("img");
     await expect.poll(() => photo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
@@ -40,6 +43,7 @@ test("A color change resets the zoom and keeps the correct original photo", asyn
     await expect(stage).toHaveAttribute("data-hover-zoom", "true");
     // Keyboard selection changes the image without first moving the mouse out of the frame.
     await page.getByRole("button", { name: "بني", exact: true }).press("Enter");
+    await chooseSizeIfRequired(page);
     await expect(photo).toHaveJSProperty("src", new URL("/images/catalogue-test/abaya.webp", page.url()).href);
     await expect(stage).not.toHaveAttribute("data-hover-zoom", "true");
     await expect(photo).toHaveCSS("transform", "none");
@@ -52,6 +56,7 @@ test("A color change resets the zoom and keeps the correct original photo", asyn
 test("Reduced motion keeps an instant hover zoom without an animated transition", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/products/fixture-sabot");
+    await chooseSizeIfRequired(page);
     const stage = page.locator(".gallery-stage");
     await expect.poll(() => stage.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
     await stage.hover();
@@ -65,6 +70,7 @@ for (const width of [320, 390])
         const page = await context.newPage();
         try {
             await page.goto("http://127.0.0.1:3131/products/fixture-gallery");
+            await chooseSizeIfRequired(page);
             const stage = page.locator(".gallery-stage");
             await expect.poll(() => stage.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
             await stage.tap();
@@ -86,6 +92,7 @@ for (const width of [320, 390])
 test("An unavailable photo never activates a zoom of the empty placeholder", async ({ page }) => {
     await page.route("**/images/catalogue-test/sac.webp", (route) => route.abort());
     await page.goto("/products/fixture-sabot");
+    await chooseSizeIfRequired(page);
     const stage = page.locator(".gallery-stage");
     await expect(stage.locator("img")).toHaveCount(0);
     await stage.hover();

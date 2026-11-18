@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 async function swipe(page: Page, target: Locator, x: number, y = 0, cancel = false) {
     await target.scrollIntoViewIfNeeded();
@@ -28,6 +29,7 @@ for (const width of [390, 1440])
     }, info) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/products/fixture-gallery");
+        await chooseSizeIfRequired(page);
         const stage = page.locator(".gallery-stage");
         const photo = stage.locator("img");
         await expect(photo).toHaveJSProperty(
@@ -96,6 +98,7 @@ test("Native mobile swipes change photos while vertical, cancelled and multi-tou
 }, info) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/products/fixture-gallery");
+    await chooseSizeIfRequired(page);
     const stage = page.locator(".gallery-stage");
     const photo = stage.locator("img");
     await swipe(page, stage, -120);
@@ -160,6 +163,7 @@ test("Native mobile swipes change photos while vertical, cancelled and multi-tou
 test("Failed gallery photos are skipped by keyboard navigation", async ({ page }) => {
     await page.route("**/images/catalogue-test/abaya.webp", (route) => route.abort());
     await page.goto("/products/fixture-gallery");
+    await chooseSizeIfRequired(page);
     const stage = page.locator(".gallery-stage");
     await expect(page.locator(".gallery-thumbnails button")).toHaveCount(2);
     const control = page
@@ -182,6 +186,7 @@ test("A single photo keeps normal product controls without an unnecessary galler
     page,
 }) => {
     await page.goto("/products/fixture-sabot");
+    await chooseSizeIfRequired(page);
     await expect(page.locator(".gallery-stage")).not.toHaveAttribute("tabindex", "0");
     await expect(page.locator(".gallery-swipe-hint")).toHaveCount(0);
     await expect(

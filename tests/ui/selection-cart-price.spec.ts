@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [390, 1366]) {
     test(`Selection price stays separate from the next cart total at ${width}px`, async ({
@@ -6,6 +7,7 @@ for (const width of [390, 1366]) {
     }, info) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/products/fixture-manual");
+        await chooseSizeIfRequired(page);
         const selection = page.locator(".quantity-selection-total");
         const price = page.locator(".purchase-price");
         const preview = page.getByLabel("تقدير السلة بعد الإضافة", { exact: true });
@@ -27,7 +29,9 @@ for (const width of [390, 1366]) {
         await add.click();
         await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
         await page.reload();
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "بني", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(selection).toContainText("230.00");
         await expect(price).toContainText("230.00");
         await expect(preview).toContainText("في السلة الآن: 2");

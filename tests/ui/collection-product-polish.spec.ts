@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
     test(`Compact collection and accessible filters at ${width}px`, async ({ page }, info) => {
@@ -6,6 +7,7 @@ for (const width of [320, 390, 1440]) {
         const errors: string[] = [];
         page.on("pageerror", error => errors.push(error.message));
         await page.goto("/shop?category=mens-clogs&section=men&stats_test=1");
+        await chooseSizeIfRequired(page);
         const cover = page.locator(".catalog-card-image").first();
         await expect(cover).toBeVisible();
         const initialTop = (await cover.boundingBox())!.y;
@@ -42,6 +44,7 @@ for (const width of [320, 390, 1440]) {
     test(`Original portrait and readable product copy at ${width}px`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 844 });
         await page.goto("/products/fixture-readable");
+        await chooseSizeIfRequired(page);
         const photo = page.locator(".gallery-stage img");
         await expect(photo).toHaveJSProperty("complete", true);
         await expect(photo).toHaveAttribute("src", /\/images\/catalogue-test\/abaya.webp$/);
@@ -63,6 +66,7 @@ for (const width of [320, 390, 1440]) {
 test("Filter resize keeps the single draft and restores page scrolling", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/shop?filters=open");
+    await chooseSizeIfRequired(page);
     const dialog = page.getByRole("dialog", { name: "البحث والفلاتر", exact: true });
     await expect(dialog).toBeVisible();
     await dialog.locator('[name="search"]').fill("draft");

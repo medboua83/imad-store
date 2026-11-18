@@ -1,5 +1,5 @@
 import { Check, ChevronUp, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import type { Product } from "@/lib/api";
 import { isAmbiguousSize, priceCart, productColorKey, quantityDiscounts, quantityPriceBreakdown } from "@imad-store/shared";
@@ -9,11 +9,16 @@ export function ProductOptions({
     product,
     variantId: id,
     onVariantChange,
+    sizeConfirmed,
+    onSizeChoose,
 }: {
     product: Product;
     variantId: string;
     onVariantChange: (variant: Product["variants"][number], colorClicked: boolean) => void;
+    sizeConfirmed: boolean;
+    onSizeChoose: (variant: Product["variants"][number]) => void;
 }) {
+    const sizeField = useRef<HTMLFieldSetElement>(null);
     const variants = product.variants.filter((v) => !isAmbiguousSize(v.size));
     const [quantity, setQuantity] = useState(1);
     const [quantityDraft, setQuantityDraft] = useState<string | null>(null);
@@ -26,7 +31,7 @@ export function ProductOptions({
     function remainingStock(candidate: Product["variants"][number]) {
         return Math.max(0, candidate.stock - (cart.find((item) => item.variantId === candidate.id)?.quantity ?? 0));
     }
-    const stock = variant?.stock || 0;
+    const stock = sizeConfirmed ? variant?.stock || 0 : 0;
     const selectedInCart = cart.find((item) => item.variantId === id);
     const cartLineTotal = priceCart(cart).lines.find((line) => line.item.variantId === id)?.total;
     const alreadyInCart = stock > 0 && (selectedInCart?.quantity ?? 0) >= stock;
@@ -133,9 +138,9 @@ export function ProductOptions({
                         })}
                     </div>
                 </fieldset>
-                <fieldset className="variant-fieldset">
+                <fieldset className="variant-fieldset" ref={sizeField} aria-describedby="product-size-help">
                     <legend>
-                        المقاس <span>{sizeLabel(variant?.size)}</span>
+                        المقاس <span>{sizeConfirmed ? sizeLabel(variant?.size) : "اختاروا المقاس"}</span>
                     </legend>
                     <div className="size-options">
                         {sizes.map((size) => {
@@ -152,17 +157,20 @@ export function ProductOptions({
                                 <button
                                     type="button"
                                     key={size}
-                                    aria-pressed={!!variant && sizeKey(variant.size) === sizeKey(size)}
+                                    aria-pressed={sizeConfirmed && !!variant && sizeKey(variant.size) === sizeKey(size)}
                                     disabled={!match?.stock}
                                     aria-label={`${label}${match?.stock ? "" : " — غير متوفر لهذا اللون"}`}
-                                    onClick={() => selectVariant(match)}
+                                    onClick={() => {
+                                        if (match) onSizeChoose(match);
+                                        selectVariant(match);
+                                    }}
                                 >
                                     {label}
                                 </button>
                             );
                         })}
                     </div>
-                    <p className="variant-help">المقاسات غير المتوفرة لهذا اللون تظهر مشطوبة.</p>
+                    <p className="variant-help" id="product-size-help">{sizeConfirmed ? "المقاسات غير المتوفرة لهذا اللون تظهر مشطوبة." : "اختاروا مقاسكم قبل الإضافة إلى السلة. المقاسات المشطوبة غير متوفرة لهذا اللون."}</p>
                 </fieldset>
             </div>
             {!variants.length && <p role="status">لا توجد خيارات متاحة لهذا المنتج حالياً.</p>}
@@ -259,7 +267,7 @@ export function ProductOptions({
                     <div className="quantity-heading">
                         <label htmlFor="product-quantity">الكمية</label>
                         <span className="availability-note">
-                            {available
+                            {!sizeConfirmed ? "اختاروا المقاس لمعرفة التوفر" : available
                                 ? `${available} قطعة متاحة للإضافة`
                                 : stock
                                   ? "الكمية المتوفرة في السلة"
@@ -324,11 +332,11 @@ export function ProductOptions({
                 <div className="product-purchase-bar">
                     <div className="purchase-summary">
                         <p className="purchase-price" dir="ltr">
-                            {alreadyInCart ? (cartLineTotal ?? product.price).toFixed(2) : available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
+                            {!sizeConfirmed ? product.price.toFixed(2) : alreadyInCart ? (cartLineTotal ?? product.price).toFixed(2) : available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
                             <span>MAD</span>
                         </p>
                         <p className="purchase-selection" aria-live="polite" aria-atomic="true">
-                            {quantityInvalid ? (
+                            {!sizeConfirmed ? "اختاروا المقاس قبل الإضافة" : quantityInvalid ? (
                                 "تحققوا من الكمية"
                             ) : variant ? (
                                 <>
@@ -362,19 +370,23 @@ export function ProductOptions({
                     <button
                         type="button"
                         className="btn-primary w-full"
-                        disabled={!variant || (!available && !alreadyInCart) || quantityInvalid}
+                        disabled={!variant || (sizeConfirmed && ((!available && !alreadyInCart) || quantityInvalid))}
                         onClick={() => {
-                            if (alreadyInCart) useCartStore.getState().openCart();
+                            if (!sizeConfirmed) {
+                                sizeField.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+                                sizeField.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true });
+                            }
+                            else if (alreadyInCart) useCartStore.getState().openCart();
                             else if (variant && available && !quantityInvalid)
                                 useCartStore.getState().addItem(product, variant, selectedQuantity);
                         }}
                     >
                         <ShoppingBag size={19} aria-hidden="true" />
-                        {alreadyInCart ? "عرض السلة" : available ? "إضافة إلى السلة" : "غير متوفر حالياً"}
+                        {!sizeConfirmed ? "اختاروا المقاس" : alreadyInCart ? "عرض السلة" : available ? "إضافة إلى السلة" : "غير متوفر حالياً"}
                     </button>
                 </div>
             </div>
-            {inCart > 0 && (
+            {inCart > 0 && sizeConfirmed && (
                 <aside
                     className="quantity-cart-preview"
                     aria-label="تقدير السلة بعد الإضافة"
@@ -457,8 +469,8 @@ export function ProductOptions({
                     aria-hidden="true"
                 />
                 <span>
-                    {stock ? "متوفر الآن" : "غير متوفر حالياً"}
-                    {variant
+                    {!sizeConfirmed ? "اختاروا المقاس لمعرفة التوفر" : stock ? "متوفر الآن" : "غير متوفر حالياً"}
+                    {variant && sizeConfirmed
                         ? ` · ${variant.colorNameAr || variant.colorNameFr || variant.colorNameEn}${variant.size ? ` / ${sizeLabel(variant.size)}` : ""}`
                         : ""}
                 </span>

@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [1440]) {
     test(`Floating WhatsApp contact respects store navigation at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 844 });
         await page.goto("/");
+        await chooseSizeIfRequired(page);
         const whatsapp = page.locator(".store-whatsapp-float");
         await expect(whatsapp).toBeVisible();
         await expect(whatsapp).toHaveAccessibleName("مساعدة عبر واتساب — نافذة جديدة");
@@ -30,11 +32,14 @@ for (const width of [1440]) {
         await expect(whatsapp).toBeVisible();
 
         await page.goto("/shop?category=manteau-femme");
+        await chooseSizeIfRequired(page);
         await expect(whatsapp).toBeVisible();
         await page.goto("/products/fixture-sabot");
+        await chooseSizeIfRequired(page);
         if (width < 768) await expect(whatsapp).toBeHidden();
         else await expect(whatsapp).toBeVisible();
         await page.goto("/checkout");
+        await chooseSizeIfRequired(page);
         await expect(whatsapp).toHaveCount(0);
     });
 }

@@ -1,14 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 async function prepare(page: Page) {
   let orders = 0;
   await page.route("**/api/orders", route => { orders++; return route.abort(); });
   await page.goto("/products/fixture-manual");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
   await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
   await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
   await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
   await page.goto("/checkout");
+  await chooseSizeIfRequired(page);
   return () => orders;
 }
 
@@ -40,6 +43,7 @@ for (const viewport of [{width:320,height:740}, {width:390,height:844}, {width:1
     await toggle.click();
     await expect(page.locator(".checkout-compact-total")).toContainText("230.00");
     await page.reload();
+    await chooseSizeIfRequired(page);
     if (viewport.width < 768) await expect(page.locator(".checkout-compact-total")).toContainText("230.00");
     else await expect(disclosure).toHaveAttribute("open");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -54,6 +58,7 @@ test("A compact summary never advertises a total when delivery settings fail", a
   const orders = await prepare(page);
   await page.route("**/api/settings", route => route.abort());
   await page.reload();
+  await chooseSizeIfRequired(page);
   await expect(page.locator(".checkout-compact-total")).toContainText("بانتظار رسوم التوصيل");
   await expect(page.locator(".checkout-compact-total")).not.toContainText("400.00");
   await expect(page.getByRole("button", {name:"مراجعة الطلب",exact:true})).toBeDisabled();

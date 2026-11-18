@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
   test(`Manual quantity replacement and invalid drafts stay safe at ${width}px`, async ({ page }, info) => {
@@ -6,6 +7,7 @@ for (const width of [320, 390, 1440]) {
     let orders = 0;
     await page.route("**/api/orders", route => { orders++; return route.abort(); });
     await page.goto("/products/fixture-quantity-input?stats_test=1");
+    await chooseSizeIfRequired(page);
     const quantity = page.getByRole("spinbutton", { name: "الكمية", exact: true });
     const add = page.getByRole("button", { name: "إضافة إلى السلة", exact: true });
     const price = page.locator(".purchase-price");
@@ -68,17 +70,20 @@ for (const width of [390, 1440]) {
       quantityDiscounts:[{minQuantity:2,unitPrice:200,totalPrice:400}],image:"/images/catalogue-test/sac.webp"
     }]},version:0})));
     await page.goto("/products/fixture-quantity-input?stats_test=1");
+    await chooseSizeIfRequired(page);
     const quantity = page.getByRole("spinbutton", { name: "الكمية", exact: true });
     await expect(quantity).toHaveAttribute("max", "1");
     await quantity.fill("2");
     await expect(quantity).toHaveAttribute("aria-invalid", "true");
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeDisabled();
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(quantity).toHaveValue("1");
     await expect(quantity).toHaveAttribute("aria-invalid", "false");
     await quantity.fill("3");
     await expect(page.locator(".purchase-price")).toContainText("630.00");
     await page.getByRole("button", { name: "أسود", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(quantity).toHaveValue("1");
     await expect(page.locator(".purchase-price")).toContainText("230.00");
     await page.getByRole("button", { name: "فتح السلة، 19 قطعة", exact: true }).first().click();

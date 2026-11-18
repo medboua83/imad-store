@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const viewport of [
   { width: 320, height: 568 },
@@ -11,6 +12,7 @@ for (const viewport of [
     let orders = 0;
     await page.route("**/api/orders", route => { orders++; return route.abort(); });
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const dialog = page.getByRole("dialog");
@@ -61,6 +63,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 844, height: 390 }
     await page.route("**/api/settings", route => failed ? route.abort() : route.continue());
     await page.route("**/api/orders", route => { orders++; return route.abort(); });
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const dialog = page.getByRole("dialog");

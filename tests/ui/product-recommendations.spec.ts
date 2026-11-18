@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [390, 1366]) {
     test(`Alternatives and complements preserve the basket and require a variant choice at ${width}px`, async ({ page }, info) => {
@@ -6,6 +7,7 @@ for (const width of [390, 1366]) {
         const errors: string[] = [];
         page.on("pageerror", error => errors.push(error.message));
         await page.goto("/products/fixture-recommendations");
+        await chooseSizeIfRequired(page);
         const alternatives = page.getByRole("region", { name: "خيارات أخرى للمقارنة", exact: true });
         const complements = page.getByRole("region", { name: "أكملوا اختياراتكم", exact: true });
         await expect(alternatives).toContainText("300.00");
@@ -31,6 +33,7 @@ for (const width of [390, 1366]) {
         await expect(dialog.locator(".recommendation-card")).toHaveCount(1);
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         await page.goto("/products/fixture-second-source");
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(dialog.locator(".bag-grand-total")).toContainText("310.00");
         await expect(dialog.locator(".recommendation-card")).toHaveCount(2);
@@ -45,6 +48,7 @@ for (const width of [390, 1366]) {
 test("Recommendations failing to load never prevent continuing checkout", async ({ page }) => {
     await page.route("**/api/products/*/recommendations", route => route.fulfill({ status: 503, json: { success: false } }));
     await page.goto("/products/fixture-recommendations");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator(".bag-grand-total")).toContainText("230.00");
@@ -74,6 +78,7 @@ for (const width of [390, 1366]) {
             await route.fulfill({ json: { success: true, data, total: 2, page: 1, totalPages: 1, unread: 0 } });
         });
         await page.goto("/admin");
+        await chooseSizeIfRequired(page);
         if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
         await page.getByRole("button", { name: "Produits", exact: true }).click();
         await page.getByRole("button", { name: "Modifier Article source", exact: true }).click();
@@ -96,6 +101,7 @@ for (const width of [390, 1366]) {
         await expect(page.getByText("Produit enregistré. Le catalogue est à jour.", { exact: true })).toBeVisible();
         expect(base.recommendationSettings).toEqual({ enabled: true, upsellProductIds: [target.id], crossSellProductIds: [target.id] });
         await page.reload();
+        await chooseSizeIfRequired(page);
         if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
         await page.getByRole("button", { name: "Produits", exact: true }).click();
         await page.getByRole("button", { name: "Modifier Article source", exact: true }).click();

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
   test(`Colour photo survives add, refresh and a single checkout expansion at ${width}px`, async ({page}, info) => {
@@ -6,9 +7,11 @@ for (const width of [320, 390, 1440]) {
     let orders = 0;
     await page.route("**/api/orders", route => { orders++; return route.abort(); });
     await page.goto("/products/fixture-one-size?stats_test=1");
+    await chooseSizeIfRequired(page);
     const sizeButtons = page.locator(".size-options button");
     await expect(sizeButtons).toHaveText(["قياسي", "مقاس موحد"]);
     await page.getByRole("button", {name:"بني", exact:true}).click();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", {name:"مقاس موحد",exact:true})).toHaveAttribute("aria-pressed","true");
     const image = new URL("/images/catalogue-test/abaya.webp", page.url()).href;
     await expect(page.locator(".gallery-stage img")).toHaveJSProperty("src",image);
@@ -24,6 +27,7 @@ for (const width of [320, 390, 1440]) {
     await expect(bag.locator(".bag-quantity span")).toHaveText("1");
     await page.getByRole("button",{name:"إغلاق السلة",exact:true}).click();
     await page.reload();
+    await chooseSizeIfRequired(page);
     await page.locator(".site-header .cart-toggle").click();
     await expect(bag.locator(".bag-line-photo img")).toHaveJSProperty("src",image);
     await page.getByRole("link",{name:"متابعة الطلب",exact:true}).click();
@@ -44,6 +48,7 @@ for (const width of [320, 390, 1440]) {
   test(`Size and colour filters stay distinct and retain actual SKU choices at ${width}px`, async ({page}) => {
     await page.setViewportSize({width,height:900});
     await page.goto("/shop?search=one-size-fixture&filters=open&size=Unique");
+    await chooseSizeIfRequired(page);
     const size = page.getByRole("combobox",{name:"المقاس",exact:true});
     await expect(size.locator("option")).toHaveText(["جميع المقاسات","قياسي","مقاس موحد"]);
     await expect(size).toHaveValue("unique");
@@ -52,6 +57,7 @@ for (const width of [320, 390, 1440]) {
     await page.locator(".catalog-card-image").click();
     await expect(page.getByRole("button",{name:"مقاس موحد",exact:true})).toHaveAttribute("aria-pressed","true");
     await page.getByRole("button",{name:"أسود",exact:true}).click();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button",{name:"مقاس موحد",exact:true})).toBeEnabled();
     await page.getByRole("button",{name:"إضافة إلى السلة",exact:true}).click();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items);
@@ -68,15 +74,18 @@ test("A legacy cart repairs its photo from the current variant mapping without c
     price:230,size:"unique",stock:1,quantity:1,image:"/images/catalogue-test/sac.webp",images:["/images/catalogue-test/sac.webp"],
   }]}})));
   await page.goto("/checkout");
+  await chooseSizeIfRequired(page);
   const photo=page.locator(".checkout-summary-items .bag-line-photo img");
   await expect(photo).toHaveJSProperty("src",new URL("/images/catalogue-test/abaya.webp",page.url()).href);
   await expect(page.locator(".checkout-summary-items .bag-quantity span")).toHaveText("1");
   await page.reload();
+  await chooseSizeIfRequired(page);
   await expect(photo).toHaveJSProperty("src",new URL("/images/catalogue-test/abaya.webp",page.url()).href);
 });
 
 test("Equivalent display sizes never hide another SKU or pool their stock", async ({page}) => {
   await page.goto("/products/fixture-one-size");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button",{name:"إضافة إلى السلة",exact:true}).click();
   await page.getByRole("button",{name:"إغلاق السلة",exact:true}).click();
   await expect(page.getByRole("button",{name:"عرض السلة",exact:true})).toBeEnabled();
@@ -92,6 +101,7 @@ test("Equivalent display sizes never hide another SKU or pool their stock", asyn
 test("A failed colour photo shows a placeholder instead of another colour", async ({page}) => {
   await page.route("**/images/catalogue-test/abaya.webp",route => route.fulfill({status:404,body:""}));
   await page.goto("/products/fixture-one-size");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button",{name:"إضافة إلى السلة",exact:true}).click();
   const bag=page.getByRole("dialog");
   await expect(bag.locator(".bag-line-photo .product-photo-placeholder")).toBeVisible();

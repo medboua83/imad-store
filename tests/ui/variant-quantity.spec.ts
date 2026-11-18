@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [390, 1440]) {
   test(`Variant choices preserve quantity and clamp to their stock at ${width}px`, async ({
@@ -6,6 +7,7 @@ for (const width of [390, 1440]) {
   }, info) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     const quantity = page.locator("#product-quantity");
     const price = page.locator(".quantity-selection-total");
     const two = page.getByRole("button", { name: "اختيار قطعتين", exact: true });
@@ -17,6 +19,7 @@ for (const width of [390, 1440]) {
     await expect(price).toContainText("400.00");
 
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -30,10 +33,12 @@ for (const width of [390, 1440]) {
 
     // Black has two units: colour changes cannot exceed the destination stock.
     await page.getByRole("button", { name: "أسود", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(quantity).toHaveValue("2");
     await expect(price).toContainText("400.00");
     await expect(page.getByRole("button", { name: "اختيار 3 قطع", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(quantity).toHaveValue("2");
     await expect(page.locator(".purchase-price")).toContainText("400.00");
     await page.screenshot({ path: info.outputPath(`variant-quantity-${width}.png`) });
@@ -52,15 +57,19 @@ for (const width of [390, 1440]) {
   }, info) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/products/fixture-manual?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
     await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
     await page.getByRole("button", { name: "أسود", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
     await expect(page.locator("#product-quantity")).toHaveValue("2");
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(page.locator("#product-quantity")).toHaveValue("1");
     await expect(page.locator(".purchase-price")).toContainText("230.00");
     await expect(page.locator(".availability-note")).toContainText("1 قطعة متاحة");

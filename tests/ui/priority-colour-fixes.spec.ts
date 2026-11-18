@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390]) {
     test(`Mobile WhatsApp stays inside the reserved navigation at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 844 });
         await page.goto("/shop");
+        await chooseSizeIfRequired(page);
         const contact = page.locator(".mobile-dock-whatsapp");
         await expect(contact).toBeVisible();
         await expect(contact).toHaveAttribute("href", "https://wa.me/message/M44N6KT35MW4N1");
@@ -24,16 +26,21 @@ for (const width of [390, 1440]) {
     test(`Gallery navigation selects the mapped colour at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/products/fixture-color-photos");
+        await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "عرض الصورة 2", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(page.getByRole("button", { name: "بني", exact: true })).toHaveAttribute("aria-pressed", "true");
         await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute("aria-pressed", "true");
         await page.getByRole("button", { name: "45", exact: true }).click();
         await page.getByRole("button", { name: "عرض الصورة 3", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(page.getByRole("button", { name: "أسود", exact: true })).toHaveAttribute("aria-pressed", "true");
         await page.getByRole("button", { name: "الصورة التالية", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(page.locator(".gallery-color-notice")).toBeVisible();
         await expect(page.getByRole("button", { name: "أسود", exact: true })).toHaveAttribute("aria-pressed", "true");
         await page.getByRole("button", { name: "الصورة التالية", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(page.getByRole("button", { name: "بني", exact: true })).toHaveAttribute("aria-pressed", "true");
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         await expect(page.locator(".bag-line-detail")).toContainText("بني");
@@ -43,6 +50,7 @@ for (const width of [390, 1440]) {
 
 test("A grouped colour filter carries a matching real SKU to the product", async ({ page }) => {
     await page.goto("/shop?search=one-size-fixture&filters=open");
+    await chooseSizeIfRequired(page);
     const color = page.getByRole("combobox", { name: "اللون", exact: true });
     await expect(color.locator("option")).toHaveText(["جميع الألوان", "بني"]);
     await color.selectOption("group:#804000,#804001");
@@ -54,6 +62,8 @@ test("A grouped colour filter carries a matching real SKU to the product", async
     await expect(card.locator(".variant-hint")).not.toContainText("0 خيارات");
     await expect(card.locator(".catalog-card-image img")).toHaveJSProperty("src", new URL("/images/catalogue-test/abaya.webp", page.url()).href);
     await page.locator(".catalog-card-image").click();
+    await expect(page.getByRole("button", { name: "بني", exact: true })).toBeVisible();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "بني", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeEnabled();
 });
@@ -61,7 +71,9 @@ test("A grouped colour filter carries a matching real SKU to the product", async
 test("A failed mapped gallery photo cannot display another colour silently", async ({ page }) => {
     await page.route("**/images/catalogue-test/abaya.webp", route => route.fulfill({ status: 404, body: "" }));
     await page.goto("/products/fixture-color-photos");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(page.locator(".gallery-stage .gallery-empty")).toBeVisible();
     await expect(page.locator(".gallery-stage img")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "بني", exact: true })).toHaveAttribute("aria-pressed", "true");

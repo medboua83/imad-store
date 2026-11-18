@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 const item = {
   productId: "222222222222222222222222",
   productSlug: "fixture-sabot",
@@ -22,6 +23,7 @@ for (const width of [320, 390, 1440]) {
   }, info) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/shop");
+    await chooseSizeIfRequired(page);
     if (width === 1440) {
       const price = await page
         .locator(".catalog-card .product-current-price")
@@ -59,6 +61,7 @@ for (const saved of ["{broken", JSON.stringify({ state: { items: "bad" }, versio
     page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript((value) => localStorage.setItem("imad-store-cart", value), saved);
     await page.goto("/checkout");
+    await chooseSizeIfRequired(page);
     await expect(page.locator("main .cart-recovery-notice")).toBeVisible();
     await expect(page.locator(".checkout-empty")).toBeVisible();
     expect(errors).toEqual([]);
@@ -80,6 +83,7 @@ test("A mixed saved basket preserves valid lines, gives a warning and survives r
       );
   }, item);
   await page.goto("/checkout");
+  await chooseSizeIfRequired(page);
   await expect(page.locator("main .cart-recovery-notice")).toBeVisible();
   await expect(
     page.locator(".checkout-order-summary .bag-grand-total, .checkout-summary .bag-grand-total"),
@@ -87,6 +91,7 @@ test("A mixed saved basket preserves valid lines, gives a warning and survives r
   await page.locator("main .cart-recovery-notice").getByRole("button").click();
   await expect(page.locator("main .cart-recovery-notice")).toHaveCount(0);
   await page.reload();
+  await chooseSizeIfRequired(page);
   await expect(page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true })).toBeVisible();
   await expect(page.locator("main .cart-recovery-notice")).toHaveCount(0);
   await page.screenshot({ path: info.outputPath("recovered-checkout.png") });
@@ -104,6 +109,7 @@ test("Browser storage being unavailable does not break a new basket", async ({ p
     };
   });
   await page.goto("/products/fixture-sabot");
+  await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
   await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("230.00");
   expect(errors).toEqual([]);
@@ -134,6 +140,7 @@ for (const width of [390, 1440]) {
       await route.fulfill({ json: { success: true, data, total: 0, unread: 0 } });
     });
     await page.goto("/admin");
+    await chooseSizeIfRequired(page);
     if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
     await page.getByRole("button", { name: "Paramètres", exact: true }).click();
     await page.getByLabel("Délai maximal de livraison (jours)", { exact: true }).fill("3");
@@ -152,6 +159,7 @@ for (const width of [390, 1440]) {
       freeShippingMin: 500,
     });
     await page.reload();
+    await chooseSizeIfRequired(page);
     if (width < 768) await page.getByRole("button", { name: "Navigation", exact: true }).click();
     await page.getByRole("button", { name: "Paramètres", exact: true }).click();
     await expect(

@@ -13,15 +13,19 @@ export function cleanProductText(text: string): string {
     .replace(/^\s{0,3}(?:>\s*)+/gm, "")
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/(^|[\s(])(\*{1,2}|_{1,2})(\S(?:.*?\S)?)\2(?=$|[\s).,!،؛؟:])/gm, "$1$3")
+    // Drop recognisable editorial prefaces, not product facts or arbitrary lines.
+    .replace(/^\s*(?:هاهي|ها\s+هي)\s+(?:ال\s*)?ad\s*copy\b[^\n]*(?:\n|$)/gim, "")
+    .replace(/^\s*(?:ad\s*copy|النص\s+للموقع)\s*[:：]\s*/gim, "")
+    .replace(/^\s*الموديل\s+(?:الأول|الثاني|الثالث)\s*[-–—:]\s*/gm, "")
     .trim();
 }
 export function productDescription(product: ProductCopy): string {
-  return cleanProductText(
+  const description = cleanProductText(
     [product.descriptionAr, product.descriptionFr, product.descriptionEn]
       .find((text) => text?.trim())
-      ?.trim() ||
-    `${[product.nameAr, product.nameFr, product.nameEn].find((name) => name?.trim())?.trim() || "المنتج"}. اختاروا اللون والمقاس من الخيارات المتاحة، وراجعوا السعر والتوصيل قبل تأكيد الطلب.`
+      ?.trim() || ""
   );
+  return description || `${[product.nameAr, product.nameFr, product.nameEn].find((name) => name?.trim())?.trim() || "المنتج"}. اختاروا اللون والمقاس من الخيارات المتاحة، وراجعوا السعر والتوصيل قبل تأكيد الطلب.`;
 }
 /** Keep the merchant's wording; only introduce readable paragraph boundaries. */
 export function descriptionParagraphs(text: string): string[] {

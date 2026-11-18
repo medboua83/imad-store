@@ -171,6 +171,7 @@ createServer((req, res) => {
   }
   else if (pathname === "/api/products/fixture-recommendations") data = {...product, slug:"fixture-recommendations"};
   else if (pathname === "/api/products/fixture-premium") data = premium;
+  else if (pathname === "/api/products/fixture-editorial") data = {...product,slug:"fixture-editorial",descriptionAr:"هاهي ال ad copy بالعربية للموديلات بجوج 👇\nالموديل الأول – روبة واسعة ومريحة\nالنص للموقع:\nروبة واسعة بقماش ناعم."};
   else if (pathname === "/api/products/fixture-accessory") data = accessory;
   else if (pathname === "/api/products/fixture-second-source") data = secondSource;
   else if (pathname === "/api/products/fixture-recommendations/recommendations") data = {upsell:[premium],crossSell:[accessory]};

@@ -1,13 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
     test(`Product return restores filters, page and result position at ${width}px`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 900 });
         const filters = "search=page-fixture&category=mens-clogs&sort=price-asc&minPrice=100&maxPrice=500&availability=in-stock&size=40&page=2";
         await page.goto(`/shop?${filters}`);
+        await chooseSizeIfRequired(page);
         await page.locator(".catalog-card .text-link").click();
         const back = page.getByRole("link", { name: "العودة إلى النتائج", exact: true });
         await expect(back).toBeVisible();
+        await chooseSizeIfRequired(page);
         expect(new URL(page.url()).searchParams.get("size")).toBe("40");
         await expect(page.getByRole("button", { name: "40", exact: true })).toHaveAttribute("aria-pressed", "true");
         const canonical = new URL("/products/fixture-sabot", page.url()).href;
@@ -28,11 +31,14 @@ for (const width of [320, 390, 1440]) {
 test("Unavailable size recovery retains safe catalogue context and never changes social URLs", async ({ page }) => {
     const returnTo = "/shop?category=mens-clogs&size=40&page=2";
     await page.goto(`/products/fixture-sabot?size=99&returnTo=${encodeURIComponent(returnTo)}`);
+    await chooseSizeIfRequired(page);
     await page.getByRole("link", { name: "عرض المقاسات الأخرى", exact: true }).click();
     await expect(page).toHaveURL(url => url.pathname === "/products/fixture-sabot" && !url.searchParams.has("size"));
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("link", { name: "العودة إلى النتائج", exact: true })).toHaveAttribute("href", returnTo + "#catalog-results");
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeEnabled();
     await page.goto("/products/fixture-sabot?returnTo=https%3A%2F%2Fevil.example%2Fshop");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("link", { name: "العودة إلى النتائج", exact: true })).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "مسار التصفح" }).getByRole("link", { name: "المتجر", exact: true })).toHaveAttribute("href", "/shop");
 });

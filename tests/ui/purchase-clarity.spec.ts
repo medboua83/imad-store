@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const viewport of [
     { width: 320, height: 640 },
@@ -10,6 +11,7 @@ for (const viewport of [
     }, info) => {
         await page.setViewportSize(viewport);
         await page.goto("/products/fixture-manual?stats_test=1");
+        await chooseSizeIfRequired(page);
         const one = page.getByRole("button", { name: "اختيار قطعة واحدة", exact: true });
         const two = page.getByRole("button", { name: "اختيار قطعتين", exact: true });
         const three = page.getByRole("button", { name: "اختيار 3 قطع", exact: true });
@@ -25,6 +27,7 @@ for (const viewport of [
         expect(box!.y).toBeGreaterThanOrEqual(0);
         expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
         await page.getByRole("button", { name: "بني", exact: true }).click();
+        await chooseSizeIfRequired(page);
         await expect(three.locator(".quantity-choice-price")).toHaveText("630.00 MAD");
         await three.click();
         await expect(recap).toHaveText("بني · 44 · 3 قطع");
@@ -48,6 +51,7 @@ test("Ordinary prices are not advertised as promotions and invalid quantities hi
     page,
 }) => {
     await page.goto("/products/fixture-sabot?stats_test=1");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("region", { name: "عروض الكمية" })).toHaveCount(0);
     await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
     await expect(page.locator(".purchase-price")).toContainText("460.00");
@@ -61,7 +65,9 @@ test("A manually entered quantity offer takes priority in the displayed choices"
     page,
 }) => {
     await page.goto("/products/fixture-override?stats_test=1");
+    await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "بني", exact: true }).click();
+    await chooseSizeIfRequired(page);
     const three = page.getByRole("button", { name: "اختيار 3 قطع", exact: true });
     await expect(three.locator(".quantity-choice-price")).toHaveText("650.00 MAD");
     await three.click();

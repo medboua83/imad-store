@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { chooseSizeIfRequired } from "./choose-size";
 
 for (const width of [320, 390, 1440]) {
   test(`Available size filter carries the choice to the matching color at ${width}px`, async ({
@@ -6,6 +7,7 @@ for (const width of [320, 390, 1440]) {
   }, info) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/shop?filters=open&search=size-fixture&category=mens-clogs&sort=price-asc");
+    await chooseSizeIfRequired(page);
     const size = page.getByRole("combobox", { name: "المقاس", exact: true });
     await expect(size.locator("option")).toHaveText(["جميع المقاسات", "40", "44", "M"]);
     await size.selectOption("44");
@@ -32,6 +34,7 @@ for (const width of [320, 390, 1440]) {
       expect(new URL(href!, page.url()).searchParams.get("size")).toBe("44");
     await page.locator(".catalog-card .text-link").click();
     await expect(page).toHaveURL(url => url.pathname.startsWith("/products/"), { timeout: 30000 });
+    await chooseSizeIfRequired(page);
     expect(new URL(page.url()).searchParams.get("color")).toBe("#804000");
     await expect(page.getByRole("link", { name: "العودة إلى النتائج" })).toHaveAttribute(
       "href", /color=%23804000/,
@@ -69,25 +72,30 @@ for (const width of [320, 390, 1440]) {
   }, info) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/shop?search=size-race&size=40");
+    await chooseSizeIfRequired(page);
     await page.locator(".catalog-card .text-link").click();
     await expect(page).toHaveURL(url => url.pathname.startsWith("/products/"), { timeout: 30000 });
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("status", { name: "المقاس المطلوب", exact: true })).toContainText(
       "غير متوفر",
     );
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toHaveCount(0);
     await page.screenshot({ path: info.outputPath(`size-unavailable-${width}.png`) });
     await page.getByRole("link", { name: "عرض المقاسات الأخرى", exact: true }).click();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeEnabled();
     await expect(page.getByRole("button", { name: "44", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
     await page.goto("/products/fixture-sabot?size=99");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("status", { name: "المقاس المطلوب", exact: true })).toContainText(
       "غير متوفر",
     );
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toHaveCount(0);
     await page.goto("/shop?filters=open&search=size-no-options&category=mens-clogs&size=44");
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("textbox", { name: "المقاس", exact: true })).toHaveValue("44");
     await expect(page.locator(".catalog-card")).toHaveCount(1);
     await page.getByRole("button", { name: "إغلاق الفلاتر", exact: true }).click();
@@ -98,12 +106,14 @@ for (const width of [320, 390, 1440]) {
     expect(new URL(page.url()).searchParams.get("search")).toBe("size-no-options");
     await expect(page.locator(".catalog-card")).toHaveCount(2);
     await page.goto("/shop?search=page-fixture&size=44&page=99");
+    await chooseSizeIfRequired(page);
     await page.getByRole("link", { name: "العودة إلى أول صفحة", exact: true }).click();
     expect(new URL(page.url()).searchParams.get("size")).toBe("44");
     await page.getByRole("link", { name: "الصفحة التالية", exact: true }).click();
     expect(new URL(page.url()).searchParams.get("size")).toBe("44");
     await expect(page.locator(".shop-pagination")).toContainText("2 / 3");
     await page.goto("/shop?size=40&size=44");
+    await chooseSizeIfRequired(page);
     await expect(page.locator("#catalog-filter-error")).toContainText("صححوا الفلاتر");
     await expect(page.locator(".catalog-card")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
