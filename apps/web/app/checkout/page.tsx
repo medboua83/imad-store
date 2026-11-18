@@ -517,7 +517,7 @@ export default function CheckoutPage() {
                             />
                             {error && <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">{error}</p>}
                             <div className="checkout-confirm-actions">
-                                <p><span>رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${shipping.total.toFixed(2)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
+                                <p><span className="checkout-confirm-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${shipping.total.toFixed(2)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
                                 <button type="submit" className="btn-primary" disabled={blocked}>{busy ? "جارٍ التحقق والحفظ…" : "أؤكد طلبي"}<ArrowLeft size={18} aria-hidden="true" /></button>
                             </div>
                         </div>}

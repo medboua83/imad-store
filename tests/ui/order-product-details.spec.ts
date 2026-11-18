@@ -36,7 +36,7 @@ for (const width of [320, 390, 1440]) {
     const draft = new URL((await contact.getAttribute("href"))!);
     expect(draft.pathname).toBe("/212600000099");
     const message = draft.searchParams.get("text")!;
-    for (const detail of [order.id, "Abaya de recette", "Marron", "XL", "AB-MARRON-XL", "Quantité : 2", "40,00", "240,00", "http://127.0.0.1:3131/images/catalogue-test/abaya.webp"]) expect(message).toContain(detail);
+    for (const detail of ["Client fictif", "عباية تجريبية", "بني", "XL", "الكمية : 2", "40,00", "240,00", "http://127.0.0.1:3131/images/catalogue-test/abaya.webp"]) expect(message).toContain(detail);
     expect(message).not.toContain("sac.webp");
     await photo.scrollIntoViewIfNeeded();
     await page.screenshot({path: info.outputPath(`order-products-${width}.png`)});

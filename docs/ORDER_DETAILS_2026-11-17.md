@@ -1,3 +1,9 @@
+## Ajustements demandés le 18 novembre 2026
+
+Olivraison : la description conserve les produits, quantités, tailles et couleurs ; référence SKU et prix unitaire retirés. Les identifiants techniques nécessaires au suivi et le montant COD enregistré sont conservés. Aucune modification ou réexpédition de colis existants.
+
+Popup client : frais de livraison dans un encadré bleu pétrole clair, libellé explicite et montant en gras, avec rappel dans la zone de confirmation. Même traitement dans le reçu. Aucun tarif ni mécanisme de confirmation modifié.
+
 # Détails des commandes — candidat du 17 novembre 2026
 
 Demande : transmettre les tailles/couleurs à Olivraison, rendre les frais explicites avant confirmation, afficher les produits et leurs photos dans les commandes administrateur.

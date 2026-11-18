@@ -1099,6 +1099,38 @@
 .checkout-confirm-actions bdi { white-space: nowrap; }
 .checkout-confirm-dialog .checkout-final-review { scroll-margin-top: 100px; }
 
+/* Delivery fees stay distinct from the ivory order total, in both review and receipt. */
+.checkout-confirm-dialog .bag-totals .bag-shipping-row,
+.order-receipt-totals .order-receipt-shipping {
+    background: #eaf5f6;
+    color: #15545d;
+    border: 1px solid #9fc9ce;
+    border-inline-start: 4px solid #237582;
+    border-radius: 8px;
+    padding: 14px 12px;
+    margin-block: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    align-items: center;
+}
+.checkout-confirm-dialog .bag-shipping-row dt,
+.checkout-confirm-dialog .bag-shipping-row dd,
+.order-receipt-shipping dt,
+.order-receipt-shipping dd { color: inherit; font-weight: inherit; }
+.checkout-confirm-dialog .bag-shipping-row dd,
+.order-receipt-shipping dd { white-space: nowrap; }
+.checkout-confirm-actions .checkout-confirm-shipping {
+    display: inline-block;
+    background: #eaf5f6;
+    color: #15545d;
+    border: 1px solid #9fc9ce;
+    border-radius: 6px;
+    padding: 5px 7px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 /* A short viewport needs one scroll surface, with the close control outside it. */
 @media (max-height: 600px) {
     .store-shell .cart-dialog .bag-body {
