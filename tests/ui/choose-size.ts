@@ -8,6 +8,8 @@ export async function chooseSizeIfRequired(page: Page) {
     if (!(await options.count())) return;
     const choose = options.getByRole("button", { name: "اختاروا المقاس", exact: true });
     if (await choose.isVisible()) {
-        await options.locator(".size-options button:not(:disabled)").first().click();
+        const oneSize = options.getByRole("button", { name: "مقاس موحد", exact: true });
+        if (await oneSize.count() && await oneSize.isEnabled()) await oneSize.click();
+        else await options.locator(".size-options button:not(:disabled)").first().click();
     }
 }

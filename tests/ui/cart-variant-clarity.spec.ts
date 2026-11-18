@@ -55,6 +55,8 @@ for (const width of [320, 390, 1440]) {
     await expect(page.getByRole("combobox",{name:"اللون",exact:true}).locator("option")).toHaveText(["جميع الألوان","بني"]);
     await page.getByRole("button",{name:"إغلاق الفلاتر",exact:true}).click();
     await page.locator(".catalog-card-image").click();
+    await expect(page.getByRole("button",{name:"مقاس موحد",exact:true})).toBeVisible();
+    await chooseSizeIfRequired(page);
     await expect(page.getByRole("button",{name:"مقاس موحد",exact:true})).toHaveAttribute("aria-pressed","true");
     await page.getByRole("button",{name:"أسود",exact:true}).click();
     await chooseSizeIfRequired(page);
