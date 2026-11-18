@@ -313,6 +313,19 @@
 .size-advice summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .size-advice p { margin-block: 10px; font-size: 13px; }
 .size-advice a { text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
+.product-size-guide { color: #383127; min-width: 0; }
+.product-size-guide :is(h3,h4) { font-weight: 700; margin-block: 14px 6px; }
+.product-size-guide ol { list-style: decimal; padding-inline-start: 22px; font-size: 14px; }
+.product-size-guide li { margin-block: 8px; }
+.product-size-guide .size-guide-unavailable { border-inline-start: 3px solid #947027; padding: 10px; background: #fffdf7; color: #44351e; }
+.size-table-scroll { width: 100%; max-width: 100%; overflow-x: auto; margin-block: 14px; border: 1px solid #c9b58a; border-radius: 6px; }
+.size-table-scroll:focus-visible { outline: 3px solid #806124; outline-offset: 2px; }
+.size-table-scroll table { border-collapse: collapse; width: 100%; font-size: 14px; text-align: center; }
+.size-table-scroll caption { padding: 8px; color: #423a2e; font-size: 13px; }
+.size-table-scroll :is(th,td) { padding: 10px; border-bottom: 1px solid #ded4bf; min-width: 75px; }
+.size-table-scroll thead { background: #ede3ce; }
+.size-measurement-selected { background: #f1e0b9; box-shadow: inset -3px 0 #806124; }
+.product-information-facts dd { white-space: pre-line; }
 .policy-page { line-height: 2; }
 .policy-page h2 { font-size: 20px; font-weight: 600; }
 .policy-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }

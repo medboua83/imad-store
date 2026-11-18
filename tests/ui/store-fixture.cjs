@@ -172,6 +172,8 @@ createServer((req, res) => {
   else if (pathname === "/api/products/fixture-recommendations") data = {...product, slug:"fixture-recommendations"};
   else if (pathname === "/api/products/fixture-premium") data = premium;
   else if (pathname === "/api/products/fixture-editorial") data = {...product,slug:"fixture-editorial",descriptionAr:"هاهي الـ ad copy بالعربية للموديلات بجوج 👇\nالموديل الأول – روبة واسعة ومريحة\n*للموقع :*\nروبة واسعة بقماش ناعم.\n*للإعلانات / تيك توك :*\nصيغة الإعلان\nالمنتج الآخر: جيوب وطيات."};
+  else if (pathname === "/api/products/fixture-size-guide") data = {...premium,slug:"fixture-size-guide",category:coatCategory,variants:[...premium.variants,{...premium.variants[0],id:"333333333333333333333339",sku:"GUIDE-L",size:"L",stock:3}],productInformation:{composition:"خامة اختبار فقط",care:"تعليمات اختبار فقط",fit:"قصة اختبار فقط",sizeGuide:{basis:"GARMENT",verified:true,rows:[{size:"M",chest:100,length:120}]}}};
+  else if (pathname === "/api/products/fixture-foot-guide") data = {...product,slug:"fixture-foot-guide",productInformation:{sizeGuide:{basis:"FOOT",verified:true,rows:[{size:"40",footLength:25.5}]}}};
   else if (pathname === "/api/products/fixture-accessory") data = accessory;
   else if (pathname === "/api/products/fixture-second-source") data = secondSource;
   else if (pathname === "/api/products/fixture-recommendations/recommendations") data = {upsell:[premium],crossSell:[accessory]};

@@ -1,4 +1,6 @@
 "use client";
+import { ProductInformationEditor } from "./product-information-editor";
+import { productInformationError, type ProductInformation } from "@imad-store/shared";
 import { useAdminLocale } from "./admin-locale";
 
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +39,7 @@ const blank = {
     promotionEnabled: false,
     freeShipping: false,
     colorPhotos: [] as ProductColorPhoto[],
+    productInformation: {} as ProductInformation,
     recommendationSettings: {
         enabled: false,
         upsellProductIds: [] as string[],
@@ -162,6 +165,7 @@ export function ProductsTab({
                   nameFr: p.nameFr,
                   nameAr: p.nameAr,
                   nameEn: p.nameEn,
+                  productInformation: p.productInformation ?? {},
                   descriptionFr: p.descriptionFr,
                   descriptionAr: p.descriptionAr,
                   descriptionEn: p.descriptionEn,
@@ -285,6 +289,8 @@ export function ProductsTab({
         setConflictField("");
         setConflictAttempt((attempt) => attempt + 1);
         try {
+            const infoError = productInformationError(form.productInformation);
+            if (infoError) throw new Error(infoError);
             const payload = variantPayload(prepareNewVariantSkus(variants, form.slug));
             const tiers = packOffers(Number(form.price), form.quantityDiscounts);
             if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug))
@@ -1021,6 +1027,7 @@ export function ProductsTab({
                             {t("Ajouter une variante")}
                         </button>
                     </fieldset>
+                    <ProductInformationEditor value={form.productInformation} sizes={[...new Set(variants.map(v => v.size.trim()).filter(size => size && !isAmbiguousSize(size)))]} disabled={disabled} onChange={(productInformation) => setForm(old => ({ ...old, productInformation }))} />
                     <ProductRecommendationEditor
                         key={`recommendations-${session}`}
                         currentId={id}

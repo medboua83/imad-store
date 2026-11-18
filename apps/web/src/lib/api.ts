@@ -155,6 +155,7 @@ export interface Product {
     quantityDiscounts?: import("@imad-store/shared").QuantityDiscount[];
     freeShipping?: boolean;
     recommendationSettings?: RecommendationSettings;
+    productInformation?: import("@imad-store/shared").ProductInformation | null;
     images: string[];
     colorPhotos?: import("@imad-store/shared").ProductColorPhoto[] | null;
     status: string;

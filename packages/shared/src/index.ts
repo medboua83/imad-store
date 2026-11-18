@@ -1,4 +1,5 @@
 export * from "./store-contact";
+export * from "./product-information";
 // ─── Locales ────────────────────────────────────────────────────────────────
 /** A variant represents one size, never a list of numeric pointures. */
 export function isAmbiguousSize(size?: string | null): boolean {
@@ -79,6 +80,7 @@ export interface Product {
     freeShipping?: boolean;
     images: string[]; // Supabase Storage URLs
     colorPhotos?: import("./product-color-photos").ProductColorPhoto[] | null;
+    productInformation?: import("./product-information").ProductInformation | null;
     status: ProductStatus;
     categoryId: string;
     category?: Category;
