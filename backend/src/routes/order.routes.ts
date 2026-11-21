@@ -7,6 +7,7 @@ import {
     getOrderHistory,
     listOrders,
     updateOrderStatus,
+    syncOrderCarrierStatus,
     getAdminNotifications,
     markNotificationRead,
     markAllNotificationsRead,
@@ -25,6 +26,7 @@ orderRoutes.get("/", authenticate, requireAdmin, listOrders);
 orderRoutes.get("/:id/history", authenticate, requireAdmin, getOrderHistory);
 orderRoutes.post("/trash", authenticate, requireAdmin, moveOrdersToTrash);
 orderRoutes.patch("/:id/status", authenticate, requireAdmin, updateOrderStatus);
+orderRoutes.post("/:id/olivraison-sync", authenticate, requireAdmin, syncOrderCarrierStatus);
 
 // Admin notifications (polled by dashboard every 5–10s)
 export const notificationRoutes: IRouter = Router();

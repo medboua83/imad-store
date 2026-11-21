@@ -107,6 +107,7 @@ export async function listOlivraisonShipments(_req: Request, res: Response) {
       id: true,
       trackingId: true,
       carrierStatus: true,
+      lastSyncedAt: true,
       state: true,
       attempts: true,
       lastError: true,

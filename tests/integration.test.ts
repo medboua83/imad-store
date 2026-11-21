@@ -2145,6 +2145,89 @@ test("Olivraison reconciles an uncertain pickup without issuing it twice and sto
 });
 
 
+test("Orders expose carrier tracking only to admins; read-only synchronization is leased, idempotent and never creates a parcel", async () => {
+    const { refreshOlivraisonTracking, applyCarrierOrderStatus } = await import("../backend/src/lib/olivraison");
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: false } });
+    await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: true } });
+    product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), confirmationMode: "SITE" });
+    assert.equal(created.status, 201);
+    const order = created.body.data;
+    await applyCarrierOrderStatus(order.id, "INHOUSE");
+    assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "SHIPPED");
+    const trackingId = "ISOLATED-READ-ONLY";
+    await prisma.olivraisonShipment.create({ data: { id: order.id, trackingId, state: "ACTIVE" } });
+    const eventsBefore = await prisma.orderEvent.count({ where: { orderId: order.id } });
+    const stockBefore = await prisma.productVariant.findMany({ where: { productId: product.id } });
+    const countBefore = await prisma.olivraisonShipment.count();
+    await request(app).post(`/api/orders/${order.id}/olivraison-sync`).expect(401);
+    let reads = 0;
+    const fake = async (path: string, method = "GET") => {
+        reads++;
+        assert.equal(method, "GET");
+        assert.equal(path, `/package/${trackingId}`);
+        await new Promise(resolve => setTimeout(resolve, 40));
+        return { trackingID: trackingId, partnerTrackingID: order.id, status: "DELIVERED" };
+    };
+    const concurrent = await Promise.allSettled([refreshOlivraisonTracking(order.id, fake), refreshOlivraisonTracking(order.id, fake)]);
+    assert.equal(concurrent.filter(result => result.status === "fulfilled").length, 1);
+    assert.equal(reads, 1);
+    await refreshOlivraisonTracking(order.id, fake);
+    const updated = await prisma.order.findUnique({ where: { id: order.id } });
+    assert.equal(updated.status, "DELIVERED");
+    assert.equal(updated.paymentStatus, "PENDING");
+    assert.equal(await prisma.orderEvent.count({ where: { orderId: order.id } }), eventsBefore + 1);
+    assert.equal(await prisma.olivraisonShipment.count(), countBefore);
+    assert.deepEqual(await prisma.productVariant.findMany({ where: { productId: product.id } }), stockBefore);
+    const list = await request(app).get("/api/orders?limit=100").set(admin()).expect(200);
+    const summary = list.body.data.find((row: any) => row.id === order.id).shipment;
+    assert.equal(summary.carrierStatus, "DELIVERED");
+    assert.ok(summary.lastSyncedAt);
+    assert.deepEqual(Object.keys(summary).sort(), ["id", "trackingId", "carrierStatus", "state", "lastError", "lastSyncedAt"].sort());
+    assert.equal((await request(app).get(`/api/orders/${order.id}`).expect(200)).body.data.shipment, undefined);
+    const checkedAt = summary.lastSyncedAt;
+    await assert.rejects(refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: "OTHER-ORDER", status: "TRANSIT" })), /rapprochement/);
+    assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: order.id } })).lastSyncedAt.toISOString(), checkedAt);
+    await refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: order.id, status: "TRANSIT" }));
+    assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "DELIVERED");
+    await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { state: "DISCONNECTED" } });
+    await assert.rejects(refreshOlivraisonTracking(order.id, fake), /Suivi retiré/);
+    assert.equal(reads, 2);
+    await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: false } });
+});
+
+test("Carrier cancellation continues polling until returned without refunding or restocking automatically", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(checkout());
+    assert.equal(created.status, 201);
+    const order = created.body.data;
+    await transitionOrderStatus(order.id, "CONFIRMED");
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: true, activatedAt: new Date() } });
+    await prisma.olivraisonShipment.create({ data: { id: order.id, trackingId: "ISOLATED-RETURN", state: "ATTENTION", carrierStatus: "CANCELLED", nextAttemptAt: new Date(0) } });
+    const variants = await prisma.productVariant.findMany({ where: { productId: product.id } });
+    let reads = 0;
+    await processOlivraisonQueue(async (path, method = "GET") => {
+        reads++;
+        assert.equal(method, "GET");
+        assert.equal(path, "/package/ISOLATED-RETURN");
+        return { trackingID: "ISOLATED-RETURN", partnerTrackingID: order.id, status: "RETURNED" };
+    });
+    assert.equal(reads, 1);
+    const shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(shipment.carrierStatus, "RETURNED");
+    assert.equal(shipment.state, "ATTENTION");
+    assert.ok(shipment.lastSyncedAt);
+    const unchanged = await prisma.order.findUnique({ where: { id: order.id } });
+    assert.equal(unchanged.status, "CONFIRMED");
+    assert.equal(unchanged.paymentStatus, "PENDING");
+    assert.deepEqual(await prisma.productVariant.findMany({ where: { productId: product.id } }), variants);
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: false } });
+});
+
 test("carrier removal retires unfinished parcels, erases secrets and cannot replay history after reconnect", async () => {
     const url = "/api/integrations/olivraison";
     await request(app).delete(url).expect(401);

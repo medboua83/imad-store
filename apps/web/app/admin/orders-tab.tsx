@@ -6,7 +6,8 @@ import { productVariantImages } from "@imad-store/shared";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, updateOrderStatus, trashOrders } from "@/lib/api";
+import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus } from "@/lib/api";
+import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
@@ -125,6 +126,26 @@ export function OrdersTab({
                     "Mise à jour non confirmée. Actualisez pour vérifier le statut avant de réessayer.",
             );
             setReloadRequired(true);
+        } finally {
+            lock.current = false;
+            setBusy(false);
+        }
+    }
+    async function syncCarrier(o: AdminOrder) {
+        if (lock.current) return;
+        lock.current = true;
+        setBusy(true);
+        setMessage("");
+        try {
+            await syncOrderCarrierStatus(o.id);
+            await onRefresh();
+            setReloadRequired(false);
+            setError(false);
+            setMessage("Statut Olivraison vérifié. Aucun nouveau colis créé.");
+        } catch (error) {
+            setError(true);
+            setMessage((error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+                "Vérification impossible. Le dernier statut connu reste affiché ; vous pouvez réessayer.");
         } finally {
             lock.current = false;
             setBusy(false);
@@ -338,6 +359,7 @@ export function OrdersTab({
                             <strong>{money(o.totalAmount)}</strong>
                             <span>{t(paymentLabels[o.paymentStatus] || o.paymentStatus)}</span>
                         </div>
+                        <OrderCarrierStatus order={o} />
                         <button
                             className="admin-button order-details-trigger"
                             aria-haspopup="dialog"
@@ -406,6 +428,7 @@ export function OrdersTab({
                 {order ? (
                     <OrderDetails
                         order={order}
+                        carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy} />}
                         feedback={feedback}
                         actions={
                             <OrderActions
@@ -434,11 +457,13 @@ export function OrdersTab({
 }
 function OrderDetails({
     order: o,
+    carrier,
     feedback,
     actions,
     refresh,
 }: {
     order: AdminOrder;
+    carrier: React.ReactNode;
     feedback: React.ReactNode;
     actions: React.ReactNode;
     refresh: React.ReactNode;
@@ -499,6 +524,7 @@ function OrderDetails({
                 </ol>
             )}
             <OrderHistory orderId={o.id} status={o.status} />
+            {carrier}
             <div className="order-detail-columns">
                 <section>
                     <h3>{t("Client et livraison")}</h3>

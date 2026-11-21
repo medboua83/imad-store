@@ -174,3 +174,4 @@ export * from "./catalog-sections";
 export * from "./product-color-photos";
 
 export * from "./meta-domain-verification";
+export * from "./carrier-status";

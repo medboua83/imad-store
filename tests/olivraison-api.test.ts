@@ -1,5 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { carrierOrderProgress, carrierNeedsReview, olivraisonStatusLabels } from "../packages/shared/src/carrier-status";
+
+test("Carrier statuses cover transit and return codes without treating pickup, incidents or unknowns as delivery", () => {
+  for (const status of ["PICKEDUP", "PICKED_UP", "INHOUSE", "RECIVED", "ENROUTE", "ASSIGN", "TRANSIT", "SCHEDULED", "REPORTED", "UNKNOWN_CALL"])
+    assert.equal(carrierOrderProgress(status), "SHIPPED", status);
+  assert.equal(carrierOrderProgress("DELIVERED"), "DELIVERED");
+  for (const status of ["CREATED", "CONFIRMED", "PICKUP", "CANCELED", "CANCELLED", "RETURNED", "NEW_UNKNOWN_STATUS"])
+    assert.equal(carrierOrderProgress(status), null, status);
+  for (const status of ["CANCELED", "CANCELLED", "RETURNED", "NEW_UNKNOWN_STATUS"])
+    assert.equal(carrierNeedsReview(status), true, status);
+  assert.equal(carrierNeedsReview("TRANSIT"), false);
+  assert.equal(olivraisonStatusLabels.RETURNED, "Retourné au marchand");
+});
 import {
   createCarrierClient,
   documentUrl,
