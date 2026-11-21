@@ -2079,6 +2079,11 @@ test("Olivraison opt-in, encrypted config, no historical replay, direct/CRM enqu
         await Promise.all([processOlivraisonQueue(fake), processOlivraisonQueue(fake)]);
         shipment = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
         assert.equal(shipment.carrierStatus, "PICKUP"); assert.equal(shipment.state, "ACTIVE");
+        assert.ok(Math.abs(shipment.nextAttemptAt.getTime() - shipment.lastSyncedAt.getTime() - 30_000) < 1000);
+        const callsAfterPickup = calls.length;
+        assert.equal(await processOlivraisonQueue(fake), false);
+        assert.equal(calls.length, callsAfterPickup);
+
         assert.equal(shipment.slipUrl, "https://partners.olivraison.com/slip.pdf");
         const creates = calls.filter(c => c.path === "/package/new");
         assert.equal(creates.length, 2); assert.deepEqual(creates[0].body, creates[1].body);
@@ -2202,7 +2207,7 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
 });
 
 test("Existing parcels blocked by an omitted partner reference recover into read-only tracking without parcel or pickup actions", async () => {
-    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { processOlivraisonQueue, refreshOlivraisonTracking } = await import("../backend/src/lib/olivraison");
     const { CARRIER_REFERENCE_MISMATCH } = await import("../backend/src/lib/olivraison-api");
     const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
     await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
@@ -2224,7 +2229,22 @@ test("Existing parcels blocked by an omitted partner reference recover into read
     let saved = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
     assert.equal(saved.state, "TRACKING_ONLY"); assert.equal(saved.lastError, null); assert.ok(saved.lastSyncedAt);
     assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "SHIPPED");
-    // Even a carrier regression to CREATED must not re-arm confirmation or pickup.
+    assert.ok(Math.abs(saved.nextAttemptAt.getTime() - saved.lastSyncedAt.getTime() - 30_000) < 1000);
+    assert.equal(await processOlivraisonQueue(remote), false);
+    assert.equal(calls.length, 1);
+    // A worker with an old due snapshot must not read again after another lease completed.
+    await assert.rejects(refreshOlivraisonTracking(order.id, remote, new Date(0)), /synchronisation/);
+    assert.equal(calls.length, 1);
+    // A tracking outage keeps its five-minute backoff and the last successful status.
+    await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+    const failedAt = Date.now();
+    assert.equal(await processOlivraisonQueue(async () => { throw new Error("isolated outage"); }), true);
+    const failed = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.ok(failed.nextAttemptAt.getTime() >= failedAt + 300_000);
+    assert.equal(failed.lastSyncedAt.getTime(), saved.lastSyncedAt.getTime());
+    assert.equal(failed.carrierStatus, saved.carrierStatus);
+    assert.equal(await processOlivraisonQueue(remote), false);
+        // Even a carrier regression to CREATED must not re-arm confirmation or pickup.
     for (const next of ["CREATED", "DELIVERED"]) {
         status = next;
         await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });

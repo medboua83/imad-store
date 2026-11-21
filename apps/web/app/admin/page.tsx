@@ -1,5 +1,6 @@
 "use client";
 import { useAdminLocale, AdminLanguageSelect } from "./admin-locale";
+import { ADMIN_ORDERS_REFRESH_MS } from "@imad-store/shared";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -330,6 +331,36 @@ export default function AdminPage() {
             document.removeEventListener("visibilitychange", sync);
         };
     }, [token]);
+    useEffect(() => {
+        if (!token || activeTab !== "orders") return;
+        let alive = true,
+            busy = false;
+        const controller = new AbortController();
+        const refreshOrders = async () => {
+            if (busy || document.hidden) return;
+            busy = true;
+            const request = startAdminRead(readState.current);
+            try {
+                const result = await getAllOrders({ limit: 100 }, controller.signal);
+                if (alive && acceptAdminRead(readState.current, "orders", request)) {
+                    setOrders(result.data);
+                    setOrderTotal(result.total);
+                }
+            } catch {
+                // Retain the last successful list during an outage; the next tick retries.
+            } finally {
+                busy = false;
+            }
+        };
+        const interval = setInterval(refreshOrders, ADMIN_ORDERS_REFRESH_MS);
+        document.addEventListener("visibilitychange", refreshOrders);
+        return () => {
+            alive = false;
+            controller.abort();
+            clearInterval(interval);
+            document.removeEventListener("visibilitychange", refreshOrders);
+        };
+    }, [token, activeTab]);
     useEffect(() => {
         if (mobileMenu)
             (

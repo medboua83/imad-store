@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
 import { decryptDeskcommValue } from "./deskcomm-config";
 import { transitionOrderStatus } from "./order-lifecycle";
-import { carrierOrderProgress, carrierNeedsReview } from "@imad-store/shared";
+import { carrierOrderProgress, carrierNeedsReview, CARRIER_TRACKING_INTERVAL_MS } from "@imad-store/shared";
 import { AppError } from "../middleware/error.middleware";
 import {
   CarrierError,
@@ -48,7 +48,7 @@ export async function applyCarrierOrderStatus(orderId: string, status: string) {
 }
 
 /** Explicit admin read: never creates, confirms, cancels or requests pickup of a remote parcel. */
-export async function refreshOlivraisonTracking(orderId: string, injected?: CarrierRequest) {
+export async function refreshOlivraisonTracking(orderId: string, injected?: CarrierRequest, dueBefore?: Date) {
   const [cfg, shipment, order] = await Promise.all([
     prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }),
     prisma.olivraisonShipment.findUnique({ where: { id: orderId } }),
@@ -61,7 +61,8 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
   const leaseToken = randomUUID(), now = new Date();
   const owned = { id: orderId, leaseToken };
   const claim = await prisma.olivraisonShipment.updateMany({
-    where: { id: orderId, trackingId: shipment.trackingId, state: shipment.state, lockedUntil: { lte: now } },
+    where: { id: orderId, trackingId: shipment.trackingId, state: shipment.state, lockedUntil: { lte: now },
+      ...(dueBefore ? { nextAttemptAt: { lte: dueBefore } } : {}) },
     data: { leaseToken, lockedUntil: new Date(now.getTime() + 300_000) },
   });
   if (!claim.count) throw new AppError("Une synchronisation est en cours. Réessayez dans quelques instants.", 409);
@@ -81,7 +82,7 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
     const saved = await prisma.olivraisonShipment.updateMany({
       where: { ...owned, lockedUntil: { gt: new Date() } },
       data: {
-        carrierStatus: remote.status, lastSyncedAt: new Date(), nextAttemptAt: new Date(Date.now() + 300_000), state,
+        carrierStatus: remote.status, lastSyncedAt: new Date(), nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS), state,
         lastError: review ? "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
       },
     });
@@ -92,10 +93,10 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
   }
 }
 
-/** One leased shipment per tick; checkpoints precede every irreversible request. */
+/** One leased shipment per call; true lets the bounded scheduler drain another due parcel. */
 export async function processOlivraisonQueue(injected?: CarrierRequest) {
   const cfg = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
-  if (!cfg?.enabled || !cfg.credentials || !cfg.activatedAt) return;
+  if (!cfg?.enabled || !cfg.credentials || !cfg.activatedAt) return false;
   const now = new Date();
   const candidate = await prisma.olivraisonShipment.findFirst({
     where: {
@@ -111,29 +112,29 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     },
     orderBy: { nextAttemptAt: "asc" },
   });
-  if (!candidate) return;
+  if (!candidate) return false;
   if (candidate.state === "TRACKING_ONLY" || (candidate.state === "ATTENTION" && candidate.lastError === CARRIER_REFERENCE_MISMATCH)) {
     try {
-      await refreshOlivraisonTracking(candidate.id, injected);
+      await refreshOlivraisonTracking(candidate.id, injected, now);
     } catch (error) {
       await prisma.olivraisonShipment.updateMany({
-        where: { id: candidate.id, state: candidate.state, lockedUntil: { lte: new Date() } },
+        where: { id: candidate.id, state: candidate.state, nextAttemptAt: { lte: now }, lockedUntil: { lte: new Date() } },
         data: { nextAttemptAt: new Date(Date.now() + 300_000) },
       });
     }
-    return;
+    return true;
   }
   const leaseToken = randomUUID();
   const owned = { id: candidate.id, leaseToken };
   const claim = await prisma.olivraisonShipment.updateMany({
-    where: { id: candidate.id, lockedUntil: { lte: now }, state: candidate.state },
+    where: { id: candidate.id, lockedUntil: { lte: now }, nextAttemptAt: { lte: now }, state: candidate.state },
     data: {
       leaseToken,
       lockedUntil: new Date(now.getTime() + 300_000),
       attempts: { increment: 1 },
     },
   });
-  if (claim.count !== 1) return;
+  if (claim.count !== 1) return false;
 
   async function save(data: Prisma.OlivraisonShipmentUpdateManyMutationInput) {
     const result = await prisma.olivraisonShipment.updateMany({ where: owned, data });
@@ -247,7 +248,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
         : missingDocuments
           ? "Ramassage effectué : récupérer les bordereaux dans Olivraison."
           : null,
-      nextAttemptAt: new Date(Date.now() + 300_000),
+      nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS),
     });
   } catch (error) {
     const retry = error instanceof CarrierError && error.retryable;
@@ -267,4 +268,5 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       data: { leaseToken: null, lockedUntil: new Date(0) },
     });
   }
+  return true;
 }
