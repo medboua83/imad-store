@@ -1,3 +1,9 @@
+## Suivi Olivraison à 30 secondes — 21 novembre 2026
+
+Lectures réussies des colis actifs replanifiées à 30 secondes ; ordonnanceur commun au serveur combiné et séparé, réveil toutes les cinq secondes, au plus dix colis échus par lot séquentiel. Débit distribué, bail de cinq minutes et délais de reprise après erreur conservés. La rubrique Commandes relit seulement sa liste toutes les cinq secondes quand elle est visible, sans écritures ni perte des filtres ou des détails ouverts. Résultats de recette et publication à consigner sur DATA dans `outputs/carrier-30s-20261121`.
+
+La version précédente des statuts a été publiée et vérifiée (PR150/151, 360 tests navigateur et 151 serveur GitHub). Les colis existants ont été rapprochés sans création, modification des paiements ni remise en stock automatique. Les incidents demandant une vérification physique restent signalés.
+
 ## Recette Olivraison — 21 novembre 2026
 
 PR150 publiée avec migration additive et sauvegardes ; permissions de lecture des dépendances corrigées sur le candidat avant activation. Le compte réel retourne `trackingID` et `REPORTED`, sans la propriété facultative `partnerTrackingID`. Correctif commun worker/lecture manuelle préparé : suivi enregistré toujours exigé et référence contradictoire refusée ; aucun colis créé par les tests. Résultats définitifs à consigner après validation du correctif.

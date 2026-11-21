@@ -369,8 +369,8 @@ export const getAllOrders = async (params?: {
     page?: number;
     limit?: number;
     trash?: boolean;
-}) => {
-    const { data } = await api.get("/orders", { params });
+}, signal?: AbortSignal) => {
+    const { data } = await api.get("/orders", { params, signal });
     return data as {
         success: boolean;
         data: AdminOrder[];

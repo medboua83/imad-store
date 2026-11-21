@@ -1,8 +1,13 @@
+## Fréquence Olivraison et Commandes — 21 novembre 2026
+
+- [x] Préparer suivi à 30 secondes, lots bornés et actualisation visible des commandes à cinq secondes.
+- [ ] Valider les protections, publier et mesurer les cycles automatiques sur un colis existant.
+
 ## Statuts Olivraison — 21 novembre 2026
 
 - [x] Préparer le statut du colis dans la liste et la fiche commande.
 - [x] Préparer une lecture manuelle sans nouvel envoi et les correspondances de transit/retour.
-- [ ] Terminer les tests de la source actuelle, puis publier et vérifier le compte réel.
+- [x] PR150/151 publiées, tests GitHub et compte réel vérifiés sans doublon ni modification du paiement.
 
 ## Couleurs et contact mobile — 17 novembre 2026
 

@@ -175,3 +175,4 @@ export * from "./product-color-photos";
 
 export * from "./meta-domain-verification";
 export * from "./carrier-status";
+export * from "./carrier-sync";
