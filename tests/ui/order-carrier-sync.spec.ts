@@ -56,7 +56,6 @@ for (const width of [390, 1440]) for (const locale of ["fr", "ar"] as const) {
     test(`Automatic order tracking refresh preserves the open details and search at ${width}px in ${locale}`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 900 });
         await page.clock.install();
-        await page.clock.pauseAt(new Date());
         await page.addInitScript(locale => {
             localStorage.setItem("adminToken", "isolated-auto-tracking");
             localStorage.setItem("imad-admin-language", locale);
@@ -115,7 +114,6 @@ for (const width of [390, 1440]) for (const locale of ["fr", "ar"] as const) {
 
 test("A slow automatic order read cannot overlap and stops when leaving Orders", async ({ page }) => {
     await page.clock.install();
-    await page.clock.pauseAt(new Date());
     await page.addInitScript(() => localStorage.setItem("adminToken", "isolated-slow-tracking"));
     let reads = 0, release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });
