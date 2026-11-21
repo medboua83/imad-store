@@ -1,7 +1,13 @@
+## Parcours confirmé et quota des lectures — 21 novembre 2026
+
+- [x] Reproduire en mode production le blocage 429 après des lectures répétées.
+- [x] Séparer les budgets de lecture et d’écriture en conservant les protections.
+- [ ] Terminer la recette complète, vérifier GitHub et publier le correctif.
+
 ## Fréquence Olivraison et Commandes — 21 novembre 2026
 
 - [x] Préparer suivi à 30 secondes, lots bornés et actualisation visible des commandes à cinq secondes.
-- [ ] Valider les protections, publier et mesurer les cycles automatiques sur un colis existant.
+- [x] PR152 publiée : validations GitHub, trois cycles automatiques, paiements/stock/identités inchangés.
 
 ## Statuts Olivraison — 21 novembre 2026
 

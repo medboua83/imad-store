@@ -1,3 +1,9 @@
+## Correction révélée par le parcours Olivraison — 21 novembre 2026
+
+Le parcours chronométré en mode production a révélé que les lectures du dashboard partageaient le quota de 50 requêtes/15 minutes avec les créations et changements de commandes. Après plusieurs rafraîchissements, le serveur répondait 429 et la fiche restait sur un ancien statut alors que le transporteur avait déjà avancé. Les lectures GET/HEAD disposent désormais d’un quota séparé de 120/minute/IP ; les écritures conservent 50/15 minutes/IP et l’authentification ne change pas. Quatre tests HTTP en configuration production sont ajoutés à la suite normale. La recette utilise une base jetable, le vrai scheduler et les vrais écrans à 390/1440 px, avec le transporteur simulé et les appels externes bloqués. Aucune commande ni configuration de transport réelle modifiée. Résultats et publication à consigner sur DATA dans `outputs/new-order-carrier-journey-20261121`.
+
+La PR152 précédente est publiée et vérifiée : 365 tests navigateur, 151 serveur ; contrôles actifs configurés à 30 secondes (environ 35 secondes mesurées) et affichage visible à cinq secondes. Cette correction garde ces intervalles et les paiements, stocks et identités de colis.
+
 ## Suivi Olivraison à 30 secondes — 21 novembre 2026
 
 Lectures réussies des colis actifs replanifiées à 30 secondes ; ordonnanceur commun au serveur combiné et séparé, réveil toutes les cinq secondes, au plus dix colis échus par lot séquentiel. Débit distribué, bail de cinq minutes et délais de reprise après erreur conservés. La rubrique Commandes relit seulement sa liste toutes les cinq secondes quand elle est visible, sans écritures ni perte des filtres ou des détails ouverts. Résultats de recette et publication à consigner sur DATA dans `outputs/carrier-30s-20261121`.

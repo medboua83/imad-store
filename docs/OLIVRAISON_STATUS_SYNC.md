@@ -34,3 +34,10 @@ Références vérifiées : [Partners API](https://partners.olivraison.com/docs),
 Le 21 novembre 2026, la recette réelle a confirmé que le GET du compte omet `partnerTrackingID` (statut `REPORTED`), bien que le numéro de suivi corresponde. La documentation publique décrit le GET comme limité au propriétaire authentifié et la propriété n’est pas obligatoire dans le schéma. Le contrôle commun au worker et à la lecture manuelle accepte cette omission, garde la comparaison stricte du suivi et refuse toute référence interne fournie qui diffère. Régression : omission, identité contradictoire, autre colis et réponses invalides.
 
 Les colis existants déjà arrêtés par l’ancien contrôle de référence passent, après une lecture authentifiée réussie, en `TRACKING_ONLY`. Ce mode continue les lectures périodiques avec bail et ne crée, ne confirme ni ne ramasse de colis, même si un statut distant régresse à `CREATED`. Les autres incidents et les colis déconnectés restent inchangés.
+
+
+## Quotas du dashboard — 21 novembre 2026
+
+Les consultations GET/HEAD des commandes ont leur propre budget de 120 requêtes/minute/IP. Les créations et autres écritures gardent le plafond de 50 requêtes/15 minutes/IP. Les lectures automatiques ne consomment donc plus le quota des commandes clients ou des actions de l’équipe. Les deux budgets restent bornés en production ; le comportement de développement et la limite de connexion administrateur restent distincts. Les en-têtes Authorization ne dispensent pas de ces limites et les routes conservent leurs contrôles de rôle.
+
+Régression : plus de cinquante lectures, GET et HEAD, budget de création conservé, lectures encore bornées, POST/PATCH partageant toujours le plafond d’écriture. Le parcours isolé exécute les intervalles réels et les API de la boutique avec des réponses Olivraison fictives ; aucun appel au transporteur réel n’est effectué.
