@@ -2188,6 +2188,8 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
     assert.equal((await request(app).get(`/api/orders/${order.id}`).expect(200)).body.data.shipment, undefined);
     const checkedAt = summary.lastSyncedAt;
     await assert.rejects(refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: "OTHER-ORDER", status: "TRANSIT" })), /rapprochement/);
+    await assert.rejects(refreshOlivraisonTracking(order.id, async () => null), /Réponse de suivi/);
+    await assert.rejects(refreshOlivraisonTracking(order.id, async () => { throw new Error("isolated network failure"); }), /isolated network failure/);
     assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: order.id } })).lastSyncedAt.toISOString(), checkedAt);
     await refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: order.id, status: "TRANSIT" }));
     assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "DELIVERED");
