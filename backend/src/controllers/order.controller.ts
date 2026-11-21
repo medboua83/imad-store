@@ -13,6 +13,8 @@ import { appendOrderToSheets, updateOrderStatusInSheets } from "../lib/notificat
 import { createHash } from "crypto";
 import { paginationSchema, statusSchema } from "../lib/validation";
 import { transitionOrderStatus } from "../lib/order-lifecycle";
+import { refreshOlivraisonTracking } from "../lib/olivraison";
+import { CarrierError } from "../lib/olivraison-api";
 
 // Guest-only checkout schema — COD only (card payments disabled)
 const createOrderSchema = z
@@ -483,13 +485,30 @@ export async function listOrders(req: Request, res: Response) {
         prisma.order.count({ where }),
     ]);
 
+    const shipments = orders.length ? await prisma.olivraisonShipment.findMany({
+        where: { id: { in: orders.map(order => order.id) } },
+        select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
+    }) : [];
+    const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
+    res.setHeader("Cache-Control", "no-store");
     res.json({
         success: true,
-        data: orders,
+        data: orders.map(order => ({ ...order, shipment: tracking.get(order.id) ?? null })),
         total,
         page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
     });
+}
+
+export async function syncOrderCarrierStatus(req: Request, res: Response) {
+    try {
+        await refreshOlivraisonTracking(req.params.id);
+        res.setHeader("Cache-Control", "no-store");
+        res.json({ success: true, data: { synced: true } });
+    } catch (error) {
+        if (error instanceof CarrierError) throw new AppError(error.reason, 502);
+        throw error;
+    }
 }
 
 export async function updateOrderStatus(req: Request, res: Response) {

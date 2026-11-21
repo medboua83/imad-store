@@ -318,6 +318,14 @@ export const markAllNotificationsRead = async () => {
 };
 
 export interface AdminOrder {
+    shipment?: {
+        id: string;
+        trackingId: string | null;
+        carrierStatus: string | null;
+        state: string;
+        lastError: string | null;
+        lastSyncedAt: string | null;
+    } | null;
     confirmationMethod?: string | null;
     confirmedAt?: string | null;
     id: string;
@@ -389,6 +397,9 @@ export const updateOrderStatus = async (id: string, status: string) => {
     const { data } = await api.patch(`/orders/${id}/status`, { status });
     return data;
 };
+
+export const syncOrderCarrierStatus = async (id: string) =>
+    (await api.post(`/orders/${id}/olivraison-sync`)).data;
 
 // ─── Admin Product CRUD ───────────────────────────────────────────────────────
 

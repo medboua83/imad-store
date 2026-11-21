@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
 import { decryptDeskcommValue } from "./deskcomm-config";
 import { transitionOrderStatus } from "./order-lifecycle";
+import { carrierOrderProgress, carrierNeedsReview } from "@imad-store/shared";
+import { AppError } from "../middleware/error.middleware";
 import {
   CarrierError,
   CarrierRequest,
@@ -29,15 +31,66 @@ export function configuredClient(ciphertext: string) {
   return createCarrierClient(JSON.parse(decryptDeskcommValue(ciphertext)), carrierGate);
 }
 const terminal = new Set(["DELIVERED", "RETURNED", "DELETED", "CUSTOMER_CANCELED", "ARCHIVED"]);
-const moving = new Set([
-  "PICKEDUP",
-  "PICKED_UP",
-  "TRANSIT",
-  "RECIVED",
-  "SCHEDULED",
-  "REPORTED",
-  "DELIVERED",
-]);
+/** Forward-only commercial transitions. A delivery never proves COD remittance. */
+export async function applyCarrierOrderStatus(orderId: string, status: string) {
+  const progress = carrierOrderProgress(status);
+  if (!progress) return;
+  let order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || order.deletedAt) return;
+  if (order.status === "CONFIRMED") {
+    await transitionOrderStatus(orderId, "SHIPPED", "olivraison");
+    order = await prisma.order.findUnique({ where: { id: orderId } });
+  }
+  if (progress === "DELIVERED" && order?.status === "SHIPPED")
+    await transitionOrderStatus(orderId, "DELIVERED", "olivraison");
+}
+
+/** Explicit admin read: never creates, confirms, cancels or requests pickup of a remote parcel. */
+export async function refreshOlivraisonTracking(orderId: string, injected?: CarrierRequest) {
+  const [cfg, shipment, order] = await Promise.all([
+    prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }),
+    prisma.olivraisonShipment.findUnique({ where: { id: orderId } }),
+    prisma.order.findUnique({ where: { id: orderId } }),
+  ]);
+  if (!order || order.deletedAt) throw new AppError("Commande introuvable", 404);
+  if (!cfg?.credentials) throw new AppError("Enregistrez la connexion Olivraison dans les paramètres.", 409);
+  if (!shipment?.trackingId) throw new AppError("Aucun colis Olivraison relié à cette commande.", 409);
+  if (shipment.state === "DISCONNECTED") throw new AppError("Suivi retiré : vérifiez ce colis directement chez Olivraison.", 409);
+  const leaseToken = randomUUID(), now = new Date();
+  const owned = { id: orderId, leaseToken };
+  const claim = await prisma.olivraisonShipment.updateMany({
+    where: { id: orderId, trackingId: shipment.trackingId, state: shipment.state, lockedUntil: { lte: now } },
+    data: { leaseToken, lockedUntil: new Date(now.getTime() + 300_000) },
+  });
+  if (!claim.count) throw new AppError("Une synchronisation est en cours. Réessayez dans quelques instants.", 409);
+  try {
+    const api = injected || configuredClient(cfg.credentials);
+    const remote = await api(`/package/${encodeURIComponent(shipment.trackingId)}`);
+    if (!remote || remote.trackingID !== shipment.trackingId || typeof remote.status !== "string" || !remote.status || remote.status.length > 100)
+      throw new CarrierError("Réponse de suivi Olivraison invalide", true);
+    if (remote.partnerTrackingID !== orderId)
+      throw new AppError("Référence transporteur différente : rapprochement requis", 409);
+    const current = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
+    const lease = await prisma.olivraisonShipment.findFirst({ where: { ...owned, lockedUntil: { gt: new Date() } } });
+    if (current?.credentials !== cfg.credentials || !lease)
+      throw new AppError("La connexion a changé. Actualisez avant de réessayer.", 409);
+    await applyCarrierOrderStatus(orderId, remote.status);
+    const review = carrierNeedsReview(remote.status);
+    // Read-only checks must never re-arm parcel creation, confirmation or pickup.
+    const state = review ? "ATTENTION" : terminal.has(remote.status) ? "DONE" : shipment.state;
+    const saved = await prisma.olivraisonShipment.updateMany({
+      where: { ...owned, lockedUntil: { gt: new Date() } },
+      data: {
+        carrierStatus: remote.status, lastSyncedAt: new Date(), state,
+        lastError: review ? "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
+      },
+    });
+    if (!saved.count) throw new AppError("Une autre vérification a pris le relais. Actualisez la commande.", 409);
+    return await prisma.olivraisonShipment.findUniqueOrThrow({ where: { id: orderId } });
+  } finally {
+    await prisma.olivraisonShipment.updateMany({ where: owned, data: { leaseToken: null, lockedUntil: new Date(0) } });
+  }
+}
 
 /** One leased shipment per tick; checkpoints precede every irreversible request. */
 export async function processOlivraisonQueue(injected?: CarrierRequest) {
@@ -46,7 +99,11 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
   const now = new Date();
   const candidate = await prisma.olivraisonShipment.findFirst({
     where: {
-      state: { in: ["QUEUED", "ACTIVE", "RETRY"] },
+      OR: [
+        { state: { in: ["QUEUED", "ACTIVE", "RETRY"] } },
+        // An unsuccessful delivery can later become RETURNED. Continue reading that parcel.
+        { state: "ATTENTION", trackingId: { not: null }, carrierStatus: { in: ["CANCELED", "CANCELLED"] } },
+      ],
       nextAttemptAt: { lte: now },
       lockedUntil: { lte: now },
     },
@@ -68,7 +125,8 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
   async function save(data: Prisma.OlivraisonShipmentUpdateManyMutationInput) {
     const result = await prisma.olivraisonShipment.updateMany({ where: owned, data });
     if (result.count !== 1) throw new CarrierError("Traitement repris par un autre processus");
-    if (data.state === "ATTENTION") {
+    if (data.state === "ATTENTION" && (candidate!.state !== "ATTENTION" ||
+      (typeof data.carrierStatus === "string" && data.carrierStatus !== candidate!.carrierStatus))) {
       await prisma.adminNotification.create({
         data: {
           type: "shipping_attention",
@@ -123,7 +181,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     }
     if (!trackingId) throw new CarrierError("Référence de colis absente");
     let remote = await api(`/package/${encodeURIComponent(trackingId)}`);
-    if (remote.trackingID !== trackingId || typeof remote.status !== "string")
+    if (!remote || remote.trackingID !== trackingId || typeof remote.status !== "string" || !remote.status || remote.status.length > 100)
       throw new CarrierError("Réponse de suivi Olivraison invalide", true);
     if (remote.partnerTrackingID !== order.id)
       throw new CarrierError("Référence transporteur différente : rapprochement requis");
@@ -132,7 +190,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       await api("/package/status", "POST", { trackingID: trackingId, status: "CONFIRMED" });
       remote = { ...remote, status: "CONFIRMED" };
     }
-    await save({ carrierStatus: remote.status });
+    await save({ carrierStatus: remote.status, lastSyncedAt: new Date() });
     const pickupConfig = await prisma.olivraisonIntegration.findUnique({
       where: { id: "olivraison" },
     });
@@ -158,22 +216,16 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       remote = { ...remote, status: "PICKUP" };
     }
     order = await eligible();
-    if (moving.has(remote.status) && order.status === "CONFIRMED") {
-      await transitionOrderStatus(order.id, "SHIPPED", "olivraison");
-      order = await eligible();
-    }
-    if (remote.status === "DELIVERED" && order.status === "SHIPPED")
-      await transitionOrderStatus(order.id, "DELIVERED", "olivraison");
+    await applyCarrierOrderStatus(order.id, remote.status);
     // Delivery is not proof of COD remittance. Never change paymentStatus or replenish stock here.
-    const needsReview = ["CANCELED", "RETURNED", "DELETED", "CUSTOMER_CANCELED"].includes(
-      remote.status,
-    );
+    const needsReview = carrierNeedsReview(remote.status);
     const missingDocuments =
       cfg.autoPickup &&
       remote.status === "PICKUP" &&
       candidate.pickupAttempted &&
       !candidate.slipUrl;
     await save({
+      carrierStatus: remote.status,
       state:
         needsReview || missingDocuments
           ? "ATTENTION"

@@ -370,6 +370,7 @@ model OlivraisonShipment {
   id String @id
   trackingId String?
   carrierStatus String?
+  lastSyncedAt DateTime?
   state String @default("QUEUED")
   attempts Int @default(0)
   nextAttemptAt DateTime @default(now())

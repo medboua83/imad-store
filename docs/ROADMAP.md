@@ -1,3 +1,9 @@
+## Statuts Olivraison — 21 novembre 2026
+
+- [x] Préparer le statut du colis dans la liste et la fiche commande.
+- [x] Préparer une lecture manuelle sans nouvel envoi et les correspondances de transit/retour.
+- [ ] Terminer les tests de la source actuelle, puis publier et vérifier le compte réel.
+
 ## Couleurs et contact mobile — 17 novembre 2026
 
 - [x] Synchroniser galerie et variante avec les associations photo-couleur connues.
