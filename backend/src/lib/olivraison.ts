@@ -12,6 +12,7 @@ import {
   documentUrl,
   packagePayload,
   resolveCity,
+  validateCarrierTrackingResponse,
 } from "./olivraison-api";
 
 // Distributed request gate: all app instances share a maximum of four calls per second.
@@ -66,10 +67,7 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
   try {
     const api = injected || configuredClient(cfg.credentials);
     const remote = await api(`/package/${encodeURIComponent(shipment.trackingId)}`);
-    if (!remote || remote.trackingID !== shipment.trackingId || typeof remote.status !== "string" || !remote.status || remote.status.length > 100)
-      throw new CarrierError("Réponse de suivi Olivraison invalide", true);
-    if (remote.partnerTrackingID !== orderId)
-      throw new AppError("Référence transporteur différente : rapprochement requis", 409);
+    validateCarrierTrackingResponse(remote, shipment.trackingId, orderId);
     const current = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
     const lease = await prisma.olivraisonShipment.findFirst({ where: { ...owned, lockedUntil: { gt: new Date() } } });
     if (current?.credentials !== cfg.credentials || !lease)
@@ -181,10 +179,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     }
     if (!trackingId) throw new CarrierError("Référence de colis absente");
     let remote = await api(`/package/${encodeURIComponent(trackingId)}`);
-    if (!remote || remote.trackingID !== trackingId || typeof remote.status !== "string" || !remote.status || remote.status.length > 100)
-      throw new CarrierError("Réponse de suivi Olivraison invalide", true);
-    if (remote.partnerTrackingID !== order.id)
-      throw new CarrierError("Référence transporteur différente : rapprochement requis");
+    validateCarrierTrackingResponse(remote, trackingId, order.id);
     if (remote.status === "CREATED") {
       await eligible();
       await api("/package/status", "POST", { trackingID: trackingId, status: "CONFIRMED" });

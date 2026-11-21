@@ -2191,7 +2191,9 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
     await assert.rejects(refreshOlivraisonTracking(order.id, async () => null), /Réponse de suivi/);
     await assert.rejects(refreshOlivraisonTracking(order.id, async () => { throw new Error("isolated network failure"); }), /isolated network failure/);
     assert.equal((await prisma.olivraisonShipment.findUnique({ where: { id: order.id } })).lastSyncedAt.toISOString(), checkedAt);
-    await refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: order.id, status: "TRANSIT" }));
+    // Real account-scoped GET responses can omit partnerTrackingID; persisted tracking remains mandatory.
+    await refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, status: "TRANSIT" }));
+    await assert.rejects(refreshOlivraisonTracking(order.id, async () => ({ trackingID: "OTHER-PARCEL", status: "DELIVERED" })), /Réponse de suivi/);
     assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "DELIVERED");
     await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { state: "DISCONNECTED" } });
     await assert.rejects(refreshOlivraisonTracking(order.id, fake), /Suivi retiré/);

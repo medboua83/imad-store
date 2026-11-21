@@ -17,6 +17,7 @@ test("Carrier statuses cover transit and return codes without treating pickup, i
 });
 import {
   createCarrierClient,
+  validateCarrierTrackingResponse,
   documentUrl,
   packagePayload,
   resolveCity,
@@ -115,4 +116,14 @@ test("Olivraison errors contain no echoed credential or customer payload and 429
     (err: unknown) =>
       err instanceof CarrierError && err.retryable && err.message === "Olivraison HTTP 429",
   );
+});
+
+test("Account-scoped tracking details allow an omitted partner reference but reject conflicting identities and invalid status", () => {
+  const remote = { trackingID: "TRACK-PERSISTED", status: "REPORTED" };
+  assert.equal(validateCarrierTrackingResponse(remote, "TRACK-PERSISTED", "order-unique"), remote);
+  assert.equal(validateCarrierTrackingResponse({ ...remote, partnerTrackingID: "order-unique" }, "TRACK-PERSISTED", "order-unique").status, "REPORTED");
+  for (const partnerTrackingID of ["other-order", "", null, 123])
+    assert.throws(() => validateCarrierTrackingResponse({ ...remote, partnerTrackingID }, "TRACK-PERSISTED", "order-unique"), /rapprochement/);
+  for (const response of [null, { ...remote, trackingID: "OTHER" }, { ...remote, status: "" }, { ...remote, status: 4 }, { ...remote, status: "x".repeat(101) }])
+    assert.throws(() => validateCarrierTrackingResponse(response, "TRACK-PERSISTED", "order-unique"), /Réponse de suivi/);
 });

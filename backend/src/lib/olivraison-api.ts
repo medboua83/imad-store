@@ -87,6 +87,17 @@ export function packagePayload(order: any, city: string, pickupAddress: unknown)
     noOpen: false,
   };
 }
+/** GET details is account-scoped and may omit the optional partner reference.
+ * The tracking ID must always match the persisted parcel; a supplied partner reference must match too.
+ */
+export function validateCarrierTrackingResponse(remote: any, trackingId: string, orderId: string) {
+  if (!remote || remote.trackingID !== trackingId || typeof remote.status !== "string" || !remote.status || remote.status.length > 100)
+    throw new CarrierError("Réponse de suivi Olivraison invalide", true);
+  if (remote.partnerTrackingID !== undefined && remote.partnerTrackingID !== orderId)
+    throw new CarrierError("Référence transporteur différente : rapprochement requis");
+  return remote;
+}
+
 export function createCarrierClient(
   credentials: { apiKey: string; secretKey: string },
   gate: () => Promise<void>,
