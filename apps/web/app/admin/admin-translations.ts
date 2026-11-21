@@ -1,4 +1,5 @@
 export const adminArabic: Record<string, string> = {
+    "Gestion des commandes annulées": "إدارة الطلبيات الملغاة",
     "Contacter sur WhatsApp": "التواصل عبر واتساب",
     "Récapitulatif et liens des photos préremplis. Vérifiez le message puis envoyez-le dans WhatsApp.": "ملخص الطلب وروابط الصور جاهزة. راجعوا الرسالة ثم أرسلوها عبر واتساب.",
     "Couleur": "اللون",

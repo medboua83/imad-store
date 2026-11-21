@@ -160,7 +160,7 @@ export function OverviewTab({
                             <span className="admin-bar-count">{d.count}</span>
                             <div className="admin-bar-track">
                                 <span
-                                    style={{ height: `${Math.max(2, (d.count / max) * 100)}%` }}
+                                    style={{ height: `${d.count === 0 ? 0 : Math.max(2, (d.count / max) * 100)}%` }}
                                 />
                             </div>
                             <span>{d.label}</span>

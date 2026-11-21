@@ -1,8 +1,17 @@
+## Lisibilité du dashboard — 21/22 novembre 2026
+
+- [x] Auditer les écrans existants sans modifier les données.
+- [x] Préparer en-tête mobile compact, recherche prioritaire et maintenance repliée.
+- [x] Afficher fidèlement les jours sans commande sur le graphique.
+- [ ] Valider les recettes responsives, vérifier GitHub et consigner la publication.
+- [ ] Ajouter recherche/pagination serveur pour les commandes anciennes et agrégats globaux.
+- [ ] Concevoir file des incidents transporteur, export et permissions d’équipe détaillées.
+
 ## Parcours confirmé et quota des lectures — 21 novembre 2026
 
 - [x] Reproduire en mode production le blocage 429 après des lectures répétées.
 - [x] Séparer les budgets de lecture et d’écriture en conservant les protections.
-- [ ] Terminer la recette complète, vérifier GitHub et publier le correctif.
+- [x] PR153 publiée et vérifiée : recette isolée complète, 365 UI / 155 serveur, données marchandes conservées.
 
 ## Fréquence Olivraison et Commandes — 21 novembre 2026
 

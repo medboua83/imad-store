@@ -1,3 +1,11 @@
+## Lisibilité du dashboard — 21/22 novembre 2026
+
+Audit authentifié de la vue d’ensemble, des commandes et de la navigation en présentation étroite et large. Candidat limité à la présentation : en-tête mobile compact, colonne de navigation défilable, recherche/tri avant les statuts, actions sur les commandes annulées dans une section native repliée traduite français/arabe. Confirmations et traitement des commandes conservés. Les jours sans commande ont désormais une barre de hauteur nulle. Quatre recettes navigateur ajoutées à 320/390/1440 px et contrôle de l’accessibilité clavier du volet. Aucun changement de données, API, schéma, dépendances ou intégrations. Résultats et éventuelle publication à consigner sur DATA dans `outputs/dashboard-professional-20261122`.
+
+Suite de l’audit : recherche et pagination serveur au-delà des 100 commandes chargées, file des incidents transporteur, exports et permissions d’équipe détaillées. La synchronisation Olivraison, le stock, les raccourcis et les langues existent déjà.
+
+La PR153 précédente est fusionnée et publiée : 365 tests UI et 155 serveur réussis ; quota de consultation distinct, parcours isolé de commande confirmé sans expédition réelle. Les commandes et colis de production, paiements et stocks ont été conservés.
+
 ## Correction révélée par le parcours Olivraison — 21 novembre 2026
 
 Le parcours chronométré en mode production a révélé que les lectures du dashboard partageaient le quota de 50 requêtes/15 minutes avec les créations et changements de commandes. Après plusieurs rafraîchissements, le serveur répondait 429 et la fiche restait sur un ancien statut alors que le transporteur avait déjà avancé. Les lectures GET/HEAD disposent désormais d’un quota séparé de 120/minute/IP ; les écritures conservent 50/15 minutes/IP et l’authentification ne change pas. Quatre tests HTTP en configuration production sont ajoutés à la suite normale. La recette utilise une base jetable, le vrai scheduler et les vrais écrans à 390/1440 px, avec le transporteur simulé et les appels externes bloqués. Aucune commande ni configuration de transport réelle modifiée. Résultats et publication à consigner sur DATA dans `outputs/new-order-carrier-journey-20261121`.

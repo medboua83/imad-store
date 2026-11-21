@@ -1948,3 +1948,40 @@
 .order-carrier-status p { margin-block: 0.45rem; font-size: 0.9rem; }
 .order-carrier-status .order-carrier-date { color: #6d6250; font-size: 0.8rem; }
 .order-carrier-status button { margin-block-start: 0.5rem; }
+
+/* Operational density: keep search ahead of maintenance and preserve touch targets. */
+.admin-sidebar { overflow-y: auto; }
+.admin-app .order-maintenance {
+    margin-block: 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    padding: 0 12px;
+}
+.admin-app .order-maintenance > summary {
+    padding-block: 12px;
+    min-height: 44px;
+    cursor: pointer;
+    color: var(--admin-muted);
+    font-size: 12px;
+}
+.admin-app .order-maintenance[open] > summary { color: var(--admin-ink); }
+.admin-app .order-maintenance .admin-toolbar { margin-block: 0 12px; }
+@media (max-width: 1023px) {
+    .admin-app .admin-sidebar { padding: 10px 16px; }
+    .admin-app .admin-sidebar .brand-logo { width: 84px; }
+    .admin-app .admin-sidebar nav { margin-block-start: 12px; }
+}
+@media (max-width: 767px) {
+    .admin-app .admin-topbar { min-height: 64px; padding: 10px 16px; }
+    .admin-app .admin-topbar > p { display: none; }
+    .admin-app .admin-topbar-actions { width: 100%; justify-content: flex-end; }
+    .admin-app .admin-main { padding-block-start: 18px; }
+    .admin-app .admin-page-heading { gap: 12px; margin-block-end: 18px; }
+    .admin-app .admin-page-heading .admin-eyebrow { display: none; }
+    .admin-app .admin-page-heading h1 { font-size: 26px; margin-block-end: 6px; }
+    .admin-app .admin-panel { padding: 16px; }
+    .admin-app .admin-panel-heading { gap: 12px; margin-block-end: 16px; }
+    .admin-app .admin-task-grid { gap: 8px; }
+    .admin-app .order-quick-filters { margin-block: 14px; gap: 6px; }
+    .admin-app .order-filter { min-height: 44px; padding: 8px 12px; }
+}
