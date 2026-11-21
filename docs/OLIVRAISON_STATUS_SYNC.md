@@ -32,3 +32,5 @@ Références vérifiées : [Partners API](https://partners.olivraison.com/docs),
 
 
 Le 21 novembre 2026, la recette réelle a confirmé que le GET du compte omet `partnerTrackingID` (statut `REPORTED`), bien que le numéro de suivi corresponde. La documentation publique décrit le GET comme limité au propriétaire authentifié et la propriété n’est pas obligatoire dans le schéma. Le contrôle commun au worker et à la lecture manuelle accepte cette omission, garde la comparaison stricte du suivi et refuse toute référence interne fournie qui diffère. Régression : omission, identité contradictoire, autre colis et réponses invalides.
+
+Les colis existants déjà arrêtés par l’ancien contrôle de référence passent, après une lecture authentifiée réussie, en `TRACKING_ONLY`. Ce mode continue les lectures périodiques avec bail et ne crée, ne confirme ni ne ramasse de colis, même si un statut distant régresse à `CREATED`. Les autres incidents et les colis déconnectés restent inchangés.

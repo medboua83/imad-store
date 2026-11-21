@@ -2201,6 +2201,44 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
     await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: false } });
 });
 
+test("Existing parcels blocked by an omitted partner reference recover into read-only tracking without parcel or pickup actions", async () => {
+    const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
+    const { CARRIER_REFERENCE_MISMATCH } = await import("../backend/src/lib/olivraison-api");
+    const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
+    await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
+    product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(checkout());
+    const order = created.body.data;
+    await transitionOrderStatus(order.id, "CONFIRMED");
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: true, activatedAt: new Date() } });
+    await prisma.olivraisonShipment.create({ data: { id: order.id, trackingId: "ISOLATED-LEGACY-REF", state: "ATTENTION", lastError: CARRIER_REFERENCE_MISMATCH, nextAttemptAt: new Date(0) } });
+    const count = await prisma.olivraisonShipment.count();
+    const variants = await prisma.productVariant.findMany({ where: { productId: product.id } });
+    const calls: string[] = []; let status = "REPORTED";
+    const remote = async (path: string, method = "GET") => {
+        assert.equal(method, "GET"); calls.push(path);
+        assert.equal(path, "/package/ISOLATED-LEGACY-REF");
+        return { trackingID: "ISOLATED-LEGACY-REF", status };
+    };
+    await processOlivraisonQueue(remote);
+    let saved = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(saved.state, "TRACKING_ONLY"); assert.equal(saved.lastError, null); assert.ok(saved.lastSyncedAt);
+    assert.equal((await prisma.order.findUnique({ where: { id: order.id } })).status, "SHIPPED");
+    // Even a carrier regression to CREATED must not re-arm confirmation or pickup.
+    for (const next of ["CREATED", "DELIVERED"]) {
+        status = next;
+        await prisma.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await processOlivraisonQueue(remote);
+    }
+    saved = await prisma.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(saved.state, "DONE"); assert.equal(calls.length, 3);
+    const result = await prisma.order.findUnique({ where: { id: order.id } });
+    assert.equal(result.status, "DELIVERED"); assert.equal(result.paymentStatus, "PENDING");
+    assert.equal(await prisma.olivraisonShipment.count(), count);
+    assert.deepEqual(await prisma.productVariant.findMany({ where: { productId: product.id } }), variants);
+    await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: false } });
+});
+
 test("Carrier cancellation continues polling until returned without refunding or restocking automatically", async () => {
     const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
     const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");

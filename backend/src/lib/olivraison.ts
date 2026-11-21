@@ -7,6 +7,7 @@ import { carrierOrderProgress, carrierNeedsReview } from "@imad-store/shared";
 import { AppError } from "../middleware/error.middleware";
 import {
   CarrierError,
+  CARRIER_REFERENCE_MISMATCH,
   CarrierRequest,
   createCarrierClient,
   documentUrl,
@@ -75,11 +76,12 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
     await applyCarrierOrderStatus(orderId, remote.status);
     const review = carrierNeedsReview(remote.status);
     // Read-only checks must never re-arm parcel creation, confirmation or pickup.
-    const state = review ? "ATTENTION" : terminal.has(remote.status) ? "DONE" : shipment.state;
+    const state = review ? "ATTENTION" : terminal.has(remote.status) ? "DONE" :
+      shipment.state === "ATTENTION" && shipment.lastError === CARRIER_REFERENCE_MISMATCH ? "TRACKING_ONLY" : shipment.state;
     const saved = await prisma.olivraisonShipment.updateMany({
       where: { ...owned, lockedUntil: { gt: new Date() } },
       data: {
-        carrierStatus: remote.status, lastSyncedAt: new Date(), state,
+        carrierStatus: remote.status, lastSyncedAt: new Date(), nextAttemptAt: new Date(Date.now() + 300_000), state,
         lastError: review ? "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
       },
     });
@@ -98,7 +100,9 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
   const candidate = await prisma.olivraisonShipment.findFirst({
     where: {
       OR: [
-        { state: { in: ["QUEUED", "ACTIVE", "RETRY"] } },
+        { state: { in: ["QUEUED", "ACTIVE", "RETRY", "TRACKING_ONLY"] } },
+        // Recover existing parcels blocked by the old optional-reference check, using GET only.
+        { state: "ATTENTION", trackingId: { not: null }, lastError: CARRIER_REFERENCE_MISMATCH },
         // An unsuccessful delivery can later become RETURNED. Continue reading that parcel.
         { state: "ATTENTION", trackingId: { not: null }, carrierStatus: { in: ["CANCELED", "CANCELLED"] } },
       ],
@@ -108,6 +112,17 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     orderBy: { nextAttemptAt: "asc" },
   });
   if (!candidate) return;
+  if (candidate.state === "TRACKING_ONLY" || (candidate.state === "ATTENTION" && candidate.lastError === CARRIER_REFERENCE_MISMATCH)) {
+    try {
+      await refreshOlivraisonTracking(candidate.id, injected);
+    } catch (error) {
+      await prisma.olivraisonShipment.updateMany({
+        where: { id: candidate.id, state: candidate.state, lockedUntil: { lte: new Date() } },
+        data: { nextAttemptAt: new Date(Date.now() + 300_000) },
+      });
+    }
+    return;
+  }
   const leaseToken = randomUUID();
   const owned = { id: candidate.id, leaseToken };
   const claim = await prisma.olivraisonShipment.updateMany({
