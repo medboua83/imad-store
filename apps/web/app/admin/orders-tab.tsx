@@ -206,41 +206,6 @@ export function OrdersTab({
                 </button>
             </div>
             <div className="admin-toolbar">
-                <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
-                    {t("Corbeille")}
-                </button>
-                <button
-                    className="admin-button"
-                    disabled={busy || reloadRequired || !removable.length}
-                    onClick={() => remove(removable.map((o) => o.id))}
-                >
-                    {t("Supprimer les annulées affichées (")}
-                    {removable.length})
-                </button>
-                <p>
-                    {t(
-                        "Suppression réversible. Seules les commandes annulées de la sélection affichée sont concernées.",
-                    )}
-                </p>
-            </div>
-            <div className="order-quick-filters" aria-label={t("Filtrer par statut")}>
-                {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
-                    <button
-                        key={key}
-                        className="order-filter"
-                        aria-pressed={status === key}
-                        onClick={() => setFilter("status", key)}
-                    >
-                        {t(label)}
-                        <span>
-                            {key === "ALL"
-                                ? orders.length
-                                : orders.filter((o) => o.status === key).length}
-                        </span>
-                    </button>
-                ))}
-            </div>
-            <div className="admin-toolbar">
                 <label className="admin-search">
                     <span>{t("Rechercher une commande")}</span>
                     <div>
@@ -262,6 +227,23 @@ export function OrdersTab({
                         <option value="amount">{t("Montant décroissant")}</option>
                     </select>
                 </label>
+            </div>
+            <div className="order-quick-filters" aria-label={t("Filtrer par statut")}>
+                {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
+                    <button
+                        key={key}
+                        className="order-filter"
+                        aria-pressed={status === key}
+                        onClick={() => setFilter("status", key)}
+                    >
+                        {t(label)}
+                        <span>
+                            {key === "ALL"
+                                ? orders.length
+                                : orders.filter((o) => o.status === key).length}
+                        </span>
+                    </button>
+                ))}
             </div>
             <details className="order-extra-filters">
                 <summary>
@@ -303,6 +285,27 @@ export function OrdersTab({
                     </label>
                 </div>
                 <p>{t("Dates incluses · heure du Maroc.")}</p>
+            </details>
+            <details className="order-maintenance">
+                <summary>{t("Gestion des commandes annulées")}</summary>
+                <div className="admin-toolbar">
+                    <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
+                        {t("Corbeille")}
+                    </button>
+                    <button
+                        className="admin-button"
+                        disabled={busy || reloadRequired || !removable.length}
+                        onClick={() => remove(removable.map((o) => o.id))}
+                    >
+                        {t("Supprimer les annulées affichées (")}
+                        {removable.length})
+                    </button>
+                    <p>
+                        {t(
+                            "Suppression réversible. Seules les commandes annulées de la sélection affichée sont concernées.",
+                        )}
+                    </p>
+                </div>
             </details>
             <div className="order-results">
                 <p role="status">
