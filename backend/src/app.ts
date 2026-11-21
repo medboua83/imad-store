@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { receiveDeskcommConfirmation } from "./controllers/deskcomm-status.controller";
 import { assertStoreInstallation } from "./lib/store-installation";
 import rateLimit from "express-rate-limit";
+import { createOrderRateLimiters } from "./middleware/order-rate-limit";
 import "express-async-errors";
 
 import { olivraisonRoutes } from "./routes/olivraison.routes";
@@ -64,19 +65,6 @@ app.get("/", (_req, res) => {
     res.json({ message: "Imad Store API is running. Please use /api for endpoints." });
 });
 
-// ─── Rate Limiting ───────────────────────────────────────────────────────────
-const IS_DEV = process.env.NODE_ENV !== "production";
-const orderRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    // In development: effectively unlimited (10 000 requests).
-    // In production: strict 50 requests per 15 min per IP.
-    max: IS_DEV ? 10_000 : 50,
-    skip: () => IS_DEV, // Skip the limiter entirely in dev — no 429s during testing
-    message: "تم تجاوز الحد الأقصى للطلبات. يرجى المحاولة لاحقاً.",
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
 // ─── Routes ──────────────────────────────────────────────────────────────────
 const loginRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -105,7 +93,7 @@ app.use(
 );
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/orders", orderRateLimiter, orderRoutes);
+app.use("/api/orders", ...createOrderRateLimiters(), orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/telegram", telegramRoutes);
