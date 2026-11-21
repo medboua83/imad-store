@@ -1,3 +1,7 @@
+## Statuts Olivraison dans Commandes — candidat du 21 novembre 2026
+
+Affichage administrateur groupé du suivi, de la dernière vérification et des incidents, en français/arabe. Lecture manuelle d’un colis existant avec bail partagé, contrôle strict des références et aucune création/confirmation/ramassage. Reconnaissance des étapes de transit et suivi d’une annulation transporteur jusqu’au retour. Paiement, stock, commandes en attente ou annulées et historique déconnecté préservés. Migration nullable additive ; tests et publication à consigner. Détails : `docs/OLIVRAISON_STATUS_SYNC.md`.
+
 ## Couleurs, photos et WhatsApp mobile — 17 novembre 2026
 
 Réintégration des corrections de production `priority-colours-20261117` dans le code source : galerie et variante synchronisées selon les associations enregistrées, filtre couleur regroupé et interprété par le serveur, les cartes et la fiche, accès WhatsApp dans la navigation mobile. Les quatorze fichiers du manifeste déployé sont identiques avant intégration ; les ajouts propres au dépôt sont la documentation, le lanceur fictif du build combiné et l'inscription du test unitaire dans la suite normale. Compilation/types, deux tests unitaires, 37 tests navigateur et 35 combinaisons réelles en lecture seule réussis sur le candidat déployé. La CI complète de l'intégration Git reste à vérifier séparément. Voir `PRIORITY_COLOURS_2026-11-17.md`. Aucun secret, rapport brut, fichier d'environnement ou sauvegarde n'est ajouté au dépôt.

@@ -1,3 +1,7 @@
+## Statuts Olivraison dans Commandes — candidat du 21 novembre 2026
+
+Affichage administrateur groupé du suivi, de la dernière vérification et des incidents, en français/arabe. Lecture manuelle d’un colis existant avec bail partagé, contrôle strict des références et aucune création/confirmation/ramassage. Reconnaissance des étapes de transit et suivi d’une annulation transporteur jusqu’au retour. Paiement, stock, commandes en attente ou annulées et historique déconnecté préservés. Migration nullable additive ; tests et publication à consigner. Détails : `docs/OLIVRAISON_STATUS_SYNC.md`.
+
 ## Corrections de couleurs et contact mobile — 17 novembre 2026
 
 Le correctif source correspond aux fichiers applicatifs de la version publiée `priority-colours-20261117`, vérifiés par empreintes avant copie. Les associations photo-couleur existantes sont conservées, les images générales sont signalées, les groupes de teintes préservent chaque SKU et leur filtre est traité jusqu'aux cartes et à la fiche. WhatsApp quitte la superposition mobile pour la case contact du dock. Le test unitaire est inclus dans le lanceur d'intégration et les tests navigateur couvrent les trois régressions. Les archives, journaux et sauvegardes restent privés sur le VPS. Détails et limites : `docs/PRIORITY_COLOURS_2026-11-17.md`.
