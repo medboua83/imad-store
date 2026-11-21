@@ -1,3 +1,7 @@
+## Recette Olivraison — 21 novembre 2026
+
+PR150 publiée avec migration additive et sauvegardes ; permissions de lecture des dépendances corrigées sur le candidat avant activation. Le compte réel retourne `trackingID` et `REPORTED`, sans la propriété facultative `partnerTrackingID`. Correctif commun worker/lecture manuelle préparé : suivi enregistré toujours exigé et référence contradictoire refusée ; aucun colis créé par les tests. Résultats définitifs à consigner après validation du correctif.
+
 ## Statuts Olivraison dans Commandes — candidat du 21 novembre 2026
 
 Affichage administrateur groupé du suivi, de la dernière vérification et des incidents, en français/arabe. Lecture manuelle d’un colis existant avec bail partagé, contrôle strict des références et aucune création/confirmation/ramassage. Reconnaissance des étapes de transit et suivi d’une annulation transporteur jusqu’au retour. Paiement, stock, commandes en attente ou annulées et historique déconnecté préservés. Migration nullable additive ; tests et publication à consigner. Détails : `docs/OLIVRAISON_STATUS_SYNC.md`.

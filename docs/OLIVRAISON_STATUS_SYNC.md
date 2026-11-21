@@ -22,10 +22,15 @@ Les commandes en attente ou annulées ne sont pas confirmées par le transporteu
 
 ## Intégrité et déploiement
 
-`POST /api/orders/:id/olivraison-sync` est réservé aux administrateurs et partage le bail du worker. Il exige le numéro de suivi déjà enregistré et une réponse dont `partnerTrackingID` est l'identifiant exact de la commande. Les vérifications répétées n'ajoutent ni commande, ni colis, ni événement de transition identique. Un échec conserve le dernier statut et sa date de réussite.
+`POST /api/orders/:id/olivraison-sync` est réservé aux administrateurs et partage le bail du worker. Il exige le numéro de suivi déjà enregistré, retourné à l’identique par la lecture authentifiée du compte Olivraison. `partnerTrackingID` est facultatif dans cette réponse : lorsqu’il est fourni, il doit être l’identifiant exact de la commande ; une référence vide, nulle ou contradictoire est refusée. Aucun rapprochement n’est fait à partir du nom ou du téléphone du client. Les vérifications répétées n'ajoutent ni commande, ni colis, ni événement de transition identique. Un échec conserve le dernier statut et sa date de réussite.
 
 Migration additive : `20261121180000_carrier_tracking_sync`, colonne nullable `lastSyncedAt` dans `olivraison_shipments`. Une valeur vide représente un ancien colis pas encore relu, jamais une date de vérification inventée. Sauvegarde et migration contrôlée nécessaires avant publication ; aucun `db push`.
 
 Tests : réponses transporteur fictives, concurrence, lecture seule avec automatisation arrêtée, absence de fuite publique, contrôle des références, absence de régression, retour et paiement/stock inchangés. Tests navigateur prévus à 390 et 1440 pixels en français/arabe, avec erreur puis réessai. Les résultats et captures sont sur DATA dans `outputs/order-carrier-sync-20261121`. Publication et compte transporteur réel restent à vérifier séparément.
 
 Références vérifiées : [Partners API](https://partners.olivraison.com/docs), [guide de suivi Olivraison](https://www.olivraison.com/fr/tracking).
+
+
+Le 21 novembre 2026, la recette réelle a confirmé que le GET du compte omet `partnerTrackingID` (statut `REPORTED`), bien que le numéro de suivi corresponde. La documentation publique décrit le GET comme limité au propriétaire authentifié et la propriété n’est pas obligatoire dans le schéma. Le contrôle commun au worker et à la lecture manuelle accepte cette omission, garde la comparaison stricte du suivi et refuse toute référence interne fournie qui diffère. Régression : omission, identité contradictoire, autre colis et réponses invalides.
+
+Les colis existants déjà arrêtés par l’ancien contrôle de référence passent, après une lecture authentifiée réussie, en `TRACKING_ONLY`. Ce mode continue les lectures périodiques avec bail et ne crée, ne confirme ni ne ramasse de colis, même si un statut distant régresse à `CREATED`. Les autres incidents et les colis déconnectés restent inchangés.
