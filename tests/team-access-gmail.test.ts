@@ -65,6 +65,13 @@ test("Gmail configuration is administrator-only, encrypted, versioned and never 
 
 test("The Gmail transport enforces TLS and a fixed host, verifies without sending, and uses trusted fragment-only reset links", async () => {
     const nodemailer = require('nodemailer'), original = nodemailer.createTransport;
+    const socket = require('node:net').Socket.prototype, connect = socket.connect;
+    socket.connect = function (...args: any[]) {
+        const inputs = args.flat(Infinity);
+        if (inputs.some(value => [465, 587].includes(Number(value?.port ?? value))))
+            throw new Error('External SMTP connections are forbidden in this isolated test');
+        return connect.apply(this, args);
+    };
     const options: any[] = [], messages: any[] = []; let closes = 0, fail = false;
     nodemailer.createTransport = (config: any) => {
         options.push(config);
@@ -96,7 +103,7 @@ test("The Gmail transport enforces TLS and a fixed host, verifies without sendin
         process.env.SITE_URL = 'https://fixture-store.example.invalid/untrusted-path';
         await assert.rejects(() => sendAccessMail('recipient@example.invalid', token, 'RESET', resetHash(token)));
         assert.equal(messages.length, 1);
-    } finally { nodemailer.createTransport = original; if (previousUrl === undefined) delete process.env.SITE_URL; else process.env.SITE_URL = previousUrl; }
+    } finally { socket.connect = connect; nodemailer.createTransport = original; if (previousUrl === undefined) delete process.env.SITE_URL; else process.env.SITE_URL = previousUrl; }
     assert.equal(await commerceSnapshot(), commerce);
 });
 

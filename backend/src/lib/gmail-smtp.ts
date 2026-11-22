@@ -13,7 +13,7 @@ export async function gmailTransport() {
     try { password = decryptDeskcommValue(config.passwordCiphertext); }
     catch { throw new AppError("La connexion Gmail doit être reconfigurée.", 503); }
     // Load the SMTP library only when an enabled connection is actually used.
-    const nodemailer = (await import("nodemailer")).default;
+    const nodemailer: typeof import("nodemailer") = require("nodemailer");
     const transport = nodemailer.createTransport({
         host: "smtp.gmail.com", port: config.port, secure: config.port === 465,
         requireTLS: true, auth: { user: config.gmailUser, pass: password },
