@@ -73,9 +73,9 @@ for (const width of [320, 390, 1440]) test(`Export downloads the complete filter
     await page.getByText("Dates et paiement", { exact: true }).click();
     await page.getByLabel("Du", { exact: true }).fill("2020-01-01");
     await page.getByLabel("Au", { exact: true }).fill("2020-01-02");
-    await page.getByLabel("Paiement", { exact: true }).selectOption("PENDING");
+    await page.getByRole("combobox", { name: "Paiement", exact: true }).selectOption("PENDING");
     await page.getByRole("button", { name: /^Expédiée/ }).click();
-    await page.getByLabel("Trier par", { exact: true }).selectOption("oldest");
+    await page.getByRole("combobox", { name: "Trier par", exact: true }).selectOption("oldest");
     await expect(page.locator(".order-results")).toContainText("1 résultat");
     const second = page.waitForEvent("download"); await button.click(); await second;
     expect(Object.fromEntries(f.exports.at(-1)!.searchParams)).toEqual({
