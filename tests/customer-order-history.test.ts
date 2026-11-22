@@ -33,7 +33,8 @@ async function integrity() { return JSON.stringify({
 }); }
 before(async () => {
     await createDatabase(database);
-    ({ prisma: p } = await import("../backend/src/lib/prisma")); ({ app } = await import("../backend/src/app"));
+    ({ prisma: p } = await import("../backend/src/lib/prisma"));
+    await p.user.upsert({ where: { id: "123456789012345678901234" }, create: { id: "123456789012345678901234", email: "fixture-admin@example.invalid", passwordHash: "fixture-no-login", firstName: "Test", lastName: "Admin", role: "ADMIN" }, update: {} }); ({ app } = await import("../backend/src/app"));
     await p.order.createMany({ data: [
         row(1, "2026-11-22T10:00:00Z", "PENDING"), row(2, "2020-01-01T10:00:00Z", "CANCELLED", { customerPhone: "06 00 00 00 99" }),
         row(3, "2021-01-01T10:00:00Z", "CANCELLED", { customerPhone: "00212 600000099", deletedAt: new Date("2026-11-01T10:00:00Z") }),

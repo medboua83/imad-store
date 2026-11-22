@@ -8,25 +8,25 @@ import { AuthRequest } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 
 const registerSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(8),
+    email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
+    password: z.string().min(8).max(128).refine(value => Buffer.byteLength(value, "utf8") <= 72),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
     phone: z.string().optional(),
 });
 
 const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string(),
+    email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
+    password: z.string().max(128),
 });
 
-function generateTokens(user: { id: string; email: string; role: string }) {
+function generateTokens(user: { id: string; email: string; role: string; authVersion: number; permissions: string[] }) {
     const accessToken = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        { id: user.id, email: user.email, role: user.role, sv: user.authVersion, permissions: user.role === "STAFF" ? user.permissions : [] },
         process.env.JWT_SECRET as string,
         { expiresIn: (process.env.JWT_EXPIRES_IN ?? "15m") as jwt.SignOptions["expiresIn"] },
     );
-    const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET as string, {
+    const refreshToken = jwt.sign({ id: user.id, sv: user.authVersion }, process.env.JWT_REFRESH_SECRET as string, {
         expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? "7d") as jwt.SignOptions["expiresIn"],
         jwtid: randomUUID(),
     });
@@ -60,9 +60,9 @@ export async function register(req: Request, res: Response) {
 export async function login(req: Request, res: Response) {
     const body = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({ where: { email: body.email } });
+    const user = await prisma.user.findFirst({ where: { email: { equals: body.email, mode: "insensitive" } } });
 
-    if (!user) {
+    if (!user || !user.isActive || user.mustSetPassword) {
         throw new AppError("Invalid credentials", 401);
     }
 
@@ -91,7 +91,8 @@ export async function refreshToken(req: Request, res: Response) {
         where: { token },
         include: { user: true },
     });
-    if (!stored || stored.userId !== identity.id || stored.expiresAt < new Date())
+    if (!stored || stored.userId !== identity.id || stored.expiresAt < new Date()
+        || !stored.user.isActive || stored.user.mustSetPassword || (identity.sv ?? 0) !== stored.user.authVersion)
         throw new AppError("Invalid refresh token", 401);
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(stored.user);
@@ -126,6 +127,7 @@ export async function getMe(req: AuthRequest, res: Response) {
             lastName: true,
             phone: true,
             role: true,
+            permissions: true,
             createdAt: true,
         },
     });

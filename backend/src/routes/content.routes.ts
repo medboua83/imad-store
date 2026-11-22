@@ -2,7 +2,7 @@ import { Router, IRouter } from "express";
 import { z } from "zod";
 import { defaultSiteContent, homeSectionKeys, MAX_HERO_PRODUCTS, usesManualHeroSelection } from "@imad-store/shared";
 import { prisma } from "../lib/prisma";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 import { readPublicContent, readPublicHeroProducts } from "../lib/public-content";
 import { isPublishableImage, objectIdSchema } from "../lib/validation";
@@ -52,7 +52,7 @@ contentRoutes.get("/", async (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
     res.json(await readPublicContent());
 });
-contentRoutes.use(authenticate, requireAdmin);
+contentRoutes.use(authenticate, requirePermission("content.manage"));
 contentRoutes.get("/admin", async (_req, res) => {
     const row = await prisma.siteContent.findUnique({ where: { id: "site" } });
     res.json({

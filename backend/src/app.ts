@@ -15,6 +15,7 @@ import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
 import { analyticsRoutes } from "./routes/analytics.routes";
 import { contentRoutes } from "./routes/content.routes";
 import { authRoutes } from "./routes/auth.routes";
+import { teamRoutes } from "./routes/team.routes";
 import { productRoutes } from "./routes/product.routes";
 import { categoryRoutes } from "./routes/category.routes";
 import { orderRoutes, notificationRoutes } from "./routes/order.routes";
@@ -82,6 +83,7 @@ app.use("/api", (req, res, next) => {
 app.use("/api/content", contentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/team", teamRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use(
     "/uploads",

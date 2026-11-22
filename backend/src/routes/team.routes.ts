@@ -1,0 +1,15 @@
+import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { listTeam, createTeamUser, updateTeamUser, inviteTeamUser } from "../controllers/team.controller";
+import { readGmail, saveGmail, testGmail } from "../controllers/gmail.controller";
+export const teamRoutes = Router();
+teamRoutes.use(authenticate, requireAdmin);
+teamRoutes.get("/", listTeam);
+teamRoutes.get("/gmail", readGmail);
+teamRoutes.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false }));
+teamRoutes.post("/", createTeamUser);
+teamRoutes.put("/gmail", saveGmail);
+teamRoutes.post("/gmail/test", testGmail);
+teamRoutes.patch("/:id", updateTeamUser);
+teamRoutes.post("/:id/invite", inviteTeamUser);

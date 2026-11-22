@@ -15,7 +15,7 @@ import {
     markNotificationRead,
     markAllNotificationsRead,
 } from "../controllers/order.controller";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 
 export const orderRoutes: IRouter = Router();
 orderRoutes.param("id", validateObjectId);
@@ -23,21 +23,21 @@ orderRoutes.param("id", validateObjectId);
 // ─── Public (guest checkout — no auth required) ────────────────────────────
 orderRoutes.post("/", createOrder); // guest checkout
 // Register before the public /:id route and its identifier validation.
-orderRoutes.get("/export.csv", authenticate, requireAdmin, exportOrders);
+orderRoutes.get("/export.csv", authenticate, requirePermission("orders.export"), exportOrders);
 orderRoutes.get("/:id", getOrder); // order tracking by ID
 
 // ─── Admin ────────────────────────────────────────────────────────────────
-orderRoutes.get("/", authenticate, requireAdmin, listOrders);
-orderRoutes.get("/:id/admin-details", authenticate, requireAdmin, getAdminOrder);
-orderRoutes.get("/:id/customer-history", authenticate, requireAdmin, getCustomerOrderHistory);
-orderRoutes.get("/:id/history", authenticate, requireAdmin, getOrderHistory);
-orderRoutes.post("/trash", authenticate, requireAdmin, moveOrdersToTrash);
-orderRoutes.patch("/:id/status", authenticate, requireAdmin, updateOrderStatus);
-orderRoutes.post("/:id/olivraison-sync", authenticate, requireAdmin, syncOrderCarrierStatus);
+orderRoutes.get("/", authenticate, requirePermission("orders.read"), listOrders);
+orderRoutes.get("/:id/admin-details", authenticate, requirePermission("orders.read"), getAdminOrder);
+orderRoutes.get("/:id/customer-history", authenticate, requirePermission("orders.read"), getCustomerOrderHistory);
+orderRoutes.get("/:id/history", authenticate, requirePermission("orders.read"), getOrderHistory);
+orderRoutes.post("/trash", authenticate, requirePermission("orders.write"), moveOrdersToTrash);
+orderRoutes.patch("/:id/status", authenticate, requirePermission("orders.write"), updateOrderStatus);
+orderRoutes.post("/:id/olivraison-sync", authenticate, requirePermission("orders.write"), syncOrderCarrierStatus);
 
 // Admin notifications (polled by dashboard every 5–10s)
 export const notificationRoutes: IRouter = Router();
 notificationRoutes.param("id", validateObjectId);
-notificationRoutes.get("/", authenticate, requireAdmin, getAdminNotifications);
-notificationRoutes.patch("/:id/read", authenticate, requireAdmin, markNotificationRead);
-notificationRoutes.post("/read-all", authenticate, requireAdmin, markAllNotificationsRead);
+notificationRoutes.get("/", authenticate, requirePermission("orders.read"), getAdminNotifications);
+notificationRoutes.patch("/:id/read", authenticate, requirePermission("orders.read"), markNotificationRead);
+notificationRoutes.post("/read-all", authenticate, requirePermission("orders.read"), markAllNotificationsRead);

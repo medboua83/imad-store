@@ -22,7 +22,9 @@ async function startHostedServer() {
   let web;
   let stopCrmWorker = async () => {};
   let stopOlivraisonWorker = async () => {};
+  let stopAccessMailWorker = async () => {};
   const close = async () => {
+    await stopAccessMailWorker();
     await stopCrmWorker();
     await stopOlivraisonWorker();
     if (publicServer.listening) await new Promise((resolve) => {
@@ -54,6 +56,7 @@ async function startHostedServer() {
       if (passenger) publicServer.listen("passenger", bound);
       else publicServer.listen(Number(process.env.PORT || 3000), process.env.HOSTNAME || "0.0.0.0", bound);
     });
+    stopAccessMailWorker = require("./hosted-auth-mail-worker.cjs").startHostedAuthMailWorker();
     stopCrmWorker = require("./hosted-crm-worker.cjs").startHostedCrmWorker();
     stopOlivraisonWorker = require("./hosted-olivraison-worker.cjs").startHostedOlivraisonWorker();
     console.log("Imad Store ready: one public listener; CRM scheduler requires explicit hosted opt-in.");

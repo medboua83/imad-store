@@ -15,6 +15,7 @@ datasource db {
 enum UserRole {
   CUSTOMER
   ADMIN
+  STAFF
 }
 
 enum ProductStatus {
@@ -53,14 +54,53 @@ model User {
   lastName     String
   phone        String?
   role         UserRole @default(CUSTOMER)
+  permissions  String[] @default([])
+  isActive     Boolean  @default(true)
+  authVersion  Int      @default(0)
+  mustSetPassword Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   addresses     Address[]
   orders        Order[]
   refreshTokens RefreshToken[]
+  passwordResets PasswordReset[]
 
   @@map("users")
+}
+
+model PasswordReset {
+  tokenHash String @id
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authVersion Int
+  expiresAt DateTime
+  requestedAt DateTime @default(now())
+  mailCiphertext String?
+  mailState String @default("PENDING")
+  claimedAt DateTime?
+  kind String @default("RESET")
+  @@map("password_resets")
+}
+
+model GmailConfig {
+  id String @id @default("gmail")
+  enabled Boolean @default(false)
+  gmailUser String
+  port Int @default(465)
+  passwordCiphertext String?
+  revision Int @default(1)
+  updatedAt DateTime @updatedAt
+  @@map("gmail_config")
+}
+
+model AccessEvent {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  actorId String
+  targetId String?
+  action String
+  createdAt DateTime @default(now())
+  @@map("access_events")
 }
 
 model RefreshToken {

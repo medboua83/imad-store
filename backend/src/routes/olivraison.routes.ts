@@ -1,5 +1,5 @@
 import { Router, IRouter } from "express";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 import {
   getOlivraisonConfig,
   putOlivraisonConfig,
@@ -9,7 +9,7 @@ import {
   retryOlivraisonShipment,
 } from "../controllers/olivraison.controller";
 export const olivraisonRoutes: IRouter = Router();
-olivraisonRoutes.use(authenticate, requireAdmin);
+olivraisonRoutes.use(authenticate, requirePermission("settings.manage"));
 olivraisonRoutes.get("/", getOlivraisonConfig);
 olivraisonRoutes.put("/", putOlivraisonConfig);
 olivraisonRoutes.delete("/", deleteOlivraisonConfig);

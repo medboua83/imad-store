@@ -75,6 +75,7 @@ const checkout = (quantity = 1) => ({
 const key = () => randomBytes(16).toString("hex");
 before(async () => {
     ({ prisma } = await import("../backend/src/lib/prisma"));
+    await prisma.user.upsert({ where: { id: "123456789012345678901234" }, create: { id: "123456789012345678901234", email: "fixture-admin@example.invalid", passwordHash: "fixture-no-login", firstName: "Test", lastName: "Admin", role: "ADMIN" }, update: {} });
     ({ app } = await import("../backend/src/app"));
     category = await prisma.category.create({
         data: { slug: "bags", nameFr: "Sacs", nameAr: "حقائب", nameEn: "Bags" },

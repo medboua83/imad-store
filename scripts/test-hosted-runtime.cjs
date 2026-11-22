@@ -4,7 +4,7 @@ const path = require("node:path");
 const { databaseUrl, createDatabase, dropDatabase } = require("./test-postgres.cjs");
 const name = `imad_ci_${randomBytes(8).toString("hex")}`;
 const env = {
-  ...process.env, NODE_ENV: "production", IMAD_HOSTING_MODE: "combined", PORT: "0", HOSTNAME: "127.0.0.1",
+  ...process.env, IMAD_AUTH_MAIL_WORKER_DISABLED: "true", NODE_ENV: "production", IMAD_HOSTING_MODE: "combined", PORT: "0", HOSTNAME: "127.0.0.1",
   DATABASE_URL: databaseUrl(name), TEST_DATABASE_NAME: name,
   JWT_SECRET: "hosted-isolated-secret", JWT_REFRESH_SECRET: "hosted-isolated-refresh",
   UPLOAD_DIR: path.resolve(".test-runtime", name, "uploads"),
@@ -12,7 +12,7 @@ const env = {
 };
 for (const key of Object.keys(env))
   if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|ADMIN_)/.test(key)) delete env[key];
-const unit = spawnSync(process.execPath, ["--test", "tests/hosted-crm-worker.test.cjs", "tests/hosted-olivraison-worker.test.cjs", "tests/upload-storage.test.cjs"], {stdio:"inherit"});
+const unit = spawnSync(process.execPath, ["--test", "tests/hosted-crm-worker.test.cjs", "tests/access-mail-worker.test.cjs", "tests/hosted-olivraison-worker.test.cjs", "tests/upload-storage.test.cjs"], {stdio:"inherit"});
 if (unit.status !== 0) process.exit(unit.status ?? 1);
 (async () => {
 for (const mode of ["tcp", "passenger", "litespeed"]) {

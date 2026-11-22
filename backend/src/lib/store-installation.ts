@@ -27,6 +27,9 @@ export async function assertStoreInstallation() {
         // Never adopt a copied commerce database as a new company's installation.
         const delegates = [
             prisma.user,
+            prisma.passwordReset,
+            prisma.gmailConfig,
+            prisma.accessEvent,
             prisma.refreshToken,
             prisma.address,
             prisma.adminNotification,

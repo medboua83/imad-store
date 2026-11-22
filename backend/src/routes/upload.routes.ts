@@ -3,7 +3,7 @@ import path from "node:path";
 import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 const { resolveUploadDirectory, seedPublishedUploads } =
     require("../../../scripts/upload-storage.cjs") as {
@@ -70,7 +70,7 @@ uploadRoutes.get(/^\/preview-v1\/([a-f0-9]{64}\.webp)$/, async (req, res) => {
 uploadRoutes.post(
     "/",
     authenticate,
-    requireAdmin,
+    requirePermission("catalogue.manage", "content.manage"),
     express.raw({ type: ["image/png", "image/jpeg", "image/webp"], limit: "5mb" }),
     async (req, res) => {
         if (!Buffer.isBuffer(req.body) || !req.body.length)
