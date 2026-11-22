@@ -332,7 +332,7 @@ export default function AdminPage() {
         };
     }, [token]);
     useEffect(() => {
-        if (!token || activeTab !== "orders") return;
+        if (!token || activeTab !== "orders" || orderTotal > orders.length) return;
         let alive = true,
             busy = false;
         const controller = new AbortController();
@@ -360,7 +360,7 @@ export default function AdminPage() {
             clearInterval(interval);
             document.removeEventListener("visibilitychange", refreshOrders);
         };
-    }, [token, activeTab]);
+    }, [token, activeTab, orderTotal, orders.length]);
     useEffect(() => {
         if (mobileMenu)
             (

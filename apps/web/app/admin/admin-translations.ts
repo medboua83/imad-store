@@ -1,4 +1,14 @@
 export const adminArabic: Record<string, string> = {
+    "Résultats en attente": "النتائج قيد الانتظار",
+    "Affichage {from}–{to}": "عرض {from}–{to}",
+    "Recherche dans toutes les commandes, hors corbeille.": "البحث في جميع الطلبيات، باستثناء سلة المحذوفات.",
+    "Recherche dans l’historique…": "جارٍ البحث في سجل الطلبيات…",
+    "Recherche dans l’historique impossible. Réessayez pour vérifier les résultats.": "تعذر البحث في سجل الطلبيات. يرجى إعادة المحاولة للتحقق من النتائج.",
+    "Chargement de la commande…": "جارٍ تحميل الطلبية…",
+    "Cette commande est introuvable ou a été déplacée dans la corbeille.": "تعذر العثور على هذه الطلبية أو تم نقلها إلى سلة المحذوفات.",
+    "Navigation des commandes, début": "التنقل بين صفحات الطلبيات، البداية",
+    "Navigation des commandes, fin": "التنقل بين صفحات الطلبيات، النهاية",
+
     "Gestion des commandes annulées": "إدارة الطلبيات الملغاة",
     "Contacter sur WhatsApp": "التواصل عبر واتساب",
     "Récapitulatif et liens des photos préremplis. Vérifiez le message puis envoyez-le dans WhatsApp.": "ملخص الطلب وروابط الصور جاهزة. راجعوا الرسالة ثم أرسلوها عبر واتساب.",

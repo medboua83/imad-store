@@ -15,6 +15,11 @@ async function fixture(page: Page) {
     });
     await page.route("**/api/**", async (route) => {
         const req = route.request(), path = new URL(req.url()).pathname;
+        if (req.method() === "GET" && /^\/api\/orders\/[^/]+\/admin-details$/.test(path)) {
+            const found = path === `/api/orders/${order.id}/admin-details`;
+            return route.fulfill({ status: found ? 200 : 404,
+                json: found ? { success: true, data: order } : { success: false, error: "Commande introuvable" } });
+        }
         if (req.method() !== "GET") {
             writes.push(req.postDataJSON());
             if (path !== "/api/settings") return route.fulfill({ status: 405 });

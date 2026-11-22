@@ -1985,3 +1985,6 @@
     .admin-app .order-quick-filters { margin-block: 14px; gap: 6px; }
     .admin-app .order-filter { min-height: 44px; padding: 8px 12px; }
 }
+
+.admin-app .order-pagination { margin-block: 14px; padding-block: 10px; border-block: 1px solid var(--admin-line); }
+.admin-app .order-results > p[tabindex] { scroll-margin-block-start: 20px; }
