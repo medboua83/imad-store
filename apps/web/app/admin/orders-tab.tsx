@@ -2,7 +2,7 @@
 import { useOrderHistory, orderPageSize } from "./use-order-history";
 import { useAdminLocale } from "./admin-locale";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
-import { productVariantImages } from "@imad-store/shared";
+import { orderTrackingMatches, productVariantImages } from "@imad-store/shared";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
@@ -43,7 +43,7 @@ export function OrdersTab({
 }) {
     const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
-    const { search, status, payment, from, to, sort } = filters;
+    const { search, status, payment, tracking, from, to, sort } = filters;
     const serverHistory = total > orders.length;
     const history = useOrderHistory(serverHistory, filters, selected, !!selected && !orders.some(o => o.id === selected));
     async function onRefresh() {
@@ -62,10 +62,10 @@ export function OrdersTab({
         dialog = useRef<HTMLDialogElement>(null);
     const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
     const invalidDates = !!from && !!to && from > to;
-    const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders, search, status), payment, from, to, sort),
-        [orders, search, status, payment, from, to, sort, invalidDates]);
-    const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders, search, "ALL"), payment, from, to, sort),
-        [orders, search, payment, from, to, sort, invalidDates]);
+    const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, from, to, sort),
+        [orders, search, status, payment, tracking, from, to, sort, invalidDates]);
+    const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, "ALL"), payment, from, to, sort),
+        [orders, search, payment, tracking, from, to, sort, invalidDates]);
     const resultTotal = serverHistory ? history.data?.total ?? 0 : localResults.length;
     const pages = Math.max(1, serverHistory ? history.data?.pages ?? 1 : Math.ceil(resultTotal / orderPageSize));
     const page = serverHistory ? history.data?.page ?? filters.page : Math.min(filters.page, pages);
@@ -254,6 +254,16 @@ export function OrdersTab({
                     </select>
                 </label>
             </div>
+            <div className="order-tracking-filter">
+                <label htmlFor="order-tracking-filter">{t("Suivi de livraison")}</label>
+                <select id="order-tracking-filter" value={tracking} onChange={event => setFilter("tracking", event.target.value)}>
+                    <option value="ALL">{t("Tous les suivis")}</option>
+                    <option value="ATTENTION">{t("À surveiller")}</option>
+                    <option value="REPORTED">{t("Livraison reportée")}</option>
+                    <option value="UNLINKED">{t("Sans colis relié")}</option>
+                </select>
+                {tracking === "ATTENTION" && <p>{t("Reports, destinataires injoignables, retours et suivis nécessitant une vérification.")}</p>}
+            </div>
             <div className="order-quick-filters" aria-label={t("Filtrer par statut")}>
                 {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
                     <button
@@ -349,6 +359,7 @@ export function OrdersTab({
                         !search &&
                         status === "ALL" &&
                         payment === "ALL" &&
+                        tracking === "ALL" &&
                         !from &&
                         !to &&
                         sort === "newest"

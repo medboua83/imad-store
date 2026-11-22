@@ -3,6 +3,7 @@ export const initialOrderListFilters = {
     search: "",
     status: "ALL",
     payment: "ALL",
+    tracking: "ALL",
     from: "",
     to: "",
     sort: "newest",

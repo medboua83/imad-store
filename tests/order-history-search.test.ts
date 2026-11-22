@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import { orderTrackingMatches, orderTrackingFilters } from "@imad-store/shared";
 import { Prisma } from "@prisma/client";
 import { orderDay } from "../apps/web/app/admin/order-utils";
 import { moroccoDayBoundary, orderHistoryQuery, orderHistoryWhere } from "../backend/src/lib/order-history-query";
@@ -11,6 +12,24 @@ const database = "imad_ci_" + randomBytes(8).toString("hex");
 process.env.DATABASE_URL = databaseUrl(database);
 process.env.DESKCOMM_OUTBOX_WORKER_ENABLED = "false";
 let p: any, app: any, snapshot: string;
+const trackingCases = [
+    { state: "ACTIVE", carrierStatus: "REPORTED", lastError: null },
+    { state: "ACTIVE", carrierStatus: "TRANSIT", lastError: null },
+    null,
+    { state: "ACTIVE", carrierStatus: "UNKNOWN_CALL", lastError: null },
+    { state: "RETRY", carrierStatus: "TRANSIT", lastError: "Erreur de recette" },
+    { state: "ATTENTION", carrierStatus: "CREATED", lastError: null },
+    { state: "DISCONNECTED", carrierStatus: "DELIVERED", lastError: null },
+    { state: "ACTIVE", carrierStatus: "FUTURE_PARTNER_CODE", lastError: null },
+    { state: "DONE", carrierStatus: "DELIVERED", lastError: null },
+    { state: "DONE", carrierStatus: "ARCHIVED", lastError: null },
+    { state: "DONE", carrierStatus: "RETURNED", lastError: null },
+    { state: "QUEUED", carrierStatus: null, lastError: null },
+    { state: "ACTIVE", carrierStatus: "CANCELLED", lastError: null },
+    { state: "ACTIVE", carrierStatus: "CREATED", lastError: "Erreur de lecture" },
+];
+const shipmentFor = (n: number) => trackingCases[n % trackingCases.length];
+const expectedAttention = new Set([0, 3, 4, 5, 6, 7, 10, 12, 13]);
 const admin = { Authorization: `Bearer ${jwt.sign({ id: "123456789012345678901234", role: "ADMIN" }, process.env.JWT_SECRET!)}` };
 const prefix = randomBytes(8).toString("hex");
 const id = (n: number) => prefix + n.toString(16).padStart(8, "0");
@@ -28,7 +47,7 @@ async function integrity() {
     return JSON.stringify({
         orders: await p.order.findMany({ orderBy: { id: "asc" }, select: { id: true, status: true, paymentStatus: true, totalAmount: true, shippingCost: true, inventoryReserved: true, updatedAt: true } }),
         stock: await p.productVariant.findMany({ select: { id: true, stock: true } }),
-        shipments: await p.olivraisonShipment.count(), events: await p.orderEvent.count(),
+        shipments: await p.olivraisonShipment.findMany({ orderBy: { id: "asc" } }), events: await p.orderEvent.count(),
     });
 }
 before(async () => {
@@ -49,6 +68,11 @@ before(async () => {
     const category = await p.category.create({ data: { slug: "history-fixture", nameFr: "Test", nameAr: "اختبار", nameEn: "Test" } });
     const product = await p.product.create({ data: { slug: "history-fixture", nameFr: "Test", nameAr: "اختبار", nameEn: "Test", descriptionFr: "", descriptionAr: "", descriptionEn: "", price: 200, images: [], categoryId: category.id } });
     await p.productVariant.create({ data: { productId: product.id, sku: "HISTORY-TEST", colorNameFr: "Noir", colorNameAr: "أسود", colorNameEn: "Black", color: "#000000", stock: 7 } });
+    await p.olivraisonShipment.createMany({ data: rows.flatMap((row, n) => {
+        const shipment = shipmentFor(n);
+        return shipment ? [{ id: row.id, trackingId: "FICTIF-" + n, ...shipment }] : [];
+    }) });
+    await p.olivraisonShipment.create({ data: { id: id(130), trackingId: "TRASH-FICTIF", state: "ACTIVE", carrierStatus: "REPORTED" } });
     snapshot = await integrity();
 });
 after(async () => { await p?.$disconnect(); await dropDatabase(database); });
@@ -126,5 +150,45 @@ test("Search is literal, query values are validated, details require admin and r
     await request(app).get(`/api/orders/${id(130)}/admin-details`).set(admin).expect(404);
     const publicOrder = await request(app).get(`/api/orders/${id(0)}`).expect(200);
     assert.equal(publicOrder.body.data.customerName, undefined);
+    assert.equal(await integrity(), snapshot);
+});
+
+
+test("Tracking views agree between local summaries and the server across the complete history", async () => {
+    for (const filter of orderTrackingFilters) {
+        const expected = rows.filter((_, n) => filter === "ALL" || filter === "UNLINKED" && !shipmentFor(n)
+            || filter === "REPORTED" && n % trackingCases.length === 0
+            || filter === "ATTENTION" && expectedAttention.has(n % trackingCases.length));
+        assert.deepEqual(rows.filter((_, n) => orderTrackingMatches(shipmentFor(n), filter)).map(row => row.id), expected.map(row => row.id));
+        const all: string[] = [];
+        for (let page = 1; page <= Math.max(1, Math.ceil(expected.length / 25)); page++) {
+            const r = await get({ search: "HISTORY-" + prefix, tracking: filter, limit: 25, page });
+            assert.equal(r.body.trackingFilter, filter);
+            assert.equal(r.body.total, expected.length);
+            assert.equal(r.body.scopeTotal, expected.length);
+            assert.equal(Object.values(r.body.statusCounts).reduce((a: number, b: any) => a + Number(b), 0), expected.length);
+            all.push(...r.body.data.map((row: any) => row.id));
+        }
+        assert.deepEqual(all.sort(), expected.map(row => row.id).sort());
+        assert.equal(new Set(all).size, all.length);
+    }
+    const found = await get({ search: "Mariam", tracking: "REPORTED" });
+    assert.equal(found.body.total, 1); assert.equal(found.body.data[0].id, id(0));
+    const paid = rows.filter((row, n) => row.paymentStatus === "PAID" && expectedAttention.has(n % trackingCases.length));
+    const r = await get({ search: "HISTORY-" + prefix, tracking: "ATTENTION", payment: "PAID", status: "SHIPPED" });
+    assert.equal(r.body.scopeTotal, paid.length);
+    assert.equal(r.body.total, paid.filter(row => row.status === "SHIPPED").length);
+    assert.equal((await get({ trash: "true", tracking: "REPORTED" })).body.total, 1);
+    assert.equal(await integrity(), snapshot);
+});
+
+test("Unknown tracking filters and unauthorized callers cannot access or change tracking records", async () => {
+    for (const tracking of ["wrong", "ATTENTION' OR 1=1--", ["REPORTED", "ALL"]]) {
+        await request(app).get("/api/orders").query({ tracking }).set(admin).expect(400);
+    }
+    await request(app).get("/api/orders").query({ tracking: "ATTENTION" }).expect(401);
+    const token = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+    await request(app).get("/api/orders").query({ tracking: "ATTENTION" }).set("Authorization", `Bearer ${token}`).expect(403);
+    assert.equal(orderTrackingMatches(shipmentFor(0), "wrong"), false);
     assert.equal(await integrity(), snapshot);
 });

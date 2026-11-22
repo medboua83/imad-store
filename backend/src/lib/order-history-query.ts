@@ -1,4 +1,4 @@
-import { orderSearchReference, orderSearchPhone } from "@imad-store/shared";
+import { orderSearchReference, orderSearchPhone, orderTrackingFilters, attentionTrackingStates, attentionDeliveryStatuses, olivraisonStatusLabels, carrierNeedsReview } from "@imad-store/shared";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { paginationSchema, statusSchema } from "./validation";
@@ -11,6 +11,7 @@ export const orderHistoryQuery = paginationSchema.extend({
     search: z.string().trim().max(120).default(""),
     status: statusSchema.optional(),
     payment: z.enum(["PENDING", "PAID", "FAILED", "REFUNDED"]).optional(),
+    tracking: z.enum(orderTrackingFilters).default("ALL"),
     from: day.optional(),
     to: day.optional(),
     sort: z.enum(["newest", "oldest", "amount"]).default("newest"),
@@ -41,6 +42,18 @@ export function orderHistoryWhere(q: z.infer<typeof orderHistoryQuery>) {
     if (q.payment) parts.push(Prisma.sql`"paymentStatus"::text = ${q.payment}`);
     if (q.from) parts.push(Prisma.sql`"createdAt" >= ${moroccoDayBoundary(q.from)}::timestamp`);
     if (q.to) parts.push(Prisma.sql`"createdAt" < ${moroccoDayBoundary(q.to, true)}::timestamp`);
+    if (q.tracking !== "ALL") {
+        if (q.tracking === "UNLINKED") {
+            parts.push(Prisma.sql`NOT EXISTS (SELECT 1 FROM "olivraison_shipments" tracking WHERE tracking."id" = "orders"."id")`);
+        } else {
+            const condition = q.tracking === "REPORTED" ? Prisma.sql`tracking."carrierStatus" = 'REPORTED'`
+                : Prisma.sql`(tracking."state" IN (${Prisma.join([...attentionTrackingStates])})
+                    OR coalesce(tracking."lastError", '') <> ''
+                    OR tracking."carrierStatus" IN (${Prisma.join([...attentionDeliveryStatuses])})
+                    OR (coalesce(tracking."carrierStatus", '') <> '' AND tracking."carrierStatus" NOT IN (${Prisma.join(Object.keys(olivraisonStatusLabels).filter(status => !carrierNeedsReview(status)))})))`;
+            parts.push(Prisma.sql`EXISTS (SELECT 1 FROM "olivraison_shipments" tracking WHERE tracking."id" = "orders"."id" AND ${condition})`);
+        }
+    }
     if (q.search) {
         const reference = orderSearchReference(q.search);
         const phone = orderSearchPhone(q.search);

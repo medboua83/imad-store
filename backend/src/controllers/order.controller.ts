@@ -489,7 +489,7 @@ export async function listOrders(req: Request, res: Response) {
         return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null })), total, scopeTotal, statusCounts, page, totalPages };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
-    res.json({ success: true, ...result });
+    res.json({ success: true, ...result, trackingFilter: q.tracking });
 }
 
 export async function getAdminOrder(req: Request, res: Response) {
