@@ -2021,3 +2021,29 @@
 .admin-app .order-carrier-attention { border-color: #bb914b; background: #fff8e9; }
 .admin-app .order-carrier-attention > .admin-tag { margin-block: 8px 2px; background: #f2dfb9; color: #684514; font-weight: 600; }
 @media (max-width: 600px) { .admin-app .order-tracking-filter { align-items: stretch; flex-direction: column; } .admin-app .order-tracking-filter select { width: 100%; min-width: 0; } }
+
+/* Export uses the current selection across every history page. */
+.order-export {
+    margin-block: 18px;
+    padding-block: 16px;
+    border-block: 1px solid #e9e4db;
+}
+.order-export-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.order-export-toolbar > p {
+    flex: 1 1 220px;
+    min-width: 0;
+    color: #796b54;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.order-export-toolbar .admin-button {
+    flex: 0 1 auto;
+    max-width: 100%;
+    white-space: normal;
+}

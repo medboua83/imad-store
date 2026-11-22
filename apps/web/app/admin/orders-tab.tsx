@@ -11,6 +11,7 @@ import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
+import { OrderExport } from "./order-export";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
 import { orderWhatsAppLink } from "./order-whatsapp";
@@ -322,6 +323,7 @@ export function OrdersTab({
                 </div>
                 <p>{t("Dates incluses · heure du Maroc.")}</p>
             </details>
+            <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />
             <details className="order-maintenance">
                 <summary>{t("Gestion des commandes annulées")}</summary>
                 <div className="admin-toolbar">
