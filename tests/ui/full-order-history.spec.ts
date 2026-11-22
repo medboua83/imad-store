@@ -12,8 +12,8 @@ const initialRows = Array.from({ length: 125 }, (_, i) => ({
 }));
 async function fixture(page: Page, locale = "fr", small = false) {
     const rows = structuredClone(initialRows).slice(0, small ? 60 : 125);
-    const writes: string[] = [], queries: URL[] = [];
-    const control = { fail: false, lag: false, release: () => {} };
+    const writes: string[] = [], queries: URL[] = [], detailRequests: string[] = [];
+    const control = { fail: false, lag: false, detailMode: "ok", release: () => {} };
     let resolve!: () => void;
     const gate = new Promise<void>(r => { resolve = r; }); control.release = resolve;
     await page.addInitScript(locale => {
@@ -23,8 +23,13 @@ async function fixture(page: Page, locale = "fr", small = false) {
     await page.route("**/api/**", async route => {
         const req = route.request(), url = new URL(req.url());
         if (req.method() !== "GET") { writes.push(url.pathname); return route.fulfill({ status: 405 }); }
-        if (url.pathname === `/api/orders/${oldId}/admin-details`)
-            return route.fulfill({ json: { success: true, data: rows[0] } });
+        if (/^\/api\/orders\/[^/]+\/admin-details$/.test(url.pathname)) {
+            detailRequests.push(control.detailMode);
+            if (control.detailMode === "network") return route.fulfill({ status: 503 });
+            if (url.pathname !== `/api/orders/${oldId}/admin-details`)
+                return route.fulfill({ status: 404, json: { success: false, error: "Commande introuvable" } });
+            return route.fulfill({ json: { success: true, data: control.detailMode === "unrelated" ? rows[1] : rows[0] } });
+        }
         if (url.pathname !== "/api/orders") return route.fulfill({ json: { success: true, data: [], total: 0, unread: 0 } });
         queries.push(url);
         const limit = Number(url.searchParams.get("limit") || 20), search = url.searchParams.get("search") || "";
@@ -39,9 +44,30 @@ async function fixture(page: Page, locale = "fr", small = false) {
         try { await route.fulfill({ json: { success: true, data: filtered.slice((current - 1) * limit, current * limit),
             total: filtered.length, scopeTotal: scope.length, statusCounts: counts, page: current, totalPages } }); } catch { /* Superseded read may have been aborted. */ }
     });
-    return { rows, writes, queries, control };
+    return { rows, writes, queries, detailRequests, control };
 }
 for (const width of [390, 1440]) {
+    test(`Historical details distinguish errors, unrelated responses and missing orders at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        const f = await fixture(page); f.control.detailMode = "network";
+        await page.goto(`/admin?tab=orders&order=${oldId}`);
+        const dialog = page.getByRole("dialog"), alert = dialog.getByRole("alert");
+        await expect(alert).toContainText("Recherche dans l’historique impossible");
+        await expect(dialog.getByText("Cette commande est introuvable ou a été déplacée dans la corbeille.")).toHaveCount(0);
+        f.control.detailMode = "unrelated";
+        await page.reload();
+        await expect.poll(() => f.detailRequests.at(-1)).toBe("unrelated");
+        await expect(alert).toContainText("Recherche dans l’historique impossible");
+        await expect(dialog.getByText("Client fictif 1", { exact: true })).toHaveCount(0);
+        f.control.detailMode = "ok";
+        await alert.getByRole("button", { name: "Réessayer", exact: true }).click();
+        await expect(dialog).toContainText("Ancienne cliente fictive");
+        await page.goto("/admin?tab=orders&order=999999999999999999999999");
+        await expect(dialog.getByRole("heading", { name: "Commande indisponible", exact: true })).toBeVisible();
+        await expect(dialog).toContainText("Cette commande est introuvable ou a été déplacée dans la corbeille.");
+        await expect(dialog.getByRole("button", { name: "Confirmer", exact: true })).toHaveCount(0);
+        expect(f.writes).toEqual([]);
+    });
     test(`Historical pages find an order beyond 100, preserve details and poll its status at ${width}px`, async ({ page }, info) => {
         await page.setViewportSize({ width, height: 900 });
         const f = await fixture(page);

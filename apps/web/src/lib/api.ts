@@ -389,6 +389,7 @@ export const getAllOrders = async (params?: {
 
 export const getAdminOrder = async (id: string, signal?: AbortSignal) => {
     const { data } = await api.get<{ data: AdminOrder }>(`/orders/${id}/admin-details`, { signal });
+    if (!data.data || data.data.id !== id) throw new Error("Order details do not match the requested reference");
     return data.data;
 };
 

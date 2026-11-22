@@ -449,7 +449,7 @@ export function OrdersTab({
                     <div>
                         <p className="admin-eyebrow">{t("FICHE COMMANDE")}</p>
                         <h2 id="order-detail-title">
-                            {selected
+                            {selected && (order || history.loading || history.error)
                                 ? `#${selected.slice(-8).toUpperCase()}`
                                 : t("Commande indisponible")}
                         </h2>
@@ -462,7 +462,9 @@ export function OrdersTab({
                         <X size={20} />
                     </button>
                 </header>
-                {!order && history.loading ? <p role="status">{t("Chargement de la commande…")}</p> : order ? (
+                {!order && history.loading ? <p role="status">{t("Chargement de la commande…")}</p> : !order && history.error ? (
+                    <div className="admin-alert" role="alert">{t(history.error)} <button type="button" onClick={refresh}>{t("Réessayer")}</button></div>
+                ) : order ? (
                     <OrderDetails
                         order={order}
                         carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy || readBlocked} />}
@@ -484,7 +486,7 @@ export function OrdersTab({
                 ) : (
                     <p>
                         {t(
-                            "Cette commande ne figure plus dans la sélection. Fermez la fiche et actualisez.",
+                            "Cette commande est introuvable ou a été déplacée dans la corbeille.",
                         )}
                     </p>
                 )}

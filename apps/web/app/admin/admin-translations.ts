@@ -5,6 +5,7 @@ export const adminArabic: Record<string, string> = {
     "Recherche dans l’historique…": "جارٍ البحث في سجل الطلبيات…",
     "Recherche dans l’historique impossible. Réessayez pour vérifier les résultats.": "تعذر البحث في سجل الطلبيات. يرجى إعادة المحاولة للتحقق من النتائج.",
     "Chargement de la commande…": "جارٍ تحميل الطلبية…",
+    "Cette commande est introuvable ou a été déplacée dans la corbeille.": "تعذر العثور على هذه الطلبية أو تم نقلها إلى سلة المحذوفات.",
     "Navigation des commandes, début": "التنقل بين صفحات الطلبيات، البداية",
     "Navigation des commandes, fin": "التنقل بين صفحات الطلبيات، النهاية",
 
