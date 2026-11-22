@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
-import { orderHistoryQuery, orderHistoryWhere, orderHistorySort } from "../lib/order-history-query";
+import { orderHistoryQuery, orderHistoryWhere, orderHistorySort, orderExportQuery } from "../lib/order-history-query";
+import { ORDER_EXPORT_LIMIT, orderExportSelect, orderCsv } from "../lib/order-export";
 import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee, priceCart } from "@imad-store/shared";
@@ -490,6 +491,30 @@ export async function listOrders(req: Request, res: Response) {
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, ...result, trackingFilter: q.tracking });
+}
+
+export async function exportOrders(req: Request, res: Response) {
+    const input = orderExportQuery.parse(req.query);
+    const q = orderHistoryQuery.parse(input);
+    const result = await prisma.$transaction(async tx => {
+        const status = q.status ? Prisma.sql`AND "status"::text = ${q.status}` : Prisma.empty;
+        const ids = await tx.$queryRaw<{ id: string }[]>(Prisma.sql`
+            SELECT "id" FROM "orders" WHERE ${orderHistoryWhere(q)} ${status}
+            ORDER BY ${orderHistorySort(q.sort)} LIMIT ${ORDER_EXPORT_LIMIT + 1}`);
+        if (ids.length > ORDER_EXPORT_LIMIT) throw new AppError("ORDER_EXPORT_TOO_LARGE", 422);
+        const where = { id: { in: ids.map(row => row.id) } };
+        const orders = await tx.order.findMany({ where, select: orderExportSelect });
+        const shipments = await tx.olivraisonShipment.findMany({ where,
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastSyncedAt: true } });
+        const byId = new Map(orders.map(order => [order.id, order]));
+        return { csv: orderCsv(ids.map(({ id }) => byId.get(id)!), new Map(shipments.map(s => [s.id, s])), input.locale), count: ids.length };
+    }, { isolationLevel: "RepeatableRead", timeout: 30000 });
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="imad-commandes-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.setHeader("X-Order-Export-Count", String(result.count));
+    res.setHeader("Access-Control-Expose-Headers", "X-Order-Export-Count");
+    res.send(result.csv);
 }
 
 export async function getAdminOrder(req: Request, res: Response) {

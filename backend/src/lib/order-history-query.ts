@@ -7,7 +7,7 @@ const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
     const date = new Date(value + "T00:00:00Z");
     return !value.startsWith("0000") && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }, "Date invalide");
-export const orderHistoryQuery = paginationSchema.extend({
+const filters = {
     search: z.string().trim().max(120).default(""),
     status: statusSchema.optional(),
     payment: z.enum(["PENDING", "PAID", "FAILED", "REFUNDED"]).optional(),
@@ -15,8 +15,15 @@ export const orderHistoryQuery = paginationSchema.extend({
     from: day.optional(),
     to: day.optional(),
     sort: z.enum(["newest", "oldest", "amount"]).default("newest"),
+};
+const validPeriod = (q: { from?: string; to?: string }) => !q.from || !q.to || q.from <= q.to;
+export const orderHistoryQuery = paginationSchema.extend({
+    ...filters,
     trash: z.enum(["true", "false"]).default("false"),
-}).refine(q => !q.from || !q.to || q.from <= q.to, "Période invalide");
+}).refine(validPeriod, "Période invalide");
+// Pagination and trash are deliberately unavailable in a full filtered export.
+export const orderExportQuery = z.object({ ...filters, locale: z.enum(["fr", "ar"]).default("fr") })
+    .strict().refine(validPeriod, "Période invalide");
 
 const moroccoOffset = new Intl.DateTimeFormat("en", { timeZone: "Africa/Casablanca", timeZoneName: "longOffset" });
 /** UTC boundary for the same Moroccan calendar used by the interface, independent of PostgreSQL tzdata. */

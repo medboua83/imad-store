@@ -1,3 +1,9 @@
+## En cours — export des commandes filtrées (22 novembre 2026)
+
+CSV de toutes les pages filtrées, accès administrateur, formats français/arabe, limite explicite sans troncature, protection tableur et reprise après erreur. Aucun changement de paiement, stock ou colis. Recettes et publication sur DATA : `outputs/filtered-order-export-20261122`.
+
+Priorité suivante : demandes de retour structurées (les conditions commerciales sont déjà configurables). Les vues de livraison à surveiller et l’historique complet sont déjà publiés.
+
 ## Vues de suivi de livraison — 22 novembre 2026
 
 - [x] Auditer le repérage des situations de livraison sur mobile et ordinateur.

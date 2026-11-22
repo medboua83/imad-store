@@ -395,6 +395,18 @@ export const getAdminOrder = async (id: string, signal?: AbortSignal) => {
     return data.data;
 };
 
+export async function exportOrders(params: {
+    search?: string; status?: string; payment?: string; tracking?: string;
+    from?: string; to?: string; sort: string; locale: "fr" | "ar";
+}, signal: AbortSignal) {
+    const response = await api.get<Blob>("/orders/export.csv", { params, signal, responseType: "blob", timeout: 45000 });
+    const countHeader = response.headers["x-order-export-count"];
+    const count = typeof countHeader === "string" && /^\d+$/.test(countHeader) ? Number(countHeader) : NaN;
+    if (!String(response.headers["content-type"]).startsWith("text/csv") || !Number.isSafeInteger(count) || count > 10000 || !response.data.size)
+        throw new Error("Invalid order export response");
+    return { blob: response.data, count };
+}
+
 export interface OrderHistoryEvent {
     id: string;
     type: string;

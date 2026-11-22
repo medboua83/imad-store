@@ -192,3 +192,110 @@ test("Unknown tracking filters and unauthorized callers cannot access or change 
     assert.equal(orderTrackingMatches(shipmentFor(0), "wrong"), false);
     assert.equal(await integrity(), snapshot);
 });
+
+// Parse quoted CSV, including multiline cells, independently of the serializer.
+function parseCsv(text: string) {
+    const records: string[][] = []; let row: string[] = [], cell = "", quoted = false;
+    for (let i = text.charCodeAt(0) === 0xfeff ? 1 : 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '"') {
+            if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+            else quoted = !quoted;
+        } else if (!quoted && (c === ";" || c === "\r" || c === "\n")) {
+            row.push(cell); cell = "";
+            if (c !== ";") { records.push(row); row = []; if (c === "\r" && text[i + 1] === "\n") i++; }
+        } else cell += c;
+    }
+    assert.equal(quoted, false);
+    return records;
+}
+const csv = (q: Record<string, string | number> = {}) => request(app).get("/api/orders/export.csv").query(q).set(admin);
+
+test("CSV exports every matching history page in stable order, with all active filters", async () => {
+    for (const q of [
+        { search: "HISTORY-" + prefix, sort: "oldest" },
+        { search: "HISTORY-" + prefix, tracking: "ATTENTION", status: "SHIPPED", payment: "PENDING", sort: "amount" },
+        { search: "HISTORY-" + prefix, tracking: "REPORTED" },
+        { search: "HISTORY-" + prefix, tracking: "UNLINKED" },
+        { search: "Projected day", from: "2026-11-22", to: "2026-11-22" },
+        { search: "#" + id(0).slice(-8) },
+        { search: "Aucun résultat fictif" },
+    ]) {
+        const query = q as Record<string, string>;
+        const expected: string[] = [];
+        const first = await get({ ...query, limit: 100 });
+        expected.push(...first.body.data.map((o: any) => o.id));
+        if (first.body.totalPages > 1) expected.push(...(await get({ ...query, limit: 100, page: 2 })).body.data.map((o: any) => o.id));
+        const r = await csv(query).expect(200);
+        assert.match(r.headers["content-type"], /^text\/csv; charset=utf-8/);
+        assert.match(r.headers["content-disposition"], /^attachment; filename="imad-commandes-\d{4}-\d{2}-\d{2}\.csv"$/);
+        assert.match(r.headers["cache-control"], /private.*no-store/);
+        assert.equal(r.text.charCodeAt(0), 0xfeff);
+        const parsed = parseCsv(r.text);
+        assert.equal(parsed.length - 1, first.body.total);
+        assert.equal(Number(r.headers["x-order-export-count"]), first.body.total);
+        assert.deepEqual(parsed.slice(1).map(row => row[1].replace(/^'/, "")), expected);
+        assert.equal(new Set(expected).size, expected.length);
+        assert.ok(!parsed.slice(1).some(row => row[1] === "'" + id(130)));
+        for (const row of parsed.slice(1)) { assert.equal(row.length, 19); assert.equal(row[13], "MAD"); }
+    }
+    assert.equal(await integrity(), snapshot);
+});
+
+test("CSV preserves Unicode, quotes, amounts and payment while neutralizing spreadsheet formulas", async () => {
+    const { csvCell } = await import("../backend/src/lib/order-export");
+    assert.equal(parseCsv(csvCell("001234567890123456789012", true) + '\r\n')[0][0], "'001234567890123456789012");
+    for (const value of ['=1+1', '  =HYPERLINK("a";"b")', '+212600000000', '-1+2', '@SUM(1)', '\t\r=1', '\u200f=1', '\u0000=1'])
+        assert.ok(parseCsv(csvCell(value) + '\r\n')[0][0].startsWith("'"), value);
+    const variant = await p.productVariant.findFirst();
+    const special = await p.order.create({ data: {
+        ...rows[1], id: id(160), customerName: '  =HYPERLINK("https://example.test";"bad")',
+        fullName: 'زبون تجريبي', street: 'Rue "test";\nعنوان تجريبي', customerEmail: 'test@example.test',
+        idempotencyKey: 'PRIVATE-NOT-IN-CSV', requestFingerprint: 'PRIVATE-FINGERPRINT',
+        items: { create: { productId: variant.productId, variantId: variant.id, quantity: 2, unitPrice: 100 } },
+    } });
+    try {
+        const before = await integrity();
+        const r = await csv({ search: id(160), locale: "ar" }).expect(200);
+        const records = parseCsv(r.text), row = records[1];
+        assert.equal(records[0][0], "المرجع");
+        assert.equal(row[3], "'" + special.customerName);
+        assert.equal(row[7], special.street);
+        assert.equal(row[9], "PAID"); assert.equal(row[11], "201.00"); assert.equal(row[12], "30.00");
+        assert.match(row[14], /2 × 100.00 MAD/); assert.match(row[14], /HISTORY-TEST/);
+        assert.doesNotMatch(r.text, /PRIVATE-NOT-IN-CSV|PRIVATE-FINGERPRINT|requestFingerprint|idempotencyKey/);
+        assert.equal(await integrity(), before);
+    } finally { await p.orderItem.deleteMany({ where: { orderId: id(160) } }); await p.order.delete({ where: { id: id(160) } }); }
+    assert.equal(await integrity(), snapshot);
+});
+
+test("CSV requires administrator access and refuses unknown parameters or invalid filters", async () => {
+    await request(app).get("/api/orders/export.csv").expect(401);
+    const token = jwt.sign({ id: "123456789012345678901234", role: "CUSTOMER" }, process.env.JWT_SECRET!);
+    await request(app).get("/api/orders/export.csv").set("Authorization", `Bearer ${token}`).expect(403);
+    for (const q of [{ trash: "true" }, { page: 2 }, { limit: 25 }, { status: "bad" }, { tracking: "bad" },
+        { locale: "wrong" }, { from: "2026-02-31" }, { from: "2026-11-23", to: "2026-11-22" }, { search: ["a", "b"] }]) {
+        const r = await csv(q as any).expect(400);
+        assert.doesNotMatch(r.headers["content-type"], /csv/);
+    }
+    assert.equal((parseCsv((await csv({ search: "%' OR 1=1--" }).expect(200)).text)).length, 1);
+    assert.equal(await integrity(), snapshot);
+});
+
+test("An oversized CSV is refused entirely instead of silently truncating the history", { timeout: 30000 }, async () => {
+    const label = "EXPORT-LIMIT-" + prefix;
+    await p.order.createMany({ data: Array.from({ length: 10001 }, (_, n) => ({
+        ...rows[0], id: id(n + 100000), customerName: label, status: n === 10000 ? "CONFIRMED" : "PENDING",
+    })) });
+    try {
+        const before = await integrity();
+        const r = await csv({ search: label }).expect(422);
+        assert.equal(r.body.error, "ORDER_EXPORT_TOO_LARGE");
+        assert.equal(r.headers["content-disposition"], undefined);
+        const boundary = await csv({ search: label, status: "PENDING" }).expect(200);
+        assert.equal(boundary.headers["x-order-export-count"], "10000");
+        assert.equal(parseCsv(boundary.text).length, 10001);
+        assert.equal(await integrity(), before);
+    } finally { await p.order.deleteMany({ where: { customerName: label } }); }
+    assert.equal(await integrity(), snapshot);
+});

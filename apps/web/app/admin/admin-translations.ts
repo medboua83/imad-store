@@ -1,4 +1,11 @@
 export const adminArabic: Record<string, string> = {
+    "Export des commandes": "تصدير الطلبيات",
+    "Exporter CSV": "تصدير CSV",
+    "Toutes les pages filtrées · hors corbeille · 10 000 commandes maximum.": "جميع الصفحات حسب عوامل التصفية · باستثناء سلة المحذوفات · حتى 10 000 طلب.",
+    "Préparation de l’export…": "جارٍ تحضير التصدير…",
+    "Export prêt : {count} commande(s).": "التصدير جاهز: {count} طلب.",
+    "Plus de 10 000 commandes. Précisez les dates ou les filtres avant d’exporter.": "أكثر من 10 000 طلب. يرجى تحديد التواريخ أو عوامل التصفية قبل التصدير.",
+    "Export impossible. Vos filtres sont conservés. Réessayez.": "تعذر التصدير. تم الاحتفاظ بعوامل التصفية. حاول مرة أخرى.",
     "Suivi de livraison": "متابعة التوصيل",
     "Tous les suivis": "جميع حالات التتبع",
     "À surveiller": "تحتاج إلى متابعة",
