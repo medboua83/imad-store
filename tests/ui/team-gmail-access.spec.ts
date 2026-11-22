@@ -119,6 +119,8 @@ test('The reset secret stays out of HTTP URLs, matching passwords are required a
     await page.getByRole('button', { name: 'Enregistrer mon mot de passe', exact: true }).dblclick();
     await expect(page.getByRole('status')).toContainText('Mot de passe enregistré');
     expect(calls).toHaveLength(1); expect(calls[0]).not.toContain(token);
+    await expect(page).toHaveURL(/\/admin\/password$/);
+    expect(await page.evaluate(() => localStorage.getItem('adminToken'))).toBeNull();
 });
 
 test('Arabic SMTP settings remain readable on mobile with masked credentials', async ({ page }, info) => {

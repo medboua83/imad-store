@@ -1,7 +1,6 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { requestPasswordReset, submitPasswordReset, clearAdminSession } from "@/lib/api";
+import { requestPasswordReset, submitPasswordReset } from "@/lib/api";
 import { useAdminLocale, AdminLanguageSelect } from "../admin-locale";
 import "../admin.css";
 export default function PasswordRecoveryPage() {
@@ -28,7 +27,7 @@ export default function PasswordRecoveryPage() {
                 if (token && password !== repeat) { setError("Les deux mots de passe doivent être identiques."); return; }
                 lock.current = true; setBusy(true);
                 try {
-                    if (token) { await submitPasswordReset(token, password); clearAdminSession("logout"); setPassword(""); setRepeat(""); }
+                    if (token) { await submitPasswordReset(token, password); localStorage.removeItem("adminToken"); localStorage.removeItem("adminRefresh"); setPassword(""); setRepeat(""); }
                     else await requestPasswordReset(email);
                     setDone(true);
                 } catch { setError(token ? "Ce lien est expiré, déjà utilisé ou temporairement indisponible. Demandez un nouveau lien ou réessayez." : "Demande indisponible. Réessayez dans quelques minutes."); }
@@ -41,8 +40,8 @@ export default function PasswordRecoveryPage() {
                 {error && <p className="admin-alert" role="alert">{t(error)}</p>}
                 <button className="admin-button primary">{t(token ? "Enregistrer mon mot de passe" : "Recevoir un lien de réinitialisation")}</button>
             </fieldset></form>}
-            {!!token && !done && <Link className="admin-text-button" href="/admin/password" onClick={() => { setToken(null); setError(""); }}>{t("Demander un nouveau lien")}</Link>}
-            <Link className="admin-text-button" href="/admin">{t("Revenir à la connexion")}</Link>
+            {!!token && !done && <a className="admin-text-button" href="/admin/password" onClick={() => { setToken(null); setError(""); }}>{t("Demander un nouveau lien")}</a>}
+            <a className="admin-text-button" href="/admin">{t("Revenir à la connexion")}</a>
         </section>
     </main>;
 }
