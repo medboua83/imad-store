@@ -1,3 +1,4 @@
+import { CARRIER_REVIEW_REQUIRED, needsCarrierApproval } from "./carrier-approval";
 import { enqueueOlivraison } from "./olivraison-enqueue";
 import { OrderStatus } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -71,6 +72,11 @@ export async function transitionOrderStatus(
                 }
                 if (!transitions[order.status].includes(nextStatus))
                     throw new AppError("Changement de statut non autorisé", 409);
+                if (nextStatus === "SHIPPED" && source !== "olivraison") {
+                    const shipment = await tx.olivraisonShipment.findUnique({ where: { id } });
+                    if (shipment && !shipment.trackingId && await needsCarrierApproval(tx, id))
+                        throw new AppError(CARRIER_REVIEW_REQUIRED, 409);
+                }
                 if (nextStatus === "CANCELLED" && order.inventoryReserved === null) {
                     throw new AppError(
                         "Réservation historique non vérifiée : rapprocher le stock avant annulation",

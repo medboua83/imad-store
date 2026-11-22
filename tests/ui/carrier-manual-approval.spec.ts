@@ -33,6 +33,7 @@ for (const width of [320,390,1440]) test(`Manual carrier review stays visible an
     const card = page.locator('.admin-order-card').first();
     await expect(card).toContainText('Validation requise avant Olivraison'); await expect(card).toContainText('Confirmée sur le site');
     await expect(card).toContainText('5 ancienne(s)'); expect(f.writes).toEqual([]);
+    await expect(card.getByRole('button', { name: 'Marquer expédiée' })).toHaveCount(0);
     await card.screenshot({ path: info.outputPath('manual-review.png') });
     await card.getByRole('button', { name: /Voir les détails/ }).click();
     const dialog = page.getByRole('dialog'); const button = dialog.getByRole('button', { name: 'Autoriser l’envoi à Olivraison' });

@@ -67,6 +67,7 @@ test('CRM and administration confirmations cannot approve shipping implicitly', 
 test('One explicit authenticated approval unlocks only its order, concurrent retries preserve one audit and parcel identity', async () => {
     const { order } = await pair(13); await queue(order);
     const before = await protect();
+    await request(app).patch(`/api/orders/${order.id}/status`).set(token(owner)).send({ status: "SHIPPED" }).expect(409);
     await request(app).post(url(order.id)).send({ approve: true }).expect(401);
     await request(app).post(url(order.id)).set(token(reader)).send({ approve: true }).expect(403);
     for (const body of [{}, { approve: false }, { approve: true, approvedAt: new Date().toISOString() }])

@@ -755,7 +755,7 @@ function OrderActions({
     return (
         <div className="admin-order-actions">
             {(allowedActions[o.status] || []).length ? (
-                (allowedActions[o.status] || []).map((next) => (
+                (allowedActions[o.status] || []).filter(next => next !== "SHIPPED" || o.shipment?.state !== "REVIEW_REQUIRED").map((next) => (
                     <button
                         key={next}
                         className={`admin-button ${next === "CANCELLED" ? "danger" : ""}`}
