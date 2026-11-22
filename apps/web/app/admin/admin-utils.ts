@@ -1,3 +1,4 @@
+import { orderSearchReference, orderSearchPhone } from "@imad-store/shared";
 export const statusLabels: Record<string, string> = {
     PENDING: "À confirmer",
     CONFIRMED: "Confirmée",
@@ -38,18 +39,22 @@ export function filterOrders<
         id: string;
         customerName: string | null;
         customerPhone: string | null;
+        fullName?: string | null;
+        phone?: string | null;
         city: string | null;
         status: string;
     },
 >(orders: T[], search: string, status: string) {
     const q = search.trim().toLocaleLowerCase();
-    const phone = q.replace(/[\s()+.-]/g, "");
+    const phone = orderSearchPhone(q);
+    const reference = orderSearchReference(q).toLocaleLowerCase();
     return orders.filter(
         (o) =>
             (status === "ALL" || o.status === status) &&
             (!q ||
-                [o.id, o.customerName, o.city].some((v) => v?.toLocaleLowerCase().includes(q)) ||
+                o.id.toLocaleLowerCase().includes(reference) ||
+                [o.customerName, o.fullName, o.city].some((v) => v?.toLocaleLowerCase().includes(q)) ||
                 (phone.length > 0 &&
-                    (o.customerPhone || "").replace(/[\s()+.-]/g, "").includes(phone))),
+                    [o.customerPhone, o.phone].some(value => (value || "").replace(/\D/g, "").includes(phone)))),
     );
 }

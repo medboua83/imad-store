@@ -1,4 +1,5 @@
 "use client";
+import { useOrderHistory, orderPageSize } from "./use-order-history";
 import { useAdminLocale } from "./admin-locale";
 import { ProductPhoto } from "@/components/store/ProductPhoto";
 import { productVariantImages } from "@imad-store/shared";
@@ -26,7 +27,7 @@ const serverOrigin = () => "";
 export function OrdersTab({
     orders,
     total,
-    onRefresh,
+    onRefresh: onParentRefresh,
     filters,
     setFilters,
     selected,
@@ -43,23 +44,52 @@ export function OrdersTab({
     const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
     const { search, status, payment, from, to, sort } = filters;
-    const setFilter = (key: keyof OrderListFilters, value: string) =>
-        setFilters((previous) => ({ ...previous, [key]: value }));
+    const serverHistory = total > orders.length;
+    const history = useOrderHistory(serverHistory, filters, selected, !!selected && !orders.some(o => o.id === selected));
+    async function onRefresh() {
+        await onParentRefresh();
+        await history.refresh();
+    }
+    const setFilter = (key: Exclude<keyof OrderListFilters, "page">, value: string) => {
+        pageNavigation.current = false;
+        setFilters(previous => ({ ...previous, [key]: value, page: 1 }));
+    };
     const [busy, setBusy] = useState(false),
         [message, setMessage] = useState(""),
         [error, setError] = useState(false),
         [reloadRequired, setReloadRequired] = useState(false);
     const lock = useRef(false),
         dialog = useRef<HTMLDialogElement>(null);
+    const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
     const invalidDates = !!from && !!to && from > to;
-    const filtered = useMemo(
-        () =>
-            invalidDates
-                ? []
-                : refineOrders(filterOrders(orders, search, status), payment, from, to, sort),
-        [orders, search, status, payment, from, to, sort, invalidDates],
-    );
-    const order = orders.find((o) => o.id === selected);
+    const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders, search, status), payment, from, to, sort),
+        [orders, search, status, payment, from, to, sort, invalidDates]);
+    const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders, search, "ALL"), payment, from, to, sort),
+        [orders, search, payment, from, to, sort, invalidDates]);
+    const resultTotal = serverHistory ? history.data?.total ?? 0 : localResults.length;
+    const pages = Math.max(1, serverHistory ? history.data?.pages ?? 1 : Math.ceil(resultTotal / orderPageSize));
+    const page = serverHistory ? history.data?.page ?? filters.page : Math.min(filters.page, pages);
+    const filtered = invalidDates ? [] : serverHistory ? history.data?.rows ?? [] : localResults.slice((page - 1) * orderPageSize, page * orderPageSize);
+    const scopeTotal = serverHistory ? history.data?.scopeTotal : localScope.length;
+    const order = (serverHistory ? history.data?.rows : orders)?.find(o => o.id === selected) || history.detail;
+    const readBlocked = !!history.error || history.loading;
+    function changePage(next: number) {
+        pageNavigation.current = true;
+        setFilters(previous => ({ ...previous, page: next }));
+    }
+    const pagination = (label: string) => pages > 1 && <nav className="admin-inventory-pages order-pagination" aria-label={t(label)}>
+        <button type="button" className="admin-button" disabled={page <= 1 || history.loading}
+            onClick={() => changePage(page - 1)}>{t("Page précédente")}</button>
+        <span>{t("Page {page} sur {total}", { page, total: pages })}</span>
+        <button type="button" className="admin-button" disabled={page >= pages || history.loading}
+            onClick={() => changePage(page + 1)}>{t("Page suivante")}</button>
+    </nav>;
+    useEffect(() => {
+        if (!pageNavigation.current || history.loading) return;
+        pageNavigation.current = false;
+        resultsRef.current?.focus({ preventScroll: true });
+        resultsRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    }, [page, history.loading]);
     useEffect(() => {
         const el = dialog.current;
         if (selected && el && !el.open) {
@@ -92,7 +122,7 @@ export function OrdersTab({
         }
     }
     async function change(o: AdminOrder, next: string) {
-        if (lock.current || reloadRequired) return;
+        if (lock.current || reloadRequired || readBlocked) return;
         const consequence =
             next === "CANCELLED"
                 ? t(" Le stock réservé sera restitué uniquement si sa réservation est vérifiée.")
@@ -132,7 +162,7 @@ export function OrdersTab({
         }
     }
     async function syncCarrier(o: AdminOrder) {
-        if (lock.current) return;
+        if (lock.current || readBlocked) return;
         lock.current = true;
         setBusy(true);
         setMessage("");
@@ -152,7 +182,7 @@ export function OrdersTab({
         }
     }
     async function remove(ids: string[]) {
-        if (lock.current || reloadRequired || !ids.length) return;
+        if (lock.current || reloadRequired || readBlocked || !ids.length) return;
         if (
             !confirm(
                 t(
@@ -193,12 +223,7 @@ export function OrdersTab({
             <div className="admin-panel-heading">
                 <div>
                     <h2>{t("Suivi des commandes")}</h2>
-                    <p>
-                        {orders.length}
-                        {t(" dernières commandes chargées sur ")}
-                        {total}
-                        {t(". Recherche, compteurs et filtres sur cette sélection.")}
-                    </p>
+                    <p>{t("Recherche dans toutes les commandes, hors corbeille.")}</p>
                 </div>
                 <button className="admin-button" disabled={busy} onClick={refresh}>
                     <RefreshCw size={16} />
@@ -213,6 +238,7 @@ export function OrdersTab({
                         <input
                             dir="auto"
                             type="search"
+                            maxLength={120}
                             placeholder={t("Nom, téléphone, ville ou référence")}
                             value={search}
                             onChange={(e) => setFilter("search", e.target.value)}
@@ -238,9 +264,9 @@ export function OrdersTab({
                     >
                         {t(label)}
                         <span>
-                            {key === "ALL"
-                                ? orders.length
-                                : orders.filter((o) => o.status === key).length}
+                            {key === "ALL" ? scopeTotal ?? "—" : serverHistory
+                                ? history.data?.counts[key] ?? "—"
+                                : localScope.filter(o => o.status === key).length}
                         </span>
                     </button>
                 ))}
@@ -294,7 +320,7 @@ export function OrdersTab({
                     </button>
                     <button
                         className="admin-button"
-                        disabled={busy || reloadRequired || !removable.length}
+                        disabled={busy || reloadRequired || readBlocked || !removable.length}
                         onClick={() => remove(removable.map((o) => o.id))}
                     >
                         {t("Supprimer les annulées affichées (")}
@@ -308,10 +334,14 @@ export function OrdersTab({
                 </div>
             </details>
             <div className="order-results">
-                <p role="status">
-                    {filtered.length}
-                    {t(" résultat")}
-                    {filtered.length !== 1 ? t("s") : ""}
+                <p ref={resultsRef} tabIndex={-1} role="status">
+                    {serverHistory && !history.data ? t("Résultats en attente") : <>
+                        {resultTotal}{t(" résultat")}{resultTotal !== 1 ? t("s") : ""}
+                        {resultTotal > 0 && <> · {t("Affichage {from}–{to}", {
+                            from: (page - 1) * orderPageSize + 1,
+                            to: (page - 1) * orderPageSize + filtered.length,
+                        })}</>}
+                    </>}
                 </p>
                 <button
                     className="admin-text-button"
@@ -333,8 +363,11 @@ export function OrdersTab({
                     {t("La date de fin doit être égale ou postérieure à la date de début.")}
                 </p>
             )}
+            {history.error && <div className="admin-alert" role="alert">{t(history.error)} <button type="button" onClick={refresh}>{t("Réessayer")}</button></div>}
+            {history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}
+            {pagination("Navigation des commandes, début")}
             {feedback}
-            <div className="admin-order-grid">
+            <div className="admin-order-grid" aria-busy={history.loading}>
                 {filtered.map((o) => (
                     <article className="admin-order-card" key={o.id}>
                         <div className="admin-order-heading">
@@ -388,14 +421,15 @@ export function OrdersTab({
                             <OrderActions
                                 order={o}
                                 busy={busy}
-                                reloadRequired={reloadRequired}
+                                reloadRequired={reloadRequired || readBlocked}
                                 onChange={change}
                             />
                         }
                     </article>
                 ))}
             </div>
-            {!filtered.length && (
+            {pagination("Navigation des commandes, fin")}
+            {!filtered.length && !history.loading && !history.error && !invalidDates && (
                 <div className="admin-empty">
                     <Package size={30} />
                     <h3>{t("Aucune commande trouvée")}</h3>
@@ -415,8 +449,8 @@ export function OrdersTab({
                     <div>
                         <p className="admin-eyebrow">{t("FICHE COMMANDE")}</p>
                         <h2 id="order-detail-title">
-                            {order
-                                ? `#${order.id.slice(-8).toUpperCase()}`
+                            {selected
+                                ? `#${selected.slice(-8).toUpperCase()}`
                                 : t("Commande indisponible")}
                         </h2>
                     </div>
@@ -428,16 +462,16 @@ export function OrdersTab({
                         <X size={20} />
                     </button>
                 </header>
-                {order ? (
+                {!order && history.loading ? <p role="status">{t("Chargement de la commande…")}</p> : order ? (
                     <OrderDetails
                         order={order}
-                        carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy} />}
-                        feedback={feedback}
+                        carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy || readBlocked} />}
+                        feedback={<>{history.error && <p className="admin-alert" role="alert">{t(history.error)}</p>}{history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}{feedback}</>}
                         actions={
                             <OrderActions
                                 order={order}
                                 busy={busy}
-                                reloadRequired={reloadRequired}
+                                reloadRequired={reloadRequired || readBlocked}
                                 onChange={change}
                             />
                         }

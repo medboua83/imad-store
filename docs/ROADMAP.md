@@ -1,9 +1,16 @@
+## Historique complet des commandes — 22 novembre 2026
+
+- [x] Préparer recherche, filtres et comptes globaux authentifiés et paramétrés.
+- [x] Préparer pagination à 25 lignes et détails administrateur hors page.
+- [x] Préserver le suivi automatique, les brouillons de filtres, les paiements et les stocks.
+- [ ] Terminer les recettes navigateur, vérifier GitHub et publier la version exacte.
+
 ## Lisibilité du dashboard — 21/22 novembre 2026
 
 - [x] Auditer les écrans existants sans modifier les données.
 - [x] Préparer en-tête mobile compact, recherche prioritaire et maintenance repliée.
 - [x] Afficher fidèlement les jours sans commande sur le graphique.
-- [ ] Valider les recettes responsives, vérifier GitHub et consigner la publication.
+- [x] PR154 publiée : 369 UI / 155 serveur, source et données vérifiées.
 - [ ] Ajouter recherche/pagination serveur pour les commandes anciennes et agrégats globaux.
 - [ ] Concevoir file des incidents transporteur, export et permissions d’équipe détaillées.
 

@@ -369,6 +369,11 @@ export const getAllOrders = async (params?: {
     page?: number;
     limit?: number;
     trash?: boolean;
+    search?: string;
+    payment?: string;
+    from?: string;
+    to?: string;
+    sort?: string;
 }, signal?: AbortSignal) => {
     const { data } = await api.get("/orders", { params, signal });
     return data as {
@@ -377,7 +382,14 @@ export const getAllOrders = async (params?: {
         total: number;
         page: number;
         totalPages: number;
+        scopeTotal?: number;
+        statusCounts?: Record<string, number>;
     };
+};
+
+export const getAdminOrder = async (id: string, signal?: AbortSignal) => {
+    const { data } = await api.get<{ data: AdminOrder }>(`/orders/${id}/admin-details`, { signal });
+    return data.data;
 };
 
 export interface OrderHistoryEvent {

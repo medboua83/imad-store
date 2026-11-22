@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+import { orderHistoryQuery, orderHistoryWhere, orderHistorySort } from "../lib/order-history-query";
 import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee, priceCart } from "@imad-store/shared";
@@ -11,7 +13,7 @@ import { AppError } from "../middleware/error.middleware";
 import { bridgeOrderToAdmin, OrderForBridge } from "../lib/telegram-bridge";
 import { appendOrderToSheets, updateOrderStatusInSheets } from "../lib/notifications";
 import { createHash } from "crypto";
-import { paginationSchema, statusSchema } from "../lib/validation";
+import { statusSchema } from "../lib/validation";
 import { transitionOrderStatus } from "../lib/order-lifecycle";
 import { refreshOlivraisonTracking } from "../lib/olivraison";
 import { CarrierError } from "../lib/olivraison-api";
@@ -461,43 +463,47 @@ export async function getOrderHistory(req: Request, res: Response) {
 }
 
 export async function listOrders(req: Request, res: Response) {
-    const { page, limit } = paginationSchema.parse(req.query);
-    const status =
-        req.query.status === undefined ? undefined : statusSchema.parse(req.query.status);
-    const trash = z.enum(["true", "false"]).default("false").parse(req.query.trash) === "true";
-    const where = {
-        ...(status ? { status } : {}),
-        ...(trash
-            ? { deletedAt: { not: null } }
-            : {
-                  deletedAt: null,
-              }),
-    };
-    const skip = (page - 1) * limit;
-    const [orders, total] = await Promise.all([
-        prisma.order.findMany({
-            where,
-            include: ORDER_INCLUDE,
-            skip,
-            take: Number(limit),
-            orderBy: { createdAt: "desc" },
-        }),
-        prisma.order.count({ where }),
-    ]);
-
-    const shipments = orders.length ? await prisma.olivraisonShipment.findMany({
-        where: { id: { in: orders.map(order => order.id) } },
-        select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
-    }) : [];
-    const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
+    const q = orderHistoryQuery.parse(req.query);
+    const result = await prisma.$transaction(async tx => {
+        const base = orderHistoryWhere(q);
+        const groups = await tx.$queryRaw<{ status: string; count: number }[]>(Prisma.sql`
+            SELECT "status"::text AS status, count(*)::int AS count FROM "orders"
+            WHERE ${base} GROUP BY "status"`);
+        const statusCounts: Record<string, number> = { PENDING: 0, CONFIRMED: 0, SHIPPED: 0, DELIVERED: 0, CANCELLED: 0 };
+        for (const group of groups) statusCounts[group.status] = group.count;
+        const scopeTotal = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
+        const total = q.status ? statusCounts[q.status] : scopeTotal;
+        const totalPages = Math.ceil(total / q.limit);
+        const page = Math.min(q.page, Math.max(1, totalPages));
+        const status = q.status ? Prisma.sql`AND "status"::text = ${q.status}` : Prisma.empty;
+        const ids = await tx.$queryRaw<{ id: string }[]>(Prisma.sql`
+            SELECT "id" FROM "orders" WHERE ${base} ${status}
+            ORDER BY ${orderHistorySort(q.sort)} LIMIT ${q.limit} OFFSET ${(page - 1) * q.limit}`);
+        const orders = ids.length ? await tx.order.findMany({ where: { id: { in: ids.map(row => row.id) } }, include: ORDER_INCLUDE }) : [];
+        const rows = new Map(orders.map(order => [order.id, order]));
+        const shipments = ids.length ? await tx.olivraisonShipment.findMany({
+            where: { id: { in: ids.map(row => row.id) } },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
+        }) : [];
+        const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
+        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null })), total, scopeTotal, statusCounts, page, totalPages };
+    }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
-    res.json({
-        success: true,
-        data: orders.map(order => ({ ...order, shipment: tracking.get(order.id) ?? null })),
-        total,
-        page: Number(page),
-        totalPages: Math.ceil(total / Number(limit)),
-    });
+    res.json({ success: true, ...result });
+}
+
+export async function getAdminOrder(req: Request, res: Response) {
+    const data = await prisma.$transaction(async tx => {
+        const order = await tx.order.findFirst({ where: { id: req.params.id, deletedAt: null }, include: ORDER_INCLUDE });
+        if (!order) throw new AppError("Commande introuvable", 404);
+        const shipment = await tx.olivraisonShipment.findUnique({
+            where: { id: order.id },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
+        });
+        return { ...order, shipment };
+    }, { isolationLevel: "RepeatableRead" });
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ success: true, data });
 }
 
 export async function syncOrderCarrierStatus(req: Request, res: Response) {
