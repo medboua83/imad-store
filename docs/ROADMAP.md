@@ -1,10 +1,19 @@
+## Vues de suivi de livraison — 22 novembre 2026
+
+- [x] Auditer le repérage des situations de livraison sur mobile et ordinateur.
+- [x] Préparer les filtres de suivi et leur correspondance locale/serveur sur tout l’historique.
+- [x] Préparer un repère visible et la confirmation du filtre réellement appliqué par l’API.
+- [x] Valider les vues locales/serveur, la reprise réseau, le détail suivi et les autorisations sur fixtures isolées.
+- [ ] Vérifier GitHub puis publier avec sauvegarde et contrôle des données.
+- [ ] Envisager ensuite export direct de la vue filtrée et suivi structuré des demandes de retour.
+
 ## Parcours des commandes — 22 novembre 2026
 
 - [x] Auditer la fiche et la corbeille authentifiées en présentation étroite et large.
 - [x] Préparer fermeture persistante, historique explicite et texte de suivi après annulation.
 - [x] Préparer pagination de la corbeille sans concaténation, reprise après restauration et lectures sûres.
 - [x] 44 recettes ciblées à 320/390/1440 px réussies, compilation et lint sans nouvelle erreur.
-- [ ] Vérifier GitHub puis publier avec sauvegarde et contrôle des données ; résultat privé sur DATA.
+- [x] PR156 publiée : 388 UI / 159 serveur, source et données vérifiées.
 
 ## Historique complet des commandes — 22 novembre 2026
 

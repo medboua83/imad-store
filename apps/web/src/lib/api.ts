@@ -365,6 +365,7 @@ export interface AdminOrder {
 }
 
 export const getAllOrders = async (params?: {
+    tracking?: string;
     status?: string;
     page?: number;
     limit?: number;
@@ -383,6 +384,7 @@ export const getAllOrders = async (params?: {
         page: number;
         totalPages: number;
         scopeTotal?: number;
+        trackingFilter?: string;
         statusCounts?: Record<string, number>;
     };
 };

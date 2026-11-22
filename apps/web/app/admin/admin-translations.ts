@@ -1,4 +1,10 @@
 export const adminArabic: Record<string, string> = {
+    "Suivi de livraison": "متابعة التوصيل",
+    "Tous les suivis": "جميع حالات التتبع",
+    "À surveiller": "تحتاج إلى متابعة",
+    "Sans colis relié": "بدون طرد مرتبط",
+    "Reports, destinataires injoignables, retours et suivis nécessitant une vérification.": "تأجيلات، مستلمون يتعذر الاتصال بهم، مرتجعات وحالات تتبع تحتاج إلى التحقق.",
+
     "Commande annulée. Le suivi du colis reste disponible ci-dessous, si un colis est associé.": "تم إلغاء الطلب. يظل تتبع الطرد متاحاً أدناه إذا كان هناك طرد مرتبط.",
     "Les commandes restent récupérables et leur statut ne change pas.": "يمكن استعادة الطلبات دون تغيير حالتها.",
     "{shown} sur {total} commandes": "{shown} من أصل {total} طلبات",

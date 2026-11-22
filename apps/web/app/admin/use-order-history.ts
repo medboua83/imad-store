@@ -23,13 +23,15 @@ export function useOrderHistory(remote: boolean, filters: OrderListFilters, sele
             const task = async () => {
                 try {
                     const response = remote ? await getAllOrders({
-                        limit: orderPageSize, page: filters.page, search: filters.search.trim() || undefined,
+                        limit: orderPageSize, page: filters.page, tracking: filters.tracking === "ALL" ? undefined : filters.tracking, search: filters.search.trim() || undefined,
                         status: filters.status === "ALL" ? undefined : filters.status,
                         payment: filters.payment === "ALL" ? undefined : filters.payment,
                         from: filters.from || undefined, to: filters.to || undefined, sort: filters.sort,
                     }, controller.signal) : undefined;
                     if (response && (response.scopeTotal === undefined || !response.statusCounts || !Number.isFinite(response.page)))
                         throw new Error("History response missing global counts");
+                    if (response && filters.tracking !== "ALL" && response.trackingFilter !== filters.tracking)
+                        throw new Error("Tracking filter not acknowledged by server");
                     let detail = response?.data.find(row => row.id === selected);
                     if (selected && !detail) {
                         try { detail = await getAdminOrder(selected, controller.signal); }
