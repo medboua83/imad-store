@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import { Prisma } from "@prisma/client";
+import { orderDay } from "../apps/web/app/admin/order-utils";
+import { moroccoDayBoundary, orderHistoryQuery, orderHistoryWhere } from "../backend/src/lib/order-history-query";
 const { databaseUrl, createDatabase, dropDatabase } = require("../scripts/test-postgres.cjs");
 const database = "imad_ci_" + randomBytes(8).toString("hex");
 process.env.DATABASE_URL = databaseUrl(database);
@@ -12,6 +15,7 @@ const admin = { Authorization: `Bearer ${jwt.sign({ id: "12345678901234567890123
 const prefix = randomBytes(8).toString("hex");
 const id = (n: number) => prefix + n.toString(16).padStart(8, "0");
 const statuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+const futureBoundaries = ["2026-11-21T22:59:59Z", "2026-11-21T23:00:00Z", "2026-11-22T22:59:59Z", "2026-11-22T23:00:00Z"];
 const rows = Array.from({ length: 125 }, (_, n) => ({
     id: id(n), customerName: "HISTORY-" + prefix + (n === 0 ? " Mariam" : ""),
     customerPhone: n === 0 ? "+212 6 00 00 00 99" : "+212700000000",
@@ -35,8 +39,11 @@ before(async () => {
     await p.order.createMany({ data: [
         { ...rows[1], id: id(130), deletedAt: new Date() },
         { ...rows[1], id: id(131), customerName: "100% QA_literal" },
-        ...["2026-11-21T22:59:59Z", "2026-11-21T23:00:00Z", "2026-11-22T22:59:59Z", "2026-11-22T23:00:00Z"].map((date, i) => ({
+        ...["2024-10-18T22:59:59Z", "2024-10-18T23:00:00Z", "2024-10-19T22:59:59Z", "2024-10-19T23:00:00Z"].map((date, i) => ({
             ...rows[1], id: id(140 + i), customerName: "Boundary", createdAt: new Date(date),
+        })),
+        ...futureBoundaries.map((date, i) => ({
+            ...rows[1], id: id(150 + i), customerName: "Projected day", createdAt: new Date(date),
         })),
     ] });
     const category = await p.category.create({ data: { slug: "history-fixture", nameFr: "Test", nameAr: "اختبار", nameEn: "Test" } });
@@ -73,13 +80,34 @@ test("Reference, legacy name, city and formatted national/international phone fi
 });
 
 test("Status counts, payment/date filters, sorting and trash stay scoped to the whole matching history", async () => {
+    for (const day of ["2024-03-10", "2024-04-14", "2024-10-19", "2026-11-22"]) {
+        const start = Date.parse(moroccoDayBoundary(day).replace(" ", "T") + "Z");
+        const end = Date.parse(moroccoDayBoundary(day, true).replace(" ", "T") + "Z");
+        assert.equal(orderDay(new Date(start).toISOString()), day);
+        assert.notEqual(orderDay(new Date(start - 1).toISOString()), day);
+        assert.equal(orderDay(new Date(end - 1).toISOString()), day);
+        assert.notEqual(orderDay(new Date(end).toISOString()), day);
+        assert.ok(end - start >= 23 * 3600000 && end - start <= 25 * 3600000);
+    }
     const expected = rows.filter(r => r.paymentStatus === "PAID");
     const r = await get({ search: "HISTORY-" + prefix, payment: "PAID", status: "CONFIRMED", sort: "amount", limit: 25 });
     assert.equal(r.body.scopeTotal, expected.length);
     assert.equal(r.body.total, expected.filter(r => r.status === "CONFIRMED").length);
     assert.equal(r.body.data[0].totalAmount, Math.max(...expected.filter(r => r.status === "CONFIRMED").map(r => r.totalAmount)));
-    const boundary = await get({ search: "Boundary", from: "2026-11-22", to: "2026-11-22" });
+    const boundary = await get({ search: "Boundary", from: "2024-10-19", to: "2024-10-19" });
     assert.deepEqual(boundary.body.data.map((o: any) => o.id).sort(), [id(141), id(142)]);
+    for (const timezone of ["UTC", "Africa/Casablanca", "America/Los_Angeles"]) {
+        const ids = await p.$transaction(async (tx: any) => {
+            await tx.$queryRaw(Prisma.sql`SELECT set_config('TimeZone', ${timezone}, true)`);
+            return tx.$queryRaw(Prisma.sql`SELECT id FROM orders WHERE ${orderHistoryWhere(orderHistoryQuery.parse({ search: "Boundary", from: "2024-10-19", to: "2024-10-19" }))} ORDER BY id`);
+        });
+        assert.deepEqual(ids.map((o: any) => o.id), [id(141), id(142)], timezone);
+    }
+    // Future offset rules can differ between PostgreSQL's tzdata and Node/browser ICU.
+    // The server filter must agree with the calendar actually displayed by the interface.
+    const projected = await get({ search: "Projected day", from: "2026-11-22", to: "2026-11-22" });
+    assert.deepEqual(projected.body.data.map((o: any) => o.id).sort(),
+        futureBoundaries.flatMap((date, i) => orderDay(date) === "2026-11-22" ? [id(150 + i)] : []));
     assert.equal((await get({ search: "HISTORY-" + prefix, trash: "true" })).body.total, 1);
     assert.equal((await get({ search: "HISTORY-" + prefix, sort: "oldest", limit: 25 })).body.data[0].id, id(0));
 });
