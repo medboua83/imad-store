@@ -11,6 +11,7 @@ import {
     exportOrders,
     updateOrderStatus,
     syncOrderCarrierStatus,
+    approveOrderCarrierDispatch,
     getAdminNotifications,
     markNotificationRead,
     markAllNotificationsRead,
@@ -33,6 +34,7 @@ orderRoutes.get("/:id/customer-history", authenticate, requirePermission("orders
 orderRoutes.get("/:id/history", authenticate, requirePermission("orders.read"), getOrderHistory);
 orderRoutes.post("/trash", authenticate, requirePermission("orders.write"), moveOrdersToTrash);
 orderRoutes.patch("/:id/status", authenticate, requirePermission("orders.write"), updateOrderStatus);
+orderRoutes.post("/:id/olivraison-approve", authenticate, requirePermission("orders.write"), approveOrderCarrierDispatch);
 orderRoutes.post("/:id/olivraison-sync", authenticate, requirePermission("orders.write"), syncOrderCarrierStatus);
 
 // Admin notifications (polled by dashboard every 5–10s)

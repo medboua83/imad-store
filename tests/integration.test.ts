@@ -2026,6 +2026,13 @@ test("Direct site confirmation is opt-in, persisted, server-enforced and never r
     }
 });
 
+// Independent clean-number fixtures for automatic dispatch; cancellation holds have dedicated coverage.
+let carrierCustomerSequence = 0;
+const carrierCheckout = () => {
+    const body = checkout();
+    return { ...body, customer: { ...body.customer, phone: "+2126" + String(90000000 + ++carrierCustomerSequence) } };
+};
+
 test("Olivraison opt-in, encrypted config, no historical replay, direct/CRM enqueue and automated shipment lifecycle", async () => {
     const { processOlivraisonQueue } = await import("../backend/src/lib/olivraison");
     const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
@@ -2037,7 +2044,7 @@ test("Olivraison opt-in, encrypted config, no historical replay, direct/CRM enqu
     const newOrder = async (direct = true) => {
         await prisma.storeSettings.upsert({ where: { id: "settings" }, create: { id: "settings", directSiteConfirmation: direct }, update: { directSiteConfirmation: direct } });
         product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
-        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), ...(direct ? { confirmationMode: "SITE" } : {}) });
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...carrierCheckout(), ...(direct ? { confirmationMode: "SITE" } : {}) });
         assert.equal(r.status, 201, JSON.stringify(r.body));
         return r.body.data;
     };
@@ -2121,7 +2128,7 @@ test("Olivraison reconciles an uncertain pickup without issuing it twice and sto
     await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: true } });
     const create = async () => {
         product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
-        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), confirmationMode: "SITE" });
+        const r = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...carrierCheckout(), confirmationMode: "SITE" });
         assert.equal(r.status, 201, JSON.stringify(r.body)); return r.body.data;
     };
     try {
@@ -2157,7 +2164,7 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
     await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: false } });
     await prisma.storeSettings.update({ where: { id: "settings" }, data: { directSiteConfirmation: true } });
     product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
-    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...checkout(), confirmationMode: "SITE" });
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send({ ...carrierCheckout(), confirmationMode: "SITE" });
     assert.equal(created.status, 201);
     const order = created.body.data;
     await applyCarrierOrderStatus(order.id, "INHOUSE");
@@ -2190,7 +2197,7 @@ test("Orders expose carrier tracking only to admins; read-only synchronization i
     const summary = list.body.data.find((row: any) => row.id === order.id).shipment;
     assert.equal(summary.carrierStatus, "DELIVERED");
     assert.ok(summary.lastSyncedAt);
-    assert.deepEqual(Object.keys(summary).sort(), ["id", "trackingId", "carrierStatus", "state", "lastError", "lastSyncedAt"].sort());
+    assert.deepEqual(Object.keys(summary).sort(), ["id", "trackingId", "carrierStatus", "state", "lastError", "lastSyncedAt", "approvedAt"].sort());
     assert.equal((await request(app).get(`/api/orders/${order.id}`).expect(200)).body.data.shipment, undefined);
     const checkedAt = summary.lastSyncedAt;
     await assert.rejects(refreshOlivraisonTracking(order.id, async () => ({ trackingID: trackingId, partnerTrackingID: "OTHER-ORDER", status: "TRANSIT" })), /rapprochement/);
@@ -2213,7 +2220,7 @@ test("Existing parcels blocked by an omitted partner reference recover into read
     const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
     await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
     product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
-    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(checkout());
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(carrierCheckout());
     const order = created.body.data;
     await transitionOrderStatus(order.id, "CONFIRMED");
     await prisma.olivraisonIntegration.update({ where: { id: "olivraison" }, data: { enabled: true, activatedAt: new Date() } });
@@ -2265,7 +2272,7 @@ test("Carrier cancellation continues polling until returned without refunding or
     const { transitionOrderStatus } = await import("../backend/src/lib/order-lifecycle");
     await prisma.olivraisonShipment.updateMany({ data: { state: "DONE" } });
     product = (await request(app).post("/api/products").set(admin()).send(payload())).body.data;
-    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(checkout());
+    const created = await request(app).post("/api/orders").set("Idempotency-Key", key()).send(carrierCheckout());
     assert.equal(created.status, 201);
     const order = created.body.data;
     await transitionOrderStatus(order.id, "CONFIRMED");

@@ -477,6 +477,7 @@ export function OlivraisonSettings({ active = true }: { active?: boolean }) {
                             {s.carrierStatus || "—"} ·{" "}
                             {(
                                 {
+                                    REVIEW_REQUIRED: t("Validation requise avant Olivraison"),
                                     QUEUED: "En file",
                                     ACTIVE: "Suivi automatique",
                                     RETRY: "Nouvelle tentative prévue",

@@ -1,3 +1,5 @@
+import { approveCarrierDispatch } from "../lib/carrier-approval";
+import { AuthRequest } from "../middleware/auth.middleware";
 import { Prisma } from "@prisma/client";
 import { orderHistoryQuery, orderHistoryWhere, orderHistorySort, orderExportQuery } from "../lib/order-history-query";
 import { ORDER_EXPORT_LIMIT, orderExportSelect, orderCsv } from "../lib/order-export";
@@ -459,6 +461,7 @@ export async function getOrderHistory(req: Request, res: Response) {
             id, type, createdAt,
             ...(type === "created" ? { source: "site", status: order.confirmationMethod === "SITE" ? "CONFIRMED" : "PENDING" } : {}),
             ...(status?.success ? { source: transition?.[2], status: status.data } : {}),
+            ...(type === "carrier_manual_approved" ? { source: "admin" } : {}),
         };
     });
     res.json({ success: true, data: events });
@@ -485,7 +488,7 @@ export async function listOrders(req: Request, res: Response) {
         const rows = new Map(orders.map(order => [order.id, order]));
         const shipments = ids.length ? await tx.olivraisonShipment.findMany({
             where: { id: { in: ids.map(row => row.id) } },
-            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true },
         }) : [];
         const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
         const summaries = await customerHistorySummaries(tx, ids.map(row => row.id));
@@ -525,7 +528,7 @@ export async function getAdminOrder(req: Request, res: Response) {
         if (!order) throw new AppError("Commande introuvable", 404);
         const shipment = await tx.olivraisonShipment.findUnique({
             where: { id: order.id },
-            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true },
         });
         const summaries = await customerHistorySummaries(tx, [order.id]);
         return { ...order, shipment, customerHistory: summaries.get(order.id) };
@@ -539,6 +542,13 @@ export async function getCustomerOrderHistory(req: Request, res: Response) {
     const result = await prisma.$transaction(tx => readCustomerOrderHistory(tx, req.params.id, page), { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "private, no-store");
     res.json({ success: true, ...result });
+}
+
+export async function approveOrderCarrierDispatch(req: AuthRequest, res: Response) {
+    z.object({ approve: z.literal(true) }).strict().parse(req.body);
+    const data = await approveCarrierDispatch(req.params.id, req.user!.id);
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ success: true, data });
 }
 
 export async function syncOrderCarrierStatus(req: Request, res: Response) {

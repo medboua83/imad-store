@@ -50,7 +50,7 @@ export async function putOlivraisonConfig(req: Request, res: Response) {
   const current = await prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
   if (current?.credentials && b.apiKey) {
     const count = await prisma.olivraisonShipment.count({
-      where: { state: { in: ["QUEUED", "ACTIVE", "RETRY", "ATTENTION"] } },
+      where: { state: { in: ["QUEUED", "ACTIVE", "RETRY", "ATTENTION", "REVIEW_REQUIRED"] } },
     });
     if (count)
       throw new AppError(

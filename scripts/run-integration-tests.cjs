@@ -37,6 +37,7 @@ const result = spawnSync(
         "tests/order-rate-limit.test.ts",
         "tests/order-history-search.test.ts",
         "tests/customer-order-history.test.ts",
+        "tests/carrier-manual-approval.test.ts",
         "tests/team-access-gmail.test.ts",
         "tests/shipping.test.ts",
         "tests/store-contact.test.ts",

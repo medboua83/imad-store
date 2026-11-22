@@ -1,3 +1,4 @@
+import { needsCarrierApproval, CarrierReviewRequired, CARRIER_REVIEW_REQUIRED } from "./carrier-approval";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
@@ -151,6 +152,11 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       });
     }
   }
+  async function authorizeWrite() {
+    const order = await eligible();
+    if (await needsCarrierApproval(prisma, candidate!.id)) throw new CarrierReviewRequired();
+    return order;
+  }
   async function eligible() {
     const [current, lease, order] = await Promise.all([
       prisma.olivraisonIntegration.findUnique({ where: { id: "olivraison" } }),
@@ -172,6 +178,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     let order = await eligible();
     let trackingId = candidate.trackingId;
     if (!trackingId) {
+      await authorizeWrite();
       if (order.status !== "CONFIRMED")
         throw new CarrierError("Commande déjà expédiée ou livrée : vérifier le transporteur avant de créer un colis");
       const cities = await api("/cities");
@@ -182,8 +189,8 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
         cities,
         (cfg.cityMapping || {}) as Record<string, string>,
       );
-      const payload = packagePayload(order, city, cfg.pickupAddress);
-      const readyOrder = await eligible();
+      const readyOrder = await authorizeWrite();
+      const payload = packagePayload(readyOrder, city, cfg.pickupAddress);
       if (readyOrder.status !== "CONFIRMED")
         throw new CarrierError("Commande déjà expédiée ou livrée : création de colis suspendue");
       // The carrier documents orderId as its idempotency identifier. It is stable on every retry.
@@ -197,7 +204,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     let remote = await api(`/package/${encodeURIComponent(trackingId)}`);
     validateCarrierTrackingResponse(remote, trackingId, order.id);
     if (remote.status === "CREATED") {
-      await eligible();
+      await authorizeWrite();
       await api("/package/status", "POST", { trackingID: trackingId, status: "CONFIRMED" });
       remote = { ...remote, status: "CONFIRMED" };
     }
@@ -206,7 +213,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       where: { id: "olivraison" },
     });
     if (pickupConfig?.enabled && pickupConfig.autoPickup && remote.status === "CONFIRMED") {
-      await eligible();
+      await authorizeWrite();
       // A timeout/crash after this checkpoint is reconciled by GET, never blindly replayed.
       if (candidate.pickupAttempted)
         throw new CarrierError(
@@ -251,6 +258,12 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
       nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS),
     });
   } catch (error) {
+    if (error instanceof CarrierReviewRequired) {
+      const shipment = await prisma.olivraisonShipment.findUniqueOrThrow({ where: { id: candidate.id } });
+      await save({ state: shipment.trackingId ? "TRACKING_ONLY" : "REVIEW_REQUIRED",
+        lastError: CARRIER_REVIEW_REQUIRED, nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS) });
+      return true;
+    }
     const retry = error instanceof CarrierError && error.retryable;
     await save({
       state: retry ? "RETRY" : "ATTENTION",
