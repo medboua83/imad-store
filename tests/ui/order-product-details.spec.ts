@@ -31,6 +31,13 @@ for (const width of [320, 390, 1440]) {
     await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
     await expect(page.locator(".order-totals")).toContainText("240,00");
     await expect(page.locator(".order-totals")).toContainText("40,00");
+    for (const amount of await page.locator(".order-totals dd").all()) {
+      const tops = await amount.evaluate(node => {
+        const range = document.createRange(); range.selectNodeContents(node);
+        return Array.from(range.getClientRects(), rect => rect.top);
+      });
+      expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(2);
+    }
     const contact = page.getByRole("link", {name: "Contacter sur WhatsApp", exact: true});
     await expect(contact).toHaveAttribute("target", "_blank");
     const draft = new URL((await contact.getAttribute("href"))!);

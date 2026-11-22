@@ -1640,12 +1640,22 @@
 }
 .admin-app .order-totals div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
   padding: 6px 0;
 }
+.admin-app .order-totals dt {
+  flex: 1 1 8ch;
+  min-width: 0;
+}
 .admin-app .order-totals dd {
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: normal;
   margin: 0;
+  margin-inline-start: auto;
   text-align: end;
 }
 .admin-app .order-grand-total {
