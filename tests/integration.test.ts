@@ -934,7 +934,7 @@ test("An empty server startup does not publish demo data even with a legacy seed
             child.on("message", (message: any) => {
                 if (message?.type !== "imad-startup-ready") return;
                 clearTimeout(timer);
-                if (!Number.isInteger(message.port) || message.port < 1 || message.port > 65535 || message.googleSdkLoaded !== false)
+                if (!Number.isInteger(message.port) || message.port < 1 || message.port > 65535 || message.googleSdkLoaded !== false || message.mailSdkLoaded !== false)
                     return reject(new Error("Invalid readiness or unused Google SDK loaded"));
                 resolve(message.port);
             });

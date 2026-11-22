@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { prisma } from "./prisma";
 import { decryptDeskcommValue, encryptDeskcommValue } from "./deskcomm-config";
 import { AppError } from "../middleware/error.middleware";
@@ -13,6 +12,8 @@ export async function gmailTransport() {
     let password: string;
     try { password = decryptDeskcommValue(config.passwordCiphertext); }
     catch { throw new AppError("La connexion Gmail doit être reconfigurée.", 503); }
+    // Load the SMTP library only when an enabled connection is actually used.
+    const nodemailer = (await import("nodemailer")).default;
     const transport = nodemailer.createTransport({
         host: "smtp.gmail.com", port: config.port, secure: config.port === 465,
         requireTLS: true, auth: { user: config.gmailUser, pass: password },
