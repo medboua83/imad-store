@@ -7,7 +7,7 @@ import { orderTrackingMatches, productVariantImages } from "@imad-store/shared";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus } from "@/lib/api";
+import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
@@ -174,6 +174,22 @@ export function OrdersTab({
             lock.current = false;
             setBusy(false);
         }
+    }
+    async function approveCarrier(o: AdminOrder) {
+        if (lock.current || readBlocked || reloadRequired) return;
+        if (!confirm(t("Autoriser l’envoi de la commande #{reference} malgré les anciennes annulations ? Olivraison pourra créer le colis et demander le ramassage selon vos réglages.", { reference: o.id.slice(-8).toUpperCase() }))) return;
+        lock.current = true; setBusy(true); setMessage("");
+        let saved = false;
+        try {
+            const result = await approveOrderCarrierDispatch(o.id);
+            if (result?.success !== true || result?.data?.approved !== true || result?.data?.orderId !== o.id) throw new Error("Unconfirmed approval");
+            saved = true;
+            await onRefresh(); setReloadRequired(false); setError(false);
+            setMessage("Envoi autorisé pour cette commande. Traitement Olivraison en attente.");
+        } catch {
+            setReloadRequired(true); setError(true);
+            setMessage(saved ? "Envoi autorisé. Actualisez pour relire le suivi." : "Validation ou actualisation non confirmée. Actualisez avant de réessayer.");
+        } finally { lock.current = false; setBusy(false); }
     }
     async function syncCarrier(o: AdminOrder) {
         if (lock.current || readBlocked) return;
@@ -421,7 +437,7 @@ export function OrdersTab({
                             <strong>{money(o.totalAmount)}</strong>
                             <span>{t(paymentLabels[o.paymentStatus] || o.paymentStatus)}</span>
                         </div>
-                        <OrderCarrierStatus order={o} />
+                        <OrderCarrierStatus order={o} onApprove={canWrite ? () => void approveCarrier(o) : undefined} busy={busy || reloadRequired || readBlocked} />
                         <CustomerCancellationAlert order={o} onOpen={() => openCustomerHistory(o.id)} />
                         <button
                             className="admin-button order-details-trigger"
@@ -497,7 +513,7 @@ export function OrdersTab({
                         customerHistory={hasCancellationHistory(order)
                             ? <CustomerCancellationAlert order={order} onOpen={() => openCustomerHistory(order.id)} />
                             : order.customerHistory?.available ? <button type="button" className="admin-text-button" onClick={() => openCustomerHistory(order.id)}>{t("Voir l’historique du numéro")}</button> : null}
-                        carrier={<OrderCarrierStatus order={order} onSync={canWrite ? () => void syncCarrier(order) : undefined} busy={busy || readBlocked} />}
+                        carrier={<OrderCarrierStatus order={order} onApprove={canWrite ? () => void approveCarrier(order) : undefined} onSync={canWrite ? () => void syncCarrier(order) : undefined} busy={busy || reloadRequired || readBlocked} />}
                         feedback={<>{history.error && <p className="admin-alert" role="alert">{t(history.error)}</p>}{history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}{feedback}</>}
                         actions={
                             <OrderActions

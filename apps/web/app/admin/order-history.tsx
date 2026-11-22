@@ -17,6 +17,7 @@ const origins: Record<string, [string, string]> = {
 };
 const eventNames: Record<string, [string, string]> = {
     created: ["Commande reçue", "تم استلام الطلب"],
+    carrier_manual_approved: ["Envoi Olivraison autorisé manuellement", "تم السماح بالإرسال إلى Olivraison يدوياً"],
     status_changed: ["Statut mis à jour", "تم تحديث الحالة"],
     restored: ["Commande restaurée", "تمت استعادة الطلب"],
     trashed: ["Déplacée dans la corbeille", "نُقل الطلب إلى سلة المهملات"],

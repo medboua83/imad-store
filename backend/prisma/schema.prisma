@@ -420,6 +420,8 @@ model OlivraisonShipment {
   stickerUrl String?
   slipUrl String?
   pickupAttempted Boolean @default(false)
+  approvedAt DateTime?
+  approvedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("olivraison_shipments")

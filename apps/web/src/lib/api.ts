@@ -343,6 +343,7 @@ export const markAllNotificationsRead = async () => {
 export interface AdminOrder {
     customerHistory?: { available: boolean; priorCancelledCount: number };
     shipment?: {
+        approvedAt?: string | null;
         id: string;
         trackingId: string | null;
         carrierStatus: string | null;
@@ -480,6 +481,9 @@ export const updateOrderStatus = async (id: string, status: string) => {
 
 export const syncOrderCarrierStatus = async (id: string) =>
     (await api.post(`/orders/${id}/olivraison-sync`)).data;
+
+export const approveOrderCarrierDispatch = async (id: string) =>
+    (await api.post(`/orders/${id}/olivraison-approve`, { approve: true })).data;
 
 // ─── Admin Product CRUD ───────────────────────────────────────────────────────
 

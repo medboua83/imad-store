@@ -1,3 +1,4 @@
+import { needsCarrierApproval, CARRIER_REVIEW_REQUIRED } from "./carrier-approval";
 import { Prisma } from "@prisma/client";
 export async function enqueueOlivraison(
   tx: Prisma.TransactionClient,
@@ -13,9 +14,10 @@ export async function enqueueOlivraison(
     data: { updatedAt: new Date() },
   });
   if (!locked.count) return;
+  const review = await needsCarrierApproval(tx, order.id);
   await tx.olivraisonShipment.upsert({
     where: { id: order.id },
-    create: { id: order.id },
+    create: { id: order.id, state: review ? "REVIEW_REQUIRED" : "QUEUED", lastError: review ? CARRIER_REVIEW_REQUIRED : null },
     update: {},
   });
 }

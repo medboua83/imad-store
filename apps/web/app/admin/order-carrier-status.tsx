@@ -5,19 +5,28 @@ import { type AdminOrder } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
 import { orderDate } from "./order-utils";
 
-export function OrderCarrierStatus({ order, onSync, busy = false }: {
+export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
     order: AdminOrder;
     onSync?: () => void;
+    onApprove?: () => void;
     busy?: boolean;
 }) {
     const { t, locale } = useAdminLocale();
     const shipment = order.shipment;
     if (!shipment) return onSync ? <p>{t("Aucun colis Olivraison relié à cette commande.")}</p> : null;
+    const held = shipment.state === "REVIEW_REQUIRED" && !shipment.trackingId;
     const disconnected = shipment.state === "DISCONNECTED";
+    if (held) return <section className="order-carrier-status order-carrier-attention" aria-label={t("Validation de l’envoi Olivraison")}>
+        <strong><Truck size={18} aria-hidden="true" />{t("Validation requise avant Olivraison")}</strong>
+        <p>{t("L’envoi est bloqué à cause des anciennes annulations associées au numéro. Vérifiez l’historique avant d’autoriser cette commande.")}</p>
+        <p>{t("Aucun colis créé pour cette demande en attente.")}</p>
+        {onApprove && order.status === "CONFIRMED" && <button type="button" className="admin-button" disabled={busy} onClick={onApprove}>{t("Autoriser l’envoi à Olivraison")}</button>}
+    </section>;
     const status = shipment.carrierStatus;
     const attention = orderTrackingMatches(shipment, "ATTENTION");
     return <section className={`order-carrier-status${attention ? " order-carrier-attention" : ""}`} aria-label={t("Suivi Olivraison")}>
         <strong><Truck size={18} aria-hidden="true" /> Olivraison · {status ? t(carrierStatusLabel(status)) : t("En attente de création")}</strong>
+        {shipment.approvedAt && <p>{t("Envoi autorisé manuellement")}</p>}
         {attention && <span className="admin-tag">{t("À surveiller")}</span>}
         {shipment.trackingId && <p>{t("Numéro de suivi")} : <bdi>{shipment.trackingId}</bdi></p>}
         {shipment.lastSyncedAt ? <p className="order-carrier-date">

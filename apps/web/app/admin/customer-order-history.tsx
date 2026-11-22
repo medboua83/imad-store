@@ -35,7 +35,7 @@ export function CustomerOrderHistory({ orderId, onBack, onOrder }: { orderId: st
     const date = (value: string) => orderDate(value, locale === "ar" ? "ar-MA" : "fr-MA");
     return <div className="order-detail-body customer-history-body">
         <button type="button" className="admin-button" onClick={onBack}><ArrowLeft size={16} aria-hidden="true" />{t("Revenir à la commande")}</button>
-        <p className="admin-scope">{t("Historique associé au même numéro, y compris les commandes conservées dans la corbeille. Aucune commande n’est bloquée automatiquement.")}</p>
+        <p className="admin-scope">{t("Historique associé au même numéro, y compris la corbeille. En cas d’anciennes annulations, l’envoi automatique à Olivraison nécessite une validation manuelle.")}</p>
         {query.isPending ? <p role="status">{t("Chargement de l’historique…")}</p> : query.isError ? <div className="admin-alert" role="alert">
             <p>{t("Historique du numéro indisponible. Réessayez.")}</p>
             <button type="button" className="admin-button" onClick={() => void query.refetch()}>{t("Réessayer")}</button>

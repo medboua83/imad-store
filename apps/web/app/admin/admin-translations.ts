@@ -1,6 +1,19 @@
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
     ...teamArabic,
+    "Validation de l’envoi Olivraison": "الموافقة على الإرسال إلى Olivraison",
+    "Validation requise avant Olivraison": "الموافقة مطلوبة قبل الإرسال إلى Olivraison",
+    "L’envoi est bloqué à cause des anciennes annulations associées au numéro. Vérifiez l’historique avant d’autoriser cette commande.": "الإرسال متوقف بسبب طلبات ملغاة سابقة مرتبطة بهذا الرقم. راجعوا السجل قبل السماح بإرسال هذا الطلب.",
+    "Aucun colis créé pour cette demande en attente.": "لم يتم إنشاء طرد لهذا الطلب المعلق.",
+    "Autoriser l’envoi à Olivraison": "السماح بالإرسال إلى Olivraison",
+    "Envoi autorisé manuellement": "تم السماح بالإرسال يدوياً",
+    "Autoriser l’envoi de la commande #{reference} malgré les anciennes annulations ? Olivraison pourra créer le colis et demander le ramassage selon vos réglages.": "هل تسمحون بإرسال الطلب #{reference} رغم الإلغاءات السابقة؟ سيتمكن Olivraison من إنشاء الطرد وطلب جمعه حسب إعداداتكم.",
+    "Envoi autorisé pour cette commande. Traitement Olivraison en attente.": "تم السماح بإرسال هذا الطلب. معالجة Olivraison قيد الانتظار.",
+    "Envoi autorisé. Actualisez pour relire le suivi.": "تم السماح بالإرسال. حدّثوا الصفحة لعرض التتبع.",
+    "Validation ou actualisation non confirmée. Actualisez avant de réessayer.": "لم يتم تأكيد الموافقة أو التحديث. حدّثوا الصفحة قبل إعادة المحاولة.",
+    "Validation requise avant Olivraison : anciennes commandes annulées associées au numéro.": "الموافقة مطلوبة قبل الإرسال إلى Olivraison بسبب إلغاءات سابقة مرتبطة بالرقم.",
+    "Historique associé au même numéro, y compris la corbeille. En cas d’anciennes annulations, l’envoi automatique à Olivraison nécessite une validation manuelle.": "سجل الطلبات المرتبطة بنفس الرقم، بما فيها سلة المهملات. عند وجود إلغاءات سابقة، يتطلب الإرسال التلقائي إلى Olivraison موافقة يدوية.",
+
     "Anciennes commandes annulées": "طلبيات سابقة ملغاة",
     "{count} ancienne(s) commande(s) annulée(s) associée(s) à ce numéro.": "يرتبط هذا الرقم بـ {count} طلبات سابقة ملغاة.",
     "Voir l’historique du numéro": "عرض سجل الرقم",

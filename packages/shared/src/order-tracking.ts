@@ -2,7 +2,7 @@ import { carrierNeedsReview } from "./carrier-status";
 
 export const orderTrackingFilters = ["ALL", "ATTENTION", "REPORTED", "UNLINKED"] as const;
 export type OrderTrackingFilter = (typeof orderTrackingFilters)[number];
-export const attentionTrackingStates = ["ATTENTION", "RETRY", "DISCONNECTED"] as const;
+export const attentionTrackingStates = ["ATTENTION", "RETRY", "DISCONNECTED", "REVIEW_REQUIRED"] as const;
 export const attentionDeliveryStatuses = ["REPORTED", "UNKNOWN_CALL"] as const;
 type ShipmentSummary = { state: string; carrierStatus?: string | null; lastError?: string | null };
 
