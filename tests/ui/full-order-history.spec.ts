@@ -90,7 +90,7 @@ for (const width of [390, 1440]) {
         await expect(page.getByRole("heading", { name: "Ancienne cliente fictive", exact: true })).toBeVisible();
         f.control.fail = true;
         await search.fill("inconnu");
-        await expect(page.getByRole("alert")).toContainText("Recherche dans l’historique impossible");
+        await expect(page.getByRole("alert").filter({ hasText: "Recherche dans l’historique impossible" })).toBeVisible();
         await expect(page.locator(".admin-order-card")).toHaveCount(0);
         f.control.fail = false;
         await page.getByRole("button", { name: "Réessayer", exact: true }).click();
