@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getOrderHistory } from "@/lib/api";
@@ -31,39 +32,74 @@ export function OrderHistory({ orderId, status }: { orderId: string; status: str
         retry: false,
     });
     const ar = locale === "ar";
-    const label = (fr: string, arabic: string) => ar ? arabic : fr;
+    const label = (fr: string, arabic: string) => (ar ? arabic : fr);
     return (
-        <details className="order-reference" onToggle={(event) => setOpen(event.currentTarget.open)}>
-            <summary className="action">{label("Historique de la commande", "سجل الطلب")}</summary>
-            {history.isPending ? (
-                <p role="status">{label("Chargement de l’historique…", "جارٍ تحميل السجل…")}</p>
-            ) : history.isError ? (
-                <div role="status">
-                    <p>{label("Historique indisponible.", "السجل غير متاح حالياً.")}</p>
-                    <button type="button" className="admin-button" onClick={() => void history.refetch()}>
-                        {t("Réessayer")}
-                    </button>
+        <details
+            className="order-reference order-history"
+            onToggle={(event) => setOpen(event.currentTarget.open)}
+        >
+            <summary>
+                {label("Historique de la commande", "سجل الطلب")}
+                <ChevronDown size={18} aria-hidden="true" />
+            </summary>
+            {open && (
+                <div className="order-history-content">
+                    {history.isPending ? (
+                        <p role="status">
+                            {label("Chargement de l’historique…", "جارٍ تحميل السجل…")}
+                        </p>
+                    ) : history.isError ? (
+                        <div role="alert">
+                            <p>{label("Historique indisponible.", "السجل غير متاح حالياً.")}</p>
+                            <button
+                                type="button"
+                                className="admin-button"
+                                onClick={() => void history.refetch()}
+                            >
+                                {t("Réessayer")}
+                            </button>
+                        </div>
+                    ) : history.data.length ? (
+                        <ol className="space-y-2">
+                            {history.data.map((event) => {
+                                const origin = event.source && origins[event.source];
+                                const eventName = eventNames[event.type];
+                                return (
+                                    <li
+                                        key={event.id}
+                                        className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
+                                    >
+                                        <div>
+                                            <strong>
+                                                {event.status
+                                                    ? t(statusLabels[event.status] || event.status)
+                                                    : eventName
+                                                      ? label(...eventName)
+                                                      : label("Événement enregistré", "حدث مسجل")}
+                                            </strong>
+                                            {origin && (
+                                                <span className="admin-muted">
+                                                    {" "}
+                                                    · {label(...origin)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <time dateTime={event.createdAt}>
+                                            {orderDate(event.createdAt, ar ? "ar-MA" : "fr-MA")}
+                                        </time>
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                    ) : (
+                        <p>
+                            {label(
+                                "Aucun événement enregistré pour cette commande.",
+                                "لا توجد أحداث مسجلة لهذا الطلب.",
+                            )}
+                        </p>
+                    )}
                 </div>
-            ) : history.data.length ? (
-                <ol className="space-y-2">
-                    {history.data.map((event) => {
-                        const origin = event.source && origins[event.source];
-                        const eventName = eventNames[event.type];
-                        return (
-                            <li key={event.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                                <div>
-                                    <strong>{event.status
-                                        ? t(statusLabels[event.status] || event.status)
-                                        : eventName ? label(...eventName) : label("Événement enregistré", "حدث مسجل")}</strong>
-                                    {origin && <span className="admin-muted"> · {label(...origin)}</span>}
-                                </div>
-                                <time dateTime={event.createdAt}>{orderDate(event.createdAt, ar ? "ar-MA" : "fr-MA")}</time>
-                            </li>
-                        );
-                    })}
-                </ol>
-            ) : (
-                <p>{label("Aucun événement enregistré pour cette commande.", "لا توجد أحداث مسجلة لهذا الطلب.")}</p>
             )}
         </details>
     );
