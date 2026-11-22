@@ -1,4 +1,14 @@
 export const adminArabic: Record<string, string> = {
+    "Commande annulée. Le suivi du colis reste disponible ci-dessous, si un colis est associé.": "تم إلغاء الطلب. يظل تتبع الطرد متاحاً أدناه إذا كان هناك طرد مرتبط.",
+    "Les commandes restent récupérables et leur statut ne change pas.": "يمكن استعادة الطلبات دون تغيير حالتها.",
+    "{shown} sur {total} commandes": "{shown} من أصل {total} طلبات",
+    "Navigation de la corbeille": "التنقل في سلة المهملات",
+    "Restaurer la commande #{reference}": "استعادة الطلب #{reference}",
+    "Cette commande a déjà été restaurée.": "تمت استعادة هذا الطلب مسبقاً.",
+    "Commande restaurée. La liste n’a pas pu être actualisée. Utilisez Actualiser, sans relancer la restauration.": "تمت استعادة الطلب ولكن تعذر تحديث القائمة. اضغط على تحديث دون إعادة الاستعادة.",
+    "Restauration non confirmée. Actualisez la corbeille avant de réessayer.": "لم يتم تأكيد الاستعادة. حدّث سلة المهملات قبل المحاولة مجدداً.",
+    "Le résumé des commandes sera actualisé à votre retour.": "سيتم تحديث ملخص الطلبات عند العودة.",
+
     "Résultats en attente": "النتائج قيد الانتظار",
     "Affichage {from}–{to}": "عرض {from}–{to}",
     "Recherche dans toutes les commandes, hors corbeille.": "البحث في جميع الطلبيات، باستثناء سلة المحذوفات.",

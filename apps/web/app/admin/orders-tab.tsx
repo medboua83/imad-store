@@ -547,7 +547,7 @@ function OrderDetails({
                 </section>
             )}
             {o.status === "CANCELLED" ? (
-                <p className="order-cancelled">{t("Commande annulée : le suivi s’arrête ici.")}</p>
+                <p className="order-cancelled">{t("Commande annulée. Le suivi du colis reste disponible ci-dessous, si un colis est associé.")}</p>
             ) : (
                 <ol className="order-progress" aria-label={t("Progression de la commande")}>
                     {steps.map((s, i) => (
