@@ -78,6 +78,7 @@ test("Fresh profiles never copy secrets, identities, clients or products and nev
 });
 test("Database binds one store/company and initializes unique order indexes before accepting traffic", async () => {
     assert.equal((await request(app).get("/api/products")).status, 200);
+    await prisma.user.upsert({ where: { id: "123456789012345678901234" }, create: { id: "123456789012345678901234", email: "fixture-admin@example.invalid", passwordHash: "fixture-no-login", firstName: "Test", lastName: "Admin", role: "ADMIN" }, update: {} });
     const installation = await prisma.storeInstallation.findUnique({
         where: { id: "installation" },
     });

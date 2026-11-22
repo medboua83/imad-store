@@ -1,3 +1,13 @@
+## Equipe, permissions et Gmail SMTP - 22 novembre 2026
+
+Preparation de comptes administrateurs et collaborateurs avec permissions serveur par module. Chaque requete privee verifie le compte actif, le role et la version de session en base ; modification des acces, desactivation et changement de mot de passe revoquent les anciennes sessions. Gestion de l'equipe reservee aux administrateurs avec confirmation par leur mot de passe, protection contre la suppression du dernier administrateur et trace des modifications sans secret. Aucun changement de commande, paiement, stock, colis ou photo.
+
+Nouvelle rubrique E-mails et SMTP : serveur Gmail fixe, ports TLS 465/587, activation, adresse d'envoi, secret chiffre jamais reaffiche, revision contre les ecrasements et verification de connexion sans envoi. Les invitations et demandes de mot de passe oublie utilisent une file persistante et des liens de 30 minutes a usage unique. Token aleatoire, empreinte en base, fragment d'URL non transmis aux journaux HTTP, contenu de file chiffre puis efface apres tentative d'envoi. Aucun renvoi automatique d'une livraison SMTP ambigue ; une nouvelle demande explicite est possible. Reponse publique identique pour les adresses connues/inconnues, quotas IP et temporisation par compte. Aucun e-mail reel n'est envoye lors des recettes isolees. Gmail reste desactive tant que l'administrateur ne l'a pas configure avec son mot de passe d'application Google.
+
+Migration additive des comptes, des versions de session et des tables Gmail/file/audit. Recettes et publication a consigner sur DATA : `outputs/team-access-gmail-20261122`. Avant publication : verifier les adresses insensibles a la casse, sauvegarder et valider migration, donnees et acces du compte existant. Les comptes actuels restent actifs avec leurs identifiants et mots de passe inchanges.
+
+La PR159 precedente est fusionnee et publiee : source `71ceae61a3a8b71b399cb238010076509c4c19ff`, merge `b2342198d8c200e8566d314c80daffbd0690908e`, 408 UI / 171 serveur reussis. Historique des annulations verifie en francais/arabe, mobile/ordinateur et en lecture seule sur les sept dossiers visibles.
+
 ## Historique des annulations par numéro — 22 novembre 2026
 
 Repère orange discret sur les commandes dont le numéro complet possède des commandes plus anciennes actuellement annulées. Comparaison exacte des formats marocains et internationaux, sans rapprochement par nom ni par derniers chiffres. La corbeille conservée participe à cet historique ; les commandes futures, la commande elle-même et les dates de création identiques ne sont pas comptées comme antérieures. Le texte vise le numéro, qui peut être partagé, et ne désigne pas une personne comme responsable.

@@ -8,6 +8,7 @@ const ready = () => {
     process.send({
         type: "imad-startup-ready",
         port: address.port,
+        mailSdkLoaded: Object.keys(require.cache).some(path => /[\\/]node_modules[\\/]nodemailer[\\/]/.test(path)),
         googleSdkLoaded: Object.keys(require.cache).some(path => /[\\/]node_modules[\\/]googleapis[\\/]/.test(path)),
     });
 };

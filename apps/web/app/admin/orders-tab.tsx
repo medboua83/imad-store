@@ -11,6 +11,7 @@ import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
+import { useAdminPermission } from "./admin-access";
 import { OrderExport } from "./order-export";
 import { CustomerCancellationAlert, CustomerOrderHistory, hasCancellationHistory } from "./customer-order-history";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
@@ -44,6 +45,7 @@ export function OrdersTab({
     onSelect: (id: string | null) => void;
 }) {
     const { t, locale } = useAdminLocale();
+    const canWrite = useAdminPermission("orders.write"), canExport = useAdminPermission("orders.export");
     const [showTrash, setShowTrash] = useState(false);
     const [customerHistoryId, setCustomerHistoryId] = useState<string | null>(null);
     const showingCustomerHistory = !!selected && customerHistoryId === selected;
@@ -223,7 +225,7 @@ export function OrdersTab({
             setBusy(false);
         }
     }
-    if (showTrash) return <OrderTrash onBack={() => setShowTrash(false)} onRefresh={onRefresh} />;
+    if (canWrite && showTrash) return <OrderTrash onBack={() => setShowTrash(false)} onRefresh={onRefresh} />;
     const removable = filtered.filter((o) => o.status === "CANCELLED");
     const feedback = message && (
         <p className={error ? "admin-alert" : "admin-feedback"} role={error ? "alert" : "status"}>
@@ -334,8 +336,8 @@ export function OrdersTab({
                 </div>
                 <p>{t("Dates incluses · heure du Maroc.")}</p>
             </details>
-            <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />
-            <details className="order-maintenance">
+            {canExport && <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />}
+            {canWrite && <details className="order-maintenance">
                 <summary>{t("Gestion des commandes annulées")}</summary>
                 <div className="admin-toolbar">
                     <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
@@ -355,7 +357,7 @@ export function OrdersTab({
                         )}
                     </p>
                 </div>
-            </details>
+            </details>}
             <div className="order-results">
                 <p ref={resultsRef} tabIndex={-1} role="status">
                     {serverHistory && !history.data ? t("Résultats en attente") : <>
@@ -433,7 +435,7 @@ export function OrdersTab({
                             <span className="sr-only">#{o.id.slice(-8).toUpperCase()}</span>
                             <ArrowUpRight size={16} />
                         </button>
-                        {o.status === "CANCELLED" && (
+                        {canWrite && o.status === "CANCELLED" && (
                             <button
                                 className="admin-button"
                                 disabled={busy || reloadRequired}
@@ -495,7 +497,7 @@ export function OrdersTab({
                         customerHistory={hasCancellationHistory(order)
                             ? <CustomerCancellationAlert order={order} onOpen={() => openCustomerHistory(order.id)} />
                             : order.customerHistory?.available ? <button type="button" className="admin-text-button" onClick={() => openCustomerHistory(order.id)}>{t("Voir l’historique du numéro")}</button> : null}
-                        carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy || readBlocked} />}
+                        carrier={<OrderCarrierStatus order={order} onSync={canWrite ? () => void syncCarrier(order) : undefined} busy={busy || readBlocked} />}
                         feedback={<>{history.error && <p className="admin-alert" role="alert">{t(history.error)}</p>}{history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}{feedback}</>}
                         actions={
                             <OrderActions
@@ -732,6 +734,8 @@ function OrderActions({
     onChange: (order: AdminOrder, next: string) => void;
 }) {
     const { t } = useAdminLocale();
+    const canWrite = useAdminPermission("orders.write");
+    if (!canWrite) return <p className="admin-scope">{t("Consultation uniquement")}</p>;
     return (
         <div className="admin-order-actions">
             {(allowedActions[o.status] || []).length ? (

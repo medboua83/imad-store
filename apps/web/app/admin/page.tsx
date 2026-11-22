@@ -3,6 +3,9 @@ import { useAdminLocale, AdminLanguageSelect } from "./admin-locale";
 import { ADMIN_ORDERS_REFRESH_MS } from "@imad-store/shared";
 
 import dynamic from "next/dynamic";
+import { canAdmin } from "@imad-store/shared";
+import { AdminAccessContext, presentationAccess, presentationSessionKey, allowedAdminTab } from "./admin-access";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +32,7 @@ import {
 } from "lucide-react";
 import {
     adminLogin,
+    clearAdminSession,
     adminLogout,
     getAdminNotifications,
     markAllNotificationsRead,
@@ -72,6 +76,9 @@ const InventoryTab = dynamic(() => import("./inventory-tab"), { loading: Pending
 const ContentTab = dynamic(() => import("./content-tab"), { loading: PendingView });
 const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: PendingView });
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: PendingView });
+const TeamTab = dynamic(() => import("./team-tab"), { loading: PendingView });
+const GmailSettingsPanel = dynamic(() => import("./gmail-settings"), { loading: PendingView });
+const AccountTab = dynamic(() => import("./account-tab"), { loading: PendingView });
 type Tab =
     | "overview"
     | "orders"
@@ -82,7 +89,7 @@ type Tab =
     | "deskcomm"
     | "notifications"
     | "analytics"
-    | "commerce";
+    | "commerce" | "team" | "mail" | "account";
 type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
 const sections = [
     {
@@ -145,6 +152,9 @@ const sections = [
         description: "Les dernières informations de votre boutique.",
         icon: Bell,
     },
+    { id: "team" as Tab, label: "Équipe et accès", description: "Les comptes et les permissions de votre équipe.", icon: Settings2 },
+    { id: "mail" as Tab, label: "E-mails et SMTP", description: "Invitations et récupération des mots de passe.", icon: Settings2 },
+    { id: "account" as Tab, label: "Mon compte", description: "Protégez votre accès à la boutique.", icon: Settings2 },
 ];
 function tabFromLocation(): Tab {
     const values = new URLSearchParams(window.location.search).getAll("tab");
@@ -166,6 +176,7 @@ function orderFromLocation(tab: Tab) {
 }
 export default function AdminPage() {
     const { t, locale } = useAdminLocale();
+    const queryClient = useQueryClient();
     const [token, setToken] = useState<string | null>(null),
         [sessionReady, setSessionReady] = useState(false);
     const [email, setEmail] = useState(""),
@@ -187,6 +198,8 @@ export default function AdminPage() {
         [syncing, setSyncing] = useState(false),
         [initialSyncReady, setInitialSyncReady] = useState(false),
         [lastSync, setLastSync] = useState<Date | null>(null);
+    const access = presentationAccess(token);
+    const allowed = (tab: Tab) => allowedAdminTab(access, tab);
     const [openedTabs, setOpenedTabs] = useState<Tab[]>(["overview"]);
     const [orderFilters, setOrderFilters] = useState(initialOrderListFilters);
     const [inventoryFilters, setInventoryFilters] = useState(initialInventoryListFilters);
@@ -233,6 +246,7 @@ export default function AdminPage() {
     }, []);
     useEffect(() => {
         const expire = (event?: Event) => {
+            queryClient.clear();
             readState.current.session++;
             productSnapshot.current = [];
             setOrderFilters(initialOrderListFilters);
@@ -249,13 +263,21 @@ export default function AdminPage() {
             setSyncing(false);
             setSyncError("");
             setAuthError(
-                event instanceof CustomEvent && event.detail === "logout"
+                event instanceof CustomEvent && event.detail === "password-changed"
+                    ? "Mot de passe changé. Reconnectez-vous."
+                    : event instanceof CustomEvent && event.detail === "logout"
                     ? "Vous êtes déconnecté."
                     : "Votre session est terminée. Reconnectez-vous pour continuer.",
             );
         };
         const changed = (e: StorageEvent) => {
-            if (e.key === "adminToken" && !e.newValue) expire();
+            if (e.key !== "adminToken") return;
+            if (!e.newValue) { expire(); return; }
+            const previous = presentationSessionKey(token), next = presentationSessionKey(e.newValue);
+            if (!previous || previous !== next) {
+                expire(); setOpenedTabs(["overview"]); setFocusedOrder(null); setFocusedProduct(undefined); setAuthError("");
+            }
+            setToken(e.newValue);
         };
         window.addEventListener("storage", changed);
         window.addEventListener("imad:session-expired", expire);
@@ -263,9 +285,10 @@ export default function AdminPage() {
             window.removeEventListener("storage", changed);
             window.removeEventListener("imad:session-expired", expire);
         };
-    }, []);
+    }, [token, queryClient]);
     useEffect(() => {
         if (!token) return;
+        const access = presentationAccess(token);
         let alive = true,
             busy = false;
         const sync = async () => {
@@ -274,10 +297,10 @@ export default function AdminPage() {
             setSyncing(true);
             const request = startAdminRead(readState.current);
             const results = await Promise.allSettled([
-                getAllOrders({ limit: 100 }),
-                getAdminProducts({ limit: 100 }),
+                canAdmin(access, "orders.read") ? getAllOrders({ limit: 100 }) : Promise.resolve({ data: [], total: 0 }),
+                (canAdmin(access, "catalogue.manage") || canAdmin(access, "content.manage")) ? getAdminProducts({ limit: 100 }) : Promise.resolve({ data: [], total: 0 }),
                 getCategories(),
-                getAdminNotifications(),
+                canAdmin(access, "orders.read") ? getAdminNotifications() : Promise.resolve({ data: [], unread: 0 }),
             ]);
             if (alive && request.session === readState.current.session) {
                 const [o, p, c, n] = results;
@@ -332,7 +355,7 @@ export default function AdminPage() {
         };
     }, [token]);
     useEffect(() => {
-        if (!token || activeTab !== "orders" || orderTotal > orders.length) return;
+        if (!token || !canAdmin(presentationAccess(token), "orders.read") || activeTab !== "orders" || orderTotal > orders.length) return;
         let alive = true,
             busy = false;
         const controller = new AbortController();
@@ -369,6 +392,7 @@ export default function AdminPage() {
             )?.focus();
     }, [mobileMenu]);
     const selectTab = (tab: Tab, productId?: string, orderId?: string) => {
+        if (!allowed(tab)) return;
         const url = new URL(window.location.href);
         if (tab === "overview") url.searchParams.delete("tab");
         else url.searchParams.set("tab", tab);
@@ -403,6 +427,7 @@ export default function AdminPage() {
         setAuthError("");
         try {
             const r = await adminLogin(email, password);
+            if (!["ADMIN", "STAFF"].includes(presentationAccess(r.data.accessToken).role)) throw new Error("Staff access required");
             readState.current.session++;
             productSnapshot.current = [];
             localStorage.setItem("adminToken", r.data.accessToken);
@@ -451,6 +476,21 @@ export default function AdminPage() {
         const r = await getCategories();
         if (acceptAdminRead(readState.current, "categories", request)) setCategories(r);
     }
+    useEffect(() => {
+        const access = presentationAccess(token);
+        if (!token) return;
+        if (!["ADMIN", "STAFF"].includes(access.role)) {
+            const task = setTimeout(() => clearAdminSession(), 0); return () => clearTimeout(task);
+        }
+        if (allowedAdminTab(access, activeTab)) return;
+        const first = sections.find(s => s.id !== "account" && allowedAdminTab(access, s.id))?.id || "account";
+        const timer = setTimeout(() => {
+        setActiveTab(first); setOpenedTabs([first]);
+        const url = new URL(window.location.href); url.searchParams.set("tab", first); url.searchParams.delete("order"); url.searchParams.delete("product");
+        window.history.replaceState(null, "", url.pathname + url.search);
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [token, activeTab]);
     const current = sections.find((s) => s.id === activeTab)!;
     if (!sessionReady)
         return (
@@ -495,7 +535,7 @@ export default function AdminPage() {
                         <p className="admin-eyebrow">{t("HEUREUX DE VOUS RETROUVER")}</p>
                         <h2>{t("Connexion à votre espace")}</h2>
                         <p className="admin-muted">
-                            {t("Utilisez votre compte administrateur pour continuer.")}
+                            {t("Utilisez votre compte de la boutique pour continuer.")}
                         </p>
                         {authError && (
                             <p className="admin-alert" role="alert">
@@ -541,6 +581,7 @@ export default function AdminPage() {
                             {authLoading ? t("Connexion en cours…") : t("Se connecter")}
                             <ArrowUpRight size={18} aria-hidden="true" />
                         </button>
+                        <Link href="/admin/password" className="admin-text-button">{t("Mot de passe oublié")}</Link>
                         <Link href="/" className="admin-back-link">
                             {t("Retour à la boutique")}
                         </Link>
@@ -549,7 +590,7 @@ export default function AdminPage() {
             </div>
         );
     return (
-        <div
+        <AdminAccessContext.Provider value={access}><div
             className="admin-app admin-workspace"
             dir={locale === "ar" ? "rtl" : "ltr"}
             lang={locale}
@@ -578,7 +619,7 @@ export default function AdminPage() {
                     className={mobileMenu ? "is-open" : ""}
                     aria-label={t("Administration")}
                 >
-                    {sections.map(({ id, label, icon: Icon }) => (
+                    {sections.filter(({ id }) => allowed(id)).map(({ id, label, icon: Icon }) => (
                         <button
                             key={id}
                             onKeyDown={(e) => {
@@ -644,6 +685,7 @@ export default function AdminPage() {
                         >
                             <RefreshCw size={18} className={syncing ? "animate-spin" : ""} />
                         </button>
+                        {canAdmin(access, "orders.read") && (
                         <button
                             className="admin-icon-button"
                             aria-label={t("Notifications, {0} non lues", { "0": unread })}
@@ -652,6 +694,7 @@ export default function AdminPage() {
                             <Bell size={19} />
                             {unread > 0 && <span className="admin-dot" />}
                         </button>
+                        )}
                     </div>
                 </header>
                 <main id="admin-main" className="admin-main">
@@ -663,7 +706,7 @@ export default function AdminPage() {
                             </h1>
                             <p>{t(current.description)}</p>
                         </div>
-                        {activeTab === "overview" && (
+                        {allowed("overview") && activeTab === "overview" && (
                             <button
                                 className="admin-button primary"
                                 onClick={() => selectTab("products")}
@@ -686,13 +729,13 @@ export default function AdminPage() {
                             {t(actionMessage)}
                         </p>
                     )}
-                    {!initialSyncReady ? (
+                    {!initialSyncReady || !allowed(activeTab) ? (
                         <div className="admin-loading" role="status">
                             {t("Chargement des données…")}
                         </div>
                     ) : (
                         <>
-                            {activeTab === "overview" && (
+                            {allowed("overview") && activeTab === "overview" && (
                                 <OverviewTab
                                     orders={orders}
                                     products={products}
@@ -712,6 +755,9 @@ export default function AdminPage() {
                                     }}
                                 />
                             )}
+                            {activeTab === "team" && <TeamTab />}
+                            {activeTab === "mail" && <GmailSettingsPanel />}
+                            {activeTab === "account" && <AccountTab />}
                             {activeTab === "orders" && (
                                 <OrdersTab
                                     orders={orders}
@@ -728,7 +774,7 @@ export default function AdminPage() {
                                     filters={inventoryFilters} onFilters={setInventoryFilters}
                                     onProduct={(id) => selectTab("products", id)} />
                             )}
-                            {openedTabs.includes("products") && (
+                            {allowed("products") && openedTabs.includes("products") && (
                                 <div hidden={activeTab !== "products"}>
                                     <ProductsTab
                                         active={activeTab === "products"}
@@ -774,7 +820,7 @@ export default function AdminPage() {
                                     />
                                 </div>
                             )}
-                            {openedTabs.includes("categories") && (
+                            {allowed("categories") && openedTabs.includes("categories") && (
                                 <div hidden={activeTab !== "categories"}>
                                     <CategoriesTab
                                         categories={categories}
@@ -793,7 +839,7 @@ export default function AdminPage() {
                                     />
                                 </div>
                             )}
-                            {openedTabs.includes("content") && (
+                            {allowed("content") && openedTabs.includes("content") && (
                                 <div hidden={activeTab !== "content"}>
                                     <ContentTab />
                                 </div>
@@ -801,12 +847,12 @@ export default function AdminPage() {
                             {activeTab === "analytics" && (
                                 <AnalyticsTab days={analyticsDays} setDays={setAnalyticsDays} />
                             )}
-                            {openedTabs.includes("commerce") && (
+                            {allowed("commerce") && openedTabs.includes("commerce") && (
                                 <div hidden={activeTab !== "commerce"}>
                                     <CommerceTab active={activeTab === "commerce"} />
                                 </div>
                             )}
-                            {openedTabs.includes("deskcomm") && (
+                            {allowed("deskcomm") && openedTabs.includes("deskcomm") && (
                                 <div hidden={activeTab !== "deskcomm"}>
                                     <DeskcommTab />
                                 </div>
@@ -925,6 +971,6 @@ export default function AdminPage() {
                     </footer>
                 </main>
             </div>
-        </div>
+        </div></AdminAccessContext.Provider>
     );
 }

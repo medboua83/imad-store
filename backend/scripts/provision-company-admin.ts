@@ -6,7 +6,7 @@ import { assertStoreInstallation, storeIdentity } from "../src/lib/store-install
 async function main() {
     if (!storeIdentity()) throw new Error("Un profil entreprise indépendant est requis");
     const email = z.string().email().parse(process.env.BOOTSTRAP_ADMIN_EMAIL);
-    const password = z.string().min(16).max(128).parse(process.env.BOOTSTRAP_ADMIN_PASSWORD);
+    const password = z.string().min(16).max(128).refine(value => Buffer.byteLength(value, "utf8") <= 72).parse(process.env.BOOTSTRAP_ADMIN_PASSWORD);
     await assertStoreInstallation();
     // An immutable claim prevents two concurrent bootstrap requests creating different admins.
     await prisma.$transaction(async (tx) => {

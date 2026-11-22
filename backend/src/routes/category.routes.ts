@@ -7,7 +7,7 @@ import {
     updateCategory,
     deleteCategory,
 } from "../controllers/category.controller";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 
 export const categoryRoutes: IRouter = Router();
 categoryRoutes.param("id", validateObjectId);
@@ -17,6 +17,6 @@ categoryRoutes.get("/", getCategories);
 categoryRoutes.get("/:slug", getCategory);
 
 // Admin only
-categoryRoutes.post("/", authenticate, requireAdmin, createCategory);
-categoryRoutes.put("/:id", authenticate, requireAdmin, updateCategory);
-categoryRoutes.delete("/:id", authenticate, requireAdmin, deleteCategory);
+categoryRoutes.post("/", authenticate, requirePermission("catalogue.manage"), createCategory);
+categoryRoutes.put("/:id", authenticate, requirePermission("catalogue.manage"), updateCategory);
+categoryRoutes.delete("/:id", authenticate, requirePermission("catalogue.manage"), deleteCategory);

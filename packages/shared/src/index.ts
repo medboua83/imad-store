@@ -180,3 +180,4 @@ export * from "./carrier-sync";
 export { orderSearchReference, orderSearchPhone } from "./order-search";
 
 export * from "./order-tracking";
+export * from "./admin-permissions";

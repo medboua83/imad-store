@@ -75,6 +75,7 @@ const checkout = (quantity = 1) => ({
 const key = () => randomBytes(16).toString("hex");
 before(async () => {
     ({ prisma } = await import("../backend/src/lib/prisma"));
+    await prisma.user.upsert({ where: { id: "123456789012345678901234" }, create: { id: "123456789012345678901234", email: "fixture-admin@example.invalid", passwordHash: "fixture-no-login", firstName: "Test", lastName: "Admin", role: "ADMIN" }, update: {} });
     ({ app } = await import("../backend/src/app"));
     category = await prisma.category.create({
         data: { slug: "bags", nameFr: "Sacs", nameAr: "حقائب", nameEn: "Bags" },
@@ -933,7 +934,7 @@ test("An empty server startup does not publish demo data even with a legacy seed
             child.on("message", (message: any) => {
                 if (message?.type !== "imad-startup-ready") return;
                 clearTimeout(timer);
-                if (!Number.isInteger(message.port) || message.port < 1 || message.port > 65535 || message.googleSdkLoaded !== false)
+                if (!Number.isInteger(message.port) || message.port < 1 || message.port > 65535 || message.googleSdkLoaded !== false || message.mailSdkLoaded !== false)
                     return reject(new Error("Invalid readiness or unused Google SDK loaded"));
                 resolve(message.port);
             });

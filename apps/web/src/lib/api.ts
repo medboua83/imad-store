@@ -23,7 +23,7 @@ const api = axios.create({
     headers: { "Content-Type": "application/json" },
 });
 
-export function clearAdminSession(reason: "expired" | "logout" = "expired") {
+export function clearAdminSession(reason: "expired" | "logout" | "password-changed" = "expired") {
     if (typeof window === "undefined") return;
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminRefresh");
@@ -47,7 +47,7 @@ api.interceptors.response.use(
             /\/auth\//.test(config.url || "")
         )
             return Promise.reject(error);
-        if (error.response?.status === 403) {
+        if (error.response?.status === 403 && error.response?.data?.code !== "PERMISSION_DENIED") {
             clearAdminSession();
             return Promise.reject(error);
         }
@@ -290,6 +290,29 @@ export const adminLogin = async (email: string, password: string): Promise<Admin
     const { data } = await api.post("/auth/login", { email, password });
     return data;
 };
+
+export interface GmailSettings {
+    enabled: boolean; gmailUser: string; host: string; port: 465 | 587; hasPassword: boolean; revision: number;
+}
+export interface TeamUser {
+    id: string; email: string; firstName: string; lastName: string; role: "ADMIN" | "STAFF";
+    permissions: string[]; isActive: boolean; mustSetPassword: boolean; createdAt: string;
+    mailState?: string | null;
+}
+export const readGmailSettings = async () => (await api.get<{ data: GmailSettings }>("/team/gmail")).data.data;
+export const saveGmailSettings = async (body: Omit<GmailSettings, "host" | "hasPassword"> & { appPassword: string; clearPassword: boolean; currentPassword: string }) =>
+    (await api.put<{ data: GmailSettings }>("/team/gmail", body, { timeout: 30000 })).data.data;
+export const verifyGmailSettings = async () => (await api.post("/team/gmail/test", {}, { timeout: 30000 })).data;
+export const listTeamUsers = async (page: number, signal?: AbortSignal) =>
+    (await api.get<{ data: TeamUser[]; total: number; page: number; totalPages: number; currentUserId: string }>("/team", { params: { page }, signal })).data;
+export const createTeamUser = async (body: { email: string; firstName: string; lastName: string; role: string; permissions: string[]; currentPassword: string }) =>
+    (await api.post("/team", body, { timeout: 30000 })).data;
+export const updateTeamUser = async (id: string, body: { firstName: string; lastName: string; role: string; permissions: string[]; isActive: boolean; currentPassword: string }) =>
+    (await api.patch(`/team/${id}`, body, { timeout: 30000 })).data;
+export const inviteTeamUser = async (id: string, currentPassword: string) => (await api.post(`/team/${id}/invite`, { currentPassword })).data;
+export const requestPasswordReset = async (email: string) => (await api.post("/auth/forgot-password", { email })).data;
+export const submitPasswordReset = async (token: string, password: string) => (await api.post("/auth/reset-password", { token, password }, { timeout: 30000 })).data;
+export const changeOwnPassword = async (currentPassword: string, password: string) => (await api.post("/auth/change-password", { currentPassword, password }, { timeout: 30000 })).data;
 
 export interface AdminNotification {
     id: string;

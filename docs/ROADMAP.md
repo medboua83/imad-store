@@ -1,3 +1,14 @@
+## En cours - equipe, permissions et Gmail SMTP (22 novembre 2026)
+
+- [x] Preparer permissions serveur, comptes distincts, reauthentification et revocation de sessions.
+- [x] Preparer configuration Gmail TLS chiffree et verification sans envoi.
+- [x] Preparer invitations et recuperation par liens temporaires uniques en file persistante.
+- [ ] Verifier les recettes serveur, navigateur et demarrage sur donnees isolees.
+- [ ] Verifier GitHub, sauvegarder et publier avec migration additive controlee.
+- [ ] Verifier le dashboard publie ; laisser Gmail desactive jusqu'a saisie du mot de passe d'application par l'administrateur.
+
+PR159 precedente publiee : historique par numero, 408 UI / 171 serveur, donnees verifiees.
+
 ## En cours — historique des annulations par numéro (22 novembre 2026)
 
 - [x] Préparer repère orange et historique complet réservé à l’administration.

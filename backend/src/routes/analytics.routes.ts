@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+import { authenticate, requirePermission } from "../middleware/auth.middleware";
 import { recordPage, recordCart, readAnalytics } from "../lib/store-analytics";
 
 export const analyticsRoutes = Router();
@@ -42,7 +42,7 @@ analyticsRoutes.post(
         return res.status(202).json({ success: true, recorded });
     },
 );
-analyticsRoutes.get("/summary", authenticate, requireAdmin, async (req, res) => {
+analyticsRoutes.get("/summary", authenticate, requirePermission("analytics.read"), async (req, res) => {
     res.setHeader("Cache-Control", "private, no-store");
     const { days } = z
         .object({ days: z.enum(["7", "30", "90"]).default("7") })

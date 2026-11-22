@@ -53,6 +53,7 @@ async function integrity() {
 before(async () => {
     await createDatabase(database);
     ({ prisma: p } = await import("../backend/src/lib/prisma"));
+    await p.user.upsert({ where: { id: "123456789012345678901234" }, create: { id: "123456789012345678901234", email: "fixture-admin@example.invalid", passwordHash: "fixture-no-login", firstName: "Test", lastName: "Admin", role: "ADMIN" }, update: {} });
     ({ app } = await import("../backend/src/app"));
     await p.order.createMany({ data: rows });
     await p.order.createMany({ data: [

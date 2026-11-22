@@ -1,4 +1,6 @@
+import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    ...teamArabic,
     "Anciennes commandes annulées": "طلبيات سابقة ملغاة",
     "{count} ancienne(s) commande(s) annulée(s) associée(s) à ce numéro.": "يرتبط هذا الرقم بـ {count} طلبات سابقة ملغاة.",
     "Voir l’historique du numéro": "عرض سجل الرقم",
