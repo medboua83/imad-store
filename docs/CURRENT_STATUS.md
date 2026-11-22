@@ -1,3 +1,11 @@
+## Historique des annulations par numéro — 22 novembre 2026
+
+Repère orange discret sur les commandes dont le numéro complet possède des commandes plus anciennes actuellement annulées. Comparaison exacte des formats marocains et internationaux, sans rapprochement par nom ni par derniers chiffres. La corbeille conservée participe à cet historique ; les commandes futures, la commande elle-même et les dates de création identiques ne sont pas comptées comme antérieures. Le texte vise le numéro, qui peut être partagé, et ne désigne pas une personne comme responsable.
+
+« Voir l’historique du numéro » ouvre une seule fiche accessible : toutes les commandes du numéro par pages de 25, statut, paiement enregistré, montant et date d’annulation uniquement lorsqu’un événement explicite la documente. Les lignes de corbeille restent en lecture seule. Authentification administrateur, lecture cohérente, reprise après erreur et actualisation automatique ; une réponse tardive ou non conforme n’affiche pas l’historique d’un autre numéro. La commande reste traitable normalement : aucun blocage, renvoi, doublon ou changement de paiement, stock, IA ou colis. Aucun changement de schéma ou dépendance. Recettes et publication sur DATA : `outputs/customer-cancellation-history-20261122`.
+
+La PR158 précédente est fusionnée et publiée : source `d2ae55ee47e030ceda993ac8211e1979a8372374`, merge `85af4b36846177bbe9dee800006d76eabf35e971`, 401 UI / 165 serveur réussis ; export français/arabe et intégrité vérifiés en production.
+
 ## Export des commandes filtrées — 22 novembre 2026
 
 Export CSV explicite et authentifié depuis la rubrique Commandes : toutes les pages correspondant à la recherche, au statut, au paiement, au suivi, aux dates marocaines et au tri, hors corbeille. La route ne permet ni pagination ni export de la corbeille. Lecture PostgreSQL RepeatableRead avec les mêmes règles que l’historique ; une ligne par commande, UTF-8 avec BOM, séparateur point-virgule, textes français/arabe et cellules protégées contre les formules de tableur. Paiement exporté tel qu’enregistré, distinct du suivi. Aucun identifiant de connexion ou clé d’idempotence n’est exporté. Au-delà de 10 000 résultats, l’export entier est refusé avec invitation à préciser les filtres ; aucune troncature silencieuse.

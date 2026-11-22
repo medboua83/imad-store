@@ -318,6 +318,7 @@ export const markAllNotificationsRead = async () => {
 };
 
 export interface AdminOrder {
+    customerHistory?: { available: boolean; priorCancelledCount: number };
     shipment?: {
         id: string;
         trackingId: string | null;
@@ -394,6 +395,35 @@ export const getAdminOrder = async (id: string, signal?: AbortSignal) => {
     if (!data.data || data.data.id !== id) throw new Error("Order details do not match the requested reference");
     return data.data;
 };
+
+export interface CustomerOrderHistoryPage {
+    anchorOrderId: string;
+    phone: string;
+    priorCancelledCount: number;
+    total: number;
+    page: number;
+    totalPages: number;
+    data: { id: string; createdAt: string; status: string; paymentStatus: string;
+        totalAmount: number; deletedAt: string | null; cancelledAt: string | null }[];
+}
+export async function getCustomerOrderHistory(id: string, page: number, signal?: AbortSignal) {
+    const { data } = await api.get<CustomerOrderHistoryPage>(`/orders/${id}/customer-history`, { params: { page }, signal });
+    const integer = (value: number) => Number.isSafeInteger(value) && value >= 0;
+    const date = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value));
+    if (data.anchorOrderId !== id || !/^\+[1-9]\d{7,14}$/.test(data.phone) || !integer(data.total) || data.total < 1
+        || !integer(data.priorCancelledCount) || data.priorCancelledCount >= data.total
+        || !integer(data.page) || data.page < 1 || data.totalPages !== Math.ceil(data.total / 25)
+        || data.page > data.totalPages || data.page !== Math.min(page, data.totalPages)
+        || !Array.isArray(data.data) || data.data.length !== Math.min(25, data.total - (data.page - 1) * 25)
+        || new Set(data.data.map(row => row.id)).size !== data.data.length
+        || data.data.some(row => !/^[a-f0-9]{24}$/.test(row.id) || !date(row.createdAt)
+            || !["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"].includes(row.status)
+            || !["PENDING", "PAID", "FAILED", "REFUNDED"].includes(row.paymentStatus)
+            || !Number.isFinite(row.totalAmount) || row.deletedAt !== null && !date(row.deletedAt)
+            || row.cancelledAt !== null && !date(row.cancelledAt)))
+        throw new Error("Invalid customer history response");
+    return data;
+}
 
 export async function exportOrders(params: {
     search?: string; status?: string; payment?: string; tracking?: string;

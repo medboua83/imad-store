@@ -6,6 +6,7 @@ import {
     getOrder,
     getOrderHistory,
     getAdminOrder,
+    getCustomerOrderHistory,
     listOrders,
     exportOrders,
     updateOrderStatus,
@@ -28,6 +29,7 @@ orderRoutes.get("/:id", getOrder); // order tracking by ID
 // ─── Admin ────────────────────────────────────────────────────────────────
 orderRoutes.get("/", authenticate, requireAdmin, listOrders);
 orderRoutes.get("/:id/admin-details", authenticate, requireAdmin, getAdminOrder);
+orderRoutes.get("/:id/customer-history", authenticate, requireAdmin, getCustomerOrderHistory);
 orderRoutes.get("/:id/history", authenticate, requireAdmin, getOrderHistory);
 orderRoutes.post("/trash", authenticate, requireAdmin, moveOrdersToTrash);
 orderRoutes.patch("/:id/status", authenticate, requireAdmin, updateOrderStatus);

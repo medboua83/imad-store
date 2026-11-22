@@ -12,6 +12,7 @@ import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
 import { OrderExport } from "./order-export";
+import { CustomerCancellationAlert, CustomerOrderHistory, hasCancellationHistory } from "./customer-order-history";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
 import { orderWhatsAppLink } from "./order-whatsapp";
@@ -44,6 +45,10 @@ export function OrdersTab({
 }) {
     const { t, locale } = useAdminLocale();
     const [showTrash, setShowTrash] = useState(false);
+    const [customerHistoryId, setCustomerHistoryId] = useState<string | null>(null);
+    const showingCustomerHistory = !!selected && customerHistoryId === selected;
+    function openOrder(id: string | null) { setCustomerHistoryId(null); onSelect(id); }
+    function openCustomerHistory(id: string) { setCustomerHistoryId(id); onSelect(id); }
     const { search, status, payment, tracking, from, to, sort } = filters;
     const serverHistory = total > orders.length;
     const history = useOrderHistory(serverHistory, filters, selected, !!selected && !orders.some(o => o.id === selected));
@@ -62,6 +67,7 @@ export function OrdersTab({
     const lock = useRef(false),
         dialog = useRef<HTMLDialogElement>(null);
     const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
+    const detailTitle = useRef<HTMLHeadingElement>(null);
     const invalidDates = !!from && !!to && from > to;
     const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, from, to, sort),
         [orders, search, status, payment, tracking, from, to, sort, invalidDates]);
@@ -105,6 +111,11 @@ export function OrdersTab({
             document.body.style.overflow = old;
         };
     }, [selected]);
+    useEffect(() => {
+        if (!selected) return;
+        if (dialog.current) dialog.current.scrollTop = 0;
+        detailTitle.current?.focus({ preventScroll: true });
+    }, [selected, showingCustomerHistory]);
     async function refresh() {
         if (lock.current) return;
         lock.current = true;
@@ -382,7 +393,7 @@ export function OrdersTab({
             {feedback}
             <div className="admin-order-grid" aria-busy={history.loading}>
                 {filtered.map((o) => (
-                    <article className="admin-order-card" key={o.id}>
+                    <article className={`admin-order-card${hasCancellationHistory(o) ? " has-cancellation-history" : ""}`} key={o.id}>
                         <div className="admin-order-heading">
                             <div>
                                 <strong>#{o.id.slice(-8).toUpperCase()}</strong>
@@ -409,11 +420,12 @@ export function OrdersTab({
                             <span>{t(paymentLabels[o.paymentStatus] || o.paymentStatus)}</span>
                         </div>
                         <OrderCarrierStatus order={o} />
+                        <CustomerCancellationAlert order={o} onOpen={() => openCustomerHistory(o.id)} />
                         <button
                             className="admin-button order-details-trigger"
                             aria-haspopup="dialog"
                             onClick={() => {
-                                onSelect(o.id);
+                                openOrder(o.id);
                                 if (!reloadRequired) setMessage("");
                             }}
                         >
@@ -455,14 +467,14 @@ export function OrdersTab({
                 aria-labelledby="order-detail-title"
                 onCancel={(event) => {
                     event.preventDefault();
-                    onSelect(null);
+                    openOrder(null);
                 }}
             >
                 <header className="order-detail-header">
                     <div>
-                        <p className="admin-eyebrow">{t("FICHE COMMANDE")}</p>
-                        <h2 id="order-detail-title">
-                            {selected && (order || history.loading || history.error)
+                        <p className="admin-eyebrow">{showingCustomerHistory ? `#${selected!.slice(-8).toUpperCase()}` : t("FICHE COMMANDE")}</p>
+                        <h2 id="order-detail-title" ref={detailTitle} tabIndex={-1}>
+                            {showingCustomerHistory ? t("Historique du numéro") : selected && (order || history.loading || history.error)
                                 ? `#${selected.slice(-8).toUpperCase()}`
                                 : t("Commande indisponible")}
                         </h2>
@@ -470,16 +482,19 @@ export function OrdersTab({
                     <button
                         className="admin-icon-button"
                         aria-label={t("Fermer les détails")}
-                        onClick={() => onSelect(null)}
+                        onClick={() => openOrder(null)}
                     >
                         <X size={20} />
                     </button>
                 </header>
-                {!order && history.loading ? <p role="status">{t("Chargement de la commande…")}</p> : !order && history.error ? (
+                {showingCustomerHistory ? <CustomerOrderHistory key={selected} orderId={selected!} onBack={() => setCustomerHistoryId(null)} onOrder={openOrder} /> : !order && history.loading ? <p role="status">{t("Chargement de la commande…")}</p> : !order && history.error ? (
                     <div className="admin-alert" role="alert">{t(history.error)} <button type="button" onClick={refresh}>{t("Réessayer")}</button></div>
                 ) : order ? (
                     <OrderDetails
                         order={order}
+                        customerHistory={hasCancellationHistory(order)
+                            ? <CustomerCancellationAlert order={order} onOpen={() => openCustomerHistory(order.id)} />
+                            : order.customerHistory?.available ? <button type="button" className="admin-text-button" onClick={() => openCustomerHistory(order.id)}>{t("Voir l’historique du numéro")}</button> : null}
                         carrier={<OrderCarrierStatus order={order} onSync={() => void syncCarrier(order)} busy={busy || readBlocked} />}
                         feedback={<>{history.error && <p className="admin-alert" role="alert">{t(history.error)}</p>}{history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}{feedback}</>}
                         actions={
@@ -510,12 +525,14 @@ export function OrdersTab({
 function OrderDetails({
     order: o,
     carrier,
+    customerHistory,
     feedback,
     actions,
     refresh,
 }: {
     order: AdminOrder;
     carrier: React.ReactNode;
+    customerHistory: React.ReactNode;
     feedback: React.ReactNode;
     actions: React.ReactNode;
     refresh: React.ReactNode;
@@ -575,6 +592,7 @@ function OrderDetails({
                     ))}
                 </ol>
             )}
+            {customerHistory}
             <OrderHistory orderId={o.id} status={o.status} />
             {carrier}
             <div className="order-detail-columns">
