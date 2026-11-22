@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { orderHistoryQuery, orderHistoryWhere, orderHistorySort, orderExportQuery } from "../lib/order-history-query";
 import { ORDER_EXPORT_LIMIT, orderExportSelect, orderCsv } from "../lib/order-export";
+import { customerHistorySummaries, readCustomerOrderHistory } from "../lib/customer-order-history";
 import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee, priceCart } from "@imad-store/shared";
@@ -487,7 +488,8 @@ export async function listOrders(req: Request, res: Response) {
             select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
         }) : [];
         const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
-        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null })), total, scopeTotal, statusCounts, page, totalPages };
+        const summaries = await customerHistorySummaries(tx, ids.map(row => row.id));
+        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, ...result, trackingFilter: q.tracking });
@@ -525,10 +527,18 @@ export async function getAdminOrder(req: Request, res: Response) {
             where: { id: order.id },
             select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true },
         });
-        return { ...order, shipment };
+        const summaries = await customerHistorySummaries(tx, [order.id]);
+        return { ...order, shipment, customerHistory: summaries.get(order.id) };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, data });
+}
+
+export async function getCustomerOrderHistory(req: Request, res: Response) {
+    const { page } = z.object({ page: z.coerce.number().int().min(1).max(1000000).default(1) }).strict().parse(req.query);
+    const result = await prisma.$transaction(tx => readCustomerOrderHistory(tx, req.params.id, page), { isolationLevel: "RepeatableRead" });
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ success: true, ...result });
 }
 
 export async function syncOrderCarrierStatus(req: Request, res: Response) {

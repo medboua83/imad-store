@@ -2047,3 +2047,30 @@
     max-width: 100%;
     white-space: normal;
 }
+
+.admin-order-card.has-cancellation-history {
+    border-inline-start: 3px solid #c18a32;
+    background: #fffaf2;
+}
+.customer-cancellation-alert {
+    margin-block: 16px;
+    padding: 14px;
+    border: 1px solid #e6be7e;
+    border-radius: 8px;
+    background: #fff3df;
+    color: #714811;
+    line-height: 1.6;
+    font-size: 12px;
+}
+.customer-cancellation-alert p { display: flex; align-items: flex-start; gap: 8px; }
+.customer-cancellation-alert svg { flex-shrink: 0; margin-top: 2px; }
+.customer-cancellation-alert .admin-text-button { color: inherit; margin-top: 8px; min-height: 36px; }
+.customer-history-summary { margin-block: 20px; padding: 16px; background: #f7f4ed; border-radius: 8px; }
+.customer-history-list { list-style: none; padding: 0; margin-block: 18px; display: grid; gap: 14px; }
+.customer-history-list > li { padding: 16px; border: 1px solid #e3ddd3; border-radius: 8px; }
+.customer-history-list time { display: block; color: #796b54; font-size: 12px; margin-block: 8px; }
+.customer-history-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.customer-history-row > strong { white-space: nowrap; }
+.customer-history-list .admin-text-button { margin-block-start: 8px; min-height: 36px; }
+.customer-history-body > .admin-button { margin-block-end: 12px; }
+.customer-history-body { overflow-wrap: anywhere; }

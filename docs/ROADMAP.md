@@ -1,8 +1,11 @@
-## En cours — export des commandes filtrées (22 novembre 2026)
+## En cours — historique des annulations par numéro (22 novembre 2026)
 
-CSV de toutes les pages filtrées, accès administrateur, formats français/arabe, limite explicite sans troncature, protection tableur et reprise après erreur. Aucun changement de paiement, stock ou colis. Recettes et publication sur DATA : `outputs/filtered-order-export-20261122`.
+- [x] Préparer repère orange et historique complet réservé à l’administration.
+- [x] Vérifier formats complets, corbeille, dates connues et lecture sans modification des données.
+- [ ] Valider navigation mobile/ordinateur, français/arabe, erreurs et actualisation.
+- [ ] Vérifier GitHub, publier avec sauvegarde et contrôler les données réelles.
 
-Priorité suivante : demandes de retour structurées (les conditions commerciales sont déjà configurables). Les vues de livraison à surveiller et l’historique complet sont déjà publiés.
+Export filtré PR158 déjà publié : 401 UI / 165 serveur, sans troncature ni changement de paiement, stock ou colis. Priorité suivante à envisager : demandes de retour structurées.
 
 ## Vues de suivi de livraison — 22 novembre 2026
 
