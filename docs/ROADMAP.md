@@ -1,8 +1,14 @@
+## Sessions de caisse — 23 novembre 2026
+
+- [x] Préparer ouverture/comptage/clôture personnels, récapitulatifs et écart motivé.
+- [x] Préparer verrou commun, reprise idempotente, protection SQL et droits limités.
+- [ ] Terminer tests mobile/tablette/ordinateur et migration sur clone privé, puis publier sans opération réelle de test.
+
 ## Historique caisse — 23 novembre 2026
 
 - [x] Préparer filtres explicites date/paiement, références complètes et remise à zéro de la pagination.
 - [x] Conserver le contrôle serveur par caissier et valider les périodes, sans écriture financière.
-- [ ] Terminer les recettes mobile/ordinateur, vérifier GitHub et publier en préservant le registre.
+- [x] PR164 publiée et vérifiée : 446 tests navigateur / 206 serveur, dix essais tactiles après publication.
 
 ## Saisie caisse — 23 novembre 2026
 

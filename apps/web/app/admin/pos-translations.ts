@@ -1,4 +1,72 @@
 export const posArabic: Record<string, string> = {
+  "Ma caisse": "صندوقي",
+  "Sessions de caisse": "جلسات الصندوق",
+  "Une session et un comptage distincts pour chaque caissier.":
+    "جلسة وعدّ نقدي مستقلان لكل مسؤول عن الصندوق.",
+  "Session de caisse ouverte": "جلسة الصندوق مفتوحة",
+  "Clôture de caisse": "إغلاق الصندوق",
+  "Fond d’ouverture": "الرصيد الافتتاحي",
+  "Fond d’ouverture (MAD)": "الرصيد الافتتاحي بالدرهم",
+  "Ventes en espèces": "المبيعات النقدية",
+  "Ventes par carte — TPE externe": "المبيعات بالبطاقة — جهاز أداء خارجي",
+  "Espèces attendues": "النقد المتوقع",
+  "Espèces comptées": "النقد المعدود",
+  "Espèces comptées (MAD)": "النقد المعدود بالدرهم",
+  "Écart de caisse": "فرق الصندوق",
+  "Note de clôture": "ملاحظة الإغلاق",
+  "Espèces attendues = fond d’ouverture + ventes en espèces, après monnaie rendue.":
+    "النقد المتوقع = الرصيد الافتتاحي + المبيعات النقدية بعد إرجاع الباقي.",
+  "Ouvrir ma caisse": "فتح صندوقي",
+  "Préparer la clôture": "التحضير للإغلاق",
+  "Clôturer ma caisse": "إغلاق صندوقي",
+  "Annuler le comptage": "إلغاء العد",
+  "Actualiser le comptage": "تحديث العد",
+  "Historique des sessions": "سجل الجلسات",
+  "Aucune session de caisse.": "لا توجد جلسات للصندوق.",
+  "Navigation des sessions de caisse": "تصفح جلسات الصندوق",
+  "Voir le récapitulatif": "عرض الملخص",
+  "Récapitulatif de caisse": "ملخص الصندوق",
+  "Ouverte le": "تاريخ الفتح",
+  "Clôturée le": "تاريخ الإغلاق",
+  "Votre caisse est clôturée. Ouvrez une session avant la prochaine vente.":
+    "صندوقكم مغلق. افتحوا جلسة قبل البيع التالي.",
+  "Le suivi commence à l’ouverture. Les anciennes ventes restent dans l’historique, sans être rattachées à cette session.":
+    "تبدأ المتابعة عند الفتح. تبقى المبيعات السابقة في السجل ولا تُربط بهذه الجلسة.",
+  "Ouvrir votre caisse avec ce fond et rattacher les prochaines ventes à cette session ?":
+    "هل تريدون فتح الصندوق بهذا الرصيد وربط المبيعات المقبلة بهذه الجلسة؟",
+  "Confirmer le comptage et clôturer votre session de caisse ?":
+    "هل تؤكدون العد وإغلاق جلسة الصندوق؟",
+  "Des ventes ont été ajoutées. Recomptez la caisse avant de clôturer.":
+    "أضيفت مبيعات جديدة. أعيدوا عد النقد قبل الإغلاق.",
+  "Expliquez l’écart de caisse avant de clôturer.": "وضحوا سبب فرق الصندوق قبل الإغلاق.",
+  "Vérifiez le montant de caisse.": "تحققوا من مبلغ الصندوق.",
+  "Une session de caisse est déjà ouverte.": "توجد جلسة مفتوحة للصندوق بالفعل.",
+  "Votre session de caisse a changé. Vérifiez Ma caisse avant d’encaisser.":
+    "تغيرت جلسة صندوقكم. راجعوا صندوقي قبل تسجيل الأداء.",
+  "Session de caisse indisponible. Réessayez.": "جلسة الصندوق غير متاحة. أعيدوا المحاولة.",
+  "Chargement de la session…": "جارٍ تحميل الجلسة…",
+  "Connectez-vous à l’administration pour consulter cette session.":
+    "سجلوا الدخول إلى لوحة الإدارة للاطلاع على هذه الجلسة.",
+  "Opération de caisse à vérifier": "عملية صندوق تحتاج إلى التحقق",
+  "Cette tentative est conservée. Vérifiez son résultat avant toute nouvelle opération.":
+    "تم حفظ هذه المحاولة. تحققوا من نتيجتها قبل أي عملية جديدة.",
+  "Vérifier l’opération": "التحقق من العملية",
+  "Réessayer la même opération": "إعادة نفس العملية",
+  "Opération de caisse non confirmée. Vérifiez son état.":
+    "عملية الصندوق غير مؤكدة. تحققوا من حالتها.",
+  "Cette opération de caisse n’est pas encore enregistrée.": "لم تُسجل عملية الصندوق هذه بعد.",
+  "Cette référence de caisse est déjà utilisée.": "مرجع الصندوق هذا مستخدم بالفعل.",
+  "L’opération de caisse conservée est illisible. Vérifiez les sessions avant de poursuivre.":
+    "تعذرت قراءة عملية الصندوق المحفوظة. راجعوا الجلسات قبل المتابعة.",
+  "Impossible de conserver l’opération de caisse. Vérifiez le stockage du navigateur.":
+    "تعذر حفظ عملية الصندوق. تحققوا من تخزين المتصفح.",
+  "Vérifiez l’encaissement en attente avant de gérer la caisse.":
+    "تحققوا من الأداء المعلق قبل إدارة الصندوق.",
+  "Vérifiez l’opération de caisse en attente avant de poursuivre.":
+    "تحققوا من عملية الصندوق المعلقة قبل المتابعة.",
+  "Terminez ou videz le panier avant de clôturer la caisse.":
+    "أتموا البيع أو أفرغوا السلة قبل إغلاق الصندوق.",
+
   "Tous les paiements": "جميع طرق الأداء",
   Du: "من تاريخ",
   Au: "إلى تاريخ",

@@ -37,8 +37,10 @@ export type PosBody = {
   quoteHash: string;
   paymentMethod: "CASH" | "CARD_TERMINAL";
   receivedCents: number;
+  cashSessionId?: string;
 };
 export type PosReceipt = {
+  cashSessionId?: string | null;
   id: string;
   reference: string;
   currency: "MAD";

@@ -34,6 +34,7 @@ export function parsePosDraft(raw: string | null): PosDraft {
       !/^[a-zA-Z0-9_-]{16,128}$/.test(p.key) ||
       !cents(p.totalCents) ||
       !b ||
+      (b.cashSessionId !== undefined && !id(b.cashSessionId)) ||
       !Array.isArray(b.items) ||
       !b.items.length ||
       b.items.length > 100 ||
@@ -73,6 +74,7 @@ export function assertPosReceipt(sale: PosReceipt, pending: PendingSale, actorId
     !id(sale.id) ||
     sale.currency !== "MAD" ||
     sale.cashierId !== actorId ||
+    (sale.cashSessionId ?? undefined) !== pending.body.cashSessionId ||
     sale.paymentMethod !== pending.body.paymentMethod ||
     sale.totalCents !== pending.totalCents ||
     sale.receivedCents !== pending.body.receivedCents ||

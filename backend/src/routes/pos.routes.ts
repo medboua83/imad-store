@@ -11,6 +11,14 @@ import {
   posReceipt,
   posRecover,
 } from "../controllers/pos.controller";
+import {
+  posCashState,
+  posCashOpen,
+  posCashClose,
+  posCashRecover,
+  posCashRead,
+  posCashList,
+} from "../controllers/pos-cash.controller";
 export const posRoutes: IRouter = Router();
 posRoutes.use(authenticate, requirePermission("pos.sell", "pos.read"));
 posRoutes.use(
@@ -41,3 +49,17 @@ posRoutes.post(
   }),
   posComplete,
 );
+
+posRoutes.get("/cash-sessions/context", posCashState);
+posRoutes.get("/cash-sessions/attempt/:key", requirePermission("pos.sell"), posCashRecover);
+posRoutes.get("/cash-sessions", posCashList);
+posRoutes.get("/cash-sessions/:id", posCashRead);
+const cashWrites = rateLimit({
+  windowMs: 60000,
+  limit: 30,
+  keyGenerator: (req) => (req as AuthRequest).user!.id,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+posRoutes.post("/cash-sessions/open", requirePermission("pos.sell"), cashWrites, posCashOpen);
+posRoutes.post("/cash-sessions/close", requirePermission("pos.sell"), cashWrites, posCashClose);

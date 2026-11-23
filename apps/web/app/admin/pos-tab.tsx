@@ -29,6 +29,9 @@ import {
 } from "./pos-draft";
 import { posMoney, PosTicket } from "./pos-receipt";
 import { PosHistoryPanel } from "./pos-history";
+import { PosCashPanel } from "./pos-cash-panel";
+import { getCashState } from "@/lib/pos-cash-api";
+import { parseCashAttempt, cashAttemptKey } from "./pos-cash-draft";
 import "./pos.css";
 const problem = (e: unknown) =>
   isAxiosError(e) && typeof e.response?.data?.error === "string"
@@ -44,7 +47,14 @@ export default function PosTab() {
     retry: false,
     staleTime: 0,
   });
-  const [view, setView] = useState<"SALE" | "HISTORY">("SALE"),
+  const cash = useQuery({
+    queryKey: ["pos-cash-state", context.data?.actorId],
+    queryFn: ({ signal }) => getCashState(signal),
+    enabled: !!context.data?.canSell,
+    retry: false,
+    refetchInterval: 15000,
+  });
+  const [view, setView] = useState<"SALE" | "HISTORY" | "REGISTER">("SALE"),
     [search, setSearch] = useState(""),
     [debounced, setDebounced] = useState(""),
     [page, setPage] = useState(1);
@@ -258,6 +268,7 @@ export default function PosTab() {
     setMessage("Vente enregistrée. Stock mis à jour une seule fois.");
     void cache.invalidateQueries({ queryKey: ["pos-catalog"] });
     void cache.invalidateQueries({ queryKey: ["pos-history"] });
+    void cache.invalidateQueries({ queryKey: ["pos-cash-state"] });
   }
   async function withDraftLock<T>(work: () => Promise<T>): Promise<T | undefined> {
     if (!storageKey) return;
@@ -284,6 +295,27 @@ export default function PosTab() {
     if (lock.current || !context.data?.canSell || storageError || !draftRef.current) return;
     let operation = pending;
     if (!operation) {
+      if (!cash.data || cash.isError || cash.isFetching) {
+        setError("Session de caisse indisponible. Réessayez.");
+        return;
+      }
+      if (cash.data.enabled && !cash.data.active) {
+        setError("Votre caisse est clôturée. Ouvrez une session avant la prochaine vente.");
+        setView("REGISTER");
+        return;
+      }
+      try {
+        if (parseCashAttempt(localStorage.getItem(cashAttemptKey(context.data.actorId)))) {
+          setError("Vérifiez l’opération de caisse en attente avant de poursuivre.");
+          setView("REGISTER");
+          return;
+        }
+      } catch {
+        setError(
+          "L’opération de caisse conservée est illisible. Vérifiez les sessions avant de poursuivre.",
+        );
+        return;
+      }
       if (
         draftRef.current.pending ||
         draftRef.current.receiptId ||
@@ -341,6 +373,7 @@ export default function PosTab() {
           quoteHash: quote.data.quoteHash,
           paymentMethod: method,
           receivedCents: amount,
+          ...(cash.data.active ? { cashSessionId: cash.data.active.id } : {}),
         },
       };
       try {
@@ -370,6 +403,7 @@ export default function PosTab() {
             try {
               retain({ ...draftRef.current!, pending: null });
               void quote.refetch();
+              void cache.invalidateQueries({ queryKey: ["pos-cash-state"] });
             } catch {
               setStorageError(
                 "Impossible de conserver le brouillon. Vérifiez le stockage du navigateur.",
@@ -471,7 +505,7 @@ export default function PosTab() {
           <button
             type="button"
             className="admin-button"
-            aria-pressed={view === "HISTORY" || !context.data?.canSell}
+            aria-pressed={view !== "REGISTER" && (view === "HISTORY" || !context.data?.canSell)}
             onClick={() => {
               cancelScan();
               setView("HISTORY");
@@ -479,6 +513,18 @@ export default function PosTab() {
           >
             <Receipt size={17} />
             {t("Historique magasin")}
+          </button>
+          <button
+            type="button"
+            className="admin-button"
+            aria-pressed={view === "REGISTER"}
+            onClick={() => {
+              cancelScan();
+              setView("REGISTER");
+            }}
+          >
+            <Receipt size={17} />
+            {t(context.data?.canSell ? "Ma caisse" : "Sessions de caisse")}
           </button>
         </div>
       </div>
@@ -497,7 +543,25 @@ export default function PosTab() {
           {t(message)}
         </p>
       )}
-      {view === "HISTORY" || !context.data?.canSell ? (
+      {context.data?.canSell && view !== "REGISTER" && cash.isError && (
+        <p role="alert" className="admin-alert">
+          {t("Session de caisse indisponible. Réessayez.")}{" "}
+          <button type="button" onClick={() => void cash.refetch()}>
+            {t("Réessayer")}
+          </button>
+        </p>
+      )}
+      {context.data?.canSell && view !== "REGISTER" && cash.data?.enabled && !cash.data.active && (
+        <p className="admin-alert">
+          {t("Votre caisse est clôturée. Ouvrez une session avant la prochaine vente.")}{" "}
+          <button type="button" onClick={() => setView("REGISTER")}>
+            {t("Ma caisse")}
+          </button>
+        </p>
+      )}
+      {view === "REGISTER" ? (
+        <PosCashPanel actorId={context.data!.actorId} canSell={!!context.data?.canSell} />
+      ) : view === "HISTORY" || !context.data?.canSell ? (
         <PosHistoryPanel canReadAll={!!context.data?.canReadAll} />
       ) : !draft ? (
         <p role="status">{t("Chargement du brouillon…")}</p>
@@ -845,6 +909,10 @@ export default function PosTab() {
                   type="button"
                   className="admin-button primary pos-pay"
                   disabled={
+                    !cash.data ||
+                    cash.isFetching ||
+                    cash.isError ||
+                    (cash.data.enabled && !cash.data.active) ||
                     frozen ||
                     quote.isPending ||
                     quote.isFetching ||

@@ -461,6 +461,9 @@ model PosSale {
   changeCents Int
   createdAt DateTime @default(now())
   items PosSaleItem[]
+  cashSessionId String?
+  cashSession PosCashSession? @relation(fields: [cashSessionId], references: [id], onDelete: Restrict)
+  @@index([cashSessionId])
   @@index([cashierId, createdAt])
   @@index([createdAt])
   @@map("pos_sales")
@@ -485,4 +488,44 @@ model PosSaleItem {
   totalCents Int
   @@unique([saleId, position])
   @@map("pos_sale_items")
+}
+
+// Per-cashier registers opt into session tracking without reassigning old receipts.
+model PosCashRegister {
+  cashierId String @id
+  activeSessionId String? @unique
+  activeSession PosCashSession? @relation("ActiveCashSession", fields: [activeSessionId], references: [id], onDelete: Restrict)
+  @@map("pos_cash_registers")
+}
+model PosCashSession {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  openKey String @unique
+  requestFingerprint String
+  cashierId String
+  cashierName String
+  openingCents Int
+  openedAt DateTime @default(now())
+  activeFor PosCashRegister? @relation("ActiveCashSession")
+  sales PosSale[]
+  closing PosCashClosing?
+  @@index([cashierId, openedAt])
+  @@map("pos_cash_sessions")
+}
+// Append-only closing snapshot; never rewrites sales, payment status or inventory.
+model PosCashClosing {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  sessionId String @unique
+  session PosCashSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  closeKey String @unique
+  requestFingerprint String
+  countedCents Int
+  cashCents BigInt
+  cardCents BigInt
+  cashCount Int
+  cardCount Int
+  expectedCents BigInt
+  differenceCents BigInt
+  note String
+  closedAt DateTime @default(now())
+  @@map("pos_cash_closings")
 }
