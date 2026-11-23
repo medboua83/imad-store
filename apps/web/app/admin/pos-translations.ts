@@ -40,7 +40,6 @@ export const posArabic: Record<string, string> = {
   "Ne recommencez pas le remboursement. Retrouvez le reçu avec la même référence.":
     "لا تكرروا رد المبلغ. استرجعوا الإيصال بالمرجع نفسه.",
   "Vérifier le retour": "التحقق من الإرجاع",
-  "Réessayer la même opération": "إعادة محاولة العملية نفسها",
   "Reçu indisponible. Ne recommencez pas le remboursement.":
     "الإيصال غير متاح. لا تكرروا رد المبلغ.",
   "Chargement du reçu…": "جارٍ تحميل الإيصال…",
