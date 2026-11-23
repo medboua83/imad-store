@@ -1,6 +1,8 @@
+import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
     ...teamArabic,
+    ...posArabic,
     "Validation de l’envoi Olivraison": "الموافقة على الإرسال إلى Olivraison",
     "Validation requise avant Olivraison": "الموافقة مطلوبة قبل الإرسال إلى Olivraison",
     "L’envoi est bloqué à cause des anciennes annulations associées au numéro. Vérifiez l’historique avant d’autoriser cette commande.": "الإرسال متوقف بسبب طلبات ملغاة سابقة مرتبطة بهذا الرقم. راجعوا السجل قبل السماح بإرسال هذا الطلب.",

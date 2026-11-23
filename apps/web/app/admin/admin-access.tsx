@@ -19,6 +19,7 @@ export function presentationSessionKey(token: string | null): string | null {
     } catch { return null; }
 }
 export function allowedAdminTab(access: AdminAccess, tab: string) {
+    if (tab === "pos") return canAdmin(access, "pos.sell") || canAdmin(access, "pos.read");
     if (tab === "account") return ["ADMIN", "STAFF"].includes(access.role);
     if (access.role === "ADMIN") return true;
     const permissions: Record<string, AdminPermission> = { orders: "orders.read", notifications: "orders.read",

@@ -13,6 +13,7 @@ import { initialOrderListFilters } from "./order-list-context";
 import { initialInventoryListFilters } from "./inventory-list-context";
 import { acceptAdminRead, startAdminRead, type AdminReadState } from "./read-version";
 import {
+    ShoppingCart,
     ArrowUpRight,
     ChartNoAxesCombined,
     Bell,
@@ -78,6 +79,7 @@ const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: Pending
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: PendingView });
 const TeamTab = dynamic(() => import("./team-tab"), { loading: PendingView });
 const GmailSettingsPanel = dynamic(() => import("./gmail-settings"), { loading: PendingView });
+const PosTab = dynamic(() => import("./pos-tab"), { loading: PendingView });
 const AccountTab = dynamic(() => import("./account-tab"), { loading: PendingView });
 type Tab =
     | "overview"
@@ -89,7 +91,7 @@ type Tab =
     | "deskcomm"
     | "notifications"
     | "analytics"
-    | "commerce" | "team" | "mail" | "account";
+    | "commerce" | "pos" | "team" | "mail" | "account";
 type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
 const sections = [
     {
@@ -104,6 +106,7 @@ const sections = [
         description: "Retrouvez une commande et suivez sa progression.",
         icon: Package,
     },
+    { id: "pos" as Tab, label: "Caisse", description: "Encaissez les ventes en magasin et retrouvez vos tickets.", icon: ShoppingCart },
     {
         id: "products" as Tab,
         label: "Produits",
@@ -755,6 +758,7 @@ export default function AdminPage() {
                                     }}
                                 />
                             )}
+                            {activeTab === "pos" && <PosTab />}
                             {activeTab === "team" && <TeamTab />}
                             {activeTab === "mail" && <GmailSettingsPanel />}
                             {activeTab === "account" && <AccountTab />}

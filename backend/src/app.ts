@@ -9,6 +9,7 @@ import rateLimit from "express-rate-limit";
 import { createOrderRateLimiters } from "./middleware/order-rate-limit";
 import "express-async-errors";
 
+import { posRoutes } from "./routes/pos.routes";
 import { olivraisonRoutes } from "./routes/olivraison.routes";
 
 import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
@@ -84,6 +85,7 @@ app.use("/api/content", contentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/team", teamRoutes);
+app.use("/api/pos", posRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use(
     "/uploads",
