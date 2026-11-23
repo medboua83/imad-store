@@ -4,6 +4,7 @@ type Pixel = ((...args: unknown[]) => void) & {
     push?: Pixel;
     loaded: boolean;
     version: string;
+    disablePushState?: boolean;
 };
 declare global {
     interface Window {
@@ -64,7 +65,8 @@ function ready() {
                 if (pixel.callMethod) pixel.callMethod(...args);
                 else pixel.queue.push(args);
             },
-            { queue: [] as unknown[][], loaded: true, version: "2.0" },
+            // The pathname effect owns page views; disable SDK history tracking before loading it.
+            { queue: [] as unknown[][], loaded: true, version: "2.0", disablePushState: true },
         );
         pixel.push = pixel;
         window.fbq = pixel;
