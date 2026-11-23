@@ -165,7 +165,7 @@ export function PosCashPanel({ actorId, canSell }: { actorId: string; canSell: b
               const countedCents = cashInputCents(counted);
               if (!preview || countedCents === null)
                 throw new CashUiError("Vérifiez le montant de caisse.");
-              if (countedCents !== preview.expectedCents && note.trim().length < 3)
+              if (countedCents !== preview.expectedCents && [...note.trim()].length < 3)
                 throw new CashUiError("Expliquez l’écart de caisse avant de clôturer.");
               if (!window.confirm(t("Confirmer le comptage et clôturer votre session de caisse ?")))
                 return;

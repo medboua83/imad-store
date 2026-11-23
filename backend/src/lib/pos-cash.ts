@@ -231,7 +231,7 @@ export async function closeCashSession(actor: Actor, key: string, raw: unknown) 
         409,
       );
     const difference = safe(body.countedCents - summary.expectedCents);
-    if (difference !== 0 && body.note.length < 3)
+    if (difference !== 0 && [...body.note].length < 3)
       throw new AppError("Expliquez l’écart de caisse avant de clôturer.", 400);
     await tx.posCashClosing.create({
       data: {

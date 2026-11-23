@@ -194,6 +194,7 @@ test("A stale count cannot close over new sales, and a discrepancy requires an e
   await close(u, s).expect(409);
   const current = (await state(u)).active;
   await close(u, current, 32000).expect(400);
+  await close(u, current, 32000, "😀😀").expect(400);
   assert.equal(await p.posCashClosing.count({ where: { sessionId: s.id } }), 0);
   const closed = (await close(u, current, 32000, "Erreur de comptage déclarée").expect(201)).body
     .data;
