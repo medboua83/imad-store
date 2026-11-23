@@ -32,7 +32,10 @@ test("Pixel loads automatically, preserves refusals, excludes tests/admin and de
         configurable: true,
         value: {
             createElement: () => ({}),
-            head: { appendChild: (s: unknown) => scripts.push(s) },
+            head: { appendChild: (s: unknown) => {
+                assert.equal(window.fbq?.disablePushState, true, "disable SDK history tracking before its script runs");
+                scripts.push(s);
+            } },
         },
     });
     configurePixel(false, "123456789");
