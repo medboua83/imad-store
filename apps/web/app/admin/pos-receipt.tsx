@@ -9,7 +9,7 @@ export function PosTicket({ sale }: { sale: PosReceipt }) {
   const { t, locale } = useAdminLocale(),
     ar = locale === "ar";
   return (
-    <article className="pos-ticket" aria-label={t("Ticket de caisse")}>
+    <article dir={ar ? "rtl" : "ltr"} className="pos-ticket" aria-label={t("Ticket de caisse")}>
       <header>
         <p className="pos-ticket-brand">IMAD MODE</p>
         <h1>{t("Reçu de vente")}</h1>

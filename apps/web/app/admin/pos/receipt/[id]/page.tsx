@@ -25,7 +25,7 @@ const snapshot = () => {
 };
 export default function ReceiptPage() {
   const { id } = useParams<{ id: string }>(),
-    { t } = useAdminLocale();
+    { t, locale } = useAdminLocale();
   const session = useSyncExternalStore(subscribe, snapshot, () => null);
   const query = useQuery({
     queryKey: ["pos-ticket", session, id],
@@ -35,7 +35,7 @@ export default function ReceiptPage() {
     refetchInterval: 15000,
   });
   return (
-    <main className="pos-print-page">
+    <main dir={locale === "ar" ? "rtl" : "ltr"} className="pos-print-page">
       <nav className="pos-no-print">
         <Link href="/admin?tab=pos">{t("Retour à la caisse")}</Link>
         <AdminLanguageSelect />

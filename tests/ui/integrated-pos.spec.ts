@@ -362,4 +362,8 @@ for (const width of [390, 1440])
     await page.getByRole("button", { name: "تأكيد تسجيل الأداء", exact: true }).click();
     await expect(page.getByRole("heading", { name: "تم تسجيل الأداء" })).toBeVisible();
     expect(sales(f)).toHaveLength(1);
+    await expect(page.locator(".pos-ticket")).toHaveAttribute("dir", "rtl");
+    await page.goto("/admin/pos/receipt/abcdefabcdefabcdefabcde1");
+    await expect(page.locator(".pos-print-page")).toHaveAttribute("dir", "rtl");
+    await expect(page.locator(".pos-ticket")).toHaveAttribute("dir", "rtl");
   });
