@@ -86,7 +86,22 @@ export function assertPosReceipt(sale: PosReceipt, pending: PendingSale, actorId
     throw new Error("Unconfirmed receipt");
 }
 export function cashInputCents(value: string): number | null {
-  if (!/^\d{1,8}(?:[.,]\d{0,2})?$/.test(value.trim())) return null;
-  const n = Math.round(Number(value.trim().replace(",", ".")) * 100);
+  const normalized = value
+    .trim()
+    .replace(/[٠-٩۰-۹]/g, (digit) => String(digit.charCodeAt(0) - (digit <= "٩" ? 0x660 : 0x6f0)))
+    .replace(/٫/g, ".");
+  if (!/^\d{1,8}(?:[.,]\d{0,2})?$/.test(normalized)) return null;
+  const n = Math.round(Number(normalized.replace(",", ".")) * 100);
   return cents(n) ? n : null;
+}
+
+/** Compare checkout intent, ignoring labels and the order of variants. */
+export function samePosItems(a: readonly PosItem[], b: readonly PosItem[]): boolean {
+  const canonical = (items: readonly PosItem[]) => {
+    const sum = new Map<string, number>();
+    for (const item of items)
+      sum.set(item.variantId, (sum.get(item.variantId) ?? 0) + item.quantity);
+    return JSON.stringify([...sum].sort(([a], [b]) => a.localeCompare(b)));
+  };
+  return canonical(a) === canonical(b);
 }

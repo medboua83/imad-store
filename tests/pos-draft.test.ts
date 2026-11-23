@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   cashInputCents,
+  samePosItems,
   parsePosDraft,
   storePosDraft,
   assertPosReceipt,
@@ -99,4 +100,36 @@ test("Recovery verifies actor, amounts, payment, quantities and distinct variant
       actor,
     ),
   );
+});
+
+test("Arabic and Persian cash digits accept exact cents without silently accepting thousands separators", () => {
+  for (const [value, cents] of [
+    ["٢٥٠٫٥٠", 25050],
+    ["۲۵۰,۵۰", 25050],
+    ["٠٫٠١", 1],
+    ["۲50.۵", 25050],
+    ["٠", 0],
+  ] as const)
+    assert.equal(cashInputCents(value), cents);
+  for (const value of ["١٬٢٥٠", "۱.۲.۳", "١٫٠٠١", "-٢٣٠"])
+    assert.equal(cashInputCents(value), null);
+});
+test("Cart review compares variants and summed quantities regardless of labels or ordering", () => {
+  const a = "1".repeat(24),
+    b = "2".repeat(24);
+  assert(
+    samePosItems(
+      [
+        { variantId: a, quantity: 1 },
+        { variantId: a, quantity: 1 },
+        { variantId: b, quantity: 1 },
+      ],
+      [
+        { variantId: b, quantity: 1 },
+        { variantId: a, quantity: 2 },
+      ],
+    ),
+  );
+  assert(!samePosItems([{ variantId: a, quantity: 1 }], [{ variantId: a, quantity: 2 }]));
+  assert(!samePosItems([{ variantId: a, quantity: 1 }], [{ variantId: b, quantity: 1 }]));
 });

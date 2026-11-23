@@ -70,6 +70,26 @@ export async function posCatalog(req: AuthRequest, res: Response) {
   );
   res.json({ success: true, ...result });
 }
+/** A scanned reference is looked up globally, never within a catalogue page. */
+export async function posScan(req: AuthRequest, res: Response) {
+  const { sku } = z
+    .object({ sku: z.string().trim().min(1).max(100) })
+    .strict()
+    .parse(req.query);
+  const variant = await prisma.productVariant.findUnique({
+    where: { sku },
+    include: { product: true },
+  });
+  if (!variant || variant.product.status !== "ACTIVE")
+    throw new AppError("Référence introuvable.", 404);
+  res.json({
+    success: true,
+    data: {
+      ...posCatalogRow(variant),
+      available: variant.stock > 0 && !isAmbiguousSize(variant.size),
+    },
+  });
+}
 export async function posQuote(req: AuthRequest, res: Response) {
   const { items } = z.object({ items: posItemsSchema }).strict().parse(req.body);
   const quote = await prisma.$transaction((tx) => quotePos(tx, items), {

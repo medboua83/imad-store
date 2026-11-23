@@ -1,6 +1,12 @@
+## Fiabilité de la saisie en caisse — 23 novembre 2026
+
+Candidat : recherche d’un SKU exact sur toutes les variantes actives, indépendante de la pagination ; annulation des réponses tardives lors d’un changement de recherche ; aucun message de succès si l’article n’a pas été ajouté. Montants français, arabes et persans convertis en centimes sans accepter silencieusement des séparateurs de milliers ambigus. Nouvelle vente : panier, recherche, montant et mode de paiement remis à leur état initial (espèces).
+
+Le contenu du panier courant et du brouillon partagé est comparé au devis avant l’encaissement. Une modification dans une autre fenêtre exige une nouvelle revue du total ; les reprises d’une tentative déjà envoyée gardent leur clé et leur contenu. Aucun changement de schéma, de paiement existant, d’Olivraison, de CRM ou de photos. Recettes et publication sur DATA : outputs/pos-entry-reliability-20261123.
+
 ## Caisse native — 23 novembre 2026
 
-Première version en préparation dans la rubrique Caisse : catalogue par variante, recherche/référence SKU, offres par quantité existantes, espèces avec monnaie, paiement déjà encaissé sur TPE externe, reçu imprimable/PDF et historique paginé par caissier. Permissions pos.sell (encaisser et lire ses propres ventes) et pos.read (lire toutes les ventes), vérifiées sur le compte serveur ; les collaborateurs actuels ne reçoivent aucun nouveau droit automatiquement.
+Première version publiée (PR162, source edac04dd3ad0a85c7118c4e89554029390a4eed2, fusion ec2011e009644def19d716ac1277de71eb3a0d40 ; 437 tests navigateur / 201 serveur) dans la rubrique Caisse : catalogue par variante, recherche/référence SKU, offres par quantité existantes, espèces avec monnaie, paiement déjà encaissé sur TPE externe, reçu imprimable/PDF et historique paginé par caissier. Permissions pos.sell (encaisser et lire ses propres ventes) et pos.read (lire toutes les ventes), vérifiées sur le compte serveur ; les collaborateurs actuels ne reçoivent aucun nouveau droit automatiquement.
 
 Registre PosSale/PosSaleItem séparé des commandes web. Prix et stock revérifiés en transaction, clé idempotente unique, verrou par tentative, stock décrémenté une fois. Brouillon conservé par compte avant envoi, écran de vérification après coupure, reprises de la même tentative et coordination entre fenêtres du navigateur. Tickets figés même après modification/suppression de produit. Aucun appel Olivraison, CRM, WhatsApp, TPE ou passerelle de paiement depuis une vente magasin. Pas de mode hors ligne, retours ou clôture de caisse dans cette première version. Guide : docs/CAISSE.md. Recettes et publication à consigner sur DATA dans outputs/integrated-pos-20261123.
 

@@ -7,6 +7,10 @@ export const posArabic: Record<string, string> = {
   Vider: "إفراغ",
   Article: "المنتج",
   Total: "المجموع",
+  "Recherche…": "جارٍ البحث…",
+  "Cette référence est actuellement indisponible.": "هذا المرجع غير متاح حالياً.",
+  "Le panier a changé. Vérifiez le nouveau total avant d’encaisser.":
+    "تغيرت السلة. تحققوا من المبلغ الجديد قبل تسجيل الأداء.",
   Caisse: "نقطة البيع",
   "Encaissez les ventes en magasin et retrouvez vos tickets.":
     "سجلوا مبيعات المتجر واطلعوا على الإيصالات.",
