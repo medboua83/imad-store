@@ -5,8 +5,9 @@ import { canAdmin, isAmbiguousSize, priceCart, productVariantImages } from "@ima
 import { prisma } from "./prisma";
 import { AppError } from "../middleware/error.middleware";
 import type { AuthRequest } from "../middleware/auth.middleware";
-export const POS_MAX_CENTS = 2_000_000_000;
-const identifier = z.string().regex(/^[a-f0-9]{24}$/);
+import { POS_MAX_CENTS, posIdentifier as identifier } from "./pos-core";
+import { cashSessionForSale, lockCashier } from "./pos-cash";
+export { POS_MAX_CENTS, posKey } from "./pos-core";
 export const posItemsSchema = z
   .array(z.object({ variantId: identifier, quantity: z.number().int().min(1).max(1000) }).strict())
   .min(1)
@@ -17,9 +18,9 @@ export const posSaleSchema = z
     quoteHash: z.string().regex(/^[a-f0-9]{64}$/),
     paymentMethod: z.enum(["CASH", "CARD_TERMINAL"]),
     receivedCents: z.number().int().min(0).max(POS_MAX_CENTS),
+    cashSessionId: identifier.optional(),
   })
   .strict();
-export const posKey = z.string().regex(/^[a-zA-Z0-9_-]{16,128}$/);
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export function normalizePosItems(items: z.infer<typeof posItemsSchema>) {
   const rows = new Map<string, number>();
@@ -97,6 +98,7 @@ export async function completePosSale(
     try {
       return await prisma.$transaction(
         async (tx) => {
+          await lockCashier(tx, actor.id);
           // Serializes all retries of the same attempt before checking prices or stock.
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"imad-pos:" + key}, 0))`;
           const cashier = await tx.user.findUnique({ where: { id: actor.id } });
@@ -116,6 +118,7 @@ export async function completePosSale(
               throw new AppError("Cette référence d’encaissement est déjà utilisée.", 409);
             return { sale: previous, replay: true };
           }
+          const cashSessionId = await cashSessionForSale(tx, actor.id, body.cashSessionId);
           // Freeze product prices and variants through settlement. Website checkout still uses its CAS stock reservation.
           const found = await tx.productVariant.findMany({
             where: { id: { in: items.map((i) => i.variantId) } },
@@ -159,6 +162,7 @@ export async function completePosSale(
               cashierId: cashier.id,
               cashierName: [cashier.firstName, cashier.lastName].filter(Boolean).join(" "),
               paymentMethod: body.paymentMethod,
+              cashSessionId,
               totalCents: quote.totalCents,
               savingsCents: quote.savingsCents,
               receivedCents: body.receivedCents,

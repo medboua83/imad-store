@@ -544,3 +544,64 @@
     display: none;
   }
 }
+
+.pos-cash-panel {
+  display: grid;
+  gap: 1.2rem;
+}
+.pos-cash-panel > .pos-section-heading {
+  margin-bottom: 0;
+}
+.pos-cash-panel .admin-panel {
+  min-width: 0;
+}
+.pos-cash-panel bdi,
+.pos-cash-note {
+  overflow-wrap: anywhere;
+}
+.pos-cash-form {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 600px;
+  margin-block: 1rem;
+}
+.pos-cash-form label {
+  display: grid;
+  gap: 0.5rem;
+}
+.pos-cash-form textarea {
+  min-height: 90px;
+}
+.pos-cash-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-block: 1rem;
+}
+.pos-cash-totals > div {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  background: #f5efdf;
+  border-radius: 10px;
+  min-width: 0;
+}
+.pos-cash-totals span {
+  font-size: 0.9rem;
+}
+.pos-cash-totals strong {
+  overflow-wrap: anywhere;
+  font-size: 1.15rem;
+}
+.pos-view-switch button {
+  white-space: normal;
+  min-width: 100px;
+}
+.pos-cash-report dt {
+  max-width: 65%;
+}
+@media (max-width: 450px) {
+  .pos-cash-totals {
+    grid-template-columns: 1fr;
+  }
+}
