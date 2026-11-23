@@ -1,4 +1,12 @@
 export const posArabic: Record<string, string> = {
+  "Tous les paiements": "جميع طرق الأداء",
+  Du: "من تاريخ",
+  Au: "إلى تاريخ",
+  "Appliquer les filtres": "تطبيق عوامل التصفية",
+  "Réinitialiser les filtres": "إعادة ضبط عوامل التصفية",
+  "Dates selon l’heure du Maroc.": "التواريخ حسب توقيت المغرب.",
+  "La date de fin doit suivre la date de début.": "يجب ألا يسبق تاريخ النهاية تاريخ البداية.",
+  "{count} vente(s)": "{count} عملية بيع",
   "Voir le panier de caisse": "عرض سلة نقطة البيع",
   Rechercher: "بحث",
   Indisponible: "غير متاح",

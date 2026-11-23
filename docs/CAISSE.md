@@ -32,3 +32,9 @@ Aucun mode hors ligne n’est proposé : l’enregistrement nécessite une conne
 - Historique paginé de 25 ventes, lecture cohérente, statistiques du jour selon Africa/Casablanca. Ces chiffres ne constituent pas une clôture comptable et ne sont pas mélangés au taux de conversion web.
 - Reçu de vente uniquement : aucune TVA, mention fiscale, numéro de facture réglementaire ou identité commerciale non renseignée n’est inventé.
 - Publication : sauvegarde vérifiée, migration additive, droits SQL explicites sur les deux nouvelles tables, recette sur clone privé avec travailleurs externes arrêtés, puis contrôles en lecture seule en production. Ne pas créer de vraie vente pour vérifier le déploiement.
+
+## Retrouver une vente
+
+Dans Historique magasin, saisir une référence complète (POS-… ou #POS-…) ou sa partie finale, choisir le mode de paiement et les dates souhaitées, puis cliquer sur Appliquer les filtres. Les dates incluent la journée entière selon l’heure du Maroc. Un responsable peut combiner ces critères avec un caissier ; un collaborateur ne voit que ses propres ventes. La recherche porte sur tout l’historique, paginé par 25 tickets, et revient à la première page lors de l’application.
+
+Le nombre de résultats porte sur les filtres appliqués. Le résumé « Aujourd’hui, dans cette vue » reste limité aux ventes du jour correspondant à ces mêmes filtres ; il peut donc être nul pour une période passée. Réinitialiser les filtres retrouve l’ensemble autorisé. Actualiser réessaie la recherche appliquée après une erreur, en conservant les champs saisis. Ouvrir ou réimprimer un ticket ne crée aucune vente.

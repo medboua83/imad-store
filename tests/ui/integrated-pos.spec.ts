@@ -8,9 +8,17 @@ const token = (permissions = ["pos.sell"], role = "STAFF") =>
   Buffer.from(JSON.stringify({ id: actor, role, permissions })).toString("base64url") +
   ".fixture";
 async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
-  const calls: { path: string; method: string; body: any; key: string | undefined }[] = [],
+  const calls: { path: string; method: string; body: any; key: string | undefined; url: string }[] =
+      [],
     receipts = new Map<string, any>();
-  const state = { networkAfterCommit: false, failPrice: false, delay: 0, scanDelay: 0 };
+  const state = {
+    networkAfterCommit: false,
+    failPrice: false,
+    delay: 0,
+    scanDelay: 0,
+    historyFailure: false,
+    historyDelay: 0,
+  };
   const variants = [
     {
       id: v1,
@@ -80,7 +88,7 @@ async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
       method = req.method(),
       body = method === "GET" ? null : req.postDataJSON(),
       key = req.headers()["idempotency-key"];
-    calls.push({ path, method, body, key });
+    calls.push({ path, method, body, key, url: url.toString() });
     if (path === "/api/pos/context")
       return route.fulfill({
         json: {
@@ -153,22 +161,46 @@ async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
         json: sale ? { success: true, data: sale } : { error: "Absent" },
       });
     }
-    if (path === "/api/pos/sales")
-      return route.fulfill({
-        json: {
-          success: true,
-          data: [...receipts.values()],
-          total: receipts.size,
-          page: 1,
-          totalPages: 1,
-          cashiers: [{ id: actor, name: "Caissier Test" }],
-          scope: permissions.includes("pos.read") ? "ALL" : "OWN",
-          today: {
-            count: receipts.size,
-            totalCents: [...receipts.values()].reduce((s, r) => s + r.totalCents, 0),
+    if (path === "/api/pos/sales") {
+      if (state.historyDelay) await new Promise((r) => setTimeout(r, state.historyDelay));
+      if (state.historyFailure) return route.fulfill({ status: 503, json: { error: "Offline" } });
+      const search = (url.searchParams.get("search") ?? "")
+        .replace(/^#/, "")
+        .replace(/^POS-/i, "")
+        .toLowerCase();
+      const filtered = [...receipts.values()].filter(
+        (r) =>
+          r.id.includes(search) &&
+          (!url.searchParams.get("cashierId") ||
+            r.cashierId === url.searchParams.get("cashierId")) &&
+          (!url.searchParams.get("paymentMethod") ||
+            r.paymentMethod === url.searchParams.get("paymentMethod")) &&
+          (!url.searchParams.get("from") ||
+            r.createdAt.slice(0, 10) >= url.searchParams.get("from")!) &&
+          (!url.searchParams.get("to") || r.createdAt.slice(0, 10) <= url.searchParams.get("to")!),
+      );
+      const totalPages = Math.ceil(filtered.length / 25),
+        page = Math.min(Number(url.searchParams.get("page") ?? 1), Math.max(1, totalPages));
+      try {
+        return await route.fulfill({
+          json: {
+            success: true,
+            data: filtered.slice((page - 1) * 25, page * 25),
+            total: filtered.length,
+            page,
+            totalPages,
+            cashiers: [{ id: actor, name: "Caissier Test" }],
+            scope: permissions.includes("pos.read") ? "ALL" : "OWN",
+            today: {
+              count: filtered.length,
+              totalCents: filtered.reduce((s, r) => s + r.totalCents, 0),
+            },
           },
-        },
-      });
+        });
+      } catch {
+        return;
+      }
+    }
     if (path.startsWith("/api/pos/sales/")) {
       const sale = [...receipts.values()].find((s) => s.id === path.split("/").at(-1));
       return route.fulfill({
@@ -462,3 +494,94 @@ for (const width of [390, 1440])
       true,
     );
   });
+
+function seedHistory(f: Awaited<ReturnType<typeof fixture>>) {
+  for (let i = 1; i <= 27; i++) {
+    const id = i.toString(16).padStart(24, "a");
+    f.receipts.set("history-" + i, {
+      id,
+      reference: "POS-" + id.toUpperCase(),
+      cashierId: actor,
+      cashierName: "Caissier Test",
+      paymentMethod: i === 1 ? "CARD_TERMINAL" : "CASH",
+      totalCents: 23000,
+      createdAt: i === 1 ? "2026-11-22T10:00:00Z" : "2026-11-23T10:00:00Z",
+    });
+  }
+  return "POS-" + [...f.receipts.values()][0].id.toUpperCase();
+}
+for (const [width, locale] of [
+  [390, "fr"],
+  [1440, "fr"],
+  [320, "ar"],
+] as const)
+  test(`Receipt history combines dates and payment, resets pagination and displays the full reference at ${width}px ${locale}`, async ({
+    page,
+  }, info) => {
+    await page.setViewportSize({ width, height: 900 });
+    const f = await fixture(page, ["pos.read"], locale),
+      reference = seedHistory(f),
+      ar = locale === "ar";
+    await page.goto("/admin?tab=pos");
+    const panel = page.locator(".pos-history");
+    await expect(
+      panel.getByRole("heading", { name: ar ? "مبيعات المتجر" : "Ventes magasin" }),
+    ).toBeVisible();
+    await expect(panel.locator(".pos-history-count")).toContainText("27");
+    await panel.getByRole("button", { name: ar ? "الصفحة التالية" : "Page suivante" }).click();
+    await expect(panel.locator(".pos-sales-list > li")).toHaveCount(2);
+    const before = f.calls.filter((c) => c.path === "/api/pos/sales").length;
+    await panel.getByLabel(ar ? "مرجع الإيصال" : "Référence du ticket").fill("#" + reference);
+    await panel.getByLabel(ar ? "طريقة الأداء" : "Mode de paiement").selectOption("CARD_TERMINAL");
+    await panel.getByLabel(ar ? "من" : "Du", { exact: true }).fill("2026-11-22");
+    await panel.getByLabel(ar ? "إلى" : "Au", { exact: true }).fill("2026-11-22");
+    expect(f.calls.filter((c) => c.path === "/api/pos/sales")).toHaveLength(before);
+    await panel
+      .getByRole("button", { name: ar ? "تطبيق عوامل التصفية" : "Appliquer les filtres" })
+      .click();
+    await expect(panel.locator(".pos-sales-list > li")).toHaveCount(1);
+    await expect(panel.locator(".pos-history-reference")).toHaveText(reference);
+    const last = new URL(f.calls.filter((c) => c.path === "/api/pos/sales").at(-1)!.url);
+    expect(last.searchParams.get("page")).toBe("1");
+    expect(last.searchParams.get("paymentMethod")).toBe("CARD_TERMINAL");
+    expect(last.searchParams.get("from")).toBe("2026-11-22");
+    await page.screenshot({ path: info.outputPath("history-filtered.png"), fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await panel
+      .getByRole("button", { name: ar ? "إعادة ضبط الفلاتر" : "Réinitialiser les filtres" })
+      .click();
+    await expect(panel.locator(".pos-sales-list > li")).toHaveCount(25);
+    await expect(panel.getByLabel(ar ? "مرجع الإيصال" : "Référence du ticket")).toHaveValue("");
+    await expect(panel.getByLabel(ar ? "من" : "Du", { exact: true })).toHaveValue("");
+    expect(f.calls.filter((c) => c.method !== "GET")).toHaveLength(0);
+  });
+
+test("Invalid history periods preserve inputs and recovery retries only the applied filters", async ({
+  page,
+}) => {
+  const f = await fixture(page, ["pos.sell"]);
+  seedHistory(f);
+  await page.goto("/admin?tab=pos");
+  await page.getByRole("button", { name: "Historique magasin" }).click();
+  const panel = page.locator(".pos-history");
+  await expect(panel.getByLabel("Caissier", { exact: true })).toHaveCount(0);
+  await expect(panel.locator(".pos-history-count")).toContainText("27");
+  const count = f.calls.filter((c) => c.path === "/api/pos/sales").length;
+  await panel.getByLabel("Du", { exact: true }).fill("2026-11-24");
+  await panel.getByLabel("Au", { exact: true }).fill("2026-11-22");
+  await panel.getByRole("button", { name: "Appliquer les filtres" }).click();
+  await expect(panel.getByRole("alert")).toContainText("La date de fin doit suivre");
+  expect(f.calls.filter((c) => c.path === "/api/pos/sales")).toHaveLength(count);
+  await panel.getByLabel("Du", { exact: true }).fill("2026-11-22");
+  f.state.historyFailure = true;
+  await panel.getByRole("button", { name: "Appliquer les filtres" }).click();
+  await expect(panel.getByRole("alert")).toContainText("Historique de caisse indisponible");
+  await expect(panel.getByLabel("Du", { exact: true })).toHaveValue("2026-11-22");
+  f.state.historyFailure = false;
+  await panel.getByRole("button", { name: "Actualiser", exact: true }).click();
+  await expect(panel.locator(".pos-sales-list > li")).toHaveCount(1);
+  await expect(panel.getByText("Vous consultez uniquement vos encaissements.")).toBeVisible();
+  expect(f.calls.filter((c) => c.method !== "GET")).toHaveLength(0);
+});
