@@ -1,3 +1,11 @@
+## Caisse native — 23 novembre 2026
+
+- [x] Préparer ventes emportées, variantes, offres du catalogue et stock transactionnel partagé.
+- [x] Préparer espèces, monnaie, enregistrement d’un paiement TPE externe, tickets et historique par caissier.
+- [x] Ajouter permissions dédiées, brouillon et reprise idempotente, sans CRM ni transporteur.
+- [ ] Terminer recettes mobile/ordinateur, contrôles GitHub, sauvegarde et publication.
+- [ ] Phase ultérieure : retours, échanges et clôture de caisse, à cadrer séparément.
+
 ## En cours - equipe, permissions et Gmail SMTP (22 novembre 2026)
 
 - [x] Preparer permissions serveur, comptes distincts, reauthentification et revocation de sessions.

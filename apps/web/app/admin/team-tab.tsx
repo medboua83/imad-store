@@ -6,6 +6,7 @@ import { isAxiosError } from "axios";
 import { createTeamUser, updateTeamUser, inviteTeamUser, listTeamUsers, type TeamUser } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
 export const permissionLabels: Record<string, string> = {
+    "pos.sell": "Encaisser et consulter ses ventes magasin", "pos.read": "Consulter les ventes de tous les caissiers",
     "orders.read": "Consulter les commandes et leurs historiques", "orders.write": "Gérer les statuts et la corbeille des commandes",
     "orders.export": "Exporter les commandes", "catalogue.manage": "Gérer les produits, catégories, photos et stocks",
     "analytics.read": "Consulter les statistiques", "content.manage": "Modifier et publier le contenu du site",

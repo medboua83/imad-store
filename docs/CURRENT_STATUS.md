@@ -1,3 +1,11 @@
+## Caisse native — 23 novembre 2026
+
+Première version en préparation dans la rubrique Caisse : catalogue par variante, recherche/référence SKU, offres par quantité existantes, espèces avec monnaie, paiement déjà encaissé sur TPE externe, reçu imprimable/PDF et historique paginé par caissier. Permissions pos.sell (encaisser et lire ses propres ventes) et pos.read (lire toutes les ventes), vérifiées sur le compte serveur ; les collaborateurs actuels ne reçoivent aucun nouveau droit automatiquement.
+
+Registre PosSale/PosSaleItem séparé des commandes web. Prix et stock revérifiés en transaction, clé idempotente unique, verrou par tentative, stock décrémenté une fois. Brouillon conservé par compte avant envoi, écran de vérification après coupure, reprises de la même tentative et coordination entre fenêtres du navigateur. Tickets figés même après modification/suppression de produit. Aucun appel Olivraison, CRM, WhatsApp, TPE ou passerelle de paiement depuis une vente magasin. Pas de mode hors ligne, retours ou clôture de caisse dans cette première version. Guide : docs/CAISSE.md. Recettes et publication à consigner sur DATA dans outputs/integrated-pos-20261123.
+
+La PR161 précédente est fusionnée et publiée : source 78e8dda99bfceddf8b4a6fe2712cd4a0129e15e6, merge 7fbaf4b9640be3dd6148fbd1b0779ac9796dcd74, 425 tests navigateur / 188 tests serveur réussis. Validation manuelle avant Olivraison conservée pour les annulations antérieures ; aucun colis existant ne doit être rejoué lors de l’ajout de la caisse.
+
 ## Validation manuelle avant Olivraison — 22 novembre 2026
 
 Les annulations antérieures associées au numéro ne sont plus seulement un repère visuel : une commande confirmée concernée est mise en attente REVIEW_REQUIRED, sans appel transporteur. La confirmation du client sur le site, du CRM ou de l’administration ne vaut pas autorisation d’expédition. Un bouton distinct dans Commandes exige une confirmation explicite et la permission orders.write, débloque uniquement la file existante de cette commande et enregistre date, compte et événement. Les clics et reprises concurrents sont dédupliqués en transaction. Connexion désactivée, commande annulée/supprimée, historique hors période ou colis déjà relié : aucune création rétroactive par cette route.

@@ -446,3 +446,43 @@ model StoreAnalytics {
   @@index([expiresAt], map: "analytics_retention")
   @@map("store_analytics")
 }
+
+// Immutable in-store receipts; use the shared variant stock, never the shipping order pipeline.
+model PosSale {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  idempotencyKey String @unique
+  requestFingerprint String
+  cashierId String
+  cashierName String
+  paymentMethod String
+  totalCents Int
+  savingsCents Int
+  receivedCents Int
+  changeCents Int
+  createdAt DateTime @default(now())
+  items PosSaleItem[]
+  @@index([cashierId, createdAt])
+  @@index([createdAt])
+  @@map("pos_sales")
+}
+
+// Snapshot identifiers intentionally have no mutable catalogue relation: receipts survive edits.
+model PosSaleItem {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  saleId String
+  sale PosSale @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  position Int
+  productId String
+  variantId String
+  sku String
+  nameFr String
+  nameAr String
+  colorFr String
+  colorAr String
+  size String?
+  quantity Int
+  unitPriceCents Int
+  totalCents Int
+  @@unique([saleId, position])
+  @@map("pos_sale_items")
+}
