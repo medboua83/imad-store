@@ -29,6 +29,8 @@ import {
 } from "./pos-draft";
 import { posMoney, PosTicket } from "./pos-receipt";
 import { PosHistoryPanel } from "./pos-history";
+import { PosReturnsPanel } from "./pos-returns-panel";
+import { parseReturnDraft, returnStorageKey } from "./pos-return-draft";
 import { PosCashPanel } from "./pos-cash-panel";
 import { getCashState } from "@/lib/pos-cash-api";
 import { parseCashAttempt, cashAttemptKey } from "./pos-cash-draft";
@@ -54,7 +56,7 @@ export default function PosTab() {
     retry: false,
     refetchInterval: 15000,
   });
-  const [view, setView] = useState<"SALE" | "HISTORY" | "REGISTER">("SALE"),
+  const [view, setView] = useState<"SALE" | "HISTORY" | "REGISTER" | "RETURNS">("SALE"),
     [search, setSearch] = useState(""),
     [debounced, setDebounced] = useState(""),
     [page, setPage] = useState(1);
@@ -69,6 +71,7 @@ export default function PosTab() {
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [returnReference, setReturnReference] = useState("");
   const [method, setMethod] = useState<"CASH" | "CARD_TERMINAL">("CASH"),
     [received, setReceived] = useState(""),
     [receipt, setReceipt] = useState<PosReceipt | null>(null);
@@ -305,6 +308,13 @@ export default function PosTab() {
         return;
       }
       try {
+        if (
+          parseReturnDraft(localStorage.getItem(returnStorageKey(context.data.actorId))).pending
+        ) {
+          setError("Vérifiez le retour en attente avant de poursuivre.");
+          setView("RETURNS");
+          return;
+        }
         if (parseCashAttempt(localStorage.getItem(cashAttemptKey(context.data.actorId)))) {
           setError("Vérifiez l’opération de caisse en attente avant de poursuivre.");
           setView("REGISTER");
@@ -505,7 +515,7 @@ export default function PosTab() {
           <button
             type="button"
             className="admin-button"
-            aria-pressed={view !== "REGISTER" && (view === "HISTORY" || !context.data?.canSell)}
+            aria-pressed={view === "HISTORY"}
             onClick={() => {
               cancelScan();
               setView("HISTORY");
@@ -525,6 +535,17 @@ export default function PosTab() {
           >
             <Receipt size={17} />
             {t(context.data?.canSell ? "Ma caisse" : "Sessions de caisse")}
+          </button>
+          <button
+            type="button"
+            className="admin-button"
+            aria-pressed={view === "RETURNS"}
+            onClick={() => {
+              cancelScan();
+              setView("RETURNS");
+            }}
+          >
+            {t("Retours et échanges")}
           </button>
         </div>
       </div>
@@ -559,10 +580,26 @@ export default function PosTab() {
           </button>
         </p>
       )}
-      {view === "REGISTER" ? (
+      {view === "RETURNS" ? (
+        <PosReturnsPanel
+          actorId={context.data!.actorId}
+          canReturn={!!context.data?.canReturn}
+          initialReference={returnReference}
+        />
+      ) : view === "REGISTER" ? (
         <PosCashPanel actorId={context.data!.actorId} canSell={!!context.data?.canSell} />
       ) : view === "HISTORY" || !context.data?.canSell ? (
-        <PosHistoryPanel canReadAll={!!context.data?.canReadAll} />
+        <PosHistoryPanel
+          canReadAll={!!context.data?.canReadAll}
+          onReturn={
+            context.data?.canReturn
+              ? (reference) => {
+                  setReturnReference(reference);
+                  setView("RETURNS");
+                }
+              : undefined
+          }
+        />
       ) : !draft ? (
         <p role="status">{t("Chargement du brouillon…")}</p>
       ) : savedReceipt ? (

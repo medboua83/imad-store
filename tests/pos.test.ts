@@ -140,7 +140,7 @@ test("POS access and stored permissions protect catalogue, quotes, sales and rec
   await request(app).post("/api/pos/quote").set(auth(reader)).send({ items: [] }).expect(403);
   await sell({}, randomUUID(), reader).expect(403);
   const ctx = (await call("/context")).body.data;
-  assert.deepEqual(ctx, { actorId: seller.id, canSell: true, canReadAll: false });
+  assert.deepEqual(ctx, { actorId: seller.id, canSell: true, canReturn: false, canReadAll: false });
   assert.equal((await call("/context", reader)).body.data.canReadAll, true);
   assert.equal(await unchanged(), initial);
 });

@@ -6,7 +6,13 @@ import { listPosSales } from "@/lib/pos-api";
 import { useAdminLocale } from "./admin-locale";
 import { posMoney } from "./pos-receipt";
 const emptyFilters = { search: "", cashier: "", from: "", to: "", paymentMethod: "" };
-export function PosHistoryPanel({ canReadAll }: { canReadAll: boolean }) {
+export function PosHistoryPanel({
+  canReadAll,
+  onReturn,
+}: {
+  canReadAll: boolean;
+  onReturn?: (reference: string) => void;
+}) {
   const { t, locale } = useAdminLocale(),
     ar = locale === "ar";
   const [draft, setDraft] = useState(emptyFilters),
@@ -34,7 +40,9 @@ export function PosHistoryPanel({ canReadAll }: { canReadAll: boolean }) {
       <header className="pos-section-heading">
         <div>
           <h2>{t("Ventes magasin")}</h2>
-          <p>{t("Tickets encaissés, distincts des commandes à livrer.")}</p>
+          <p>
+            {t("Ventes brutes encaissées. Les retours et échanges ont leur propre historique.")}
+          </p>
         </div>
         <button
           type="button"
@@ -189,6 +197,15 @@ export function PosHistoryPanel({ canReadAll }: { canReadAll: boolean }) {
                     >
                       {t("Voir le ticket")}
                     </Link>
+                    {onReturn && (
+                      <button
+                        type="button"
+                        className="admin-button"
+                        onClick={() => onReturn("POS-" + s.id.toUpperCase())}
+                      >
+                        {t("Retours et échanges")}
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

@@ -1,3 +1,7 @@
+## Caisse — retours et échanges en préparation
+
+Retours partiels, remboursement espèces, échange et état revendable explicite ; quantités et stock atomiques, reprise sans doublon, comptage de la session courante. Validation isolée et publication suivies dans outputs/pos-returns-exchanges-20261123 sur DATA.
+
 ## Sessions de caisse — 23 novembre 2026
 
 - [x] Préparer ouverture/comptage/clôture personnels, récapitulatifs et écart motivé.

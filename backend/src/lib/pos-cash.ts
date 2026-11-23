@@ -107,7 +107,26 @@ export async function cashSessionDTO(
     cardCents = safe(c?.cardCents ?? card?._sum.totalCents ?? 0);
   const cashCount = c?.cashCount ?? cash?._count ?? 0,
     cardCount = c?.cardCount ?? card?._count ?? 0;
-  const expectedCents = safe(c?.expectedCents ?? session.openingCents + cashCents);
+  const adjustments = c
+    ? []
+    : await tx.posAdjustment.groupBy({
+        by: ["paymentMethod"],
+        where: { cashSessionId: session.id },
+        _sum: { netCents: true },
+        _count: true,
+      });
+  const adjustmentCents = safe(
+    c?.adjustmentCents ?? adjustments.find((r) => r.paymentMethod === "CASH")?._sum.netCents ?? 0,
+  );
+  const cardAdjustmentCents = safe(
+    c?.cardAdjustmentCents ??
+      adjustments.find((r) => r.paymentMethod === "CARD_TERMINAL")?._sum.netCents ??
+      0,
+  );
+  const adjustmentCount = c?.adjustmentCount ?? adjustments.reduce((n, r) => n + r._count, 0);
+  const expectedCents = safe(
+    c?.expectedCents ?? session.openingCents + cashCents + adjustmentCents,
+  );
   return {
     id: session.id,
     reference: "CAISSE-" + session.id.toUpperCase(),
@@ -121,6 +140,9 @@ export async function cashSessionDTO(
     cashCount,
     cardCount,
     expectedCents,
+    adjustmentCents,
+    cardAdjustmentCents,
+    adjustmentCount,
     balanceHash: hash({
       id: session.id,
       openingCents: session.openingCents,
@@ -128,6 +150,7 @@ export async function cashSessionDTO(
       cardCents,
       cashCount,
       cardCount,
+      ...(adjustmentCount ? { adjustmentCents, cardAdjustmentCents, adjustmentCount } : {}),
     }),
     closing: c
       ? {
@@ -227,7 +250,7 @@ export async function closeCashSession(actor: Actor, key: string, raw: unknown) 
     const summary = await cashSessionDTO(tx, session);
     if (summary.balanceHash !== body.balanceHash)
       throw new AppError(
-        "Des ventes ont été ajoutées. Recomptez la caisse avant de clôturer.",
+        "Des opérations ont été ajoutées. Recomptez la caisse avant de clôturer.",
         409,
       );
     const difference = safe(body.countedCents - summary.expectedCents);
@@ -243,6 +266,9 @@ export async function closeCashSession(actor: Actor, key: string, raw: unknown) 
         cardCents: BigInt(summary.cardCents),
         cashCount: summary.cashCount,
         cardCount: summary.cardCount,
+        adjustmentCents: BigInt(summary.adjustmentCents),
+        cardAdjustmentCents: BigInt(summary.cardAdjustmentCents),
+        adjustmentCount: summary.adjustmentCount,
         expectedCents: BigInt(summary.expectedCents),
         differenceCents: BigInt(difference),
         note: body.note,

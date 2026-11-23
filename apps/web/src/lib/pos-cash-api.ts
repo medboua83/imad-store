@@ -11,6 +11,9 @@ export type CashSession = {
   cardCents: number;
   cashCount: number;
   cardCount: number;
+  adjustmentCents?: number;
+  cardAdjustmentCents?: number;
+  adjustmentCount?: number;
   expectedCents: number;
   balanceHash: string;
   closing: null | {

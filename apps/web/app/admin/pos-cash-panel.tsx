@@ -18,6 +18,7 @@ import {
   parseCashAttempt,
   type CashAttempt,
 } from "./pos-cash-draft";
+import { parseReturnDraft, returnStorageKey } from "./pos-return-draft";
 import { posMoney } from "./pos-receipt";
 class CashUiError extends Error {}
 const issue = (e: unknown) =>
@@ -135,6 +136,8 @@ export function PosCashPanel({ actorId, canSell }: { actorId: string; canSell: b
             await confirmed(r.data, attempt);
             return;
           }
+          if (parseReturnDraft(localStorage.getItem(returnStorageKey(actorId))).pending)
+            throw new CashUiError("Vérifiez le retour en attente avant de gérer la caisse.");
           const draft = parsePosDraft(localStorage.getItem("imad-pos-v1:" + actorId));
           if (draft.pending)
             throw new CashUiError("Vérifiez l’encaissement en attente avant de gérer la caisse.");
@@ -216,6 +219,8 @@ export function PosCashPanel({ actorId, canSell }: { actorId: string; canSell: b
   async function prepare() {
     setError("");
     try {
+      if (parseReturnDraft(localStorage.getItem(returnStorageKey(actorId))).pending)
+        throw new CashUiError("Vérifiez le retour en attente avant de gérer la caisse.");
       const d = parsePosDraft(localStorage.getItem("imad-pos-v1:" + actorId));
       if (d.pending)
         throw new CashUiError("Vérifiez l’encaissement en attente avant de gérer la caisse.");
@@ -310,13 +315,27 @@ export function PosCashPanel({ actorId, canSell }: { actorId: string; canSell: b
                 </span>
                 <strong>{posMoney(active.cardCents, ar)}</strong>
               </div>
+              {!!active.adjustmentCount && (
+                <>
+                  <div>
+                    <span>{t("Retours et échanges — espèces")}</span>
+                    <strong>{posMoney(active.adjustmentCents ?? 0, ar)}</strong>
+                  </div>
+                  <div>
+                    <span>{t("Compléments d’échange par TPE")}</span>
+                    <strong>{posMoney(active.cardAdjustmentCents ?? 0, ar)}</strong>
+                  </div>
+                </>
+              )}
               <div>
                 <span>{t("Espèces attendues")}</span>
                 <strong>{posMoney(active.expectedCents, ar)}</strong>
               </div>
             </div>
             <p className="admin-muted">
-              {t("Espèces attendues = fond d’ouverture + ventes en espèces, après monnaie rendue.")}
+              {t(
+                "Espèces attendues = fond + ventes + échanges en espèces − remboursements, après monnaie rendue.",
+              )}
             </p>
             {!preview ? (
               <button
@@ -337,7 +356,7 @@ export function PosCashPanel({ actorId, canSell }: { actorId: string; canSell: b
               >
                 {changed && (
                   <p role="alert" className="admin-alert">
-                    {t("Des ventes ont été ajoutées. Recomptez la caisse avant de clôturer.")}{" "}
+                    {t("Des opérations ont été ajoutées. Recomptez la caisse avant de clôturer.")}{" "}
                     <button type="button" disabled={disabled} onClick={() => void prepare()}>
                       {t("Actualiser le comptage")}
                     </button>

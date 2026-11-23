@@ -41,6 +41,7 @@ const cents = (amount: number) => {
 export async function quotePos(
   tx: Prisma.TransactionClient,
   requested: z.infer<typeof posItemsSchema>,
+  stockCredits: ReadonlyMap<string, number> = new Map(),
 ) {
   const items = normalizePosItems(requested);
   const variants = await tx.productVariant.findMany({
@@ -51,7 +52,7 @@ export async function quotePos(
     const variant = variants.find((v) => v.id === item.variantId);
     if (!variant || variant.product.status !== "ACTIVE" || isAmbiguousSize(variant.size))
       throw new AppError("Un article n’est plus disponible. Retirez-le du panier.", 409);
-    if (variant.stock < item.quantity)
+    if (variant.stock + (stockCredits.get(variant.id) ?? 0) < item.quantity)
       throw new AppError("Stock insuffisant. Modifiez les quantités ou retirez l’article.", 409);
     return {
       ...item,

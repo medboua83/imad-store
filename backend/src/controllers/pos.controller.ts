@@ -21,6 +21,7 @@ export async function posContext(req: AuthRequest, res: Response) {
     data: {
       actorId: req.user!.id,
       canSell: canAdmin(req.user!, "pos.sell"),
+      canReturn: canAdmin(req.user!, "pos.sell") && canAdmin(req.user!, "pos.returns"),
       canReadAll: canAdmin(req.user!, "pos.read"),
     },
   });
