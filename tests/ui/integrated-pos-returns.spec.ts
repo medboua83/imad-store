@@ -192,7 +192,6 @@ async function returnsFixture(page: Page, canReturn = true, locale = "fr") {
     }
     return route.fallback();
   });
-  page.on("dialog", (d) => void d.accept());
   await page.goto("/admin?tab=pos");
   await page
     .locator(".pos-view-switch")
@@ -227,7 +226,9 @@ for (const viewport of [
       const f = await returnsFixture(page);
       await choose(page, "");
       await page.getByRole("button", { name: "Vérifier le total du retour", exact: true }).tap();
-      await expect(page.getByRole("alert")).toContainText("Indiquez si chaque article");
+      await expect(page.locator(".pos-returns").getByRole("alert")).toContainText(
+        "Indiquez si chaque article",
+      );
       expect(f.state.quotes).toBe(0);
       await page.getByLabel("État de l’article — TEST-NOIR-M", { exact: true }).selectOption("yes");
       await review(page);
