@@ -1,9 +1,15 @@
+## Saisie caisse — 23 novembre 2026
+
+- [x] Préparer référence exacte indépendante des pages et gestion des réponses tardives.
+- [x] Préparer montants arabes/persans, réinitialisation d’une vente et revue du panier partagé.
+- [ ] Terminer les recettes, vérifier GitHub et publier sans modification des ventes existantes.
+
 ## Caisse native — 23 novembre 2026
 
 - [x] Préparer ventes emportées, variantes, offres du catalogue et stock transactionnel partagé.
 - [x] Préparer espèces, monnaie, enregistrement d’un paiement TPE externe, tickets et historique par caissier.
 - [x] Ajouter permissions dédiées, brouillon et reprise idempotente, sans CRM ni transporteur.
-- [ ] Terminer recettes mobile/ordinateur, contrôles GitHub, sauvegarde et publication.
+- [x] PR162 publiée et vérifiée : 437 tests navigateur / 201 serveur, migration et parcours sur clone privé, intégrité en production.
 - [ ] Phase ultérieure : retours, échanges et clôture de caisse, à cadrer séparément.
 
 ## En cours - equipe, permissions et Gmail SMTP (22 novembre 2026)

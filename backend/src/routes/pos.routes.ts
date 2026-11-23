@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import {
   posContext,
   posCatalog,
+  posScan,
   posQuote,
   posComplete,
   posHistory,
@@ -23,6 +24,7 @@ posRoutes.use(
 );
 posRoutes.get("/context", posContext);
 posRoutes.get("/catalog", posCatalog);
+posRoutes.get("/scan", requirePermission("pos.sell"), posScan);
 posRoutes.post("/quote", requirePermission("pos.sell"), posQuote);
 posRoutes.get("/sales", posHistory);
 posRoutes.get("/sales/by-key/:key", posRecover);

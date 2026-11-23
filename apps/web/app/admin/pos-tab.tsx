@@ -8,6 +8,7 @@ import { ProductPhoto } from "@/components/store/ProductPhoto";
 import {
   getPosContext,
   getPosCatalog,
+  scanPosVariant,
   quotePosCart,
   recordPosSale,
   recoverPosSale,
@@ -22,6 +23,7 @@ import {
   storePosDraft,
   assertPosReceipt,
   cashInputCents,
+  samePosItems,
   type PosDraft,
   type PendingSale,
 } from "./pos-draft";
@@ -52,8 +54,11 @@ export default function PosTab() {
   const [busy, setBusy] = useState(false),
     lock = useRef(false),
     scanLock = useRef(false),
+    scanVersion = useRef(0),
+    scanController = useRef<AbortController | null>(null),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
+  const [scanning, setScanning] = useState(false);
   const [method, setMethod] = useState<"CASH" | "CARD_TERMINAL">("CASH"),
     [received, setReceived] = useState(""),
     [receipt, setReceipt] = useState<PosReceipt | null>(null);
@@ -100,6 +105,21 @@ export default function PosTab() {
       window.removeEventListener("storage", sync);
     };
   }, [storageKey]);
+  useEffect(
+    () => () => {
+      scanVersion.current++;
+      scanController.current?.abort();
+      scanController.current = null;
+    },
+    [],
+  );
+  function cancelScan() {
+    scanVersion.current++;
+    scanController.current?.abort();
+    scanController.current = null;
+    scanLock.current = false;
+    setScanning(false);
+  }
   const frozen =
     busy || !!draft?.pending || !!draft?.receiptId || !!storageError || !context.data?.canSell;
   const catalog = useQuery({
@@ -138,27 +158,33 @@ export default function PosTab() {
     setDraft(next);
   }
   async function editCart(change: (previous: PosDraft) => PosDraft) {
-    if (frozen || !draftRef.current) return;
+    if (frozen || !draftRef.current) return false;
     try {
       setError("");
       setMessage("");
-      await withDraftLock(async () => {
-        const latest = parsePosDraft(localStorage.getItem(storageKey!));
-        if (latest.pending || latest.receiptId) {
-          draftRef.current = latest;
-          setDraft(latest);
-          setReceipt(null);
-          return;
-        }
-        retain(change(latest));
-      });
+      return (
+        (await withDraftLock(async () => {
+          const latest = parsePosDraft(localStorage.getItem(storageKey!));
+          if (latest.pending || latest.receiptId) {
+            draftRef.current = latest;
+            setDraft(latest);
+            setReceipt(null);
+            return false;
+          }
+          const next = change(latest);
+          if (next === latest) return false;
+          retain(next);
+          return true;
+        })) === true
+      );
     } catch {
       setStorageError("Impossible de conserver le brouillon. Vérifiez le stockage du navigateur.");
     }
   }
-  async function add(v: PosVariant) {
-    if (!v.available || frozen) return;
-    await editCart((previous) => {
+  async function add(v: PosVariant, mayAdd = () => true) {
+    if (!v.available || frozen) return false;
+    return await editCart((previous) => {
+      if (!mayAdd()) return previous;
       const found = previous.cart.find((i) => i.variantId === v.id),
         qty = (found?.quantity ?? 0) + 1;
       if (qty > v.stock || qty > 1000 || (!found && previous.cart.length >= 100)) {
@@ -179,24 +205,47 @@ export default function PosTab() {
   async function scan(e: React.FormEvent) {
     e.preventDefault();
     if (frozen || lock.current || scanLock.current || !search.trim()) return;
+    cancelScan();
+    setError("");
+    setMessage("");
+    const version = scanVersion.current,
+      controller = new AbortController(),
+      scanned = search.trim();
+    scanController.current = controller;
     scanLock.current = true;
-    const scanned = search.trim();
+    setScanning(true);
+    const current = () => version === scanVersion.current && !controller.signal.aborted;
     try {
-      const result = await getPosCatalog(scanned, 1),
-        matches = result.data.filter((v) => v.sku === scanned);
-      if (matches.length === 1 && matches[0].available) {
-        await add(matches[0]);
-        setSearch("");
-        setMessage("Article ajouté au panier.");
-      } else {
-        setDebounced(search.trim());
+      if (scanned.length > 100) {
+        setDebounced(scanned);
         setPage(1);
         setMessage("Choisissez la variante dans les résultats.");
+        return;
+      }
+      const variant = await scanPosVariant(scanned, controller.signal);
+      if (!current()) return;
+      if (!variant.available) {
+        setMessage("Cette référence est actuellement indisponible.");
+        return;
+      }
+      const added = await add(variant, current);
+      if (added && current()) {
+        setSearch("");
+        setMessage("Article ajouté au panier.");
       }
     } catch (e) {
-      setError(problem(e));
+      if (!current()) return;
+      if (isAxiosError(e) && e.response?.status === 404) {
+        setDebounced(scanned);
+        setPage(1);
+        setMessage("Choisissez la variante dans les résultats.");
+      } else setError(problem(e));
     } finally {
-      scanLock.current = false;
+      if (scanController.current === controller) {
+        scanController.current = null;
+        scanLock.current = false;
+        setScanning(false);
+      }
     }
   }
   function accepted(sale: PosReceipt, pending: PendingSale) {
@@ -210,7 +259,7 @@ export default function PosTab() {
     void cache.invalidateQueries({ queryKey: ["pos-catalog"] });
     void cache.invalidateQueries({ queryKey: ["pos-history"] });
   }
-  async function withDraftLock(work: () => Promise<void>) {
+  async function withDraftLock<T>(work: () => Promise<T>): Promise<T | undefined> {
     if (!storageKey) return;
     if (!navigator.locks) {
       setError(
@@ -218,14 +267,14 @@ export default function PosTab() {
       );
       return;
     }
-    await navigator.locks.request(storageKey, { ifAvailable: true }, async (tabLock) => {
+    return await navigator.locks.request(storageKey, { ifAvailable: true }, async (tabLock) => {
       if (!tabLock) {
         setError(
           "Un encaissement est déjà en cours dans une autre fenêtre. Vérifiez son résultat.",
         );
         return;
       }
-      await work();
+      return await work();
     });
   }
   async function submit(pending?: PendingSale) {
@@ -243,6 +292,10 @@ export default function PosTab() {
         quote.isError
       )
         return;
+      if (!samePosItems(draftRef.current.cart, quote.data.lines)) {
+        setError("Le panier a changé. Vérifiez le nouveau total avant d’encaisser.");
+        return;
+      }
       const amount = method === "CARD_TERMINAL" ? quote.data.totalCents : cashInputCents(received);
       if (amount === null || amount < quote.data.totalCents) {
         setError("Vérifiez le montant encaissé.");
@@ -265,6 +318,13 @@ export default function PosTab() {
           setDraft(latest);
           setReceipt(null);
           setError("Une autre fenêtre a déjà commencé cet encaissement. Vérifiez son résultat.");
+          return;
+        }
+        if (!samePosItems(latest.cart, quote.data.lines)) {
+          draftRef.current = latest;
+          setDraft(latest);
+          setReceived("");
+          setError("Le panier a changé. Vérifiez le nouveau total avant d’encaisser.");
           return;
         }
       } catch {
@@ -358,6 +418,11 @@ export default function PosTab() {
           return;
         }
         retain(emptyPosDraft());
+        cancelScan();
+        setSearch("");
+        setDebounced("");
+        setPage(1);
+        setMethod("CASH");
         setReceipt(null);
         setReceived("");
         setError("");
@@ -394,7 +459,10 @@ export default function PosTab() {
               type="button"
               className="admin-button"
               aria-pressed={view === "SALE"}
-              onClick={() => setView("SALE")}
+              onClick={() => {
+                cancelScan();
+                setView("SALE");
+              }}
             >
               <ShoppingCart size={17} />
               {t("Encaisser")}
@@ -404,7 +472,10 @@ export default function PosTab() {
             type="button"
             className="admin-button"
             aria-pressed={view === "HISTORY" || !context.data?.canSell}
-            onClick={() => setView("HISTORY")}
+            onClick={() => {
+              cancelScan();
+              setView("HISTORY");
+            }}
           >
             <Receipt size={17} />
             {t("Historique magasin")}
@@ -518,13 +589,16 @@ export default function PosTab() {
                 <input
                   id="pos-search"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    cancelScan();
+                    setSearch(e.target.value);
+                  }}
                   placeholder={t("Rechercher ou scanner une référence")}
                   maxLength={120}
                   autoComplete="off"
                 />
-                <button type="submit" className="admin-button" disabled={frozen}>
-                  {t("Rechercher")}
+                <button type="submit" className="admin-button" disabled={frozen || scanning}>
+                  {t(scanning ? "Recherche…" : "Rechercher")}
                 </button>
               </div>
               <small>{t("Lecteur : scannez une référence SKU puis Entrée.")}</small>

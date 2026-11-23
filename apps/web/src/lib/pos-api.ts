@@ -78,6 +78,8 @@ export const getPosCatalog = async (search: string, page: number, signal?: Abort
       { params: { search, page }, signal },
     )
   ).data;
+export const scanPosVariant = async (sku: string, signal?: AbortSignal) =>
+  (await api.get<{ data: PosVariant }>("/pos/scan", { params: { sku }, signal })).data.data;
 export const quotePosCart = async (items: PosItem[], signal?: AbortSignal) =>
   (await api.post<{ data: PosQuote }>("/pos/quote", { items }, { signal })).data.data;
 export const recordPosSale = async (key: string, body: PosBody) => {

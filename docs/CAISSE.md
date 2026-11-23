@@ -6,11 +6,11 @@ La rubrique **Caisse** enregistre les ventes emportées avec le catalogue et le 
 
 1. Ouvrir Caisse et rechercher un nom ou une référence SKU. Chaque carte correspond à une variante : couleur, taille et stock disponible.
 2. Ajouter les articles. Les offres par quantité du produit s’appliquent aussi en caisse ; le serveur vérifie le prix final et le stock avant validation.
-3. Choisir Espèces et saisir le montant reçu : la monnaie à rendre s’affiche. Pour Carte — TPE externe, effectuer d’abord le paiement sur le terminal habituel, puis confirmer son succès dans la caisse. Le site ne débite pas de carte.
+3. Choisir Espèces et saisir le montant reçu : la monnaie à rendre s’affiche. Les chiffres latins, arabes et persans sont acceptés, ainsi que le séparateur décimal point, virgule ou « ٫ » ; ne pas saisir de séparateur de milliers. Pour Carte — TPE externe, effectuer d’abord le paiement sur le terminal habituel, puis confirmer son succès dans la caisse. Le site ne débite pas de carte.
 4. Valider une seule fois, puis imprimer le ticket ou l’enregistrer en PDF depuis la fenêtre d’impression du navigateur. Le format papier et l’imprimante restent à choisir dans cette fenêtre.
-5. Cliquer sur Nouvelle vente. Les anciens tickets restent accessibles depuis Historique magasin, par référence et, pour un responsable, par caissier.
+5. Cliquer sur Nouvelle vente : la recherche et le montant sont effacés, et le mode Espèces est rétabli. Les anciens tickets restent accessibles depuis Historique magasin, par référence et, pour un responsable, par caissier.
 
-Le lecteur doit saisir une référence SKU existante puis Entrée. Cette version ne crée pas de correspondances EAN distinctes. Les imprimantes et lecteurs physiques doivent être vérifiés avec le matériel effectivement utilisé ; les tests navigateur ne certifient pas un périphérique particulier.
+Le lecteur doit saisir une référence SKU exacte existante puis Entrée. La recherche de ce code porte sur toutes les variantes actives, indépendamment des pages du catalogue. Une saisie modifiée pendant la recherche annule le résultat précédent. Cette version ne crée pas de correspondances EAN distinctes. Les imprimantes et lecteurs physiques doivent être vérifiés avec le matériel effectivement utilisé ; les tests navigateur ne certifient pas un périphérique particulier.
 
 ## Accès
 

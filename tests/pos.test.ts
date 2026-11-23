@@ -330,6 +330,44 @@ test("Full-history pagination and cashier filters never expose another cashier t
   assert.equal(await unchanged(), initial);
 });
 
+test("Exact SKU scan finds a variant outside the first 24 results, and excludes drafts and unauthorized readers", async () => {
+  const row = await product(3),
+    target = row.variants[0];
+  const extra = Array.from({ length: 28 }, (_, i) => ({
+    id: (i + 1).toString(16).padStart(24, "0"),
+    productId: row.id,
+    sku: target.sku + "-" + i,
+    size: "M",
+    color: "#000000",
+    colorNameFr: "Noir",
+    colorNameAr: "أسود",
+    colorNameEn: "Black",
+    stock: 1,
+  }));
+  await p.productVariant.createMany({ data: extra });
+  const before = await unchanged(),
+    count = await p.posSale.count();
+  const result = await call("/scan?sku=" + encodeURIComponent(target.sku)).expect(200);
+  assert.equal(result.body.data.id, target.id);
+  assert.equal(result.body.data.available, true);
+  const catalogue = await call("/catalog?search=" + encodeURIComponent(target.sku));
+  assert(catalogue.body.total > 24);
+  assert(!catalogue.body.data.some((v: any) => v.id === target.id));
+  await call("/scan?sku=" + encodeURIComponent(target.sku), reader).expect(403);
+  await call("/scan?sku=" + encodeURIComponent(target.sku), noAccess).expect(403);
+  await call("/scan?sku=missing").expect(404);
+  await call("/scan?sku=" + encodeURIComponent(target.sku) + "&page=1").expect(400);
+  await p.productVariant.update({ where: { id: target.id }, data: { stock: 0 } });
+  assert.equal(
+    (await call("/scan?sku=" + encodeURIComponent(target.sku))).body.data.available,
+    false,
+  );
+  await p.product.update({ where: { id: row.id }, data: { status: "DRAFT" } });
+  await call("/scan?sku=" + encodeURIComponent(target.sku)).expect(404);
+  assert.equal(await p.posSale.count(), count);
+  assert.equal(await unchanged(), before);
+});
+
 test("Removing sell access or changing the authentication version invalidates settlement at the server", async () => {
   const row = await product(1),
     q = await quote(items(row.variants[0])),

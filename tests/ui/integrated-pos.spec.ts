@@ -10,7 +10,7 @@ const token = (permissions = ["pos.sell"], role = "STAFF") =>
 async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
   const calls: { path: string; method: string; body: any; key: string | undefined }[] = [],
     receipts = new Map<string, any>();
-  const state = { networkAfterCommit: false, failPrice: false, delay: 0 };
+  const state = { networkAfterCommit: false, failPrice: false, delay: 0, scanDelay: 0 };
   const variants = [
     {
       id: v1,
@@ -92,6 +92,18 @@ async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
           },
         },
       });
+    if (path === "/api/pos/scan") {
+      if (state.scanDelay) await new Promise((r) => setTimeout(r, state.scanDelay));
+      const data = variants.find((v) => v.sku === url.searchParams.get("sku"));
+      try {
+        return await route.fulfill({
+          status: data ? 200 : 404,
+          json: data ? { success: true, data } : { error: "Référence introuvable." },
+        });
+      } catch {
+        return;
+      }
+    }
     if (path === "/api/pos/catalog") {
       const s = url.searchParams.get("search")?.toLowerCase();
       const data = s
@@ -116,8 +128,8 @@ async function fixture(page: Page, permissions = ["pos.sell"], locale = "fr") {
       let sale = receipts.get(key!);
       if (!sale) {
         sale = {
-          id: "abcdefabcdefabcdefabcde1",
-          reference: "POS-ABCDEFABCDEFABCDEFABCDE1",
+          id: "abcdefabcdefabcdefabcde" + (receipts.size + 1).toString(16),
+          reference: "POS-ABCDEFABCDEFABCDEFABCDE" + (receipts.size + 1).toString(16),
           currency: "MAD",
           cashierId: actor,
           cashierName: "Caissier Test",
@@ -366,4 +378,87 @@ for (const width of [390, 1440])
     await page.goto("/admin/pos/receipt/abcdefabcdefabcdefabcde1");
     await expect(page.locator(".pos-print-page")).toHaveAttribute("dir", "rtl");
     await expect(page.locator(".pos-ticket")).toHaveAttribute("dir", "rtl");
+  });
+
+test("A slow scan cannot add an old reference or erase the next search", async ({ page }) => {
+  const f = await fixture(page);
+  f.state.scanDelay = 500;
+  await page.goto("/admin?tab=pos");
+  const search = page.getByLabel("Nom ou référence SKU");
+  await search.fill("TEST-NOIR-M");
+  await search.press("Enter");
+  await expect.poll(() => f.calls.filter((c) => c.path === "/api/pos/scan").length).toBe(1);
+  await search.fill("Abaya");
+  await page.waitForTimeout(600);
+  await expect(search).toHaveValue("Abaya");
+  await expect(cart(page)).toContainText("Ajoutez un article pour commencer.");
+  expect(sales(f)).toHaveLength(0);
+});
+test("A successful scan adds exactly one piece, but a stock-limited or unavailable reference never claims success", async ({
+  page,
+}) => {
+  const f = await fixture(page);
+  await page.goto("/admin?tab=pos");
+  const search = page.getByLabel("Nom ou référence SKU");
+  for (let i = 0; i < 5; i++) await add(page).click();
+  await expect(cart(page).locator(".pos-item-actions>span")).toHaveText("5");
+  await search.fill("TEST-NOIR-M");
+  await search.press("Enter");
+  await expect(
+    page.getByText("Quantité maximale disponible atteinte.", { exact: true }),
+  ).toBeVisible();
+  await expect(search).toHaveValue("TEST-NOIR-M");
+  await search.fill("TEST-MARRON-L");
+  await search.press("Enter");
+  await expect(page.getByText("Cette référence est actuellement indisponible.")).toBeVisible();
+  await expect(cart(page).locator(".pos-item-actions>span")).toHaveText("5");
+  expect(sales(f)).toHaveLength(0);
+});
+test("A changed shared cart is reviewed before any payment is recorded", async ({ page }) => {
+  const f = await fixture(page);
+  await page.goto("/admin?tab=pos");
+  await add(page).click();
+  await cart(page).getByLabel("Montant reçu (MAD)").fill("500");
+  await expect(cart(page).getByRole("button", { name: "Valider l’encaissement" })).toBeEnabled();
+  await page.evaluate(() => {
+    const key = "imad-pos-v1:123456789012345678901234",
+      d = JSON.parse(localStorage.getItem(key)!);
+    d.cart[0].quantity = 2;
+    localStorage.setItem(key, JSON.stringify(d));
+  });
+  await cart(page).getByRole("button", { name: "Valider l’encaissement" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Le panier a changé" })).toBeVisible();
+  await expect(cart(page).locator(".pos-cart-total")).toContainText("400,00");
+  await expect(cart(page).getByLabel("Montant reçu (MAD)")).toHaveValue("");
+  expect(sales(f)).toHaveLength(0);
+});
+for (const width of [390, 1440])
+  test(`Two successive sales use distinct references and reset payment and search at ${width}px`, async ({
+    page,
+  }, info) => {
+    await page.setViewportSize({ width, height: 900 });
+    const f = await fixture(page);
+    await page.goto("/admin?tab=pos");
+    await page.getByLabel("Nom ou référence SKU").fill("Abaya");
+    await add(page).click();
+    await cart(page).getByLabel("Mode de paiement").selectOption("CARD_TERMINAL");
+    await cart(page).getByRole("button", { name: "Valider l’encaissement" }).click();
+    await expect(page.getByRole("heading", { name: "Vente encaissée" })).toBeVisible();
+    await page.getByRole("button", { name: "Nouvelle vente", exact: true }).click();
+    await expect(page.getByLabel("Nom ou référence SKU")).toHaveValue("");
+    await add(page).click();
+    await expect(cart(page).getByLabel("Mode de paiement")).toHaveValue("CASH");
+    await cart(page).getByLabel("Montant reçu (MAD)").fill("٢٥٠٫٥٠");
+    await expect(cart(page)).toContainText("20,50");
+    await cart(page).getByRole("button", { name: "Valider l’encaissement" }).click();
+    await expect(page.getByRole("heading", { name: "Vente encaissée" })).toBeVisible();
+    expect(sales(f)).toHaveLength(2);
+    expect(sales(f)[0].key).not.toBe(sales(f)[1].key);
+    expect(sales(f)[1].body.receivedCents).toBe(25050);
+    expect(sales(f)[1].body.paymentMethod).toBe("CASH");
+    expect(f.receipts.size).toBe(2);
+    await page.screenshot({ path: info.outputPath("successive-sales.png"), fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
   });
