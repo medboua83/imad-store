@@ -498,7 +498,7 @@ export default function PosTab() {
         </p>
       )}
       {view === "HISTORY" || !context.data?.canSell ? (
-        <PosHistoryPanel />
+        <PosHistoryPanel canReadAll={!!context.data?.canReadAll} />
       ) : !draft ? (
         <p role="status">{t("Chargement du brouillon…")}</p>
       ) : savedReceipt ? (

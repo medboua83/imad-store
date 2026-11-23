@@ -1,3 +1,11 @@
+## Historique de caisse filtrable — 23 novembre 2026
+
+Candidat : dates de début/fin selon Africa/Casablanca et mode de paiement combinés à la référence et au caissier. Les filtres s’appliquent explicitement et reviennent à la première page ; Réinitialiser les filtres restaure la vue complète autorisée. Référence POS complète visible et lisible en français/arabe, nombre de ventes correspondant aux filtres, saisie conservée après erreur réseau. Une période inversée est signalée avant toute requête et refusée côté serveur ; dates inexistantes et modes inconnus sont refusés. Le résumé du jour intersecte la période choisie.
+
+Les collaborateurs restent limités à leurs propres tickets, y compris avec des paramètres modifiés manuellement. Lecture seule : aucun changement du registre, des paiements, du stock, des commandes web, du transporteur ou du CRM. Pas de migration ni nouvelle dépendance. Recettes et publication sur DATA : outputs/pos-history-filters-20261123.
+
+La PR163 précédente est fusionnée et publiée : source 47f7762e99a91ca81ec6dd18ab706dc19bb0b454, fusion ab7b34910ce72830539a266d90611450f1181a41 ; 442 tests navigateur / 204 tests serveur réussis, intégrité et cinq tests ciblés de l’interface déployée vérifiés sans vente réelle.
+
 ## Fiabilité de la saisie en caisse — 23 novembre 2026
 
 Candidat : recherche d’un SKU exact sur toutes les variantes actives, indépendante de la pagination ; annulation des réponses tardives lors d’un changement de recherche ; aucun message de succès si l’article n’a pas été ajouté. Montants français, arabes et persans convertis en centimes sans accepter silencieusement des séparateurs de milliers ambigus. Nouvelle vente : panier, recherche, montant et mode de paiement remis à leur état initial (espèces).

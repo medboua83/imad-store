@@ -368,6 +368,85 @@ test("Exact SKU scan finds a variant outside the first 24 results, and excludes 
   assert.equal(await unchanged(), before);
 });
 
+test("Receipt history dates use Moroccan day boundaries, combine payment and cashier scope, and remain read-only", async () => {
+  const make = (u: any, createdAt: string, paymentMethod = "CASH") =>
+    p.posSale.create({
+      data: {
+        idempotencyKey: randomUUID(),
+        requestFingerprint: "history-fixture",
+        cashierId: u.id,
+        cashierName: u.firstName,
+        paymentMethod,
+        totalCents: 100,
+        receivedCents: 100,
+        changeCents: 0,
+        savingsCents: 0,
+        createdAt: new Date(createdAt),
+      },
+    });
+  await make(seller, "2020-01-02T22:59:59.999Z");
+  const first = await make(seller, "2020-01-02T23:00:00.000Z", "CARD_TERMINAL");
+  const last = await make(seller, "2020-01-03T22:59:59.999Z");
+  await make(seller, "2020-01-03T23:00:00.000Z");
+  const foreign = await make(other, "2020-01-03T12:00:00Z", "CARD_TERMINAL");
+  const before = JSON.stringify(await p.posSale.findMany({ orderBy: { id: "asc" } }));
+  const stock = JSON.stringify(await p.productVariant.findMany({ orderBy: { id: "asc" } }));
+  const own = (await call("/sales?from=2020-01-03&to=2020-01-03")).body;
+  assert.deepEqual(
+    own.data.map((r: any) => r.id),
+    [last.id, first.id],
+  );
+  assert.equal(own.total, 2);
+  assert.equal(own.today.count, 0); // Today's summary must intersect the requested period.
+  const card = (await call("/sales?from=2020-01-03&to=2020-01-03&paymentMethod=CARD_TERMINAL"))
+    .body;
+  assert.deepEqual(
+    card.data.map((r: any) => r.id),
+    [first.id],
+  );
+  const all = (
+    await call("/sales?from=2020-01-03&to=2020-01-03&paymentMethod=CARD_TERMINAL", reader)
+  ).body;
+  assert.equal(all.total, 2);
+  const filtered = (
+    await call("/sales?from=2020-01-03&to=2020-01-03&cashierId=" + other.id, reader)
+  ).body;
+  assert.deepEqual(
+    filtered.data.map((r: any) => r.id),
+    [foreign.id],
+  );
+  assert.equal(
+    (await call("/sales?from=2020-01-04")).body.data.some((r: any) => r.id === last.id),
+    false,
+  );
+  assert.equal((await call("/sales?to=2019-12-31")).body.total, 0);
+  const search = (await call("/sales?search=%23POS-" + first.id.toUpperCase())).body;
+  assert.deepEqual(
+    search.data.map((r: any) => r.id),
+    [first.id],
+  );
+  assert.equal((await call("/sales?search=%23POS-" + foreign.id.toUpperCase())).body.total, 0);
+  await call("/sales?from=2020-01-03&cashierId=" + other.id).expect(403);
+  assert.equal(JSON.stringify(await p.posSale.findMany({ orderBy: { id: "asc" } })), before);
+  assert.equal(JSON.stringify(await p.productVariant.findMany({ orderBy: { id: "asc" } })), stock);
+  assert.equal(await unchanged(), initial);
+});
+
+test("Invalid receipt history dates and payment methods are rejected instead of widening the query", async () => {
+  for (const params of [
+    "from=2026-02-30",
+    "to=0000-01-01",
+    "from=2026-13-01",
+    "from=2026-03-03&to=2026-03-02",
+    "from=2026-2-03",
+    "paymentMethod=PAID",
+    "paymentMethod=CASH&paymentMethod=CARD_TERMINAL",
+    "from=2026-01-01&from=2026-01-02",
+  ])
+    await call("/sales?" + params, reader).expect(400);
+  assert.equal(await unchanged(), initial);
+});
+
 test("Removing sell access or changing the authentication version invalidates settlement at the server", async () => {
   const row = await product(1),
     q = await quote(items(row.variants[0])),

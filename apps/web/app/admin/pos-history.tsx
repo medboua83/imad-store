@@ -5,18 +5,29 @@ import Link from "next/link";
 import { listPosSales } from "@/lib/pos-api";
 import { useAdminLocale } from "./admin-locale";
 import { posMoney } from "./pos-receipt";
-export function PosHistoryPanel() {
+const emptyFilters = { search: "", cashier: "", from: "", to: "", paymentMethod: "" };
+export function PosHistoryPanel({ canReadAll }: { canReadAll: boolean }) {
   const { t, locale } = useAdminLocale(),
     ar = locale === "ar";
-  const [search, setSearch] = useState(""),
-    [cashier, setCashier] = useState(""),
-    [page, setPage] = useState(1);
+  const [draft, setDraft] = useState(emptyFilters),
+    [filters, setFilters] = useState(emptyFilters),
+    [page, setPage] = useState(1),
+    [periodError, setPeriodError] = useState(false);
   const query = useQuery({
-    queryKey: ["pos-history", search, cashier, page],
-    queryFn: ({ signal }) => listPosSales(search, cashier, page, signal),
+    queryKey: ["pos-history", filters, page],
+    queryFn: ({ signal }) =>
+      listPosSales(filters.search, filters.cashier, page, signal, {
+        ...(filters.from ? { from: filters.from } : {}),
+        ...(filters.to ? { to: filters.to } : {}),
+        ...(filters.paymentMethod ? { paymentMethod: filters.paymentMethod } : {}),
+      }),
     retry: false,
     refetchInterval: 15000,
   });
+  const change = (field: keyof typeof emptyFilters, value: string) => {
+    setDraft((previous) => ({ ...previous, [field]: value }));
+    setPeriodError(false);
+  };
   const data = query.data;
   return (
     <section className="admin-panel pos-history">
@@ -34,39 +45,104 @@ export function PosHistoryPanel() {
           {t("Actualiser")}
         </button>
       </header>
-      <div className="pos-filters">
-        <label>
-          {t("Référence du ticket")}
-          <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="POS-…"
-            maxLength={32}
-          />
-        </label>
-        {data?.scope === "ALL" && (
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (draft.from && draft.to && draft.from > draft.to) {
+            setPeriodError(true);
+            return;
+          }
+          setPeriodError(false);
+          setFilters({
+            ...draft,
+            search: draft.search.trim(),
+            cashier: canReadAll ? draft.cashier : "",
+          });
+          setPage(1);
+        }}
+      >
+        <div className="pos-filters">
           <label>
-            {t("Caissier")}
+            {t("Référence du ticket")}
+            <input
+              value={draft.search}
+              onChange={(e) => change("search", e.target.value)}
+              placeholder="POS-…"
+              maxLength={32}
+              autoCapitalize="none"
+              spellCheck={false}
+              dir="ltr"
+            />
+          </label>
+          <label>
+            {t("Mode de paiement")}
             <select
-              value={cashier}
-              onChange={(e) => {
-                setCashier(e.target.value);
-                setPage(1);
-              }}
+              value={draft.paymentMethod}
+              onChange={(e) => change("paymentMethod", e.target.value)}
             >
-              <option value="">{t("Tous les caissiers")}</option>
-              {data.cashiers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              <option value="">{t("Tous les paiements")}</option>
+              <option value="CASH">{t("Espèces")}</option>
+              <option value="CARD_TERMINAL">{t("Carte — TPE externe")}</option>
             </select>
           </label>
+          {canReadAll && (
+            <label>
+              {t("Caissier")}
+              <select value={draft.cashier} onChange={(e) => change("cashier", e.target.value)}>
+                <option value="">{t("Tous les caissiers")}</option>
+                {(data?.cashiers ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label>
+            {t("Du")}
+            <input
+              type="date"
+              value={draft.from}
+              onChange={(e) => change("from", e.target.value)}
+              aria-invalid={periodError || undefined}
+              aria-describedby={periodError ? "pos-history-period-error" : undefined}
+            />
+          </label>
+          <label>
+            {t("Au")}
+            <input
+              type="date"
+              value={draft.to}
+              onChange={(e) => change("to", e.target.value)}
+              aria-invalid={periodError || undefined}
+              aria-describedby={periodError ? "pos-history-period-error" : undefined}
+            />
+          </label>
+        </div>
+        {periodError && (
+          <p className="admin-alert" id="pos-history-period-error" role="alert">
+            {t("La date de fin doit suivre la date de début.")}
+          </p>
         )}
-      </div>
+        <div className="pos-history-actions">
+          <button type="submit" className="admin-button admin-button-primary">
+            {t("Appliquer les filtres")}
+          </button>
+          <button
+            type="button"
+            className="admin-button"
+            onClick={() => {
+              setDraft(emptyFilters);
+              setFilters(emptyFilters);
+              setPage(1);
+              setPeriodError(false);
+            }}
+          >
+            {t("Réinitialiser les filtres")}
+          </button>
+          <span>{t("Dates selon l’heure du Maroc.")}</span>
+        </div>
+      </form>
       {query.isError ? (
         <div className="admin-alert" role="alert">
           {t("Historique de caisse indisponible. Réessayez.")}
@@ -76,6 +152,9 @@ export function PosHistoryPanel() {
       ) : (
         data && (
           <>
+            <p className="pos-history-count" role="status">
+              {t("{count} vente(s)", { count: data.total })}
+            </p>
             <p className="pos-summary">
               {t("Aujourd’hui, dans cette vue")} :{" "}
               <strong>
@@ -89,7 +168,9 @@ export function PosHistoryPanel() {
               {data.data.map((s) => (
                 <li key={s.id}>
                   <div>
-                    <strong>#{s.id.slice(-8).toUpperCase()}</strong>
+                    <strong className="pos-history-reference">
+                      <bdi dir="ltr">POS-{s.id.toUpperCase()}</bdi>
+                    </strong>
                     <p>
                       {s.cashierName} ·{" "}
                       {new Date(s.createdAt).toLocaleString(ar ? "ar-MA" : "fr-MA", {

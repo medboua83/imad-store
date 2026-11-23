@@ -247,6 +247,23 @@
   display: block;
   margin-top: 0.4rem;
 }
+.pos-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+  margin-block: 1rem;
+}
+.pos-history-actions > span,
+.pos-history-count {
+  font-size: 0.85rem;
+  color: #756c5b;
+}
+.pos-history-reference {
+  display: block;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
 .pos-summary {
   background: #f5efdf;
   border-radius: 10px;

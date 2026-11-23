@@ -126,16 +126,31 @@ export async function posReceipt(req: AuthRequest, res: Response) {
   res.json({ success: true, data: visiblePosReceipt(sale) });
 }
 export async function posHistory(req: AuthRequest, res: Response) {
+  const calendarDay = z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((value) => {
+      const date = new Date(value + "T00:00:00Z");
+      return (
+        !value.startsWith("0000") &&
+        Number.isFinite(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value
+      );
+    }, "Date invalide");
   const q = z
     .object({
       page: z.coerce.number().int().min(1).max(100000).default(1),
       search: z.string().trim().max(32).default(""),
+      from: calendarDay.optional(),
+      to: calendarDay.optional(),
+      paymentMethod: z.enum(["CASH", "CARD_TERMINAL"]).optional(),
       cashierId: z
         .string()
         .regex(/^[a-f0-9]{24}$/)
         .optional(),
     })
     .strict()
+    .refine((q) => !q.from || !q.to || q.from <= q.to, "Période invalide")
     .parse(req.query);
   const all = canAdmin(req.user!, "pos.read"),
     actor = req.user!.id;
@@ -152,9 +167,22 @@ export async function posHistory(req: AuthRequest, res: Response) {
   const result = await prisma.$transaction(
     async (tx) => {
       const cashierId = all ? q.cashierId : actor;
-      const reference = q.search.replace(/^POS-/i, "").replace(/^#/, "").toLowerCase();
-      const where = {
+      const reference = q.search.replace(/^#/, "").replace(/^POS-/i, "").toLowerCase();
+      const where: Prisma.PosSaleWhereInput = {
         ...(cashierId ? { cashierId } : {}),
+        ...(q.paymentMethod ? { paymentMethod: q.paymentMethod } : {}),
+        ...(q.from || q.to
+          ? {
+              createdAt: {
+                ...(q.from
+                  ? { gte: new Date(moroccoDayBoundary(q.from).replace(" ", "T") + "Z") }
+                  : {}),
+                ...(q.to
+                  ? { lt: new Date(moroccoDayBoundary(q.to, true).replace(" ", "T") + "Z") }
+                  : {}),
+              },
+            }
+          : {}),
         ...(reference
           ? { id: { contains: /^[a-f0-9]+$/.test(reference) ? reference : "invalid-reference" } }
           : {}),
@@ -178,11 +206,15 @@ export async function posHistory(req: AuthRequest, res: Response) {
       });
       const today = await tx.posSale.aggregate({
         where: {
-          ...where,
-          createdAt: {
-            gte: new Date(moroccoDayBoundary(day).replace(" ", "T") + "Z"),
-            lt: new Date(moroccoDayBoundary(day, true).replace(" ", "T") + "Z"),
-          },
+          AND: [
+            where,
+            {
+              createdAt: {
+                gte: new Date(moroccoDayBoundary(day).replace(" ", "T") + "Z"),
+                lt: new Date(moroccoDayBoundary(day, true).replace(" ", "T") + "Z"),
+              },
+            },
+          ],
         },
         _count: true,
         _sum: { totalCents: true },

@@ -1,8 +1,14 @@
+## Historique caisse — 23 novembre 2026
+
+- [x] Préparer filtres explicites date/paiement, références complètes et remise à zéro de la pagination.
+- [x] Conserver le contrôle serveur par caissier et valider les périodes, sans écriture financière.
+- [ ] Terminer les recettes mobile/ordinateur, vérifier GitHub et publier en préservant le registre.
+
 ## Saisie caisse — 23 novembre 2026
 
 - [x] Préparer référence exacte indépendante des pages et gestion des réponses tardives.
 - [x] Préparer montants arabes/persans, réinitialisation d’une vente et revue du panier partagé.
-- [ ] Terminer les recettes, vérifier GitHub et publier sans modification des ventes existantes.
+- [x] PR163 publiée : 442 tests navigateur / 204 serveur, intégrité et vérifications publiques sans vente réelle.
 
 ## Caisse native — 23 novembre 2026
 

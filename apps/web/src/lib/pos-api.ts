@@ -101,10 +101,11 @@ export const listPosSales = async (
   cashierId: string,
   page: number,
   signal?: AbortSignal,
+  filters: { from?: string; to?: string; paymentMethod?: string } = {},
 ) =>
   (
     await api.get<PosHistory>("/pos/sales", {
-      params: { search, ...(cashierId ? { cashierId } : {}), page },
+      params: { search, ...(cashierId ? { cashierId } : {}), ...filters, page },
       signal,
     })
   ).data;
