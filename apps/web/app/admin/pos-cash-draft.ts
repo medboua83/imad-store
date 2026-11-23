@@ -38,7 +38,7 @@ export function assertCashAction(s: CashSession, p: CashAttempt, actorId: string
     s.cashierId !== actorId ||
     s.currency !== "MAD" ||
     !Number.isSafeInteger(s.expectedCents) ||
-    s.expectedCents !== s.openingCents + s.cashCents
+    s.expectedCents !== s.openingCents + s.cashCents + (s.adjustmentCents ?? 0)
   )
     throw new Error("Unconfirmed cash operation");
   if (p.kind === "open") {

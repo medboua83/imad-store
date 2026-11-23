@@ -1,3 +1,11 @@
+## Retours et échanges en caisse — 23 novembre 2026
+
+Candidat : retours partiels depuis un ticket POS ou un reçu RET de remplacement, remboursement en espèces et échange avec complément espèces/TPE externe. Condition revendable obligatoire par ligne ; seuls les articles explicitement revendables et la variante originale encore identifiable sont réintégrés. Crédit fondé sur le montant payé du ticket, remises comprises, avec allocation cumulative des centimes. Quantités plafonnées par le solde du ticket ; verrou commun de source entre caissiers, clé idempotente et reprise après coupure. Entrées, sorties de stock et reçu atomiques, aucune nouvelle commande web, paiement existant, CRM ou colis modifié.
+
+Permission pos.returns distincte, combinée à pos.sell ; accès aux tickets d’autrui limité à pos.read. Session personnelle ouverte requise, espèces disponibles vérifiées avant remboursement, différences signées dans le comptage courant et clôtures anciennes conservées. Registre append-only, protection SQL contre une clôture ignorant les retours. Migration additive 20261123180000_pos_returns_exchanges, deux tables et trois champs par défaut à zéro. Recettes sur base jetable/clone VPS, interface tactile téléphone/tablette ; aucun remboursement réel pour tester. Guide : docs/CAISSE.md. Rapports sur DATA : outputs/pos-returns-exchanges-20261123.
+
+PR165 précédente publiée : source 88210b0e7bba644f145126215280e783b63f6018, fusion d60ba297a8ef848223f6409febc02a72caa7f9c8 ; 454 tests navigateur et 215 serveur réussis. Sessions et comptages par caissier disponibles.
+
 ## Sessions et clôtures par caissier — 23 novembre 2026
 
 Candidat : ouverture d’une session personnelle avec fond initial, ventes explicitement rattachées à la session, récapitulatif espèces/cartes, comptage et écart motivé à la fermeture. Les montants attendus utilisent le net des ventes en espèces (montant reçu moins monnaie), jamais les paiements par TPE externe. Le suivi s’active pour un caissier à sa première ouverture ; les tickets antérieurs restent non rattachés. Une fois activé, une nouvelle vente exige la session ouverte attendue. Les reprises de ventes déjà enregistrées retrouvent toujours leur ticket, même après fermeture ou nouvelle ouverture.

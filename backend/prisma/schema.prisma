@@ -460,6 +460,7 @@ model PosSale {
   receivedCents Int
   changeCents Int
   createdAt DateTime @default(now())
+  adjustments PosAdjustment[] @relation("SaleAdjustments")
   items PosSaleItem[]
   cashSessionId String?
   cashSession PosCashSession? @relation(fields: [cashSessionId], references: [id], onDelete: Restrict)
@@ -506,6 +507,7 @@ model PosCashSession {
   openingCents Int
   openedAt DateTime @default(now())
   activeFor PosCashRegister? @relation("ActiveCashSession")
+  adjustments PosAdjustment[]
   sales PosSale[]
   closing PosCashClosing?
   @@index([cashierId, openedAt])
@@ -523,9 +525,67 @@ model PosCashClosing {
   cardCents BigInt
   cashCount Int
   cardCount Int
+  adjustmentCents BigInt @default(0)
+  cardAdjustmentCents BigInt @default(0)
+  adjustmentCount Int @default(0)
   expectedCents BigInt
   differenceCents BigInt
   note String
   closedAt DateTime @default(now())
   @@map("pos_cash_closings")
+}
+
+// Immutable return/exchange ledger. Source is an original ticket or a replacement receipt.
+model PosAdjustment {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  idempotencyKey String @unique
+  requestFingerprint String
+  rootSaleId String
+  rootSale PosSale @relation("SaleAdjustments", fields: [rootSaleId], references: [id], onDelete: Restrict)
+  sourceSaleId String?
+  sourceAdjustmentId String?
+  sourceAdjustment PosAdjustment? @relation("ExchangeSource", fields: [sourceAdjustmentId], references: [id], onDelete: Restrict)
+  subsequent PosAdjustment[] @relation("ExchangeSource")
+  cashierId String
+  cashierName String
+  cashSessionId String
+  cashSession PosCashSession @relation(fields: [cashSessionId], references: [id], onDelete: Restrict)
+  returnCents Int
+  replacementCents Int
+  netCents Int
+  paymentMethod String
+  receivedCents Int
+  changeCents Int
+  note String
+  createdAt DateTime @default(now())
+  items PosAdjustmentItem[]
+  @@index([rootSaleId])
+  @@index([sourceSaleId])
+  @@index([sourceAdjustmentId])
+  @@index([cashSessionId])
+  @@index([cashierId, createdAt])
+  @@map("pos_adjustments")
+}
+model PosAdjustmentItem {
+  id String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  adjustmentId String
+  adjustment PosAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Restrict)
+  position Int
+  kind String
+  sourceItemId String?
+  restock Boolean?
+  productId String
+  variantId String
+  sku String
+  nameFr String
+  nameAr String
+  colorFr String
+  colorAr String
+  size String?
+  quantity Int
+  unitPriceCents Int
+  totalCents Int
+  @@unique([adjustmentId, position])
+  @@index([sourceItemId])
+  @@map("pos_adjustment_items")
 }

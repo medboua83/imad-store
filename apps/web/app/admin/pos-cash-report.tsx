@@ -46,6 +46,18 @@ export function CashSessionReport({ session: s }: { session: CashSession }) {
           </dt>
           <dd>{posMoney(s.cardCents, ar)}</dd>
         </div>
+        {!!s.adjustmentCount && (
+          <>
+            <div>
+              <dt>{t("Retours et échanges — espèces")}</dt>
+              <dd>{posMoney(s.adjustmentCents ?? 0, ar)}</dd>
+            </div>
+            <div>
+              <dt>{t("Compléments d’échange par TPE")}</dt>
+              <dd>{posMoney(s.cardAdjustmentCents ?? 0, ar)}</dd>
+            </div>
+          </>
+        )}
         <div className="pos-ticket-total">
           <dt>{t("Espèces attendues")}</dt>
           <dd>{posMoney(s.expectedCents, ar)}</dd>
@@ -69,7 +81,9 @@ export function CashSessionReport({ session: s }: { session: CashSession }) {
         </p>
       )}
       <footer>
-        {t("Espèces attendues = fond d’ouverture + ventes en espèces, après monnaie rendue.")}
+        {t(
+          "Espèces attendues = fond + ventes + échanges en espèces − remboursements, après monnaie rendue.",
+        )}
       </footer>
     </article>
   );

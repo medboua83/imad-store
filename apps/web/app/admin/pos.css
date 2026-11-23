@@ -605,3 +605,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+.pos-returns { display:grid; gap:1.25rem; min-width:0; }
+.pos-return-lookup {display:flex;gap:1rem;align-items:end;flex-wrap:wrap}
+.pos-return-lookup label {flex:1;min-width:12rem}
+.pos-returns label {display:grid;gap:.4rem;margin-block:.65rem}
+.pos-returns input,.pos-returns select,.pos-returns textarea {width:100%;min-width:0;min-height:46px;padding:.7rem;border:1px solid var(--admin-border,#d8ccb6);border-radius:10px;background:var(--admin-surface,#fff);color:inherit;font:inherit}
+.pos-returns code {overflow-wrap:anywhere;display:block;font-size:.8rem}
+.pos-return-line {display:grid;grid-template-columns:minmax(0,1.4fr) minmax(100px,.7fr) minmax(0,1.4fr);gap:1rem;align-items:center;padding-block:1rem;border-bottom:1px solid #e6ddcf}
+.pos-return-line p,.pos-return-ticket-line p {margin-block:.35rem}
+.pos-return-replacements {padding-block:1.2rem}
+.pos-return-replacements summary {cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+.pos-return-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;max-height:330px;overflow:auto}
+.pos-return-options button {white-space:normal;text-align:start;justify-content:start}
+.pos-return-review {margin-block-start:1rem;padding:1rem;border:1px solid #c6a05c;border-radius:12px;background:#fbf7ef}
+.pos-return-review dl>div {display:flex;justify-content:space-between;gap:1rem;padding-block:.6rem}
+.pos-return-review dd {margin:0;font-weight:600;white-space:nowrap}
+.pos-return-history-row {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.7rem;padding-block:.75rem;border-bottom:1px solid #e6ddcf}
+.pos-return-ticket-line {padding-block:.65rem;border-bottom:1px dashed #bdb2a1}
+.pos-return-history .pos-ticket {margin-block:1rem}
+@media(max-width:600px) {.pos-return-line {grid-template-columns:1fr}.pos-return-options{grid-template-columns:1fr}.pos-return-lookup .admin-button{width:100%}.pos-returns .pos-success-actions{display:grid;grid-template-columns:1fr}.pos-return-history-row{display:grid;grid-template-columns:1fr}}

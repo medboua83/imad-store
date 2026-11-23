@@ -70,7 +70,7 @@ export const getPosContext = async (signal?: AbortSignal) =>
   (
     await api.get<{
       success: boolean;
-      data: { actorId: string; canSell: boolean; canReadAll: boolean };
+      data: { actorId: string; canSell: boolean; canReadAll: boolean; canReturn: boolean };
     }>("/pos/context", { signal })
   ).data.data;
 export const getPosCatalog = async (search: string, page: number, signal?: AbortSignal) =>

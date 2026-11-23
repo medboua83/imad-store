@@ -1,3 +1,4 @@
+import * as returns from "../controllers/pos-returns.controller";
 import { Router, IRouter } from "express";
 import rateLimit from "express-rate-limit";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth.middleware";
@@ -63,3 +64,11 @@ const cashWrites = rateLimit({
 });
 posRoutes.post("/cash-sessions/open", requirePermission("pos.sell"), cashWrites, posCashOpen);
 posRoutes.post("/cash-sessions/close", requirePermission("pos.sell"), cashWrites, posCashClose);
+
+const returnWrites = [requirePermission("pos.sell"), requirePermission("pos.returns")];
+posRoutes.get("/returns/source", ...returnWrites, returns.source);
+posRoutes.post("/returns/quote", ...returnWrites, returns.quote);
+posRoutes.get("/returns/by-key/:key", ...returnWrites, returns.recover);
+posRoutes.get("/returns", returns.history);
+posRoutes.get("/returns/:id", returns.read);
+posRoutes.post("/returns", ...returnWrites, cashWrites, returns.complete);

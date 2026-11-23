@@ -90,7 +90,9 @@ async function cashFixture(page: Page, locale = "fr", permissions = ["pos.sell"]
         if (s.balanceHash !== body.balanceHash)
           return route.fulfill({
             status: 409,
-            json: { error: "Des ventes ont été ajoutées. Recomptez la caisse avant de clôturer." },
+            json: {
+              error: "Des opérations ont été ajoutées. Recomptez la caisse avant de clôturer.",
+            },
           });
         const closed = {
           ...s,
@@ -231,7 +233,7 @@ test("A changed balance requires a new count and discrepancy note before closing
   });
   await panel(page).getByRole("button", { name: "Clôturer ma caisse", exact: true }).click();
   await expect(
-    panel(page).getByRole("alert").filter({ hasText: "Des ventes ont été ajoutées" }).first(),
+    panel(page).getByRole("alert").filter({ hasText: "Des opérations ont été ajoutées" }).first(),
   ).toBeVisible();
   expect(f.sessions.get(sessionId).closing).toBeNull();
   await panel(page).getByRole("button", { name: "Actualiser le comptage" }).click();
