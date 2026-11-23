@@ -533,8 +533,8 @@ for (const [width, locale] of [
     const before = f.calls.filter((c) => c.path === "/api/pos/sales").length;
     await panel.getByLabel(ar ? "مرجع الإيصال" : "Référence du ticket").fill("#" + reference);
     await panel.getByLabel(ar ? "طريقة الأداء" : "Mode de paiement").selectOption("CARD_TERMINAL");
-    await panel.getByLabel(ar ? "من تاريخ" : "Du", { exact: true }).fill("2026-11-22");
-    await panel.getByLabel(ar ? "إلى تاريخ" : "Au", { exact: true }).fill("2026-11-22");
+    await panel.getByLabel(ar ? "من" : "Du", { exact: true }).fill("2026-11-22");
+    await panel.getByLabel(ar ? "إلى" : "Au", { exact: true }).fill("2026-11-22");
     expect(f.calls.filter((c) => c.path === "/api/pos/sales")).toHaveLength(before);
     await panel
       .getByRole("button", { name: ar ? "تطبيق عوامل التصفية" : "Appliquer les filtres" })
@@ -550,11 +550,11 @@ for (const [width, locale] of [
       true,
     );
     await panel
-      .getByRole("button", { name: ar ? "إعادة ضبط عوامل التصفية" : "Réinitialiser les filtres" })
+      .getByRole("button", { name: ar ? "إعادة ضبط الفلاتر" : "Réinitialiser les filtres" })
       .click();
     await expect(panel.locator(".pos-sales-list > li")).toHaveCount(25);
     await expect(panel.getByLabel(ar ? "مرجع الإيصال" : "Référence du ticket")).toHaveValue("");
-    await expect(panel.getByLabel(ar ? "من تاريخ" : "Du", { exact: true })).toHaveValue("");
+    await expect(panel.getByLabel(ar ? "من" : "Du", { exact: true })).toHaveValue("");
     expect(f.calls.filter((c) => c.method !== "GET")).toHaveLength(0);
   });
 
