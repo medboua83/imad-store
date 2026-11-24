@@ -140,7 +140,9 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
         const dialog = page.getByRole("dialog");
         await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
-        await expect(dialog.locator(".bag-totals .quantity-saving")).toContainText("60.00");
+        await dialog.locator(".bag-cost-breakdown summary").click();
+        await expect(dialog.locator(".bag-breakdown-totals .quantity-saving")).toBeVisible();
+        await expect(dialog.locator(".bag-breakdown-totals .quantity-saving")).toContainText("60.00");
         await page.screenshot({
             path: info.outputPath(`quantity-cart-${width}.png`),
             fullPage: true,
