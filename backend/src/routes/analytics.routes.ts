@@ -45,7 +45,7 @@ analyticsRoutes.post(
 analyticsRoutes.get("/summary", authenticate, requirePermission("analytics.read"), async (req, res) => {
     res.setHeader("Cache-Control", "private, no-store");
     const { days } = z
-        .object({ days: z.enum(["7", "30", "90"]).default("7") })
+        .object({ days: z.enum(["1", "7", "30", "90"]).default("7") })
         .strict()
         .parse(req.query);
     res.json({ success: true, data: await readAnalytics(Number(days)) });

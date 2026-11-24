@@ -64,6 +64,7 @@ export default function AnalyticsTab({
                             value={days}
                             onChange={(e) => setDays(Number(e.target.value))}
                         >
+                            <option value={1}>{t("Aujourd’hui")}</option>
                             <option value={7}>{t("7 derniers jours")}</option>
                             <option value={30}>{t("30 derniers jours")}</option>
                             <option value={90}>{t("90 derniers jours")}</option>
@@ -271,9 +272,11 @@ export default function AnalyticsTab({
                                           ),
                                       })
                                     : t("Aucun historique reconstitué.")}{" "}
-                                {t("Période glissante de ")}
-                                {days}
-                                {t(" jours. Conservation : 91 jours.")}
+                                {days === 1 ? t("Aujourd’hui depuis minuit, heure du Maroc. Conservation : 91 jours.") : <>
+                                    {t("Période glissante de ")}
+                                    {days}
+                                    {t(" jours. Conservation : 91 jours.")}
+                                </>}
                             </p>
                         </div>
                     </section>

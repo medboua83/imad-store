@@ -7,7 +7,7 @@ import { orderTrackingMatches, productVariantImages } from "@imad-store/shared";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
+import { type AdminOrder, type OrderCalendar, getOrderCalendar, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
@@ -72,10 +72,39 @@ export function OrdersTab({
     const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
     const detailTitle = useRef<HTMLHeadingElement>(null);
     const invalidDates = !!from && !!to && from > to;
-    const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, from, to, sort),
-        [orders, search, status, payment, tracking, from, to, sort, invalidDates]);
-    const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, "ALL"), payment, from, to, sort),
-        [orders, search, payment, tracking, from, to, sort, invalidDates]);
+    const [todayCalendar, setTodayCalendar] = useState<OrderCalendar | null>(null);
+    const [todayBusy, setTodayBusy] = useState(false);
+    const todaySequence = useRef(0);
+    useEffect(() => () => { todaySequence.current++; }, []);
+    const todaySelected = !!todayCalendar && from === todayCalendar.day && to === todayCalendar.day;
+    async function toggleToday() {
+        if (todayBusy) return;
+        const request = ++todaySequence.current;
+        setTodayBusy(true);
+        try {
+            const calendar = await getOrderCalendar();
+            if (request !== todaySequence.current) return;
+            setTodayCalendar(calendar);
+            pageNavigation.current = false;
+            setFilters(previous => ({ ...previous, page: 1,
+                from: previous.from === calendar.day && previous.to === calendar.day ? "" : calendar.day,
+                to: previous.from === calendar.day && previous.to === calendar.day ? "" : calendar.day,
+            }));
+            setMessage(""); setError(false);
+        } catch {
+            if (request === todaySequence.current) {
+                setError(true); setMessage("La période n’a pas pu être chargée. Réessayez.");
+            }
+        } finally { if (request === todaySequence.current) setTodayBusy(false); }
+    }
+    const calendarRows = useMemo(() => todaySelected && todayCalendar
+        ? orders.filter(order => Date.parse(order.createdAt) >= Date.parse(todayCalendar.start) && Date.parse(order.createdAt) < Date.parse(todayCalendar.end))
+        : orders, [orders, todaySelected, todayCalendar]);
+    const localFrom = todaySelected ? "" : from, localTo = todaySelected ? "" : to;
+    const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(calendarRows.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, localFrom, localTo, sort),
+        [calendarRows, search, status, payment, tracking, localFrom, localTo, sort, invalidDates]);
+    const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(calendarRows.filter(order => orderTrackingMatches(order.shipment, tracking)), search, "ALL"), payment, localFrom, localTo, sort),
+        [calendarRows, search, payment, tracking, localFrom, localTo, sort, invalidDates]);
     const resultTotal = serverHistory ? history.data?.total ?? 0 : localResults.length;
     const pages = Math.max(1, serverHistory ? history.data?.pages ?? 1 : Math.ceil(resultTotal / orderPageSize));
     const page = serverHistory ? history.data?.page ?? filters.page : Math.min(filters.page, pages);
@@ -258,10 +287,16 @@ export function OrdersTab({
                     <h2 className="sr-only">{t("Suivi des commandes")}</h2>
                     <p>{t("Recherche dans toutes les commandes, hors corbeille.")}</p>
                 </div>
-                <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
-                    <RefreshCw size={16} />
-                    <span className="order-refresh-label">{t("Actualiser")}</span>
-                </button>
+                <div className="order-heading-actions">
+                    <button type="button" className="admin-button order-today-filter" aria-pressed={todaySelected}
+                        title={t("Depuis minuit, heure du Maroc.")} disabled={todayBusy} aria-busy={todayBusy} onClick={toggleToday}>
+                        {t("Aujourd’hui")}
+                    </button>
+                    <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
+                        <RefreshCw size={16} />
+                        <span className="order-refresh-label">{t("Actualiser")}</span>
+                    </button>
+                </div>
             </div>
             <div className="admin-toolbar">
                 <label className="admin-search">
@@ -328,6 +363,7 @@ export function OrdersTab({
                             <input
                                 dir="auto"
                                 type="date"
+                                disabled={todayBusy}
                                 value={from}
                                 onInput={(e) => setFilter("from", e.currentTarget.value)}
                             />
@@ -337,6 +373,7 @@ export function OrdersTab({
                             <input
                                 dir="auto"
                                 type="date"
+                                disabled={todayBusy}
                                 value={to}
                                 onInput={(e) => setFilter("to", e.currentTarget.value)}
                             />
