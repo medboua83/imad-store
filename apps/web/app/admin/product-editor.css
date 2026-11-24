@@ -368,3 +368,13 @@
     .product-color-photos { padding: 12px; }
     .color-photo-cards { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Keep the existing submit action usable throughout a long mobile draft. */
+@media (max-width: 600px) {
+    .admin-app .product-editor-footer { position: sticky; bottom: 0; padding-block: 8px max(8px, env(safe-area-inset-bottom)); }
+    .admin-app .product-editor-footer > p { font-size: 11px; line-height: 1.4; margin-block: 0 6px; }
+    .admin-app .product-editor-footer .admin-editor-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 8px; }
+    .admin-app .product-editor-footer .admin-editor-actions button { min-height: 44px; min-width: 0; width: 100%; padding: 8px; font-size: 12px; line-height: 1.4; }
+    .admin-app .product-editor-footer .admin-editor-actions .admin-text-button { grid-column: 1 / -1; }
+    .admin-app .product-editor :is(input, select, textarea) { scroll-margin-block: 130px 160px; }
+}

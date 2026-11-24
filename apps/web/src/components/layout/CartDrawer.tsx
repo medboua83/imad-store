@@ -181,13 +181,24 @@ export function CartDrawer() {
                                     <CartLine key={item.variantId} item={item} />
                                 ))}
                             </div>
+                            <details className="bag-cost-breakdown">
+                                <summary>تفاصيل المبلغ والتوصيل</summary>
+                                <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} mode="breakdown" />
+                            </details>
+                            <p className="bag-payment-note">
+                                <PackageCheck size={17} aria-hidden="true" />
+                                الدفع عند الاستلام · بدون إنشاء حساب
+                            </p>
+                            <button type="button" className="bag-continue" onClick={dismiss}>
+                                متابعة التسوق
+                            </button>
                             {isOpen && <CartRecommendations active onNavigate={close} />}
                         </>
                     )}
                 </div>
                 {!!items.length && (
                     <div className="bag-footer">
-                        <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} />
+                        <CartTotals subtotal={total()} shipping={shipping} needsReview={invalidItems} mode="summary" />
                         {shipping.error && (
                             <p role="alert" className="bag-notice-error">
                                 تعذر تحميل رسوم التوصيل.{" "}
@@ -223,13 +234,6 @@ export function CartDrawer() {
                                 متابعة الطلب <ArrowLeft size={19} aria-hidden="true" />
                             </button>
                         )}
-                        <p className="bag-payment-note">
-                            <PackageCheck size={17} aria-hidden="true" />
-                            الدفع عند الاستلام · بدون إنشاء حساب
-                        </p>
-                        <button type="button" className="bag-continue" onClick={dismiss}>
-                            متابعة التسوق
-                        </button>
                     </div>
                 )}
             </div>

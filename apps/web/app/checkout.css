@@ -1293,3 +1293,19 @@
     top: auto;
     bottom: calc(100% + 6px);
 }
+
+/* The fixed bag footer keeps only its total and primary action. */
+.store-shell .cart-dialog .bag-footer .bag-grand-total { padding-top: 0; margin: 0; border: 0; }
+.store-shell .cart-dialog .bag-cost-breakdown { margin-block: 12px; border-block: 1px solid #e2dcd3; }
+.store-shell .cart-dialog .bag-cost-breakdown > summary { min-height: 44px; padding-block: 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: #715223; }
+.store-shell .cart-dialog .bag-breakdown-totals { display: grid; gap: 10px; padding-block: 6px 14px; font-size: 13px; }
+.store-shell .cart-dialog .bag-breakdown-totals > div { display: flex; justify-content: space-between; gap: 12px; }
+.store-shell .cart-dialog .bag-breakdown-totals dd { white-space: nowrap; }
+.store-shell .cart-dialog .bag-checkout-link { margin-top: 10px; }
+@media (max-width: 767px) {
+    .store-shell .cart-dialog .bag-header { padding: 12px 16px; }
+    .store-shell .cart-dialog .bag-header .eyebrow { margin-bottom: 3px; }
+    .store-shell .cart-dialog .bag-header h2 { font-size: 25px; }
+    .store-shell .cart-dialog .bag-footer { padding: 12px 16px max(10px, env(safe-area-inset-bottom)); }
+    .store-shell .cart-dialog .bag-scroll { padding: 12px 16px; }
+}

@@ -231,9 +231,14 @@ export default function AdminPage() {
         const previousOrNext = () => {
             restoreTab();
             requestAnimationFrame(() => {
-                const anchor = tabFromLocation() === "commerce"
-                    ? document.getElementById(window.location.hash.slice(1)) : null;
-                (anchor || mainTitle.current)?.focus();
+                // Fragment navigation must keep its own destination, including editor sections.
+                // Focusing the page title here would undo the browser's anchor scroll.
+                const anchor = document.getElementById(window.location.hash.slice(1));
+                if (anchor?.closest("#admin-main") && anchor.getClientRects().length) {
+                    if (!anchor.hasAttribute("tabindex")) anchor.tabIndex = -1;
+                    anchor.focus({ preventScroll: true });
+                    anchor.scrollIntoView({ block: "start", behavior: "instant" });
+                } else mainTitle.current?.focus();
             });
         };
         const task = setTimeout(() => {
@@ -595,6 +600,7 @@ export default function AdminPage() {
     return (
         <AdminAccessContext.Provider value={access}><div
             className="admin-app admin-workspace"
+            data-tab={activeTab}
             dir={locale === "ar" ? "rtl" : "ltr"}
             lang={locale}
         >
