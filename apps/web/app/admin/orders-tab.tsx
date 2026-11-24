@@ -252,21 +252,17 @@ export function OrdersTab({
         </p>
     );
     return (
-        <section className="admin-panel">
+        <section className="admin-panel admin-orders-workspace">
             <div className="admin-panel-heading">
                 <div>
-                    <h2>{t("Suivi des commandes")}</h2>
+                    <h2 className="sr-only">{t("Suivi des commandes")}</h2>
                     <p>{t("Recherche dans toutes les commandes, hors corbeille.")}</p>
                 </div>
-                <button className="admin-button" disabled={busy} onClick={refresh}>
+                <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
                     <RefreshCw size={16} />
-                    {t("Actualiser")}
+                    <span className="order-refresh-label">{t("Actualiser")}</span>
                 </button>
             </div>
-            <CustomerDispatchBlacklist onSearch={phone => {
-                setFilters({ ...initialOrderListFilters, search: phone });
-                requestAnimationFrame(() => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView({ block: "start" }); });
-            }} />
             <div className="admin-toolbar">
                 <label className="admin-search">
                     <span>{t("Rechercher une commande")}</span>
@@ -282,6 +278,8 @@ export function OrdersTab({
                         />
                     </div>
                 </label>
+            </div>
+            <div className="order-filter-controls">
                 <label>
                     {t("Trier par")}
                     <select value={sort} onChange={(e) => setFilter("sort", e.target.value)}>
@@ -290,16 +288,16 @@ export function OrdersTab({
                         <option value="amount">{t("Montant décroissant")}</option>
                     </select>
                 </label>
-            </div>
-            <div className="order-tracking-filter">
-                <label htmlFor="order-tracking-filter">{t("Suivi de livraison")}</label>
-                <select id="order-tracking-filter" value={tracking} onChange={event => setFilter("tracking", event.target.value)}>
-                    <option value="ALL">{t("Tous les suivis")}</option>
-                    <option value="ATTENTION">{t("À surveiller")}</option>
-                    <option value="REPORTED">{t("Livraison reportée")}</option>
-                    <option value="UNLINKED">{t("Sans colis relié")}</option>
-                </select>
-                {tracking === "ATTENTION" && <p>{t("Reports, destinataires injoignables, retours et suivis nécessitant une vérification.")}</p>}
+                <div className="order-tracking-filter">
+                    <label htmlFor="order-tracking-filter">{t("Suivi de livraison")}</label>
+                    <select id="order-tracking-filter" value={tracking} onChange={event => setFilter("tracking", event.target.value)}>
+                        <option value="ALL">{t("Tous les suivis")}</option>
+                        <option value="ATTENTION">{t("À surveiller")}</option>
+                        <option value="REPORTED">{t("Livraison reportée")}</option>
+                        <option value="UNLINKED">{t("Sans colis relié")}</option>
+                    </select>
+                    {tracking === "ATTENTION" && <p>{t("Reports, destinataires injoignables, retours et suivis nécessitant une vérification.")}</p>}
+                </div>
             </div>
             <div className="order-quick-filters" aria-label={t("Filtrer par statut")}>
                 {[["ALL", "Toutes"], ...Object.entries(statusLabels)].map(([key, label]) => (
@@ -318,69 +316,74 @@ export function OrdersTab({
                     </button>
                 ))}
             </div>
-            <details className="order-extra-filters">
-                <summary>
-                    {t("Dates et paiement")}
-                    {from || to || payment !== "ALL" ? t(" · filtres actifs") : ""}
-                </summary>
-                <div className="order-filter-fields">
-                    <label>
-                        {t("Du")}
-                        <input
-                            dir="auto"
-                            type="date"
-                            value={from}
-                            onInput={(e) => setFilter("from", e.currentTarget.value)}
-                        />
-                    </label>
-                    <label>
-                        {t("Au")}
-                        <input
-                            dir="auto"
-                            type="date"
-                            value={to}
-                            onInput={(e) => setFilter("to", e.currentTarget.value)}
-                        />
-                    </label>
-                    <label>
-                        {t("Paiement")}
-                        <select
-                            value={payment}
-                            onChange={(e) => setFilter("payment", e.target.value)}
+            <div className="order-tools">
+                <details className="order-extra-filters">
+                    <summary>
+                        {t("Dates et paiement")}
+                        {from || to || payment !== "ALL" ? t(" · filtres actifs") : ""}
+                    </summary>
+                    <div className="order-filter-fields">
+                        <label>
+                            {t("Du")}
+                            <input
+                                dir="auto"
+                                type="date"
+                                value={from}
+                                onInput={(e) => setFilter("from", e.currentTarget.value)}
+                            />
+                        </label>
+                        <label>
+                            {t("Au")}
+                            <input
+                                dir="auto"
+                                type="date"
+                                value={to}
+                                onInput={(e) => setFilter("to", e.currentTarget.value)}
+                            />
+                        </label>
+                        <label>
+                            {t("Paiement")}
+                            <select
+                                value={payment}
+                                onChange={(e) => setFilter("payment", e.target.value)}
+                            >
+                                <option value="ALL">{t("Tous les paiements")}</option>
+                                {Object.entries(paymentLabels).map(([key, label]) => (
+                                    <option key={key} value={key}>
+                                        {t(label)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                    <p>{t("Dates incluses · heure du Maroc.")}</p>
+                </details>
+                {canWrite && <details className="order-maintenance">
+                    <summary>{t("Gestion des commandes annulées")}</summary>
+                    <div className="admin-toolbar">
+                        <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
+                            {t("Corbeille")}
+                        </button>
+                        <button
+                            className="admin-button"
+                            disabled={busy || reloadRequired || readBlocked || !removable.length}
+                            onClick={() => remove(removable.map((o) => o.id))}
                         >
-                            <option value="ALL">{t("Tous les paiements")}</option>
-                            {Object.entries(paymentLabels).map(([key, label]) => (
-                                <option key={key} value={key}>
-                                    {t(label)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
-                <p>{t("Dates incluses · heure du Maroc.")}</p>
-            </details>
-            {canExport && <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />}
-            {canWrite && <details className="order-maintenance">
-                <summary>{t("Gestion des commandes annulées")}</summary>
-                <div className="admin-toolbar">
-                    <button className="admin-button" disabled={busy} onClick={() => setShowTrash(true)}>
-                        {t("Corbeille")}
-                    </button>
-                    <button
-                        className="admin-button"
-                        disabled={busy || reloadRequired || readBlocked || !removable.length}
-                        onClick={() => remove(removable.map((o) => o.id))}
-                    >
-                        {t("Supprimer les annulées affichées (")}
-                        {removable.length})
-                    </button>
-                    <p>
-                        {t(
-                            "Suppression réversible. Seules les commandes annulées de la sélection affichée sont concernées.",
-                        )}
-                    </p>
-                </div>
-            </details>}
+                            {t("Supprimer les annulées affichées (")}
+                            {removable.length})
+                        </button>
+                        <p>
+                            {t(
+                                "Suppression réversible. Seules les commandes annulées de la sélection affichée sont concernées.",
+                            )}
+                        </p>
+                    </div>
+                </details>}
+                <CustomerDispatchBlacklist onSearch={phone => {
+                    setFilters({ ...initialOrderListFilters, search: phone });
+                    requestAnimationFrame(() => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView({ block: "start" }); });
+                }} />
+            </div>
             <div className="order-results">
                 <p ref={resultsRef} tabIndex={-1} role="status">
                     {serverHistory && !history.data ? t("Résultats en attente") : <>
@@ -391,6 +394,7 @@ export function OrdersTab({
                         })}</>}
                     </>}
                 </p>
+                {canExport && <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />}
                 <button
                     className="admin-text-button"
                     disabled={

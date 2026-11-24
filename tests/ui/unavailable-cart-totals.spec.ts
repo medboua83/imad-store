@@ -74,7 +74,7 @@ for (const width of [320, 390, 1440])
       await expect(dialog.locator(".bag-stock-error")).toContainText("غير متوفر");
       await expect(dialog.locator(".bag-grand-total")).toContainText("راجعوا الحقيبة");
       await expect(dialog.locator(".bag-grand-total")).not.toContainText("MAD");
-      await expect(dialog.locator(".bag-totals")).toContainText("بعد مراجعة الحقيبة");
+      await expect(dialog.locator(".bag-breakdown-totals")).toContainText("بعد مراجعة الحقيبة");
       await expect(
         dialog.getByRole("button", { name: "متابعة الطلب", exact: true }),
       ).toBeDisabled();

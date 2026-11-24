@@ -6,15 +6,18 @@ export function CartTotals({
     subtotal,
     shipping,
     needsReview = false,
+    mode = "full",
 }: {
     subtotal: number;
     shipping: ReturnType<typeof useShipping>;
     needsReview?: boolean;
+    mode?: "full" | "summary" | "breakdown";
 }) {
     const unavailable = shipping.error || shipping.total === null;
     const savings = priceCart(useCartStore((state) => state.items)).savings;
     return (
-        <dl className="bag-totals" aria-label="تفاصيل المبلغ">
+        <dl className={mode === "breakdown" ? "bag-breakdown-totals" : "bag-totals"} aria-label="تفاصيل المبلغ">
+            {mode !== "summary" && <>
             {savings > 0 && (
                 <div className="quantity-saving">
                     <dt>توفير عرض الكمية</dt>
@@ -41,7 +44,8 @@ export function CartTotals({
                     )}
                 </dd>
             </div>
-            <div className="bag-grand-total">
+            </>}
+            {mode !== "breakdown" && <div className="bag-grand-total">
                 <dt>
                     الإجمالي<span>شامل رسوم التوصيل</span>
                 </dt>
@@ -56,7 +60,7 @@ export function CartTotals({
                         </span>
                     )}
                 </dd>
-            </div>
+            </div>}
         </dl>
     );
 }

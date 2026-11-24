@@ -1,3 +1,7 @@
+## Parcours mobile prioritaires — 24 novembre 2026
+
+Préserver les destinations des fragments dans tous les onglets admin : un raccourci de l’éditeur ne doit pas redonner le focus au titre principal. Sauvegarde mobile : même formulaire et même action existante, barre compacte et erreurs conservées ; pas de second enregistrement. Commandes : mêmes filtres, permissions, export et liste noire, avec outils regroupés. Panier : détail du prix repliable dans la zone de lecture ; total et validation de commande dans le pied. Aucun calcul commercial, ordre, stock, paiement, transporteur, CRM ou photo modifié. Recettes : outputs/mobile-workflow-priorities-20261124 sur DATA.
+
 ## Liste noire des numéros — 24 novembre 2026
 
 Liste calculée depuis toutes les commandes actuellement annulées de l’installation, corbeille comprise : recherche et pagination serveur, même identité complète de numéro que l’historique, interface français/arabe dans Commandes. La commande reste possible ; l’envoi Olivraison exige une validation explicite par commande et la permission orders.write. Le worker vérifie aussi les annulations de commandes créées plus tard que celle en attente. Aucun ajout rétroactif à la file, changement de paiement/stock, recréation de colis ou migration. Guide : docs/DISPATCH_BLACKLIST.md ; recette et publication dans outputs/customer-blacklist-20261124 sur DATA.

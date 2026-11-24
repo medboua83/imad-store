@@ -1,3 +1,9 @@
+## Parcours mobile prioritaires — 24 novembre 2026
+
+Candidat issu de l’audit : ancres de l’éditeur produit et focus corrigés, sauvegarde existante accessible dans une barre mobile compacte, filtres de commandes regroupés avec recherche et résultats rapprochés, total et bouton principaux du panier séparés de son détail repliable. Les prix, le stock, la liste noire et les accords manuels avant Olivraison conservent leurs contrôles. Aucun nouvel ordre, colis ou règlement réel pour tester. Recette et publication suivies sur DATA : outputs/mobile-workflow-priorities-20261124.
+
+PR168 précédente fusionnée et publiée : e422906, 476 UI / 233 serveur ; 14 numéros regroupés dans la liste noire, neuf essais de l’interface publiée et lecture authentifiée vérifiés.
+
 ## Liste noire des numéros — 24 novembre 2026
 
 Candidat : liste centralisée dans Commandes, recherche/pagination indépendantes des cent dernières commandes, repère de validation manuelle et contrôle de toutes les annulations du numéro avant les écritures Olivraison. Les accords restent propres à une seule commande. Recettes locales : 19 tests serveur et 24 tests navigateur ciblés réussis ; vérification GitHub et publication à suivre dans outputs/customer-blacklist-20261124. Aucun colis réel pour tester ; pas de migration.
