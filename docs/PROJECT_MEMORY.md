@@ -1,3 +1,7 @@
+## Liste noire des numéros — 24 novembre 2026
+
+Liste calculée depuis toutes les commandes actuellement annulées de l’installation, corbeille comprise : recherche et pagination serveur, même identité complète de numéro que l’historique, interface français/arabe dans Commandes. La commande reste possible ; l’envoi Olivraison exige une validation explicite par commande et la permission orders.write. Le worker vérifie aussi les annulations de commandes créées plus tard que celle en attente. Aucun ajout rétroactif à la file, changement de paiement/stock, recréation de colis ou migration. Guide : docs/DISPATCH_BLACKLIST.md ; recette et publication dans outputs/customer-blacklist-20261124 sur DATA.
+
 ## Retours et échanges en caisse — 23 novembre 2026
 
 Candidat : retours partiels depuis un ticket POS ou un reçu RET de remplacement, remboursement en espèces et échange avec complément espèces/TPE externe. Condition revendable obligatoire par ligne ; seuls les articles explicitement revendables et la variante originale encore identifiable sont réintégrés. Crédit fondé sur le montant payé du ticket, remises comprises, avec allocation cumulative des centimes. Quantités plafonnées par le solde du ticket ; verrou commun de source entre caissiers, clé idempotente et reprise après coupure. Entrées, sorties de stock et reçu atomiques, aucune nouvelle commande web, paiement existant, CRM ou colis modifié.

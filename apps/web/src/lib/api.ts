@@ -341,6 +341,7 @@ export const markAllNotificationsRead = async () => {
 };
 
 export interface AdminOrder {
+    customerBlacklist?: { available: boolean; blocked: boolean; cancelledCount: number };
     customerHistory?: { available: boolean; priorCancelledCount: number };
     shipment?: {
         approvedAt?: string | null;
@@ -418,6 +419,15 @@ export const getAdminOrder = async (id: string, signal?: AbortSignal) => {
     const { data } = await api.get<{ data: AdminOrder }>(`/orders/${id}/admin-details`, { signal });
     if (!data.data || data.data.id !== id) throw new Error("Order details do not match the requested reference");
     return data.data;
+};
+
+export interface DispatchBlacklistPage {
+    data: { phone: string; cancelledCount: number; trashCount: number; lastOrderId: string; lastOrderCreatedAt: string }[];
+    total: number; totalPages: number; page: number;
+}
+export const getDispatchBlacklist = async (search: string, page: number, signal?: AbortSignal) => {
+    const { data } = await api.get<DispatchBlacklistPage>("/orders/dispatch-blacklist", { params: { search, page }, signal });
+    return data;
 };
 
 export interface CustomerOrderHistoryPage {

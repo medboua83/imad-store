@@ -98,7 +98,7 @@ test('History is checked again after reading cities and before external creation
     const paths: string[] = [];
     await worker(async (path: string, method = 'GET') => {
         paths.push(method + ' ' + path); assert.equal(path, '/cities');
-        await p.order.create({ data: { ...base, customerPhone: phone(16), status: 'CANCELLED', createdAt: new Date('2020-01-01') } });
+        await p.order.create({ data: { ...base, customerPhone: phone(16), status: 'CANCELLED', createdAt: new Date(Date.now() + 1000) } });
         return [{ name: 'Rabat', price: 30 }];
     });
     assert.deepEqual(paths, ['GET /cities']); assert.equal((await p.olivraisonShipment.findUnique({ where: { id: order.id } })).state, 'REVIEW_REQUIRED');
@@ -156,4 +156,22 @@ test('Approved orders follow the normal idempotent carrier journey once; payment
     for (const path of ['/package/new','/package/status','/pickup']) assert.equal(calls.filter(c => c === 'POST ' + path).length, 1);
     const saved = await p.olivraisonShipment.findUnique({ where: { id: order.id } }); assert.equal(saved.trackingId, 'TEST-APPROVED'); assert.equal(saved.pickupAttempted, true);
     assert.equal(await protect(), before); await quiet();
+});
+
+test('A blacklist cancellation created after an older queued order still holds it, and approval is scoped to one order', async () => {
+    const order = await p.order.create({ data: { ...base, customerPhone: phone(30), status: 'CONFIRMED', createdAt: new Date('2025-01-01') } });
+    await p.order.create({ data: { ...base, customerPhone: phone(30), status: 'CANCELLED', createdAt: new Date('2026-01-01'), deletedAt: new Date('2026-02-01') } });
+    await queue(order);
+    const other = await p.order.create({ data: { ...base, customerPhone: phone(30), status: 'CONFIRMED' } });
+    await queue(other);
+    const before = await protect();
+    for (const o of [order, other]) assert.equal((await p.olivraisonShipment.findUnique({ where: { id: o.id } })).state, 'REVIEW_REQUIRED');
+    const details = await request(app).get(`/api/orders/${order.id}/admin-details`).set(token(owner)).expect(200);
+    assert.equal(details.body.data.customerHistory.priorCancelledCount, 0);
+    assert.deepEqual(details.body.data.customerBlacklist, { available: true, blocked: true, cancelledCount: 1 });
+    await request(app).post(url(order.id)).set(token(owner)).send({ approve: true }).expect(200);
+    assert.equal((await p.olivraisonShipment.findUnique({ where: { id: order.id } })).state, 'QUEUED');
+    assert.equal((await p.olivraisonShipment.findUnique({ where: { id: other.id } })).state, 'REVIEW_REQUIRED');
+    assert.equal(await protect(), before);
+    await quiet();
 });

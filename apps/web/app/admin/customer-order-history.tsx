@@ -10,14 +10,15 @@ import { orderDate, paymentLabels } from "./order-utils";
 
 export function hasCancellationHistory(order: AdminOrder) {
     const summary = order.customerHistory;
-    return summary?.available === true && Number.isSafeInteger(summary.priorCancelledCount) && summary.priorCancelledCount > 0;
+    return order.customerBlacklist?.blocked === true || (summary?.available === true && Number.isSafeInteger(summary.priorCancelledCount) && summary.priorCancelledCount > 0);
 }
 export function CustomerCancellationAlert({ order, onOpen }: { order: AdminOrder; onOpen: () => void }) {
     const { t } = useAdminLocale();
     if (!hasCancellationHistory(order)) return null;
     return <section className="customer-cancellation-alert" aria-label={t("Anciennes commandes annulées")}>
+        {order.customerBlacklist?.blocked && <p><strong>{t("Numéro sur liste noire — envoi Olivraison manuel")}</strong></p>}
         <p><AlertTriangle size={17} aria-hidden="true" />
-            <strong>{t("{count} ancienne(s) commande(s) annulée(s) associée(s) à ce numéro.", { count: order.customerHistory!.priorCancelledCount })}</strong>
+            <strong>{t("{count} ancienne(s) commande(s) annulée(s) associée(s) à ce numéro.", { count: order.customerBlacklist?.cancelledCount ?? order.customerHistory!.priorCancelledCount })}</strong>
         </p>
         <button type="button" className="admin-text-button" onClick={onOpen}>{t("Voir l’historique du numéro")}</button>
     </section>;

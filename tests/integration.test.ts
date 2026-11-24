@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { createHmac, randomUUID, randomBytes } from "node:crypto";
 import { rm } from "node:fs/promises";
+import path from "node:path";
 const { databaseUrl, createDatabase, dropDatabase } = require("../scripts/test-postgres.cjs");
 import request from "supertest";
 import jwt from "jsonwebtoken";
@@ -14,6 +15,8 @@ if (
     process.env.DATABASE_URL !== databaseUrl(name)
 )
     throw new Error("Use npm run test:integration: isolated database required");
+// Other test processes seed their uploads on app startup; cleanup must own its directory.
+process.env.UPLOAD_DIR = path.join(process.env.UPLOAD_DIR!, "integration");
 let prisma: any, app: any, product: any, category: any;
 const token = jwt.sign(
     { id: "123456789012345678901234", role: "ADMIN", email: "admin@example.invalid" },

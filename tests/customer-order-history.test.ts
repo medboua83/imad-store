@@ -143,3 +143,50 @@ test("Restoring trash does not erase cancellation history and correcting a previ
     } finally { await p.order.update({ where: { id: id(3) }, data: { status: old.status, deletedAt: old.deletedAt, updatedAt: old.updatedAt } }); }
     assert.equal(await integrity(), snapshot);
 });
+
+test("The dispatch blacklist groups full canonical numbers across all cancellations, including trash and later-created orders", async () => {
+    const r = await request(app).get('/api/orders/dispatch-blacklist').set(admin).expect(200);
+    assert.equal(r.headers['cache-control'], 'private, no-store');
+    assert.equal(r.body.total, 4);
+    const main = r.body.data.find((row: any) => row.phone === '+212600000099');
+    assert.equal(main.cancelledCount, 5); assert.equal(main.trashCount, 1);
+    assert.equal(main.lastOrderId, id(5));
+    assert.deepEqual(Object.keys(main).sort(), ['phone','cancelledCount','trashCount','lastOrderId','lastOrderCreatedAt'].sort());
+    for (const search of ['06 00 00 00 99','+212 (600) 000-099','00212 600000099','600000099']) {
+        const found = await request(app).get('/api/orders/dispatch-blacklist').query({ search }).set(admin).expect(200);
+        assert.equal(found.body.total, 1); assert.equal(found.body.data[0].phone, '+212600000099');
+    }
+    const foreign = await request(app).get('/api/orders/dispatch-blacklist').query({ search: '+33 6 00 00 00 99' }).set(admin).expect(200);
+    assert.equal(foreign.body.total, 1); assert.equal(foreign.body.data[0].phone, '+33600000099');
+    const anchor = await request(app).get(`/api/orders/${id(1)}/admin-details`).set(admin).expect(200);
+    assert.deepEqual(anchor.body.data.customerBlacklist, { available: true, blocked: true, cancelledCount: 5 });
+    const invalid = await request(app).get(`/api/orders/${id(7)}/admin-details`).set(admin).expect(200);
+    assert.deepEqual(invalid.body.data.customerBlacklist, { available: false, blocked: false, cancelledCount: 0 });
+    assert.equal(await integrity(), snapshot);
+});
+
+test("The blacklist is permission-protected and rejects invalid or unbounded queries", async () => {
+    await request(app).get('/api/orders/dispatch-blacklist').expect(401);
+    const outsider = jwt.sign({ id: '123456789012345678901234', role: 'CUSTOMER' }, process.env.JWT_SECRET!);
+    await request(app).get('/api/orders/dispatch-blacklist').set('Authorization', `Bearer ${outsider}`).expect(403);
+    for (const q of [{ page: 0 }, { page: 'bad' }, { page: 1000001 }, { limit: 1000 }, { search: '%' }, { search: "' OR true --" }, { search: '6'.repeat(41) }])
+        await request(app).get('/api/orders/dispatch-blacklist').query(q).set(admin).expect(400);
+    assert.equal(await integrity(), snapshot);
+});
+
+test("Blacklist pagination never repeats numbers and clamps the last page without changing historical records", async () => {
+    const additions = Array.from({ length: 52 }, (_, n) => row(n + 5000, '2026-01-01T10:00:00Z', 'CANCELLED', { customerPhone: '+212655' + String(n).padStart(6, '0') }));
+    try {
+        await p.order.createMany({ data: additions });
+        const before = await integrity(), phones: string[] = [];
+        for (let page = 1; page <= 3; page++) {
+            const r = await request(app).get('/api/orders/dispatch-blacklist').query({ page }).set(admin).expect(200);
+            assert.equal(r.body.page, page); assert.equal(r.body.total, 56); assert.equal(r.body.totalPages, 3);
+            assert(r.body.data.length <= 25); phones.push(...r.body.data.map((x: any) => x.phone));
+        }
+        assert.equal(new Set(phones).size, 56);
+        assert.equal((await request(app).get('/api/orders/dispatch-blacklist').query({ page: 999 }).set(admin).expect(200)).body.page, 3);
+        assert.equal(await integrity(), before);
+    } finally { await p.order.deleteMany({ where: { id: { in: additions.map(x => x.id) } } }); }
+    assert.equal(await integrity(), snapshot);
+});
