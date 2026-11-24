@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { customerHistorySummaries } from "./customer-order-history";
+import { customerBlacklistSummaries } from "./customer-dispatch-blacklist";
 import { AppError } from "../middleware/error.middleware";
 import { prisma } from "./prisma";
 
@@ -10,8 +10,8 @@ export class CarrierReviewRequired extends Error {}
 export async function needsCarrierApproval(tx: Prisma.TransactionClient, orderId: string) {
     const shipment = await tx.olivraisonShipment.findUnique({ where: { id: orderId }, select: { approvedAt: true } });
     if (shipment?.approvedAt) return false;
-    const summary = (await customerHistorySummaries(tx, [orderId])).get(orderId);
-    return !!summary?.priorCancelledCount;
+    const summary = (await customerBlacklistSummaries(tx, [orderId])).get(orderId);
+    return summary?.blocked === true;
 }
 
 /** Approves one existing held queue entry; cannot backfill or recreate a remote parcel. */
@@ -33,14 +33,14 @@ export async function approveCarrierDispatch(orderId: string, actorId: string) {
                 const cfg = await tx.olivraisonIntegration.findUnique({ where: { id: "olivraison" } });
                 if (!cfg?.enabled || !cfg.credentials || !cfg.activatedAt || order.createdAt < cfg.activatedAt)
                     throw new AppError("La connexion Olivraison est désactivée ou cette commande est hors de sa période d’activation.", 409);
-                const count = (await customerHistorySummaries(tx, [orderId])).get(orderId)?.priorCancelledCount ?? 0;
+                const count = (await customerBlacklistSummaries(tx, [orderId])).get(orderId)?.cancelledCount ?? 0;
                 const result = await tx.olivraisonShipment.updateMany({
                     where: { id: orderId, state: "REVIEW_REQUIRED", approvedAt: null, trackingId: null, pickupAttempted: false, lockedUntil: { lte: new Date() } },
                     data: { approvedAt: new Date(), approvedBy: actorId, state: "QUEUED", lastError: null, nextAttemptAt: new Date() },
                 });
                 if (!result.count) throw new AppError("Commande modifiée entre-temps. Actualisez la page.", 409);
                 await tx.orderEvent.create({ data: { orderId, type: "carrier_manual_approved",
-                    message: `Olivraison dispatch approved by admin ${actorId}; prior cancellations: ${count}` } });
+                    message: `Olivraison dispatch approved by admin ${actorId}; cancelled orders for number: ${count}` } });
                 return { approved: true, orderId, alreadyApproved: false };
             }, { isolationLevel: "Serializable" });
         } catch (error) {

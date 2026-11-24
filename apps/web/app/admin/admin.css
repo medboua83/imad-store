@@ -2078,6 +2078,24 @@
 .customer-history-list .admin-text-button { margin-block-start: 8px; min-height: 36px; }
 .customer-history-body > .admin-button { margin-block-end: 12px; }
 .customer-history-body { overflow-wrap: anywhere; }
+.dispatch-blacklist { margin-block: 20px; border: 1px solid #d6bf8d; border-radius: 12px; background: #fffdf8; }
+.dispatch-blacklist > summary { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 16px; font-weight: 600; color: #77521e; }
+.dispatch-blacklist-body { padding: 0 16px 18px; min-width: 0; }
+.dispatch-blacklist-body > p { margin-block: 12px; }
+.dispatch-blacklist-search { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-block: 18px; }
+.dispatch-blacklist-search label { display: grid; gap: 8px; flex: 1 1 240px; min-width: 0; }
+.dispatch-blacklist-search input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #d9ceba; border-radius: 8px; padding: 10px 12px; background: white; color: #342c20; }
+.dispatch-blacklist-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dispatch-blacklist-list > li { border: 1px solid #e4d6b8; border-inline-start: 3px solid #ac772d; border-radius: 8px; padding: 14px; min-width: 0; }
+.dispatch-blacklist-list p { margin-block: 8px; }
+.dispatch-blacklist-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.dispatch-blacklist-row strong { font-variant-numeric: tabular-nums; }
+.dispatch-blacklist-row span { font-size: 12px; color: #77521e; background: #f6e7c8; padding: 5px 8px; border-radius: 6px; }
+.dispatch-blacklist-list .admin-text-button { min-height: 44px; text-align: start; }
+@media (max-width: 700px) {
+    .dispatch-blacklist-list { grid-template-columns: minmax(0, 1fr); }
+    .dispatch-blacklist-body { padding-inline: 12px; }
+}
 .team-grid { display: grid; gap: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 .team-grid > *, .team-settings-form, .team-settings-form fieldset { min-width: 0; }
 .team-settings-form { max-width: 700px; margin-top: 20px; }

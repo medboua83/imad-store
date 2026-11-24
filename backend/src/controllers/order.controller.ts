@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { orderHistoryQuery, orderHistoryWhere, orderHistorySort, orderExportQuery } from "../lib/order-history-query";
 import { ORDER_EXPORT_LIMIT, orderExportSelect, orderCsv } from "../lib/order-export";
 import { customerHistorySummaries, readCustomerOrderHistory } from "../lib/customer-order-history";
+import { customerBlacklistSummaries, dispatchBlacklistQuery, readDispatchBlacklist } from "../lib/customer-dispatch-blacklist";
 import { checkoutDeliverySchema } from "../lib/checkout-shipping";
 import { enqueueOlivraison } from "../lib/olivraison-enqueue";
 import { shippingFee, priceCart } from "@imad-store/shared";
@@ -492,7 +493,8 @@ export async function listOrders(req: Request, res: Response) {
         }) : [];
         const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
         const summaries = await customerHistorySummaries(tx, ids.map(row => row.id));
-        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
+        const blacklist = await customerBlacklistSummaries(tx, ids.map(row => row.id));
+        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id), customerBlacklist: blacklist.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, ...result, trackingFilter: q.tracking });
@@ -522,6 +524,13 @@ export async function exportOrders(req: Request, res: Response) {
     res.send(result.csv);
 }
 
+export async function getDispatchBlacklist(req: Request, res: Response) {
+    const query = dispatchBlacklistQuery.parse(req.query);
+    const result = await prisma.$transaction(tx => readDispatchBlacklist(tx, query), { isolationLevel: "RepeatableRead" });
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ success: true, ...result });
+}
+
 export async function getAdminOrder(req: Request, res: Response) {
     const data = await prisma.$transaction(async tx => {
         const order = await tx.order.findFirst({ where: { id: req.params.id, deletedAt: null }, include: ORDER_INCLUDE });
@@ -531,7 +540,8 @@ export async function getAdminOrder(req: Request, res: Response) {
             select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true },
         });
         const summaries = await customerHistorySummaries(tx, [order.id]);
-        return { ...order, shipment, customerHistory: summaries.get(order.id) };
+        const blacklist = await customerBlacklistSummaries(tx, [order.id]);
+        return { ...order, shipment, customerHistory: summaries.get(order.id), customerBlacklist: blacklist.get(order.id) };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, data });

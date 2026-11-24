@@ -1,3 +1,7 @@
+## Liste noire des numéros — 24 novembre 2026
+
+Candidat : liste centralisée dans Commandes, recherche/pagination indépendantes des cent dernières commandes, repère de validation manuelle et contrôle de toutes les annulations du numéro avant les écritures Olivraison. Les accords restent propres à une seule commande. Recettes locales : 19 tests serveur et 24 tests navigateur ciblés réussis ; vérification GitHub et publication à suivre dans outputs/customer-blacklist-20261124. Aucun colis réel pour tester ; pas de migration.
+
 ## Retours et échanges en caisse — 23 novembre 2026
 
 Candidat : retours partiels depuis un ticket POS ou un reçu RET de remplacement, remboursement en espèces et échange avec complément espèces/TPE externe. Condition revendable obligatoire par ligne ; seuls les articles explicitement revendables et la variante originale encore identifiable sont réintégrés. Crédit fondé sur le montant payé du ticket, remises comprises, avec allocation cumulative des centimes. Quantités plafonnées par le solde du ticket ; verrou commun de source entre caissiers, clé idempotente et reprise après coupure. Entrées, sorties de stock et reçu atomiques, aucune nouvelle commande web, paiement existant, CRM ou colis modifié.

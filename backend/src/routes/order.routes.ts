@@ -7,6 +7,7 @@ import {
     getOrderHistory,
     getAdminOrder,
     getCustomerOrderHistory,
+    getDispatchBlacklist,
     listOrders,
     exportOrders,
     updateOrderStatus,
@@ -25,6 +26,7 @@ orderRoutes.param("id", validateObjectId);
 orderRoutes.post("/", createOrder); // guest checkout
 // Register before the public /:id route and its identifier validation.
 orderRoutes.get("/export.csv", authenticate, requirePermission("orders.export"), exportOrders);
+orderRoutes.get("/dispatch-blacklist", authenticate, requirePermission("orders.read"), getDispatchBlacklist);
 orderRoutes.get("/:id", getOrder); // order tracking by ID
 
 // ─── Admin ────────────────────────────────────────────────────────────────

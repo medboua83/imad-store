@@ -14,6 +14,7 @@ import { OrderHistory } from "./order-history";
 import { useAdminPermission } from "./admin-access";
 import { OrderExport } from "./order-export";
 import { CustomerCancellationAlert, CustomerOrderHistory, hasCancellationHistory } from "./customer-order-history";
+import { CustomerDispatchBlacklist } from "./customer-dispatch-blacklist";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
 import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
 import { orderWhatsAppLink } from "./order-whatsapp";
@@ -177,7 +178,9 @@ export function OrdersTab({
     }
     async function approveCarrier(o: AdminOrder) {
         if (lock.current || readBlocked || reloadRequired) return;
-        if (!confirm(t("Autoriser l’envoi de la commande #{reference} malgré les anciennes annulations ? Olivraison pourra créer le colis et demander le ramassage selon vos réglages.", { reference: o.id.slice(-8).toUpperCase() }))) return;
+        if (!confirm(t(o.customerBlacklist?.blocked
+            ? "Ce numéro est sur liste noire. Autoriser uniquement l’envoi de la commande #{reference} à Olivraison ? Cette validation ne débloque pas ses autres commandes."
+            : "Autoriser l’envoi de la commande #{reference} malgré les anciennes annulations ? Olivraison pourra créer le colis et demander le ramassage selon vos réglages.", { reference: o.id.slice(-8).toUpperCase() }))) return;
         lock.current = true; setBusy(true); setMessage("");
         let saved = false;
         try {
@@ -260,6 +263,10 @@ export function OrdersTab({
                     {t("Actualiser")}
                 </button>
             </div>
+            <CustomerDispatchBlacklist onSearch={phone => {
+                setFilters({ ...initialOrderListFilters, search: phone });
+                requestAnimationFrame(() => { resultsRef.current?.focus(); resultsRef.current?.scrollIntoView({ block: "start" }); });
+            }} />
             <div className="admin-toolbar">
                 <label className="admin-search">
                     <span>{t("Rechercher une commande")}</span>
