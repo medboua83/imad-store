@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const instant = new Date("2026-11-24T23:30:00Z"); // November 25 in Morocco, November 24 in California.
+const instant = new Date("2026-11-24T23:30:00Z"); // Deliberate server/browser calendar disagreement: supplied server bounds must win.
 async function fixture(page: Page, ar: boolean, remote: boolean) {
     await page.clock.setFixedTime(instant);
     await page.addInitScript(ar => {

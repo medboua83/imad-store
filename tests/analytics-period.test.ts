@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { analyticsPeriod, storeCalendar } from "../backend/src/lib/analytics-period";
 
 for (const [at, start] of [
-    ["2026-11-24T22:59:59.999Z", "2026-11-23T23:00:00.000Z"],
-    ["2026-11-24T23:00:00.000Z", "2026-11-24T23:00:00.000Z"],
+    ["2026-11-24T23:59:59.999Z", "2026-11-24T00:00:00.000Z"],
+    ["2026-11-25T00:00:00.000Z", "2026-11-25T00:00:00.000Z"],
     ["2026-02-15T22:00:00.000Z", "2026-02-14T23:00:00.000Z"],
     ["2026-03-22T22:00:00.000Z", "2026-03-22T00:00:00.000Z"],
 ]) test(`Today follows Moroccan midnight and clock changes at ${at}`, () => {
