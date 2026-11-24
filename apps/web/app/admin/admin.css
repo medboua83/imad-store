@@ -2165,3 +2165,12 @@
     .admin-app .admin-orders-workspace .order-tools > details[open] { grid-column: 1 / -1; }
     .admin-app .admin-orders-workspace .order-results { margin-block: 8px; }
 }
+
+/* One-click calendar filter, without another filter row on phones. */
+.admin-app .admin-orders-workspace .order-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.admin-app .order-today-filter[aria-pressed="true"] { background: var(--admin-green); color: var(--admin-white); border-color: var(--admin-green); }
+@media (max-width: 767px) {
+    .admin-app .admin-orders-workspace .admin-panel-heading > div:first-child { flex: 0; }
+    .admin-app .admin-orders-workspace .admin-panel-heading > div:first-child p { display: none; }
+    .admin-app .admin-orders-workspace .order-heading-actions { flex: 1; justify-content: space-between; }
+}

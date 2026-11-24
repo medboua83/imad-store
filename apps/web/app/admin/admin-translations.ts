@@ -1,6 +1,9 @@
 import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    "Aujourd’hui": "اليوم",
+    "Depuis minuit, heure du Maroc.": "منذ منتصف الليل بتوقيت المغرب.",
+    "Aujourd’hui depuis minuit, heure du Maroc. Conservation : 91 jours.": "اليوم منذ منتصف الليل بتوقيت المغرب. مدة الاحتفاظ: 91 يوماً.",
     "Liste noire des numéros": "القائمة السوداء للأرقام",
     "Envoi Olivraison sur validation manuelle": "الإرسال إلى Olivraison بعد الموافقة اليدوية",
     "Une commande annulée suffit à placer le numéro dans cette liste. Les commandes restent possibles ; chaque nouvel envoi à Olivraison exige votre validation dans les détails de la commande.": "يكفي طلب ملغى واحد لإدراج الرقم في هذه القائمة. يمكن للعميل الاستمرار في الطلب، لكن كل إرسال جديد إلى Olivraison يتطلب موافقتكم من تفاصيل الطلب.",

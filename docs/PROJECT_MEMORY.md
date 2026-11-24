@@ -1,3 +1,7 @@
+## Période Aujourd’hui — 24 novembre 2026
+
+Candidat : statistiques depuis minuit selon Africa/Casablanca, sans changer les périodes glissantes de 7/30/90 jours ; raccourci Aujourd’hui dans Commandes, dates remplies ensemble et pagination remise à un. Les autres filtres et l’export conservent le même contexte. Un second clic retire uniquement les dates. Lecture seule, aucune commande, paiement, stock ou création de colis de test sur la production. Recettes et publication sur DATA : outputs/today-orders-20261124.
+
 ## Parcours mobile prioritaires — 24 novembre 2026
 
 Préserver les destinations des fragments dans tous les onglets admin : un raccourci de l’éditeur ne doit pas redonner le focus au titre principal. Sauvegarde mobile : même formulaire et même action existante, barre compacte et erreurs conservées ; pas de second enregistrement. Commandes : mêmes filtres, permissions, export et liste noire, avec outils regroupés. Panier : détail du prix repliable dans la zone de lecture ; total et validation de commande dans le pied. Aucun calcul commercial, ordre, stock, paiement, transporteur, CRM ou photo modifié. Recettes : outputs/mobile-workflow-priorities-20261124 sur DATA.

@@ -16,7 +16,7 @@ import { OrderExport } from "./order-export";
 import { CustomerCancellationAlert, CustomerOrderHistory, hasCancellationHistory } from "./customer-order-history";
 import { CustomerDispatchBlacklist } from "./customer-dispatch-blacklist";
 import { allowedActions, filterOrders, money, statusLabels } from "./admin-utils";
-import { orderAmounts, orderDate, paymentLabels, refineOrders } from "./order-utils";
+import { orderAmounts, orderDate, orderDay, paymentLabels, refineOrders } from "./order-utils";
 import { orderWhatsAppLink } from "./order-whatsapp";
 const actionLabels: Record<string, string> = {
     CONFIRMED: "Confirmer",
@@ -72,6 +72,16 @@ export function OrdersTab({
     const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
     const detailTitle = useRef<HTMLHeadingElement>(null);
     const invalidDates = !!from && !!to && from > to;
+    const today = orderDay(new Date().toISOString());
+    const todaySelected = from === today && to === today;
+    function toggleToday() {
+        const day = orderDay(new Date().toISOString());
+        pageNavigation.current = false;
+        setFilters(previous => ({ ...previous, page: 1,
+            from: previous.from === day && previous.to === day ? "" : day,
+            to: previous.from === day && previous.to === day ? "" : day,
+        }));
+    }
     const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, from, to, sort),
         [orders, search, status, payment, tracking, from, to, sort, invalidDates]);
     const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(orders.filter(order => orderTrackingMatches(order.shipment, tracking)), search, "ALL"), payment, from, to, sort),
@@ -258,10 +268,16 @@ export function OrdersTab({
                     <h2 className="sr-only">{t("Suivi des commandes")}</h2>
                     <p>{t("Recherche dans toutes les commandes, hors corbeille.")}</p>
                 </div>
-                <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
-                    <RefreshCw size={16} />
-                    <span className="order-refresh-label">{t("Actualiser")}</span>
-                </button>
+                <div className="order-heading-actions">
+                    <button type="button" className="admin-button order-today-filter" aria-pressed={todaySelected}
+                        title={t("Depuis minuit, heure du Maroc.")} onClick={toggleToday}>
+                        {t("Aujourd’hui")}
+                    </button>
+                    <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
+                        <RefreshCw size={16} />
+                        <span className="order-refresh-label">{t("Actualiser")}</span>
+                    </button>
+                </div>
             </div>
             <div className="admin-toolbar">
                 <label className="admin-search">

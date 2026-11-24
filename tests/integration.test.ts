@@ -1643,6 +1643,35 @@ test("Only real committed orders convert visits; retries and multiple orders can
     assert.equal(again.attributedOrders, 2);
 });
 
+test("Today analytics exclude yesterday, future, test and other-company records", async () => {
+    const { analyticsScope } = await import("../backend/src/lib/store-analytics");
+    const { analyticsPeriod } = await import("../backend/src/lib/analytics-period");
+    await prisma.storeAnalytics.deleteMany({});
+    const now = new Date(), { start } = analyticsPeriod(1, now), scope = analyticsScope();
+    const page = { scope, kind: "page", page: "/", test: false, at: start };
+    await prisma.storeAnalytics.createMany({ data: [
+        { ...page, session: "today", kind: "page" },
+        { ...page, session: "today", kind: "order", stage: "PENDING" },
+        { ...page, session: "yesterday", at: new Date(start.getTime() - 1) },
+        { ...page, session: "future", at: new Date(now.getTime() + 86400_000) },
+        { ...page, session: "test", test: true },
+        { ...page, session: "other-company", scope: "isolated-other-company" },
+    ].map(row => ({ ...row, id: randomUUID(), expiresAt: new Date(now.getTime() + 91 * 86400_000) })) });
+    const response = await request(app).get("/api/analytics/summary?days=1").set(admin());
+    assert.equal(response.status, 200);
+    const summary = response.body.data;
+    assert.equal(summary.days, 1);
+    assert.equal(summary.start, start.toISOString());
+    assert.equal(summary.visits, 1);
+    assert.equal(summary.attributedOrders, 1);
+    assert.equal(summary.convertedVisits, 1);
+    assert.equal(summary.orderRate, 100);
+    const week = await request(app).get("/api/analytics/summary?days=7").set(admin());
+    assert.equal(week.status, 200); assert.equal(week.body.data.visits, 2);
+    assert.equal((await request(app).get("/api/analytics/summary?days=1")).status, 401);
+    assert.equal((await request(app).get("/api/analytics/summary?days=2").set(admin())).status, 400);
+});
+
 test("Analytics scope comes from the installation, never from request inputs, and periods ignore old/test records", async () => {
     const { analyticsScope, readAnalytics } = await import("../backend/src/lib/store-analytics");
     const collection = prisma.storeAnalytics;

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { storeIdentity } from "./store-installation";
+import { analyticsPeriod } from "./analytics-period";
 
 const retention = 91 * 86400_000;
 let nextCleanup = 0;
@@ -84,7 +85,7 @@ export async function recordOrderStage(orderId: string, stage: "PENDING" | "CONF
 }
 export async function readAnalytics(days: number) {
     await ready();
-    const scope = analyticsScope(), end = new Date(), start = new Date(end.getTime() - days * 86400_000);
+    const scope = analyticsScope(), { start, end } = analyticsPeriod(days);
     const filter = Prisma.sql`scope = ${scope} AND test = false AND at >= ${start} AND at <= ${end}`;
     const [sessions, groups, products, first] = await Promise.all([
         prisma.$queryRaw<Array<{ visits: bigint; converted: bigint; cart: bigint; checkout: bigint }>>(Prisma.sql`

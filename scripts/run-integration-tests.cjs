@@ -54,6 +54,7 @@ const result = spawnSync(
         "tests/meta-pixel.test.ts",
         "tests/meta-domain-verification.test.ts",
         "tests/analytics-client.test.ts",
+        "tests/analytics-period.test.ts",
         "tests/category-visuals.test.ts",
         "tests/store-template.test.ts",
         "tests/deskcomm-form.test.ts",
