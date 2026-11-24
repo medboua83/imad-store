@@ -99,7 +99,7 @@ test("Unavailable store calendar retains dates and allows an explicit retry with
     await page.goto("/admin?tab=orders");
     const today = page.getByRole("button", { name: "Aujourd’hui", exact: true });
     await today.click();
-    await expect(page.getByRole("alert")).toContainText("La période n’a pas pu être chargée");
+    await expect(page.locator(".admin-orders-workspace [role=alert]")).toContainText("La période n’a pas pu être chargée");
     await expect(page.locator('input[type="date"]').first()).toHaveValue("");
     await expect(today).toBeEnabled();
     f.control.failCalendar = false;
