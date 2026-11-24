@@ -14,10 +14,14 @@ async function fixture(page: Page, ar: boolean, remote: boolean) {
         createdAt: n < (remote ? 120 : 2) ? "2026-11-24T23:00:00Z" : "2026-11-24T22:59:59.999Z", items: [],
     }));
     const requests: URL[] = [], writes: string[] = [];
+    const control = { failCalendar: false };
     await page.route("**/api/**", route => {
         const req = route.request(), url = new URL(req.url()), path = url.pathname;
         if (req.method() !== "GET") { writes.push(path); return route.fulfill({ status: 405 }); }
         requests.push(url);
+        if (path === "/api/orders/calendar") return control.failCalendar
+            ? route.fulfill({ status: 503 })
+            : route.fulfill({ json: { success: true, data: { day: "2026-11-25", start: "2026-11-24T23:00:00Z", end: "2026-11-25T23:00:00Z", timeZone: "Africa/Casablanca" } } });
         if (path === "/api/analytics/summary") {
             const days = Number(url.searchParams.get("days") || 7);
             return route.fulfill({ json: { success: true, data: {
@@ -39,7 +43,7 @@ async function fixture(page: Page, ar: boolean, remote: boolean) {
             trackingFilter: "ALL",
         } });
     });
-    return { requests, writes };
+    return { requests, writes, control };
 }
 test.use({ timezoneId: "America/Los_Angeles" });
 test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: "ignoreErrors" }); });
@@ -88,3 +92,19 @@ for (const width of [320, 1440]) for (const ar of [false, true]) {
         });
     }
 }
+
+test("Unavailable store calendar retains dates and allows an explicit retry without writes", async ({ page }) => {
+    const f = await fixture(page, false, false);
+    f.control.failCalendar = true;
+    await page.goto("/admin?tab=orders");
+    const today = page.getByRole("button", { name: "Aujourd’hui", exact: true });
+    await today.click();
+    await expect(page.getByRole("alert")).toContainText("La période n’a pas pu être chargée");
+    await expect(page.locator('input[type="date"]').first()).toHaveValue("");
+    await expect(today).toBeEnabled();
+    f.control.failCalendar = false;
+    await today.click();
+    await expect(page.locator('input[type="date"]').first()).toHaveValue("2026-11-25");
+    await expect(page.locator(".admin-order-card")).toHaveCount(2);
+    expect(f.writes).toEqual([]);
+});

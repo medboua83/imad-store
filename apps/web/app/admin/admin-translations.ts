@@ -2,6 +2,7 @@ import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
     "Aujourd’hui": "اليوم",
+    "La période n’a pas pu être chargée. Réessayez.": "تعذر تحميل الفترة. يرجى المحاولة مجدداً.",
     "Depuis minuit, heure du Maroc.": "منذ منتصف الليل بتوقيت المغرب.",
     "Aujourd’hui depuis minuit, heure du Maroc. Conservation : 91 jours.": "اليوم منذ منتصف الليل بتوقيت المغرب. مدة الاحتفاظ: 91 يوماً.",
     "Liste noire des numéros": "القائمة السوداء للأرقام",

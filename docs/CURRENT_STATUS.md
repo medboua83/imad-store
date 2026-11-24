@@ -2,6 +2,8 @@
 
 Candidat : statistiques depuis minuit selon Africa/Casablanca, sans changer les périodes glissantes de 7/30/90 jours ; raccourci Aujourd’hui dans Commandes, dates remplies ensemble et pagination remise à un. Les autres filtres et l’export conservent le même contexte. Un second clic retire uniquement les dates. Lecture seule, aucune commande, paiement, stock ou création de colis de test sur la production. Recettes et publication sur DATA : outputs/today-orders-20261124.
 
+La journée et ses bornes UTC viennent de l’API privée /orders/calendar, protégée par orders.read. Ne pas recalculer la journée du raccourci avec le calendrier du navigateur : certaines versions divergent pour le Maroc. Une panne de cette lecture conserve les filtres et propose de réessayer ; les collections locales utilisent aussi les bornes serveur.
+
 ## Parcours mobile prioritaires — 24 novembre 2026
 
 Candidat issu de l’audit : ancres de l’éditeur produit et focus corrigés, sauvegarde existante accessible dans une barre mobile compacte, filtres de commandes regroupés avec recherche et résultats rapprochés, total et bouton principaux du panier séparés de son détail repliable. Les prix, le stock, la liste noire et les accords manuels avant Olivraison conservent leurs contrôles. Aucun nouvel ordre, colis ou règlement réel pour tester. Recette et publication suivies sur DATA : outputs/mobile-workflow-priorities-20261124.

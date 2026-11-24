@@ -1670,6 +1670,13 @@ test("Today analytics exclude yesterday, future, test and other-company records"
     assert.equal(week.status, 200); assert.equal(week.body.data.visits, 2);
     assert.equal((await request(app).get("/api/analytics/summary?days=1")).status, 401);
     assert.equal((await request(app).get("/api/analytics/summary?days=2").set(admin())).status, 400);
+    const calendar = await request(app).get("/api/orders/calendar").set(admin());
+    assert.equal(calendar.status, 200);
+    assert.equal(calendar.body.data.start, summary.start);
+    assert.equal(calendar.body.data.timeZone, "Africa/Casablanca");
+    assert.ok(Date.parse(calendar.body.data.end) > Date.parse(summary.end));
+    assert.match(calendar.headers["cache-control"], /private, no-store/);
+    assert.equal((await request(app).get("/api/orders/calendar")).status, 401);
 });
 
 test("Analytics scope comes from the installation, never from request inputs, and periods ignore old/test records", async () => {

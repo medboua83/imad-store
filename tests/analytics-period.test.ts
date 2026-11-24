@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analyticsPeriod } from "../backend/src/lib/analytics-period";
+import { analyticsPeriod, storeCalendar } from "../backend/src/lib/analytics-period";
 
 for (const [at, start] of [
     ["2026-11-24T22:59:59.999Z", "2026-11-23T23:00:00.000Z"],
@@ -20,4 +20,13 @@ test("Historical analytics periods retain their rolling duration", () => {
         assert.equal(period.end.getTime() - period.start.getTime(), days * 86400_000);
     }
     for (const days of [0, 2, -1, 365]) assert.throws(() => analyticsPeriod(days, now), RangeError);
+});
+
+test("The authoritative store calendar handles 23-hour and 25-hour days", () => {
+    for (const [instant, day, hours] of [["2026-02-15T22:00:00Z", "2026-02-15", 25], ["2026-03-22T22:00:00Z", "2026-03-22", 23]] as const) {
+        const calendar = storeCalendar(new Date(instant));
+        assert.equal(calendar.day, day);
+        assert.equal(calendar.timeZone, "Africa/Casablanca");
+        assert.equal((calendar.end.getTime() - calendar.start.getTime()) / 3600_000, hours);
+    }
 });

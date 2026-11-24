@@ -1,3 +1,4 @@
+import { storeCalendar } from "../lib/analytics-period";
 import { validateObjectId } from "../lib/validation";
 import { Router, IRouter } from "express";
 import {
@@ -27,6 +28,10 @@ orderRoutes.post("/", createOrder); // guest checkout
 // Register before the public /:id route and its identifier validation.
 orderRoutes.get("/export.csv", authenticate, requirePermission("orders.export"), exportOrders);
 orderRoutes.get("/dispatch-blacklist", authenticate, requirePermission("orders.read"), getDispatchBlacklist);
+orderRoutes.get("/calendar", authenticate, requirePermission("orders.read"), (_req, res) => {
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ success: true, data: storeCalendar() });
+});
 orderRoutes.get("/:id", getOrder); // order tracking by ID
 
 // ─── Admin ────────────────────────────────────────────────────────────────
