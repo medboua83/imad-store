@@ -1,3 +1,11 @@
+## Protections web, statistiques et preuve de reprise — 25 novembre 2026
+
+Candidat issu de l'audit de revente : protections HTTP des pages Next, statistiques compactes avec quatre indicateurs, bornes de période et heure de lecture, conservation d'une dernière lecture de la même période après erreur, refus des réponses d'une autre période, aide repliable et navigation Commandes selon les droits. Résultats Commandes : groupe explicite des actions export/réinitialisation pour les polices plus larges à 320 px, sans retirer de contrôle ni réduire les cibles tactiles. Paramètres commerciaux, photos, paiements, stock et connexions conservés. Pas de migration.
+
+Vérificateur privé de sauvegarde : sommes de contrôle, photos immuables lues sans extraction, restauration PostgreSQL sur une base aléatoire locale puis suppression de cette seule base. Aucun travailleur ou envoi sur la copie. La sauvegarde quotidienne du VPS existe ; la copie hors serveur reste à établir séparément. Recettes et publication : outputs/pro-dashboard-security-20261125 sur DATA. Guide : docs/RECOVERY_OPERATIONS.md.
+
+Ce lot n'active ni la double authentification, ni des sessions HttpOnly, ni Gmail sans secret du propriétaire. La politique CSP conserve les scripts inline Next : ne pas la présenter comme stricte à nonce. Ces étapes, la marque entièrement configurable et l'installation autonome demeurent à traiter avant une offre standardisée. Le README remplace les instructions historiques de composants et paiements qui ne correspondent plus au produit courant.
+
 ## Caisse — retours et échanges en préparation
 
 Retours partiels, remboursement espèces, échange et état revendable explicite ; quantités et stock atomiques, reprise sans doublon, comptage de la session courante. Validation isolée et publication suivies dans outputs/pos-returns-exchanges-20261123 sur DATA.

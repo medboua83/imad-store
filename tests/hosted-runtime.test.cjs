@@ -116,7 +116,16 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
     assert.match(card.headers.get("content-type"), /image\/png/);
     const dimensions = await sharp(Buffer.from(await card.arrayBuffer())).metadata();
     assert.equal(dimensions.width, 1200); assert.equal(dimensions.height, 630);
-    assert.equal((await get("/admin")).status, 200);
+    const admin = await get("/admin");
+    assert.equal(admin.status, 200);
+    for (const response of [detail, admin]) {
+      assert.equal(response.headers.get("x-frame-options"), "DENY");
+      assert.match(response.headers.get("content-security-policy"), /frame-ancestors 'none'/);
+      assert.ok(response.headers.get("content-security-policy").includes("https://connect.facebook.net"));
+      assert.doesNotMatch(response.headers.get("content-security-policy"), /unsafe-eval/);
+      assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+      assert.match(response.headers.get("strict-transport-security"), /max-age=31536000/);
+    }
     assert.equal((await get("/images/cat-abayas.png")).status, 200);
     const login = await get("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "hosted@example.invalid", password: "isolated-hosted-test" }) });
     assert.equal(login.status, 200);

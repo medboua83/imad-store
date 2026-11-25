@@ -439,6 +439,7 @@ export function OrdersTab({
                         })}</>}
                     </>}
                 </p>
+                <div className="order-result-actions">
                 {canExport && <OrderExport filters={filters} disabled={invalidDates || readBlocked || busy || reloadRequired} />}
                 <button
                     className="admin-text-button"
@@ -455,6 +456,7 @@ export function OrdersTab({
                 >
                     {t("Réinitialiser les filtres")}
                 </button>
+                </div>
             </div>
             {invalidDates && (
                 <p role="alert" className="admin-alert">

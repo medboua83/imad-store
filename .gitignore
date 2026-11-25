@@ -63,3 +63,7 @@ backend/uploads/
 # Isolated Playwright results
 /test-results/
 /playwright-report/
+
+# Python operational checks
+__pycache__/
+*.pyc

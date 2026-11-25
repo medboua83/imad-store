@@ -855,7 +855,8 @@ export default function AdminPage() {
                                 </div>
                             )}
                             {activeTab === "analytics" && (
-                                <AnalyticsTab days={analyticsDays} setDays={setAnalyticsDays} />
+                                <AnalyticsTab days={analyticsDays} setDays={setAnalyticsDays}
+                                    onOpenOrders={allowed("orders") ? () => selectTab("orders") : undefined} />
                             )}
                             {allowed("commerce") && openedTabs.includes("commerce") && (
                                 <div hidden={activeTab !== "commerce"}>

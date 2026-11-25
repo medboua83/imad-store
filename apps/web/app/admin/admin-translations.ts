@@ -1,6 +1,16 @@
 import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    "Gérer les commandes": "إدارة الطلبات",
+    "Du {start} au {end}, heure du Maroc.": "من {start} إلى {end} بتوقيت المغرب.",
+    "Données lues le {date}.": "تمت قراءة البيانات في {date}.",
+    "Les dernières données de cette période restent affichées.": "تظل آخر بيانات هذه الفترة معروضة.",
+    "Actualisation des statistiques…": "جارٍ تحديث الإحصاءات…",
+    "Commandes attribuées": "الطلبات المنسوبة للزيارات",
+    "Commandes créées depuis les visites mesurées, payées ou non.": "طلبات أُنشئت من الزيارات المقاسة، سواء دُفعت أم لا.",
+    "Aucune visite mesurée sur cette période": "لا توجد زيارات مقاسة خلال هذه الفترة",
+    "Choisissez une autre période ou revenez plus tard. Les visites d’administration et les tests sont exclus.": "اختاروا فترة أخرى أو عودوا لاحقاً. زيارات الإدارة والاختبارات مستثناة.",
+    "Comprendre les chiffres et leur période": "فهم الأرقام وفترتها",
     "Aujourd’hui": "اليوم",
     "7 jours": "7 أيام",
     "30 jours": "30 يوماً",
