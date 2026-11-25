@@ -56,8 +56,9 @@ for (const width of [390,768,1440]) for (const ar of [false,true]) test(`Private
     await expect(page.locator('.contact-page address')).toContainText('Rabat');
     await expect(page.locator('.site-header .brand-text-logo')).toHaveText('Atelier Démonstration');
     expect(await page.locator('.site-footer').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgb(22, 60, 49)');
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:info.outputPath('branded-contact.png'),fullPage:true});
+    if (await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) console.log('OVERFLOW',await page.evaluate(()=>[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,cls:e.className,x:e.getBoundingClientRect().x,width:e.getBoundingClientRect().width})).filter(e=>e.width>0&&(e.x< -1||e.x+e.width>innerWidth+1)).slice(0,20)));
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('Default palette and logo remain unchanged at mobile width', async ({page,context}) => {
     await page.setViewportSize({width:390,height:844}); await fixture(context); await page.goto('/');

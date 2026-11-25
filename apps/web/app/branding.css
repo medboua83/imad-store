@@ -36,3 +36,10 @@
 .brand-theme[data-custom-accent] .admin-sidebar nav button[aria-current="page"] { background: var(--brand-accent); color: var(--brand-on-accent); }
 
 .brand-text-logo { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Custom names and artwork occupy the same header slot as the original mark. */
+.site-header .brand-text-logo { width: 164px; max-width: 164px; }
+.site-header .brand-custom-logo { width: 164px; height: 75px; }
+@media(max-width:767px) {
+    .site-header .brand-text-logo { width: 116px; max-width: 116px; }
+    .site-header .brand-custom-logo { width: 116px; height: 54px; }
+}
