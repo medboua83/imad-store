@@ -7,7 +7,7 @@ import { prisma } from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 
-import { browserSessionRequested, hasAdminCookie } from "../lib/admin-cookies";
+import { assertBrowserRequest, browserSessionRequested, hasAdminCookie } from "../lib/admin-cookies";
 import { startBrowserSession, refreshBrowserSession, endBrowserSession, browserIdentity } from "../lib/admin-browser-session";
 import { verifyLoginMfa } from "../lib/admin-mfa";
 
@@ -63,6 +63,7 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
+    if (browserSessionRequested(req) || hasAdminCookie(req)) assertBrowserRequest(req);
     const body = loginSchema.parse(req.body);
 
     const user = await prisma.user.findFirst({ where: { email: { equals: body.email, mode: "insensitive" } } });

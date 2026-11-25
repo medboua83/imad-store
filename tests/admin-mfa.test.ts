@@ -91,6 +91,9 @@ test('Persistent per-account throttling holds across IPs and a later valid facto
 test('Staff can protect only their own account; customers, foreign origins and anonymous requests are rejected',async()=>{
  const {u,s}=await enabled('STAFF'),customer=await account('CUSTOMER');await setup(customer).expect(403);
  await request(app).get('/api/auth/mfa').expect(401);
+ const before=await p.adminMfa.findUnique({where:{userId:u.id}});
+ for(const code of [s.recoveryCodes[0],'invalid'])await request(app).post('/api/auth/login').set({...mode,...ip(),Origin:'https://foreign.example'}).send({email:u.email,password:pwd,code}).expect(403);
+ const unchanged=await p.adminMfa.findUnique({where:{userId:u.id}});assert.deepEqual(unchanged.recoveryHashes,before.recoveryHashes);assert.equal(unchanged.failedAttempts,before.failedAttempts);assert.equal(unchanged.lastUsedStep,before.lastUsedStep);
  const r=await login(u,s.recoveryCodes[0]).expect(200),c=r.headers['set-cookie'].map((c:string)=>c.split(';')[0]);
  await request(app).post('/api/auth/mfa/disable').set({...mode,Origin:'https://foreign.example','X-Imad-Admin-Identity':u.id+':'+u.authVersion}).set('Cookie',c).send({currentPassword:pwd,code:s.recoveryCodes[1]}).expect(403);
  await request(app).get('/api/team').set({...mode,'X-Imad-Admin-Identity':u.id+':'+u.authVersion}).set('Cookie',c).expect(403);
