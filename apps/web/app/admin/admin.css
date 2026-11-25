@@ -2182,3 +2182,11 @@
     .admin-app .order-period-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
     .admin-app .order-period-filter { padding-inline: 10px; }
 }
+
+@media (max-width: 767px) {
+    /* Offset the second shortcut row without shrinking any touch target. */
+    .admin-workspace[data-tab="orders"] .admin-page-heading { margin-block-end: 8px; }
+    .admin-app .admin-orders-workspace .admin-panel-heading { margin-block-end: 6px; }
+    .admin-app .admin-orders-workspace .order-quick-filters { margin-block: 6px; }
+    .admin-app .admin-orders-workspace .order-results { margin-block: 6px; }
+}
