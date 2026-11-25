@@ -2,6 +2,12 @@ import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
     "Double authentification": "المصادقة الثنائية",
+    "J’ai perdu mon téléphone": "فقدت هاتفي",
+    "Revenir à la connexion": "العودة إلى تسجيل الدخول",
+    "Réinitialiser ma protection": "إعادة ضبط حمايتي",
+    "Réinitialiser ma double authentification et fermer toutes mes sessions avec ce code de secours.": "إعادة ضبط المصادقة الثنائية وإغلاق جميع جلساتي باستخدام هذا الرمز الاحتياطي.",
+    "Votre protection a été réinitialisée. Reconnectez-vous, puis configurez votre nouvelle application dans Mon compte.": "تمت إعادة ضبط الحماية. سجلوا الدخول ثم أعدّوا تطبيقكم الجديد في حسابي.",
+    "Ce dernier code est réservé à la récupération. Choisissez « J’ai perdu mon téléphone » pour réinitialiser votre protection avec ce code.": "هذا الرمز الأخير مخصص لاستعادة الحساب. اختاروا «فقدت هاتفي» لإعادة ضبط الحماية به.",
     "Protégez votre compte avec votre mot de passe et un code de Google Authenticator, Microsoft Authenticator ou une application compatible.": "احموا حسابكم بكلمة المرور ورمز من Google Authenticator أو Microsoft Authenticator أو تطبيق متوافق.",
     "Protection active": "الحماية مفعّلة",
     "Protection non activée": "الحماية غير مفعّلة",

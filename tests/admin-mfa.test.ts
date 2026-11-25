@@ -115,3 +115,15 @@ test('Password recovery changes the password but retains MFA and recovery-code r
  const fresh=await p.user.findUnique({where:{id:u.id}});assert.deepEqual((await login(fresh,undefined,true,pwd+'-new').expect(200)).body.data,{mfaRequired:true});
  await login(fresh,s.recoveryCodes[0],true,pwd+'-new').expect(200);
 });
+test('The last backup is reserved for explicit recovery, which works without a session and is idempotent under concurrency',async()=>{
+ const {u,s}=await enabled();await p.adminMfa.update({where:{userId:u.id},data:{recoveryHashes:[mfa.recoveryHash(u.id,s.recoveryCodes[0])]}});
+ await login(u,s.recoveryCodes[0]).expect(409);assert.equal(await p.refreshToken.count({where:{userId:u.id}}),0);assert.equal((await p.adminMfa.findUnique({where:{userId:u.id}})).recoveryHashes.length,1);
+ const recover=(extra:any={},headers:any={})=>request(app).post('/api/auth/mfa/recover').set({...mode,...ip(),...headers}).send({email:u.email,password:pwd,code:s.recoveryCodes[0],...extra});
+ await recover({}, {Origin:'https://foreign.example'}).expect(403);await recover({password:'wrong'}).expect(401);
+ await recover({code:mfa.mfaTotp(s.secret).generate({timestamp:Date.now()+30000})}).expect(400);assert.ok((await p.adminMfa.findUnique({where:{userId:u.id}})).enabledAt);
+ const rs=await Promise.all([recover(),recover()]);assert.deepEqual(rs.map(r=>r.status),[200,200]);
+ const state=await p.adminMfa.findUnique({where:{userId:u.id}}),fresh=await p.user.findUnique({where:{id:u.id}});assert.equal(state.enabledAt,null);assert.equal(state.secretCiphertext,null);assert.deepEqual(state.recoveryHashes,[]);assert.equal(fresh.authVersion,u.authVersion+1);
+ assert.equal(await p.accessEvent.count({where:{actorId:u.id,action:'MFA_RECOVERED'}}),1);
+ await recover().expect(200);assert.equal((await p.user.findUnique({where:{id:u.id}})).authVersion,fresh.authVersion);
+ assert.equal((await login(fresh).expect(200)).body.data.mode,'cookie');
+});

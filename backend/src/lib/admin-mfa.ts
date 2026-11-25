@@ -45,10 +45,9 @@ export async function rejectMfa(tx: Prisma.TransactionClient, state: AdminMfa) {
         lockedUntil: attempts >= 5 ? new Date(Date.now() + MFA_LOCK_MS) : null } });
     return attempts >= 5 ? "locked" as const : "invalid" as const;
 }
-export async function consumeMfa(tx: Prisma.TransactionClient, state: AdminMfa, code: string) {
+export async function consumeMfa(tx: Prisma.TransactionClient, state: AdminMfa, code: string, options: { recoveryOnly?: boolean; allowLastRecovery?: boolean } = {}) {
     if (isMfaLocked(state)) return "locked" as const;
-    const secret = openMfaSecret(state.userId, state.secretCiphertext!);
-    const step = matchMfaStep(secret, code, state.lastUsedStep);
+    const step = options.recoveryOnly || !/^\d{6}$/.test(code) ? null : matchMfaStep(openMfaSecret(state.userId, state.secretCiphertext!), code, state.lastUsedStep);
     if (step !== null) {
         await tx.adminMfa.update({ where: { userId: state.userId }, data: { lastUsedStep: step, failedAttempts: 0, lockedUntil: null } });
         return "ok" as const;
@@ -56,15 +55,17 @@ export async function consumeMfa(tx: Prisma.TransactionClient, state: AdminMfa, 
     const digest = recoveryHash(state.userId, code);
     const found = state.recoveryHashes.find(hash => hash.length === digest.length && timingSafeEqual(Buffer.from(hash), Buffer.from(digest)));
     if (found) {
+        if (state.recoveryHashes.length === 1 && !options.allowLastRecovery) return "last-recovery" as const;
         await tx.adminMfa.update({ where: { userId: state.userId }, data: { recoveryHashes: state.recoveryHashes.filter(hash => hash !== found), failedAttempts: 0, lockedUntil: null } });
         await tx.accessEvent.create({ data: { actorId: state.userId, action: "MFA_RECOVERY_USED" } });
         return "ok" as const;
     }
     return rejectMfa(tx, state);
 }
-export function factorResult(result: "ok" | "locked" | "invalid") {
+export function factorResult(result: "ok" | "locked" | "invalid" | "last-recovery") {
     if (result === "locked") throw lockedFactor();
     if (result === "invalid") throw invalidFactor();
+    if (result === "last-recovery") throw new AppError("Ce dernier code est réservé à la récupération. Choisissez « J’ai perdu mon téléphone » pour réinitialiser votre protection avec ce code.", 409);
 }
 // Shares the account-change lock with password resets and team permission edits.
 // Failed counters commit before the public error is thrown.

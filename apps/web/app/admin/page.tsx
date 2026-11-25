@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import {
     adminLogin,
+    recoverAdminMfa,
     clearAdminSession,
     adminLogout,
     getAdminNotifications,
@@ -191,6 +192,7 @@ export default function AdminPage() {
         [authError, setAuthError] = useState(""),
         [authLoading, setAuthLoading] = useState(false);
     const [mfaRequired, setMfaRequired] = useState(false), [mfaCode, setMfaCode] = useState(""), [recoveryMode, setRecoveryMode] = useState(false);
+    const [resetMfa, setResetMfa] = useState(false), [resetMfaConfirmed, setResetMfaConfirmed] = useState(false), [authMessage, setAuthMessage] = useState("");
     const mfaInput = useRef<HTMLInputElement>(null), loginLock = useRef(false);
     useEffect(() => { if (mfaRequired) mfaInput.current?.focus(); }, [mfaRequired, recoveryMode]);
     const [activeTab, setActiveTab] = useState<Tab>("overview"),
@@ -450,7 +452,16 @@ export default function AdminPage() {
         loginLock.current = true;
         setAuthLoading(true);
         setAuthError("");
+        setAuthMessage("");
         try {
+            if (mfaRequired && recoveryMode && resetMfa) {
+                if (!resetMfaConfirmed) return;
+                await recoverAdminMfa(email, password, mfaCode);
+                setAuthError("");
+                setMfaRequired(false); setRecoveryMode(false); setResetMfa(false); setResetMfaConfirmed(false); setMfaCode(""); setPassword("");
+                setAuthMessage("Votre protection a été réinitialisée. Reconnectez-vous, puis configurez votre nouvelle application dans Mon compte.");
+                return;
+            }
             const r = await adminLogin(email, password, mfaRequired ? mfaCode : undefined);
             if (r.data.mfaRequired) { setMfaRequired(true); return; }
             if (!["ADMIN", "STAFF"].includes(presentationAccess(r.data.presentation).role)) throw new Error("Staff access required");
@@ -465,8 +476,8 @@ export default function AdminPage() {
             setToken(r.data.presentation);
         } catch (error) {
             const message = isAxiosError(error) && typeof error.response?.data?.error === "string" ? error.response.data.error : null;
-            setAuthError(mfaRequired && message ? message : "Connexion impossible. Vérifiez vos identifiants et votre connexion.");
-            if (mfaRequired) { setMfaCode(""); mfaInput.current?.focus(); }
+            setAuthError(mfaRequired && message && message !== "Invalid credentials" ? message : "Connexion impossible. Vérifiez vos identifiants et votre connexion.");
+            if (mfaRequired) { if (!isAxiosError(error) || error.response?.status !== 409) setMfaCode(""); mfaInput.current?.focus(); }
         } finally {
             setAuthLoading(false);
             loginLock.current = false;
@@ -570,6 +581,7 @@ export default function AdminPage() {
                                 {t(authError)}
                             </p>
                         )}
+                        {authMessage && <p role="status">{t(authMessage)}</p>}
                         <label htmlFor="admin-email">{t("Adresse e-mail")}</label>
                         <input
                             dir="auto"
@@ -613,11 +625,15 @@ export default function AdminPage() {
                             <input ref={mfaInput} id="admin-mfa-code" dir="ltr" autoComplete="one-time-code" inputMode={recoveryMode ? "text" : "numeric"} required
                                 pattern={recoveryMode ? undefined : "[0-9]{6}"} maxLength={recoveryMode ? 80 : 6} value={mfaCode} onChange={e => setMfaCode(e.target.value)} />
                             <p className="admin-scope">{t(recoveryMode ? "Chaque code de secours ne peut servir qu’une seule fois." : "Saisissez les 6 chiffres de votre application. Un code déjà utilisé ne peut pas resservir.")}</p>
-                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setRecoveryMode(v => !v); setMfaCode(""); setAuthError(""); }}>{t(recoveryMode ? "Utiliser l’application" : "Utiliser un code de secours")}</button>
-                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setMfaRequired(false); setMfaCode(""); setPassword(""); setRecoveryMode(false); setAuthError(""); }}>{t("Changer de compte")}</button>
+                            {recoveryMode && <>
+                                <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setResetMfa(v => !v); setResetMfaConfirmed(false); setAuthError(""); }}>{t(resetMfa ? "Revenir à la connexion" : "J’ai perdu mon téléphone")}</button>
+                                {resetMfa && <label className="team-check"><input type="checkbox" required checked={resetMfaConfirmed} onChange={e => setResetMfaConfirmed(e.target.checked)} />{t("Réinitialiser ma double authentification et fermer toutes mes sessions avec ce code de secours.")}</label>}
+                            </>}
+                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setRecoveryMode(v => !v); setResetMfa(false); setResetMfaConfirmed(false); setMfaCode(""); setAuthError(""); }}>{t(recoveryMode ? "Utiliser l’application" : "Utiliser un code de secours")}</button>
+                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setMfaRequired(false); setMfaCode(""); setPassword(""); setRecoveryMode(false); setResetMfa(false); setResetMfaConfirmed(false); setAuthError(""); }}>{t("Changer de compte")}</button>
                         </div>}
-                        <button className="admin-button primary" disabled={authLoading}>
-                            {authLoading ? t("Connexion en cours…") : t("Se connecter")}
+                        <button className="admin-button primary" disabled={authLoading || resetMfa && !resetMfaConfirmed}>
+                            {authLoading ? t("Connexion en cours…") : t(resetMfa ? "Réinitialiser ma protection" : "Se connecter")}
                             <ArrowUpRight size={18} aria-hidden="true" />
                         </button>
                         <Link href="/admin/password" className="admin-text-button">{t("Mot de passe oublié")}</Link>

@@ -2,10 +2,12 @@ import type { Response } from "express";
 import { z } from "zod";
 import { randomBytes } from "node:crypto";
 import QRCode from "qrcode";
+import bcrypt from "bcryptjs";
+import type { Request } from "express";
 import { prisma } from "../lib/prisma";
 import type { AuthRequest } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
-import { clearAdminCookies } from "../lib/admin-cookies";
+import { assertBrowserRequest, clearAdminCookies } from "../lib/admin-cookies";
 import { lockTeam } from "../lib/team-access";
 import { MFA_SETUP_MS, currentMfaAccount, generateMfaSecret, generateRecoveryCodes, recoveryHash, sealMfaSecret,
     openMfaSecret, mfaTotp, matchMfaStep, consumeMfa, rejectMfa, factorResult, isMfaLocked, lockedFactor } from "../lib/admin-mfa";
@@ -73,13 +75,40 @@ export async function disableMfa(req: AuthRequest, res: Response) {
         await lockTeam(tx); await currentMfaAccount(tx, actor, body.currentPassword);
         const state = await tx.adminMfa.findUnique({ where: { userId: actor.id } });
         if (!state?.enabledAt) throw new AppError("La double authentification n’est pas active.", 409);
-        const valid = await consumeMfa(tx, state, body.code);
+        const valid = await consumeMfa(tx, state, body.code, { allowLastRecovery: true });
         if (valid !== "ok") return valid;
         await tx.adminMfa.update({ where: { userId: actor.id }, data: { secretCiphertext: null, enabledAt: null, recoveryHashes: [], lastUsedStep: null,
             pendingCiphertext: null, pendingRecoveryHashes: [], pendingExpiresAt: null, setupId: null, failedAttempts: 0, lockedUntil: null } });
         await tx.user.update({ where: { id: actor.id }, data: { authVersion: { increment: 1 } } });
         await tx.refreshToken.deleteMany({ where: { userId: actor.id } });
         await tx.accessEvent.create({ data: { actorId: actor.id, action: "MFA_DISABLED" } });
+        return "ok" as const;
+    }, { isolationLevel: "ReadCommitted" });
+    factorResult(result); clearAdminCookies(res); res.json({ success: true });
+}
+
+// A password plus one unused recovery code suffices even without an open session.
+// The last code is reserved for this explicit reset instead of stranding its owner.
+export async function recoverMfa(req: Request, res: Response) {
+    assertBrowserRequest(req);
+    const body = z.object({ email: z.string().trim().email().max(254), password, code }).strict().parse(req.body);
+    const candidate = await prisma.user.findFirst({ where: { email: { equals: body.email, mode: "insensitive" } } });
+    if (!candidate?.isActive || candidate.mustSetPassword || !["ADMIN", "STAFF"].includes(candidate.role) || !await bcrypt.compare(body.password, candidate.passwordHash))
+        throw new AppError("Invalid credentials", 401);
+    const result = await prisma.$transaction(async tx => {
+        await lockTeam(tx);
+        const user = await tx.user.findUnique({ where: { id: candidate.id } });
+        if (!user?.isActive || user.mustSetPassword || !["ADMIN", "STAFF"].includes(user.role) || user.passwordHash !== candidate.passwordHash)
+            throw new AppError("Invalid credentials", 401);
+        const state = await tx.adminMfa.findUnique({ where: { userId: user.id } });
+        if (!state?.enabledAt) return "ok" as const; // Safe retry after an ambiguous successful response.
+        const valid = await consumeMfa(tx, state, body.code, { recoveryOnly: true, allowLastRecovery: true });
+        if (valid !== "ok") return valid;
+        await tx.adminMfa.update({ where: { userId: user.id }, data: { secretCiphertext: null, enabledAt: null, recoveryHashes: [], lastUsedStep: null,
+            pendingCiphertext: null, pendingRecoveryHashes: [], pendingExpiresAt: null, setupId: null, failedAttempts: 0, lockedUntil: null } });
+        await tx.user.update({ where: { id: user.id }, data: { authVersion: { increment: 1 } } });
+        await tx.refreshToken.deleteMany({ where: { userId: user.id } });
+        await tx.accessEvent.create({ data: { actorId: user.id, action: "MFA_RECOVERED" } });
         return "ok" as const;
     }, { isolationLevel: "ReadCommitted" });
     factorResult(result); clearAdminCookies(res); res.json({ success: true });

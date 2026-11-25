@@ -351,6 +351,10 @@ export const setupAdminMfa = async (currentPassword: string) => (await api.post<
 export const confirmAdminMfa = async (body: { currentPassword: string; setupId: string; code: string; recoverySaved: true }) => (await api.post("/auth/mfa/confirm", body, { timeout: 30000 })).data;
 export const cancelAdminMfa = async (setupId: string) => (await api.post("/auth/mfa/cancel", { setupId })).data;
 export const disableAdminMfa = async (currentPassword: string, code: string) => (await api.post("/auth/mfa/disable", { currentPassword, code }, { timeout: 30000 })).data;
+export const recoverAdminMfa = async (email: string, password: string, code: string) => sessionLock(async () => {
+    const r = await axios.post(getBaseUrl() + "/auth/mfa/recover", { email, password, code }, { ...cookieOptions(), timeout: 30000 });
+    removeAdminPresentation(); return r.data;
+});
 
 export interface GmailSettings {
     enabled: boolean; gmailUser: string; host: string; port: 465 | 587; hasPassword: boolean; revision: number;

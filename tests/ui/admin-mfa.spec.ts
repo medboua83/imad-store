@@ -5,7 +5,7 @@ const secret = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 const recoveryCodes = Array.from({length:10},(_,i)=>`FICT-ABCD-EF01-2345-6789-${String(i).padStart(4,'0')}`);
 const qr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z4IoAAAAASUVORK5CYII=';
 async function fixture(context:BrowserContext, enabled=false, connected=true) {
- const c={enabled,connected,readFailure:false,confirmFailure:false,setupFailure:false,confirmations:0,setups:0,logins:0,cancellations:0,disables:0,businessWrites:[] as string[],lastConfirm:null as any};
+ const c={enabled,connected,readFailure:false,confirmFailure:false,setupFailure:false,lastBackup:false,recoveries:0,confirmations:0,setups:0,logins:0,cancellations:0,disables:0,businessWrites:[] as string[],lastConfirm:null as any};
  const auth={success:true,data:{mode:'cookie',identity}};
  await context.route('**/api/**',async route=>{
   const req=route.request(),path=new URL(req.url()).pathname;
@@ -14,8 +14,12 @@ async function fixture(context:BrowserContext, enabled=false, connected=true) {
   if(path==='/api/auth/refresh')return route.fulfill({status:c.connected?200:401,json:c.connected?auth:{success:false}});
   if(path==='/api/auth/login'){
    c.logins++;if(c.enabled&&!body.code)return route.fulfill({json:{success:true,data:{mfaRequired:true}}});
+   if(c.enabled&&c.lastBackup&&body.code===recoveryCodes[0])return route.fulfill({status:409,json:{success:false,error:'Ce dernier code est réservé à la récupération. Choisissez « J’ai perdu mon téléphone » pour réinitialiser votre protection avec ce code.'}});
    if(c.enabled&&!['123456',recoveryCodes[0]].includes(body.code))return route.fulfill({status:400,json:{success:false,error:'Code incorrect, expiré ou déjà utilisé. Attendez le prochain code ou utilisez un code de secours.'}});
    c.connected=true;return route.fulfill({json:auth});
+  }
+  if(path==='/api/auth/mfa/recover'){
+   c.recoveries++;expect(body).toEqual({email:'owner@example.invalid',password:'Fixture-Password',code:recoveryCodes[0]});c.enabled=false;c.connected=false;return route.fulfill({json:{success:true}});
   }
   if(path==='/api/auth/mfa')return route.fulfill({status:c.readFailure?503:200,json:{success:true,data:{enabled:c.enabled,enabledAt:c.enabled?'2026-11-25T12:00:00Z':null,recoveryCodesRemaining:c.enabled?9:0}}});
   if(path==='/api/auth/mfa/setup'){
@@ -74,4 +78,8 @@ for(const width of [390,1440])test(`Password followed by MFA and single-use back
 });
 test('An enabled account displays remaining backups and requires explicit password and factor to disable',async({page,context})=>{
  const c=await fixture(context,true);await start(page);const s=page.locator('.admin-mfa');await expect(s.getByText('Protection active',{exact:false})).toContainText('9 codes de secours');await s.getByRole('button',{name:'Désactiver la double authentification',exact:true}).click();await s.getByLabel('Mot de passe actuel (sécurité du compte)',{exact:true}).fill('Fixture-Password');await s.getByLabel('Code de l’application ou code de secours',{exact:true}).fill(recoveryCodes[1]);await s.getByRole('button',{name:'Désactiver et me reconnecter',exact:true}).click();await expect(page.getByRole('heading',{name:'Connexion à votre espace',exact:true})).toBeVisible();expect(c.disables).toBe(1);expect(c.businessWrites).toEqual([]);
+});
+for(const width of [390,1440])test(`A lost phone can be recovered with the final backup without consuming it on ordinary login at ${width}px`,async({page,context})=>{
+ await page.setViewportSize({width,height:844});const c=await fixture(context,true,false);c.lastBackup=true;await page.goto('/admin');await page.getByLabel('Adresse e-mail',{exact:true}).fill('owner@example.invalid');await page.getByLabel('Mot de passe',{exact:true}).fill('Fixture-Password');await page.getByRole('button',{name:'Se connecter',exact:true}).click();await page.getByRole('button',{name:'Utiliser un code de secours',exact:true}).click();const input=page.getByLabel('Code de secours',{exact:true});await input.fill(recoveryCodes[0]);await page.getByRole('button',{name:'Se connecter',exact:true}).click();await expect(page.locator('.admin-login-card [role=alert]')).toContainText('dernier code');await expect(input).toHaveValue(recoveryCodes[0]);expect(c.recoveries).toBe(0);
+ await page.getByRole('button',{name:'J’ai perdu mon téléphone',exact:true}).click();const reset=page.getByRole('button',{name:'Réinitialiser ma protection',exact:true});await expect(reset).toBeDisabled();await page.getByRole('checkbox').check();await reset.click();await expect(page.getByRole('status')).toContainText('Votre protection a été réinitialisée');await expect(page.locator('.admin-workspace')).toHaveCount(0);expect(c.recoveries).toBe(1);expect(c.enabled).toBe(false);await page.getByLabel('Mot de passe',{exact:true}).fill('Fixture-Password');await page.getByRole('button',{name:'Se connecter',exact:true}).click();await expect(page.locator('.admin-workspace')).toBeVisible();expect(c.businessWrites).toEqual([]);
 });
