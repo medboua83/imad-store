@@ -33,7 +33,7 @@ test("Default identity preserves IMAD artwork, palette and public contact fallba
     assert.equal(r.headers['cache-control'], 'private, no-store');
     assert.deepEqual(r.body.data, { revision: 0, branding: { ...defaultStoreBranding, contactAddress: 'Adresse existante' } });
     assert.deepEqual(brandTheme(defaultStoreBranding), {});
-    assert.equal(brandForeground('#ffffff'), '#171717'); assert.equal(brandForeground('#000000'), '#ffffff');
+    assert.equal(brandForeground('#ffffff'), '#000000'); assert.equal(brandForeground('#000000'), '#ffffff');
     assert.deepEqual(resolveStoreBranding({ primaryColor: 'url(javascript:1)', logoUrl: '//evil.invalid/x', name: '' }), defaultStoreBranding);
 });
 const changed = { ...defaultStoreBranding, name: 'Atelier Test', primaryColor: '#163c31', accentColor: '#f0d8a0', backgroundColor: '#fafafa', contactEmail: 'contact@example.invalid', contactPhone: '+212 600 000 099', contactAddress: 'Adresse fictive\nRabat' };

@@ -9,7 +9,7 @@
 .brand-theme[data-custom-primary] .store-shell .btn-gold,
 .brand-theme[data-custom-primary] .pixel-choice button:first-of-type { background: var(--brand-primary); border-color: var(--brand-primary); color: var(--brand-on-primary); }
 .brand-theme[data-custom-primary] .store-shell .section-eyebrow,
-.brand-theme[data-custom-primary] .store-shell .nav-link[aria-current="page"] { color: var(--brand-primary); }
+.brand-theme[data-custom-primary] .store-shell .nav-link[aria-current="page"] { color: var(--brand-header-mark); }
 .brand-theme[data-custom-primary] .store-shell .site-footer,
 .brand-theme[data-custom-primary] .store-shell .announcement-bar,
 .brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy,
@@ -19,7 +19,9 @@
 .brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy .hero-collection-link { color: var(--brand-on-primary); }
 .brand-theme[data-custom-primary] .admin-app { --admin-green: var(--brand-primary); }
 .brand-theme[data-custom-accent] .store-shell .storefront-home .hero-actions .btn-primary { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--brand-on-accent); }
-.brand-theme[data-custom-accent] .brand-wordmark .brand-logo { background: var(--brand-accent); }
+ .brand-theme:is([data-custom-primary],[data-custom-accent]) .site-header .brand-logo { background: var(--brand-header-mark); }
+.brand-theme:is([data-custom-primary],[data-custom-accent]) .site-header .brand-wordmark { color: var(--brand-header-mark); }
+.brand-theme:is([data-custom-primary],[data-custom-accent]) :is(.site-footer,.admin-sidebar,.admin-auth-story) .brand-logo { background: var(--brand-dark-mark); }
 .brand-theme[data-custom-background] .store-shell { background: var(--brand-background); color: var(--brand-on-background); }
 @media(max-width:767px) {
     .brand-custom-logo { width: 120px; height: 60px; }

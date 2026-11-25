@@ -29,14 +29,20 @@ export function resolveStoreBranding(value?: Partial<StoreBranding> | null): Sto
         if (typeof value[key] === "string") b[key] = value[key].trim();
     return b;
 }
-/** Choose a readable foreground even for very light or dark merchant colours. */
-export function brandForeground(hex: string): string {
+function luminance(hex: string): number {
     const rgb = hex.slice(1).match(/../g)!.map(n => {
         const v = parseInt(n, 16) / 255;
         return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
     });
-    const l = rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
-    return (l + .05) / .05 > 1.05 / (l + .05) ? "#171717" : "#ffffff";
+    return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+}
+export function brandContrast(a: string, b: string): number {
+    const x = luminance(a), y = luminance(b);
+    return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
+}
+/** Choose a readable foreground even for very light or dark merchant colours. */
+export function brandForeground(hex: string): string {
+    return brandContrast(hex, "#000000") > brandContrast(hex, "#ffffff") ? "#000000" : "#ffffff";
 }
 export function brandTheme(b: StoreBranding): Record<string, string> {
     const values: Record<string, string> = {};
@@ -54,5 +60,10 @@ export function brandTheme(b: StoreBranding): Record<string, string> {
         "--brand-background": b.backgroundColor, "--brand-on-background": brandForeground(b.backgroundColor),
         "--paper": b.backgroundColor,
     });
+    if (b.primaryColor !== defaultStoreBranding.primaryColor || b.accentColor !== defaultStoreBranding.accentColor) {
+        const darkSurface = b.primaryColor !== defaultStoreBranding.primaryColor ? b.primaryColor : "#292319";
+        values["--brand-header-mark"] = brandContrast(b.primaryColor, "#fcfaf6") >= 4.5 ? b.primaryColor : brandForeground("#fcfaf6");
+        values["--brand-dark-mark"] = brandContrast(b.accentColor, darkSurface) >= 3 ? b.accentColor : brandForeground(darkSurface);
+    }
     return values;
 }

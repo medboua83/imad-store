@@ -118,8 +118,9 @@ test('Long store names, dark logos and light button colours remain usable at 320
     await page.goto('/contact');
     await expect(page.locator('.site-header .brand-text-logo')).toHaveText(c.branding.name);
     await expect(page.locator('.site-footer .brand-custom-logo')).toHaveAttribute('src',logo);
-    expect(await page.locator('.site-footer').evaluate(e=>getComputedStyle(e).color)).toBe('rgb(23, 23, 23)');
+    expect(await page.locator('.site-footer').evaluate(e=>getComputedStyle(e).color)).toBe('rgb(0, 0, 0)');
     expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).webkitLineClamp)).toBe('2');
+    expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).color)).not.toBe('rgb(255, 255, 255)');
     await expect(page.locator('.brand-contact-details')).toHaveCount(0);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
