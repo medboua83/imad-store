@@ -2188,5 +2188,7 @@
     .admin-workspace[data-tab="orders"] .admin-page-heading { margin-block-end: 8px; }
     .admin-app .admin-orders-workspace .admin-panel-heading { margin-block-end: 6px; }
     .admin-app .admin-orders-workspace .order-quick-filters { margin-block: 6px; }
-    .admin-app .admin-orders-workspace .order-results { margin-block: 6px; }
+    .admin-app .admin-orders-workspace .order-results { margin-block: 6px; column-gap: 8px; }
+    .admin-app .admin-orders-workspace .order-results > p { flex-basis: 100%; }
+    .admin-app .admin-orders-workspace .order-results > .admin-text-button { min-height: 44px; }
 }
