@@ -48,7 +48,7 @@ python3 scripts/offsite-recovery.py seal \
   --output /stockage/prive/nouvelle-sauvegarde.tar.age
 ```
 
-L'outil vérifie les sommes de contrôle et les photos immuables avant chiffrement, refuse les sources liées ou traversantes et produit un manifeste SHA-256 de tous les fichiers **dans** l'archive authentifiée age. Il n'écrase pas une sauvegarde existante. Conserver aussi l'empreinte SHA-256 chiffrée sur un support de confiance. Une empreinte voisine d'une archive ne suffit pas contre un attaquant pouvant remplacer les deux : la clé age reste séparée.
+L'outil vérifie les sommes de contrôle et les photos immuables avant chiffrement, refuse les sources liées ou traversantes et produit un manifeste SHA-256 de tous les fichiers **dans** l'archive authentifiée age. Il n'écrase pas une sauvegarde existante. Conserver aussi l'empreinte SHA-256 chiffrée sur un support de confiance. La commande de recette exige cette empreinte. Une empreinte voisine d'une archive ne suffit pas contre un attaquant pouvant remplacer les deux : la clé age reste séparée. Le chiffrement age ne signe pas l'identité de l'expéditeur ; quiconque possède le destinataire public peut créer une archive. Ne restaurer que ses propres sauvegardes, dont la provenance est vérifiée par SSH et par une empreinte reçue sur un canal de confiance. Comme toute restauration PostgreSQL, la restauration du schéma exécute du SQL de la sauvegarde : ne jamais essayer une archive provenant d'un tiers non fiable sur ce Mac.
 
 ### Recette sur la copie reçue
 

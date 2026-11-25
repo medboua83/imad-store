@@ -327,7 +327,7 @@ def main():
     p = sub.add_parser("probe")
     for name in ["archive", "identity", "workspace", "pg-bin", "age", "node", "output"]:
         p.add_argument("--" + name, type=Path, required=True)
-    p.add_argument("--expected-sha")
+    p.add_argument("--expected-sha", required=True, help="SHA-256 received through a trusted channel; encryption does not authenticate the sender")
     a = vars(parser.parse_args()); action = a.pop("action")
     if action == "seal":
         a["folder"] = a.pop("snapshot")
