@@ -1,3 +1,7 @@
+## Sessions protégées du dashboard — 25 novembre 2026
+
+Nouvelles connexions en cookies HttpOnly, Secure/__Host- en production, SameSite Strict, durée absolue et accès liés à une ligne de session révocable. Contrôles d’origine et d’identité attendue pour éviter les requêtes tierces et les actions d’un onglet sur un autre compte. Reprise unique des anciens jetons de navigateur ; présentation locale non secrète, mêmes clés de brouillons POS, tickets séparés et exclusions de suivi conservés. API Bearer explicite compatible, sans révocation rétroactive des anciens accès sans sid ; MFA hors périmètre. Pas de migration de schéma ni changement marchand. Guide : docs/ADMIN_SESSIONS.md. Recette et publication dans outputs/admin-cookie-sessions-20261125 sur DATA ; candidat en cours de vérification.
+
 ## Protections web, statistiques et preuve de reprise — 25 novembre 2026
 
 Candidat issu de l'audit de revente : protections HTTP des pages Next, statistiques compactes avec quatre indicateurs, bornes de période et heure de lecture, conservation d'une dernière lecture de la même période après erreur, refus des réponses d'une autre période, aide repliable et navigation Commandes selon les droits. Résultats Commandes : groupe explicite des actions export/réinitialisation pour les polices plus larges à 320 px, sans retirer de contrôle ni réduire les cibles tactiles. Paramètres commerciaux, photos, paiements, stock et connexions conservés. Pas de migration.

@@ -127,6 +127,31 @@ test(`Hosted ${mode} listener serves SSR, API, admin and photos without workers`
       assert.match(response.headers.get("strict-transport-security"), /max-age=31536000/);
     }
     assert.equal((await get("/images/cat-abayas.png")).status, 200);
+    // Exercise real cookie transport through every combined-hosting listener.
+    const previousSite = process.env.SITE_URL;
+    process.env.SITE_URL = origin;
+    try {
+      const sessionHeaders = { "Content-Type": "application/json", Origin: origin, "X-Imad-Admin-Session": "cookie" };
+      const browserLogin = await get("/api/auth/login", { method: "POST", headers: sessionHeaders, body: JSON.stringify({ email: "hosted@example.invalid", password: "isolated-hosted-test" }) });
+      assert.equal(browserLogin.status, 200);
+      const browserIdentity = (await browserLogin.json()).data;
+      assert.deepEqual(Object.keys(browserIdentity).sort(), ["identity", "mode"]);
+      const lines = browserLogin.headers.getSetCookie();
+      assert.equal(lines.length, 2);
+      assert.ok(lines.every(line => line.startsWith("__Host-imad_admin_") && line.includes("HttpOnly") && line.includes("Secure") && line.includes("SameSite=Strict")));
+      const cookie = lines.map(line => line.split(";")[0]).join("; ");
+      const authenticated = { ...sessionHeaders, Cookie: cookie, "X-Imad-Admin-Identity": browserIdentity.identity.id + ":" + browserIdentity.identity.authVersion };
+      const privateRead = await get("/api/products/admin/catalog", { headers: authenticated });
+      assert.equal(privateRead.status, 200); assert.match(privateRead.headers.get("cache-control"), /no-store/);
+      assert.equal((await get("/api/auth/session", { headers: sessionHeaders })).status, 401);
+      assert.equal((await get("/api/auth/session", { headers: authenticated })).status, 200);
+      assert.equal((await get("/api/auth/logout", { method: "POST", headers: { ...authenticated, Origin: "https://other.example" }, body: "{}" })).status, 403);
+      const renewed = await get("/api/auth/refresh", { method: "POST", headers: authenticated, body: "{}" });
+      assert.equal(renewed.status, 200); assert.equal((await renewed.json()).data.mode, "cookie");
+      const ended = await get("/api/auth/logout", { method: "POST", headers: authenticated, body: "{}" });
+      assert.equal(ended.status, 200); assert.equal(ended.headers.getSetCookie().length, 2);
+      assert.equal((await get("/api/products/admin/catalog", { headers: authenticated })).status, 401);
+    } finally { if (previousSite === undefined) delete process.env.SITE_URL; else process.env.SITE_URL = previousSite; }
     const login = await get("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "hosted@example.invalid", password: "isolated-hosted-test" }) });
     assert.equal(login.status, 200);
     const session = await login.json();

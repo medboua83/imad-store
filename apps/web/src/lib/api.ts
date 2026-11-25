@@ -1,3 +1,4 @@
+import { adminPresentationBinding, readAdminPresentation, hasBrowserProfile, storeBrowserIdentity, removeAdminPresentation, type AdminBrowserIdentity } from "./admin-session";
 import { analyticsOrderHeaders } from "./store-analytics";
 import { assertAssistanceReceipt } from "./checkout-assistance";
 import axios from "axios";
@@ -25,73 +26,125 @@ const api = axios.create({
 
 export function clearAdminSession(reason: "expired" | "logout" | "password-changed" = "expired") {
     if (typeof window === "undefined") return;
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminRefresh");
+    removeAdminPresentation();
     window.dispatchEvent(new CustomEvent("imad:session-expired", { detail: reason }));
 }
-let refreshPromise: Promise<string> | null = null;
+const cookieOptions = () => ({ withCredentials: true, timeout: 10000, headers: { "X-Imad-Admin-Session": "cookie" } });
+function acceptBrowserResponse(data: { mode?: string; identity?: AdminBrowserIdentity }) {
+    if (data?.mode !== "cookie" || !data.identity) throw new Error("Invalid browser session response");
+    return storeBrowserIdentity(data.identity);
+}
+async function sessionLock<T>(run: () => Promise<T>) {
+    if (navigator.locks) {
+        let started = false;
+        try { return await navigator.locks.request("imad-admin-refresh", () => { started = true; return run(); }); }
+        catch (error) { if (started) throw error; }
+    }
+    return await run();
+}
+let restorePromise: Promise<string | null> | null = null;
+export function restoreAdminSession(): Promise<string | null> {
+    if (restorePromise) return restorePromise;
+    restorePromise = sessionLock(async () => {
+        const previous = readAdminPresentation(), legacy = localStorage.getItem("adminToken");
+        const refresh = localStorage.getItem("adminRefresh");
+        // Preserve API-token clients. Real pre-upgrade browser refresh JWTs are
+        // exchanged once; test fixtures and explicitly supplied API tokens are not cookies.
+        if (legacy && !hasBrowserProfile() && !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(refresh ?? "")) return legacy;
+        try {
+            if (legacy && !hasBrowserProfile()) {
+                const r = await axios.post(getBaseUrl() + "/auth/session/migrate", { token: refresh }, cookieOptions());
+                return acceptBrowserResponse(r.data.data);
+            }
+            try {
+                const r = await axios.get(getBaseUrl() + "/auth/session", cookieOptions());
+                return acceptBrowserResponse(r.data.data);
+            } catch (error) {
+                if (!axios.isAxiosError(error) || error.response?.status !== 401) throw error;
+                const r = await axios.post(getBaseUrl() + "/auth/refresh", {}, cookieOptions());
+                return acceptBrowserResponse(r.data.data);
+            }
+        } catch (error) {
+            // An unavailable connection does not erase the presentation or drafts.
+            if (axios.isAxiosError(error) && (!error.response || ![401,403].includes(error.response.status))) return previous;
+            if (previous) clearAdminSession(); else removeAdminPresentation();
+            return null;
+        }
+    }).catch(() => readAdminPresentation()).finally(() => { restorePromise = null; });
+    return restorePromise;
+}
+let refreshPromise: Promise<void> | null = null;
 api.interceptors.request.use((config) => {
     if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
-        const token = localStorage.getItem("adminToken");
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+        const context = config as typeof config & { _adminIdentity?: string | null };
+        const binding = adminPresentationBinding();
+        if (context._adminIdentity !== undefined && context._adminIdentity !== binding)
+            throw new axios.CanceledError("Le compte connecté a changé. Relancez l’action depuis sa session.");
+        context._adminIdentity = binding;
+        const legacy = !hasBrowserProfile() && localStorage.getItem("adminToken");
+        if (legacy) {
+            config.headers.Authorization = `Bearer ${legacy}`;
+            delete config.headers["X-Imad-Admin-Session"];
+            delete config.headers["X-Imad-Admin-Identity"];
+        }
+        else {
+            delete config.headers.Authorization;
+            config.headers["X-Imad-Admin-Session"] = "cookie";
+            config.withCredentials = true;
+            try { const identity = JSON.parse(readAdminPresentation() || "null");
+                if (identity?.id) config.headers["X-Imad-Admin-Identity"] = identity.id + ":" + identity.sv;
+            } catch { /* Bootstrap reads do not have a presentation yet. */ }
+        }
+        (config as typeof config & { _adminRequest?: boolean })._adminRequest = true;
     }
     return config;
 });
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const config = error.config;
-        if (
-            typeof window === "undefined" ||
-            !config?.headers?.Authorization ||
-            /\/auth\//.test(config.url || "")
-        )
-            return Promise.reject(error);
-        if (error.response?.status === 403 && error.response?.data?.code !== "PERMISSION_DENIED") {
-            clearAdminSession();
-            return Promise.reject(error);
-        }
-        if (error.response?.status !== 401 || config._retried) return Promise.reject(error);
-        config._retried = true;
-        if (!refreshPromise) {
-            const staleToken = String(config.headers.Authorization).replace(/^Bearer /, "");
-            const refresh = async () => {
+api.interceptors.response.use(response => response, async error => {
+    const config = error.config;
+    if (typeof window === "undefined" || !config?._adminRequest || /\/auth\/(login|refresh|session|logout|register|forgot-password|reset-password)(?:[/?]|$)/.test(config.url || "")) return Promise.reject(error);
+    if (config._adminIdentity !== adminPresentationBinding())
+        return Promise.reject(new axios.CanceledError("Le compte connecté a changé. Relancez l’action depuis sa session."));
+    if (error.response?.status === 403 && error.response?.data?.code !== "PERMISSION_DENIED") {
+        clearAdminSession(); return Promise.reject(error);
+    }
+    if (error.response?.data?.code === "SESSION_CHANGED") { clearAdminSession(); return Promise.reject(error); }
+    if (error.response?.status !== 401) return Promise.reject(error);
+    if (config._retried) { clearAdminSession(); return Promise.reject(error); }
+    config._retried = true;
+    if (!refreshPromise) {
+        const staleToken = String(config.headers.Authorization || "").replace(/^Bearer /, "");
+        refreshPromise = sessionLock(async () => {
+            if (hasBrowserProfile() || !localStorage.getItem("adminToken")) {
+                const r = await axios.post(getBaseUrl() + "/auth/refresh", {}, cookieOptions());
+                acceptBrowserResponse(r.data.data);
+            } else {
                 const current = localStorage.getItem("adminToken");
-                if (current && current !== staleToken) return current;
+                if (current && current !== staleToken) return;
                 const token = localStorage.getItem("adminRefresh");
                 if (!token) throw new Error("Session expirée");
-                const response = await axios.post(
-                    `${getBaseUrl()}/auth/refresh`,
-                    { token },
-                    { timeout: 10000 },
-                );
-                const session = response.data.data;
-                localStorage.setItem("adminToken", session.accessToken);
-                localStorage.setItem("adminRefresh", session.refreshToken);
-                return session.accessToken as string;
-            };
-            refreshPromise = (async () => {
-                if (navigator.locks)
-                    return await navigator.locks.request("imad-admin-refresh", refresh);
-                return await refresh();
-            })().finally(() => {
-                refreshPromise = null;
-            });
-        }
-        try {
-            config.headers.Authorization = `Bearer ${await refreshPromise}`;
-            return await api.request(config);
-        } catch (failure) {
-            if (axios.isAxiosError(failure) && !failure.response) return Promise.reject(failure);
-            clearAdminSession();
-            return Promise.reject(failure);
-        }
-    },
-);
+                const r = await axios.post(getBaseUrl() + "/auth/refresh", { token }, { timeout: 10000 });
+                localStorage.setItem("adminToken", r.data.data.accessToken);
+                localStorage.setItem("adminRefresh", r.data.data.refreshToken);
+            }
+        }).finally(() => { refreshPromise = null; });
+    }
+    try { await refreshPromise; return await api.request(config); }
+    catch (failure) {
+        if (axios.isAxiosError(failure) && (!failure.response || ![401,403].includes(failure.response.status))) return Promise.reject(failure);
+        clearAdminSession(); return Promise.reject(failure);
+    }
+});
+export { api as adminApi };
 export async function adminLogout() {
-    const token = localStorage.getItem("adminRefresh");
-    if (token) await api.post("/auth/logout", { token });
+    return await sessionLock(async () => {
+    if (hasBrowserProfile() || !localStorage.getItem("adminToken"))
+        await axios.post(getBaseUrl() + "/auth/logout", {}, cookieOptions());
+    else {
+        const token = localStorage.getItem("adminRefresh");
+        if (token) await axios.post(getBaseUrl() + "/auth/logout", { token }, { timeout: 10000 });
+    }
     clearAdminSession("logout");
+    });
 }
 export async function getContentAdmin() {
     return (
@@ -281,14 +334,13 @@ export const getSettings = async (): Promise<StoreSettings> => {
 
 // ─── Admin (auth required — kept for /admin pages) ───────────────────────────
 
-export interface AdminAuthResponse {
-    success: boolean;
-    data: { accessToken: string; refreshToken: string };
-}
-
+export interface AdminAuthResponse { success: boolean; data: { presentation: string } }
 export const adminLogin = async (email: string, password: string): Promise<AdminAuthResponse> => {
-    const { data } = await api.post("/auth/login", { email, password });
-    return data;
+    return await sessionLock(async () => {
+        const { data } = await axios.post(getBaseUrl() + "/auth/login", { email, password }, cookieOptions());
+        const presentation = acceptBrowserResponse(data.data);
+        return { success: data.success, data: { presentation } };
+    });
 };
 
 export interface GmailSettings {

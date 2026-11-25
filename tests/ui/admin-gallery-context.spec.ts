@@ -124,7 +124,7 @@ for (const width of [390, 1440]) {
 test("A new admin session clears the previous order search and analytics period", async ({ page }) => {
     const { writes } = await admin(page);
     await page.route("**/api/auth/login", route => route.fulfill({ json: {
-        success: true, data: { accessToken: "new-isolated-session", refreshToken: "new-isolated-refresh" },
+        success: true, data: { mode: "cookie", identity: { id: "a".repeat(24), role: "ADMIN", authVersion: 0, permissions: [] }, },
     } }));
     await page.goto("/admin?tab=orders");
     await chooseSizeIfRequired(page);

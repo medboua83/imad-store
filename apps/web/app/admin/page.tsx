@@ -4,6 +4,8 @@ import { ADMIN_ORDERS_REFRESH_MS } from "@imad-store/shared";
 
 import dynamic from "next/dynamic";
 import { canAdmin } from "@imad-store/shared";
+import { readAdminPresentation, ADMIN_PROFILE_KEY } from "@/lib/admin-session";
+import { restoreAdminSession } from "@/lib/api";
 import { AdminAccessContext, presentationAccess, presentationSessionKey, allowedAdminTab } from "./admin-access";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -241,13 +243,14 @@ export default function AdminPage() {
                 } else mainTitle.current?.focus();
             });
         };
+        let cancelled = false;
         const task = setTimeout(() => {
             restoreTab();
-            setToken(localStorage.getItem("adminToken"));
-            setSessionReady(true);
+            void restoreAdminSession().then(value => { if (!cancelled) { setToken(value); setSessionReady(true); } });
         }, 0);
         window.addEventListener("popstate", previousOrNext);
         return () => {
+            cancelled = true;
             clearTimeout(task);
             window.removeEventListener("popstate", previousOrNext);
         };
@@ -278,19 +281,25 @@ export default function AdminPage() {
                     : "Votre session est terminée. Reconnectez-vous pour continuer.",
             );
         };
-        const changed = (e: StorageEvent) => {
-            if (e.key !== "adminToken") return;
-            if (!e.newValue) { expire(); return; }
-            const previous = presentationSessionKey(token), next = presentationSessionKey(e.newValue);
+        const changed = (e: Event) => {
+            if (e.type === "pageshow" && !(e as PageTransitionEvent).persisted) return;
+            if (e instanceof StorageEvent && e.key !== "adminToken" && e.key !== ADMIN_PROFILE_KEY && e.key !== null) return;
+            const value = readAdminPresentation();
+            if (!value) { expire(); return; }
+            const previous = presentationSessionKey(token), next = presentationSessionKey(value);
             if (!previous || previous !== next) {
-                expire(); setOpenedTabs(["overview"]); setFocusedOrder(null); setFocusedProduct(undefined); setAuthError("");
+                expire(); setOpenedTabs([tabFromLocation()]); setFocusedOrder(null); setFocusedProduct(undefined); setAuthError("");
             }
-            setToken(e.newValue);
+            setToken(value);
         };
         window.addEventListener("storage", changed);
+        window.addEventListener("imad:session-changed", changed);
+        window.addEventListener("pageshow", changed);
         window.addEventListener("imad:session-expired", expire);
         return () => {
             window.removeEventListener("storage", changed);
+            window.removeEventListener("imad:session-changed", changed);
+            window.removeEventListener("pageshow", changed);
             window.removeEventListener("imad:session-expired", expire);
         };
     }, [token, queryClient]);
@@ -435,17 +444,15 @@ export default function AdminPage() {
         setAuthError("");
         try {
             const r = await adminLogin(email, password);
-            if (!["ADMIN", "STAFF"].includes(presentationAccess(r.data.accessToken).role)) throw new Error("Staff access required");
+            if (!["ADMIN", "STAFF"].includes(presentationAccess(r.data.presentation).role)) throw new Error("Staff access required");
             readState.current.session++;
             productSnapshot.current = [];
-            localStorage.setItem("adminToken", r.data.accessToken);
-            localStorage.setItem("adminRefresh", r.data.refreshToken);
             setPassword("");
             setOrderFilters(initialOrderListFilters);
             setAnalyticsDays(7);
             setInitialSyncReady(false);
             setSyncError("");
-            setToken(r.data.accessToken);
+            setToken(r.data.presentation);
         } catch {
             setAuthError("Connexion impossible. Vérifiez vos identifiants et votre connexion.");
         } finally {
@@ -598,7 +605,7 @@ export default function AdminPage() {
             </div>
         );
     return (
-        <AdminAccessContext.Provider value={access}><div
+        <AdminAccessContext.Provider key={presentationSessionKey(token) ?? token} value={access}><div
             className="admin-app admin-workspace"
             data-tab={activeTab}
             dir={locale === "ar" ? "rtl" : "ltr"}

@@ -5,12 +5,19 @@ import {
     refreshToken,
     logout,
     getMe,
+    getBrowserSession,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middleware/auth.middleware";
 import rateLimit from "express-rate-limit";
 import { forgotPassword, resetPassword, changePassword } from "../controllers/password.controller";
 
+import { assertBrowserRequest } from "../lib/admin-cookies";
+import { migrateBrowserSession } from "../lib/admin-browser-session";
+
 export const authRoutes: IRouter = Router();
+authRoutes.use((_req, res, next) => { res.setHeader("Cache-Control", "private, no-store"); next(); });
+authRoutes.get("/session", (req, res, next) => { assertBrowserRequest(req); if (req.headers.authorization) return res.status(401).json({ success: false }); next(); }, authenticate, getBrowserSession);
+authRoutes.post("/session/migrate", migrateBrowserSession);
 
 authRoutes.post("/register", register);
 authRoutes.post("/login", login);

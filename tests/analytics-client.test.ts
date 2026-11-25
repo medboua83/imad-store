@@ -43,6 +43,9 @@ test("Tracking is ephemeral, respects exclusions, and checkout never invents a v
         session.set("imad:analytics:visit:v1", JSON.stringify(stored));
         assert.deepEqual(analyticsOrderHeaders(), {});
         assert.notEqual(analyticsVisit(true)!.id, first.id);
+        local.set("imad:admin:profile", "{\"id\":\"fixture\"}");
+        assert.equal(analyticsAllowed(), false);
+        local.delete("imad:admin:profile");
         local.set("adminToken", "local-test");
         assert.equal(analyticsAllowed(), false);
         trackCart("real-product");

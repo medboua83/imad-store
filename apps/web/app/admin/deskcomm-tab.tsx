@@ -4,8 +4,7 @@ import { useAdminLocale } from "./admin-locale";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import CrmConnectionForm, { type CompanyConnection } from "./crm-connection-form";
-import { getBaseUrl } from "@/lib/api";
-const base = getBaseUrl();
+import { adminApi } from "@/lib/api";
 type Config = {
     enabled: boolean;
     configured: boolean;
@@ -74,9 +73,9 @@ export default function DeskcommTab() {
         setDelivery(null);
         setDiagnosticError("");
         try {
-            const r = await axios.get(
-                base + "/integrations/deskcomm/orders/" + encodeURIComponent(reference.trim()),
-                { headers: headers(), signal: controller.signal },
+            const r = await adminApi.get(
+                "/integrations/deskcomm/orders/" + encodeURIComponent(reference.trim()),
+                { signal: controller.signal },
             );
             if (request !== diagnosticSequence.current || controller.signal.aborted) return;
             setDelivery(r.data.data);
@@ -94,12 +93,9 @@ export default function DeskcommTab() {
             }
         }
     }
-    const headers = () => ({
-        Authorization: "Bearer " + (localStorage.getItem("adminToken") || ""),
-    });
     useEffect(() => {
-        axios
-            .get<{ data: Config }>(base + "/integrations/deskcomm", { headers: headers() })
+        adminApi
+            .get<{ data: Config }>("/integrations/deskcomm")
             .then((r) => {
                 setConfig(r.data.data);
                 setEnabled(r.data.data.enabled);
@@ -127,9 +123,7 @@ export default function DeskcommTab() {
             };
             if (url.trim()) body.webhookUrl = url.trim();
             if (signingSecret.trim()) body.signingSecret = signingSecret.trim();
-            const r = await axios.put<{ data: Config }>(base + "/integrations/deskcomm", body, {
-                headers: headers(),
-            });
+            const r = await adminApi.put<{ data: Config }>("/integrations/deskcomm", body);
             setConfig((previous) => ({ ...previous, ...r.data.data }));
             setUrl("");
             setClear(false);
@@ -253,10 +247,8 @@ export default function DeskcommTab() {
                 <CrmConnectionForm
                     connection={config.connection}
                     onSaved={() => {
-                        axios
-                            .get<{ data: Config }>(base + "/integrations/deskcomm", {
-                                headers: headers(),
-                            })
+                        adminApi
+                            .get<{ data: Config }>("/integrations/deskcomm")
                             .then((r) => setConfig(r.data.data))
                             .catch(() => setMessage("Actualisation impossible"));
                     }}

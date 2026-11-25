@@ -1,3 +1,4 @@
+import { clearAdminCookies } from "../lib/admin-cookies";
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -41,6 +42,7 @@ export async function resetPassword(req: Request, res: Response) {
         await tx.passwordReset.deleteMany({ where: { userId: reset.userId } });
         await tx.accessEvent.create({ data: { actorId: reset.userId, targetId: reset.userId, action: "PASSWORD_RESET" } });
     }, { isolationLevel: "ReadCommitted" });
+    clearAdminCookies(res);
     res.json({ success: true });
 }
 export async function changePassword(req: AuthRequest, res: Response) {
@@ -56,5 +58,6 @@ export async function changePassword(req: AuthRequest, res: Response) {
         await tx.passwordReset.deleteMany({ where: { userId: req.user!.id } });
         await tx.accessEvent.create({ data: { actorId: req.user!.id, action: "PASSWORD_CHANGED" } });
     }, { isolationLevel: "ReadCommitted" });
+    clearAdminCookies(res);
     res.json({ success: true });
 }

@@ -64,8 +64,7 @@ async function partialAdmin(page: Page, repeatedFailure = false) {
                 json: {
                     success: true,
                     data: {
-                        accessToken: "new-isolated-sync-session",
-                        refreshToken: "isolated-refresh",
+                        mode: "cookie", identity: { id: "a".repeat(24), role: "ADMIN", authVersion: 0, permissions: [] },
                     },
                 },
             });

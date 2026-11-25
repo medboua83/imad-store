@@ -76,8 +76,7 @@ async function fixture(
                 json: {
                     success: true,
                     data: {
-                        accessToken: "new-isolated-reader",
-                        refreshToken: "new-isolated-refresh",
+                        mode: "cookie", identity: { id: "a".repeat(24), role: "ADMIN", authVersion: 0, permissions: [] },
                     },
                 },
             });

@@ -3,7 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { useState } from "react";
 import axios from "axios";
-import { getBaseUrl } from "@/lib/api";
+import { adminApi } from "@/lib/api";
 export type CompanyConnection = {
     storeId: string;
     companyId: string;
@@ -42,14 +42,9 @@ export default function CrmConnectionForm({
         setBusy(true);
         setMessage("");
         try {
-            await axios.put(
-                getBaseUrl() + "/integrations/deskcomm/connection",
+            await adminApi.put(
+                "/integrations/deskcomm/connection",
                 { enabled, pipeline, stage, field, ...(secret ? { secret } : {}) },
-                {
-                    headers: {
-                        Authorization: "Bearer " + (localStorage.getItem("adminToken") || ""),
-                    },
-                },
             );
             setSecret("");
             setMessage("Connexion enregistrée. Aucun événement historique n’a été envoyé.");
