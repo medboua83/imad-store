@@ -2,38 +2,45 @@
 import { useAdminLocale } from "./admin-locale";
 
 import { useEffect, useRef, useState } from "react";
-import { Eye, MousePointer2, ShoppingBag, RefreshCw, ShieldCheck } from "lucide-react";
+import { Eye, MousePointer2, ShoppingBag, RefreshCw, ShieldCheck, Package, ArrowUpRight } from "lucide-react";
 import { getStoreAnalytics, type StoreAnalyticsSummary } from "@/lib/api";
-const count = (n: number) => n.toLocaleString("fr-MA");
 export default function AnalyticsTab({
     days,
     setDays,
+    onOpenOrders,
 }: {
     days: number;
     setDays: (days: number) => void;
+    onOpenOrders?: () => void;
 }) {
     const { t, locale } = useAdminLocale();
-    const [data, setData] = useState<StoreAnalyticsSummary | null>(null);
+    const numberLocale = locale === "ar" ? "ar-MA" : "fr-MA";
+    const count = (n: number) => n.toLocaleString(numberLocale);
+    const [snapshot, setSnapshot] = useState<{ period: number; data: StoreAnalyticsSummary; readAt: string } | null>(null);
     const [loading, setLoading] = useState(true),
-        [error, setError] = useState("");
+        [failure, setFailure] = useState<{ period: number; message: string } | null>(null);
     const [refresh, setRefresh] = useState(0);
     const sequence = useRef(0);
+    // A failed refresh can retain its own period, never another period's figures.
+    const data = snapshot?.period === days ? snapshot.data : null;
+    const error = failure?.period === days ? failure.message : "";
+    const date = (value: string | undefined) => value && Number.isFinite(Date.parse(value))
+        ? new Date(value).toLocaleString(numberLocale, { dateStyle: "short", timeStyle: "short", timeZone: "Africa/Casablanca" }) : "";
     useEffect(() => {
         let active = true;
         const request = ++sequence.current;
         const timer = setTimeout(() => {
             setLoading(true);
-            setError("");
-            setData(null);
+            setFailure(null);
             getStoreAnalytics(days)
                 .then((value) => {
-                    if (active && request === sequence.current) setData(value);
+                    if (value.days !== days) throw new Error("Unexpected analytics period");
+                    if (active && request === sequence.current)
+                        setSnapshot({ period: days, data: value, readAt: new Date().toISOString() });
                 })
                 .catch(() => {
                     if (active && request === sequence.current)
-                        setError(
-                            "Les statistiques n’ont pas pu être chargées. Réessayez dans un instant.",
-                        );
+                        setFailure({ period: days, message: "Les statistiques n’ont pas pu être chargées. Réessayez dans un instant." });
                 })
                 .finally(() => {
                     if (active && request === sequence.current) setLoading(false);
@@ -47,15 +54,6 @@ export default function AnalyticsTab({
     return (
         <div className="admin-analytics">
             <section className="admin-panel analytics-intro">
-                <div>
-                    <span className="analytics-eyebrow">{t("L’activité de votre boutique")}</span>
-                    <h2>{t("Des visites aux commandes")}</h2>
-                    <p>
-                        {t(
-                            "Repérez les produits qui intéressent vos visiteurs et suivez les visites qui deviennent des commandes.",
-                        )}
-                    </p>
-                </div>
                 <div className="analytics-toolbar">
                     <div className="analytics-period">
                         <label htmlFor="analytics-period">{t("Période")}</label>
@@ -79,21 +77,26 @@ export default function AnalyticsTab({
                         {t("Actualiser")}
                     </button>
                 </div>
+                {data && <div className="analytics-freshness">
+                    {date(data.start) && date(data.end) && <p>{t("Du {start} au {end}, heure du Maroc.", { start: date(data.start), end: date(data.end) })}</p>}
+                    <p>{t("Données lues le {date}.", { date: date(snapshot!.readAt) })}</p>
+                </div>}
             </section>
             {error && (
                 <div className="admin-alert" role="alert">
                     <p>{t(error)}</p>
+                    {data && <p>{t("Les dernières données de cette période restent affichées.")}</p>}
                     <button className="admin-button" onClick={() => setRefresh((v) => v + 1)}>
                         {t("Réessayer")}
                     </button>
                 </div>
             )}
-            {loading && (
+            {(loading || !data && !error) && (
                 <div className="admin-loading" role="status">
-                    {t("Chargement des statistiques…")}
+                    {t(data ? "Actualisation des statistiques…" : "Chargement des statistiques…")}
                 </div>
             )}
-            {!loading && !error && data && (
+            {data && (
                 <>
                     <div className="admin-kpi-grid analytics-kpis">
                         <article className="admin-kpi">
@@ -105,6 +108,11 @@ export default function AnalyticsTab({
                             </div>
                             <strong>{count(data.visits)}</strong>
                             <p>{t("Une visite par onglet, pendant 30 minutes maximum")}</p>
+                        </article>
+                        <article className="admin-kpi analytics-attributed-orders">
+                            <div><p>{t("Commandes attribuées")}</p><span><Package size={20} aria-hidden="true" /></span></div>
+                            <strong>{count(data.attributedOrders)}</strong>
+                            <p>{t("Commandes créées depuis les visites mesurées, payées ou non.")}</p>
                         </article>
                         <article className="admin-kpi">
                             <div>
@@ -126,7 +134,7 @@ export default function AnalyticsTab({
                             <strong>
                                 {data.orderRate === null
                                     ? "—"
-                                    : `${data.orderRate.toLocaleString("fr-MA", { maximumFractionDigits: 2 })} %`}
+                                    : `${data.orderRate.toLocaleString(numberLocale, { maximumFractionDigits: 2 })} %`}
                             </strong>
                             <p>
                                 {count(data.convertedVisits)}
@@ -137,6 +145,9 @@ export default function AnalyticsTab({
                             </p>
                         </article>
                     </div>
+                    {onOpenOrders && <div className="analytics-navigation"><button type="button" className="admin-button" onClick={onOpenOrders}>
+                        {t("Gérer les commandes")}<ArrowUpRight size={16} aria-hidden="true" />
+                    </button></div>}
                     {data.funnel && (
                         <section className="admin-panel" aria-label={t("Parcours de conversion")}>
                             <h2>{t("Où les visiteurs s’arrêtent-ils ?")}</h2>
@@ -191,10 +202,10 @@ export default function AnalyticsTab({
                     {!data.visits && (
                         <section className="admin-panel analytics-empty">
                             <Eye size={30} aria-hidden="true" />
-                            <h2>{t("Les premières visites apparaîtront ici")}</h2>
+                            <h2>{t("Aucune visite mesurée sur cette période")}</h2>
                             <p>
                                 {t(
-                                    "Le suivi démarre à la mise en ligne de ce module. Vos visites d’administration et les tests sont exclus.",
+                                    "Choisissez une autre période ou revenez plus tard. Les visites d’administration et les tests sont exclus.",
                                 )}
                             </p>
                         </section>
@@ -244,8 +255,8 @@ export default function AnalyticsTab({
                     </section>
                     <section className="admin-panel analytics-method">
                         <ShieldCheck size={22} aria-hidden="true" />
-                        <div>
-                            <h2>{t("Des chiffres expliqués, des données séparées")}</h2>
+                        <details>
+                            <summary>{t("Comprendre les chiffres et leur période")}</summary>
                             <p>
                                 {count(data.pageViews)}
                                 {t(" consultations de pages ·")} {count(data.attributedOrders)}
@@ -278,7 +289,7 @@ export default function AnalyticsTab({
                                     {t(" jours. Conservation : 91 jours.")}
                                 </>}
                             </p>
-                        </div>
+                        </details>
                     </section>
                 </>
             )}

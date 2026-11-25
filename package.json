@@ -23,7 +23,7 @@
     "test:installer": "node --test tests/store-installer.test.cjs",
     "store:bundle": "node scripts/bundle-company-store.cjs",
     "test:ui": "playwright test",
-    "test:security": "node --test tests/security-dependencies.test.cjs",
+    "test:security": "node --test tests/security-dependencies.test.cjs tests/web-security.test.cjs && python3 -m unittest discover -s tests -p test_backup_verifier.py",
     "test:storefront": "node --import tsx --test tests/cart-recovery.test.ts",
     "build:images:native": "node scripts/build-native-images.cjs",
     "icons:build": "node scripts/generate-brand-icons.cjs"
