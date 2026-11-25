@@ -23,6 +23,7 @@ const brandingSchema = z.object({
     contactAddress: plain(1000),
 }).strict();
 export const brandingRoutes: IRouter = Router();
+brandingRoutes.use((_req, res, next) => { res.setHeader("Cache-Control", "private, no-store"); next(); });
 brandingRoutes.use(authenticate, requirePermission("settings.manage"));
 brandingRoutes.get("/", async (_req, res) => { res.json({ success: true, data: await readStoreBranding() }); });
 brandingRoutes.put("/", async (req, res) => {

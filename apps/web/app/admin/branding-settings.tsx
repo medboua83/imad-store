@@ -93,7 +93,7 @@ export function BrandingSettings() {
                 <div className="admin-branding-grid">{([
                     ["primaryColor", "Couleur principale"], ["accentColor", "Couleur d’accent"], ["backgroundColor", "Fond de la boutique"],
                 ] as const).map(([key, label]) => <label key={key}>{t(label)}
-                    <input type="color" value={form[key]} onChange={e => change(key, e.target.value)} />
+                    <input type="color" aria-label={t(label)} value={form[key]} onChange={e => change(key, e.target.value)} />
                     <span dir="ltr">{form[key]}</span>
                 </label>)}</div>
                 <p>{t("Les couleurs des statuts et des alertes restent distinctes. Le texte des boutons s’adapte pour rester lisible.")}</p>
