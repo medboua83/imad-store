@@ -2166,11 +2166,29 @@
     .admin-app .admin-orders-workspace .order-results { margin-block: 8px; }
 }
 
-/* One-click calendar filter, without another filter row on phones. */
+/* Calendar shortcuts stay together and retain comfortable touch targets. */
 .admin-app .admin-orders-workspace .order-heading-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
-.admin-app .order-today-filter[aria-pressed="true"] { background: var(--admin-green); color: var(--admin-white); border-color: var(--admin-green); }
+.admin-app .order-period-filter[aria-pressed="true"] { background: var(--admin-green); color: var(--admin-white); border-color: var(--admin-green); }
 @media (max-width: 767px) {
     .admin-app .admin-orders-workspace .admin-panel-heading > div:first-child { flex: 0; }
     .admin-app .admin-orders-workspace .admin-panel-heading > div:first-child p { display: none; }
     .admin-app .admin-orders-workspace .order-heading-actions { flex: 1; justify-content: space-between; }
+}
+
+.admin-app .order-period-shortcuts { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-app .order-period-filter { min-height: 44px; white-space: nowrap; }
+@media (max-width: 767px) {
+    .admin-app .admin-orders-workspace .order-heading-actions { align-items: flex-start; }
+    .admin-app .order-period-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; }
+    .admin-app .order-period-filter { padding-inline: 10px; }
+}
+
+@media (max-width: 767px) {
+    /* Offset the second shortcut row without shrinking any touch target. */
+    .admin-workspace[data-tab="orders"] .admin-page-heading { margin-block-end: 8px; }
+    .admin-app .admin-orders-workspace .admin-panel-heading { margin-block-end: 6px; }
+    .admin-app .admin-orders-workspace .order-quick-filters { margin-block: 6px; }
+    .admin-app .admin-orders-workspace .order-results { margin-block: 6px; column-gap: 8px; }
+    .admin-app .admin-orders-workspace .order-results > p { flex-basis: 100%; }
+    .admin-app .admin-orders-workspace .order-results > .admin-text-button { min-height: 44px; }
 }

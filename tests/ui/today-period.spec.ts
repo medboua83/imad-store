@@ -1,17 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const instant = new Date("2026-11-24T23:30:00Z"); // Deliberate server/browser calendar disagreement: supplied server bounds must win.
-async function fixture(page: Page, ar: boolean, remote: boolean) {
+async function fixture(page: Page, ar: boolean, remote: boolean, ranges = false) {
     await page.clock.setFixedTime(instant);
     await page.addInitScript(ar => {
         localStorage.setItem("adminToken", "isolated-today-filter");
         localStorage.setItem("imad-admin-language", ar ? "ar" : "fr");
     }, ar);
-    const rows = Array.from({ length: remote ? 126 : 4 }, (_, n) => ({
+    const rows = Array.from({ length: remote ? 126 : ranges ? 14 : 4 }, (_, n) => ({
         id: (n + 1).toString(16).padStart(24, "0"), customerName: `Client fictif ${n}`,
         customerPhone: "+212600000000", city: "Rabat", totalAmount: 230,
         paymentMethod: "COD", paymentStatus: "PENDING", status: n % 2 ? "CONFIRMED" : "PENDING",
-        createdAt: n < (remote ? 120 : 2) ? "2026-11-24T23:00:00Z" : "2026-11-24T22:59:59.999Z", items: [],
+        createdAt: ranges ? new Date(Date.parse("2026-11-24T23:00:00Z") - [0, 6, 7, 29, 30, 89, 90][n % 7] * 86400_000).toISOString() : n < (remote ? 120 : 2) ? "2026-11-24T23:00:00Z" : "2026-11-24T22:59:59.999Z", items: [],
     }));
     const requests: URL[] = [], writes: string[] = [];
     const control = { failCalendar: false };
@@ -19,6 +19,11 @@ async function fixture(page: Page, ar: boolean, remote: boolean) {
         const req = route.request(), url = new URL(req.url()), path = url.pathname;
         if (req.method() !== "GET") { writes.push(path); return route.fulfill({ status: 405 }); }
         requests.push(url);
+        if (path === "/api/orders/calendar" && Number(url.searchParams.get("days")) > 1 && !control.failCalendar) {
+            const days = Number(url.searchParams.get("days"));
+            const from = new Date(Date.parse("2026-11-25T00:00:00Z") - (days - 1) * 86400_000).toISOString().slice(0, 10);
+            return route.fulfill({ json: { success: true, data: { days, from, day: "2026-11-25", start: new Date(Date.parse(from + "T00:00:00Z") - 3600_000).toISOString(), end: "2026-11-25T23:00:00Z", timeZone: "Africa/Casablanca" } } });
+        }
         if (path === "/api/orders/calendar") return control.failCalendar
             ? route.fulfill({ status: 503 })
             : route.fulfill({ json: { success: true, data: { day: "2026-11-25", start: "2026-11-24T23:00:00Z", end: "2026-11-25T23:00:00Z", timeZone: "Africa/Casablanca" } } });
@@ -31,7 +36,7 @@ async function fixture(page: Page, ar: boolean, remote: boolean) {
             } } });
         }
         if (path !== "/api/orders") return route.fulfill({ json: { success: true, data: [], total: 0, unread: 0 } });
-        const day = (at: string) => at >= "2026-11-24T23:00:00Z" ? "2026-11-25" : "2026-11-24";
+        const day = (at: string) => ranges ? new Date(Date.parse(at) + 3600_000).toISOString().slice(0, 10) : at >= "2026-11-24T23:00:00Z" ? "2026-11-25" : "2026-11-24";
         const from = url.searchParams.get("from"), to = url.searchParams.get("to");
         const scope = rows.filter(row => (!from || day(row.createdAt) >= from) && (!to || day(row.createdAt) <= to));
         const filtered = scope.filter(row => !url.searchParams.get("status") || row.status === url.searchParams.get("status"));
@@ -106,5 +111,54 @@ test("Unavailable store calendar retains dates and allows an explicit retry with
     await today.click();
     await expect(page.locator('input[type="date"]').first()).toHaveValue("2026-11-25");
     await expect(page.locator(".admin-order-card")).toHaveCount(2);
+    expect(f.writes).toEqual([]);
+});
+
+for (const width of [320, 1440]) for (const ar of [false, true]) for (const remote of [false, true]) {
+    test(`Order period shortcuts keep filters and boundaries at ${width}px ${ar ? "AR" : "FR"} ${remote ? "server" : "local"}`, async ({ page }, info) => {
+        await page.setViewportSize({ width, height: 844 });
+        const f = await fixture(page, ar, remote, true);
+        await page.goto("/admin?tab=orders");
+        // Retain an independent status filter while changing all calendar shortcuts.
+        await page.locator(".order-quick-filters button").nth(2).click();
+        if (remote) {
+            await page.locator(".order-pagination").first().locator("button").last().click();
+            await expect.poll(() => f.requests.some(u => u.pathname === "/api/orders" && u.searchParams.get("page") === "2")).toBe(true);
+        }
+        for (const [days, from, count] of [[7, "2026-11-19", remote ? 18 : 2], [30, "2026-10-27", remote ? 36 : 4], [90, "2026-08-28", remote ? 54 : 6]] as const) {
+            const button = page.locator(`[data-period-days="${days}"]`);
+            await button.click();
+            await expect(button).toHaveAttribute("aria-pressed", "true");
+            await expect(page.locator('.order-period-filter[aria-pressed="true"]')).toHaveCount(1);
+            await expect(page.locator('input[type="date"]').first()).toHaveValue(from);
+            await expect(page.locator('input[type="date"]').last()).toHaveValue("2026-11-25");
+            await expect(page.locator(".order-results")).toContainText(String(count));
+            await expect(page.locator(".admin-order-card")).toHaveCount(Math.min(25, count));
+            if (remote) await expect.poll(() => f.requests.some(u => u.pathname === "/api/orders" && u.searchParams.get("from") === from && u.searchParams.get("status") === "CONFIRMED" && u.searchParams.get("page") === "1")).toBe(true);
+            expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        }
+        await page.screenshot({ path: info.outputPath("order-periods.png") });
+        const ninety = page.locator('[data-period-days="90"]');
+        await ninety.click();
+        await expect(ninety).toHaveAttribute("aria-pressed", "false");
+        await expect(page.locator('input[type="date"]').first()).toHaveValue("");
+        await expect(page.locator(".order-results")).toContainText(remote ? "63" : "7");
+        expect(f.writes).toEqual([]);
+    });
+}
+
+test("A failed range change keeps the active dates and status until retry succeeds", async ({ page }) => {
+    const f = await fixture(page, false, false, true);
+    await page.goto("/admin?tab=orders");
+    await page.locator('[data-period-days="7"]').click();
+    await expect(page.locator('input[type="date"]').first()).toHaveValue("2026-11-19");
+    f.control.failCalendar = true;
+    await page.locator('[data-period-days="30"]').click();
+    await expect(page.locator(".admin-orders-workspace [role=alert]")).toBeVisible();
+    await expect(page.locator('[data-period-days="7"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('input[type="date"]').first()).toHaveValue("2026-11-19");
+    f.control.failCalendar = false;
+    await page.locator('[data-period-days="30"]').click();
+    await expect(page.locator('input[type="date"]').first()).toHaveValue("2026-10-27");
     expect(f.writes).toEqual([]);
 });

@@ -1,3 +1,7 @@
+## Raccourcis de périodes des commandes — 25 novembre 2026
+
+Aujourd’hui, 7, 30 et 90 jours : périodes calendaires inclusives terminant aujourd’hui selon Africa/Casablanca, bornes calculées par l’API privée /orders/calendar?days=. Le premier jour est aujourd’hui moins N−1 jours. Conserver les autres filtres et l’export, remettre la pagination à un ; recliquer la période active efface seulement les dates. Boutons groupés et tactiles, FR/AR. Les statistiques gardent leurs périodes glissantes existantes. Aucun changement de commande, paiement, stock, colis ou migration. Recette et publication : outputs/order-periods-20261125 sur DATA.
+
 ## Période Aujourd’hui — 24 novembre 2026
 
 Candidat : statistiques depuis minuit selon Africa/Casablanca, sans changer les périodes glissantes de 7/30/90 jours ; raccourci Aujourd’hui dans Commandes, dates remplies ensemble et pagination remise à un. Les autres filtres et l’export conservent le même contexte. Un second clic retire uniquement les dates. Lecture seule, aucune commande, paiement, stock ou création de colis de test sur la production. Recettes et publication sur DATA : outputs/today-orders-20261124.
