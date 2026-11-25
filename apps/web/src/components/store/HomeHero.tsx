@@ -1,4 +1,6 @@
 "use client";
+import { useBranding } from "@/components/BrandingProvider";
+import { defaultStoreBranding } from "@imad-store/shared";
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -34,6 +36,8 @@ export function HomeHero({
   autoplay?: boolean;
   minimalControls?: boolean;
 }) {
+  const branding = useBranding();
+  if (branding.name !== defaultStoreBranding.name) brand = branding.name;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(preview);
   const [hovered, setHovered] = useState(false);
@@ -128,7 +132,7 @@ export function HomeHero({
                     ? "offscreen"
                     : "playing"
       }
-      aria-label="مختارات IMAD Mode"
+      aria-label={`مختارات ${branding.name}`}
       aria-roledescription="عارض المنتجات"
       aria-describedby={hint}
       onPointerDownCapture={(event) => {

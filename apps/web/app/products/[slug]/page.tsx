@@ -1,3 +1,4 @@
+import { publicBranding } from "@/lib/server-api";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProductPresentation } from "@/components/store/ProductPresentation";
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await publicProduct(slug);
   if (!product) notFound();
-  return productShareMetadata(product, await requestSiteOrigin());
+  return productShareMetadata(product, await requestSiteOrigin(), await publicBranding());
 }
 export default async function ProductPage({ params, searchParams }: Props) {
   const { slug } = await params;

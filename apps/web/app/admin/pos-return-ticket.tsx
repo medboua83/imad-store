@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import type { ReturnReceipt } from "@/lib/pos-returns-api";
 import { useAdminLocale } from "./admin-locale";
 import { posMoney } from "./pos-receipt";
@@ -12,7 +13,7 @@ export function ReturnTicket({ receipt: r }: { receipt: ReturnReceipt }) {
       aria-label={t("Reçu de retour ou échange")}
     >
       <header>
-        <p className="pos-ticket-brand">IMAD MODE</p>
+        <p className="pos-ticket-brand"><BrandName original="IMAD MODE" /></p>
         <h2>{t(r.replacementCents ? "Échange enregistré" : "Retour enregistré")}</h2>
         <code dir="ltr">{r.reference}</code>
         <p>

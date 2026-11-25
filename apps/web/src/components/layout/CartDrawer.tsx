@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import { trapDialogFocus } from "./dialog-focus";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -107,7 +108,7 @@ export function CartDrawer() {
         >
             <div className="bag-header">
                 <div>
-                    <p className="eyebrow">IMAD · حقيبتكم</p>
+                    <p className="eyebrow"><BrandName original="IMAD" /> · حقيبتكم</p>
                     <h2 id="cart-title">
                         اختياراتكم <span>{itemCount()} قطعة</span>
                     </h2>

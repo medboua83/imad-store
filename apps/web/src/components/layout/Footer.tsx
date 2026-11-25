@@ -1,4 +1,6 @@
 "use client";
+import { BrandContactDetails } from "@/components/store/BrandContactDetails";
+import { useBranding } from "@/components/BrandingProvider";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getSettings } from "@/lib/api";
@@ -9,6 +11,7 @@ import { SocialIcon } from "../store/StoreIcons";
 import { PackageCheck } from "lucide-react";
 
 export function Footer() {
+    const brand = useBranding();
     const contacts = useStoreContacts();
     const socials: [string | undefined, string][] = [
         [contacts?.whatsappUrl, "WhatsApp"],
@@ -34,10 +37,11 @@ export function Footer() {
                         href="/"
                         className="brand-wordmark"
                         dir="ltr"
-                        aria-label="IMAD Mode — الرئيسية"
+                        aria-label={`${brand.name} — الرئيسية`}
                     >
-                        <BrandLogo />
+                        <BrandLogo dark />
                     </Link>
+                    <BrandContactDetails />
                     <p className="footer-brand-note">أناقة يومية للنساء والرجال.</p>
                     <nav
                         className="footer-socials footer-social-icons"
@@ -100,7 +104,7 @@ export function Footer() {
             </div>
             <div className="footer-bottom section-container">
                 <div className="footer-legal">
-                    <small dir="ltr">© {new Date().getFullYear()} IMAD Mode</small>
+                    <small dir="ltr">© {new Date().getFullYear()} {brand.name}</small>
                     <Link href="/privacy">سياسة الخصوصية</Link>
                 </div>
                 {settings?.codEnabled === true && (

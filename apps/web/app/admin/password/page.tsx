@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import { useEffect, useRef, useState } from "react";
 import { requestPasswordReset, submitPasswordReset } from "@/lib/api";
 import { useAdminLocale, AdminLanguageSelect } from "../admin-locale";
@@ -20,7 +21,7 @@ export default function PasswordRecoveryPage() {
         return () => clearTimeout(timer);
     }, []);
     return <main className="admin-app admin-recovery" dir={locale === "ar" ? "rtl" : "ltr"} lang={locale}>
-        <section className="admin-panel"><AdminLanguageSelect /><p className="admin-eyebrow">IMAD MODE</p>
+        <section className="admin-panel"><AdminLanguageSelect /><p className="admin-eyebrow"><BrandName original="IMAD MODE" /></p>
             <h1>{t(token ? "Définir mon mot de passe" : "Mot de passe oublié")}</h1>
             {!ready ? <p role="status">{t("Chargement…")}</p> : <>{done && <p className="admin-feedback" role="status">{t(token ? "Mot de passe enregistré. Connectez-vous avec le nouveau mot de passe." : "Si un compte actif correspond à cette adresse, un lien vous sera envoyé. Vérifiez aussi les courriers indésirables.")}</p>}<form className="team-settings-form" style={formHeight ? { minHeight: formHeight } : undefined} onSubmit={async e => {
                 e.preventDefault(); if (done || lock.current) return;

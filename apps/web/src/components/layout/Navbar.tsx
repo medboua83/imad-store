@@ -1,4 +1,5 @@
 "use client";
+import { useBranding } from "@/components/BrandingProvider";
 import { categoryVisual } from "../store/category-visuals";
 import { ProductPhoto } from "../store/ProductPhoto";
 import { trapDialogFocus } from "./dialog-focus";
@@ -37,6 +38,7 @@ const links = [
     ["/contact", "تواصلوا معنا"],
 ];
 export function Navbar({ whatsappUrl }: { whatsappUrl?: string }) {
+    const brand = useBranding();
     const header = useRef<HTMLElement>(null);
     useEffect(() => {
         const element = header.current;
@@ -110,7 +112,7 @@ export function Navbar({ whatsappUrl }: { whatsappUrl?: string }) {
                 <div className="nav-inner">
                     <Link
                         href="/"
-                        aria-label="IMAD Mode — الرئيسية"
+                        aria-label={`${brand.name} — الرئيسية`}
                         className="brand-wordmark"
                         dir="ltr"
                     >

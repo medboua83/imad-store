@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import type { CashSession } from "@/lib/pos-cash-api";
 import { useAdminLocale } from "./admin-locale";
 import { posMoney } from "./pos-receipt";
@@ -14,7 +15,7 @@ export function CashSessionReport({ session: s }: { session: CashSession }) {
       dir={ar ? "rtl" : "ltr"}
     >
       <header>
-        <p className="pos-ticket-brand">IMAD MODE</p>
+        <p className="pos-ticket-brand"><BrandName original="IMAD MODE" /></p>
         <h1>{t(s.closing ? "Clôture de caisse" : "Session de caisse ouverte")}</h1>
         <code dir="ltr">{s.reference}</code>
         <p>

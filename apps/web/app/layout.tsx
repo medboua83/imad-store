@@ -1,3 +1,5 @@
+import { BrandingProvider } from "@/components/BrandingProvider";
+import { publicBranding } from "@/lib/server-api";
 import type { Metadata } from "next";
 import "./globals.css";
 import "./storefront.css";
@@ -15,6 +17,7 @@ import "./recommendations.css";
 import "./store-refinements.css";
 import "./home-polish.css";
 import "./catalog-product-polish.css";
+import "./branding.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 
@@ -22,10 +25,11 @@ import { normalizeMetaDomainVerification } from "@imad-store/shared";
 import { publicSettings, requestSiteOrigin } from "@/lib/server-api";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const brand = await publicBranding();
   return {
     metadataBase: await requestSiteOrigin(),
-    title: { default: "IMAD Mode — أناقة محتشمة", template: "%s | IMAD Mode" },
-    description: "تصفحوا منتجات IMAD Mode واختاروا اللون والمقاس مع ملخص واضح لطلبكم.",
+    title: { default: `${brand.name} — أناقة محتشمة`, template: `%s | ${brand.name}` },
+    description: `تصفحوا منتجات ${brand.name} واختاروا اللون والمقاس مع ملخص واضح لطلبكم.`,
     alternates: { canonical: "/" },
   };
 }
@@ -64,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="font-arabic">
         <Providers>
-          <StoreLayoutWrapper>{children}</StoreLayoutWrapper>
+          <BrandingProvider initialSettings={settings}><StoreLayoutWrapper>{children}</StoreLayoutWrapper></BrandingProvider>
         </Providers>
       </body>
     </html>

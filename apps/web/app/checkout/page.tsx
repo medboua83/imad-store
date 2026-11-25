@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import { CheckoutCityInput } from "./city-input";
 import { checkoutPhoneDigits, formatCheckoutPhone } from "./phone-input";
 import { CheckoutReview } from "@/components/store/CheckoutReview";
@@ -377,7 +378,7 @@ export default function CheckoutPage() {
             </Link>
             <div className="checkout-heading">
                 <div>
-                    <p className="eyebrow">IMAD · الخطوة الأخيرة</p>
+                    <p className="eyebrow"><BrandName original="IMAD" /> · الخطوة الأخيرة</p>
                     <h1>{reviewReady ? "راجعوا الطلب والتوصيل." : "طلبكم، بكل وضوح."}</h1>
                     <p>{reviewReady ? "تأكدوا من تفاصيل منتجاتكم ورسوم التوصيل قبل تأكيد الطلب." : "راجعوا اختياراتكم وأضيفوا عنوانكم. لا حاجة لإنشاء حساب."}</p>
                 </div>

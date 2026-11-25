@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/BrandingProvider";
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { Fragment, type ComponentProps, type ReactNode } from "react";
@@ -184,7 +185,7 @@ export function HomeView({
         ) : null,
         guide: (
             <details className="shopping-guide section-container home-shopping-guide">
-                <summary>كيف تطلبون من IMAD؟</summary>
+                <summary>كيف تطلبون من <BrandName original="IMAD" />؟</summary>
                 <div className="guide-grid">
                     {[
                         ["01", "اكتشفوا", "تصفحوا المجموعة واختاروا القطعة التي تناسبكم."],
@@ -219,7 +220,7 @@ export function HomeView({
                 <div className="hero-copy">
                     <p className="hero-eyebrow">
                         <span aria-hidden="true" />
-                        <bdi>{content.businessName || "IMAD Mode"}</bdi>
+                        <bdi><BrandName original={content.businessName || "IMAD Mode"} /></bdi>
                     </p>
                     <h1>{content.heroTitle}</h1>
                     <p className="hero-description">{content.heroSubtitle}</p>

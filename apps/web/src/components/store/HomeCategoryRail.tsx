@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -194,7 +195,7 @@ export function HomeCategoryRail({
                 <ProductPhoto images={item.images} name="" sizes="(max-width:767px) 82px, 96px" />
               ) : (
                 <span className="category-photo-empty" aria-hidden="true">
-                  IMAD
+                  <BrandName original="IMAD" />
                 </span>
               )}
             </span>

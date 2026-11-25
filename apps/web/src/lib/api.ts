@@ -307,6 +307,7 @@ export const trackOrder = async (orderId: string) => {
 // ─── Settings (public) ────────────────────────────────────────────────────────
 
 export interface StoreSettings {
+    branding?: import("@imad-store/shared").StoreBranding;
     id: string;
     whatsappPhone: string;
     whatsappUrl?: string | null;
@@ -676,3 +677,11 @@ export const getOlivraisonShipments = async (): Promise<OlivraisonShipment[]> =>
 export const retryOlivraison = async (id: string) => (await api.post(`/integrations/olivraison/shipments/${id}/retry`)).data.data;
 
 export const deleteOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.delete("/integrations/olivraison")).data.data;
+
+export interface BrandingSnapshot { revision: number; branding: import("@imad-store/shared").StoreBranding }
+function brandingSnapshot(value: BrandingSnapshot): BrandingSnapshot {
+    if (!value || !Number.isInteger(value.revision) || value.revision < 0 || !value.branding || typeof value.branding.name !== "string") throw new Error("Invalid identity response");
+    return value;
+}
+export const getBranding = async (): Promise<BrandingSnapshot> => brandingSnapshot((await api.get("/settings/branding")).data.data);
+export const saveBranding = async (payload: BrandingSnapshot): Promise<BrandingSnapshot> => brandingSnapshot((await api.put("/settings/branding", payload)).data.data);

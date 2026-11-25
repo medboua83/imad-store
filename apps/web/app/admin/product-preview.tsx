@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, Monitor, Smartphone, X } from "lucide-react";
@@ -151,7 +152,7 @@ export function ProductPreview({
                             {!gallery.length && <p className="admin-muted">{t("Ajoutez une photo pour voir son rendu ici.")}</p>}
                         </div>
                         <div className="product-preview-content" dir="rtl">
-                            <p className="product-preview-brand">IMAD MODE</p>
+                            <p className="product-preview-brand"><BrandName original="IMAD MODE" /></p>
                             {category && <p>{category.nameAr || category.nameFr}</p>}
                             <h3 dir="auto">{name}</h3>
                             {draft.nameFr.trim() && draft.nameFr.trim() !== name && <p dir="auto">{draft.nameFr}</p>}
