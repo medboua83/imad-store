@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analyticsPeriod, storeCalendar } from "../backend/src/lib/analytics-period";
+import { analyticsPeriod, storeCalendar, storeOrderPeriod } from "../backend/src/lib/analytics-period";
 
 for (const [at, start] of [
     ["2026-11-24T23:59:59.999Z", "2026-11-24T00:00:00.000Z"],
@@ -29,4 +29,21 @@ test("The authoritative store calendar handles 23-hour and 25-hour days", () => 
         assert.equal(calendar.timeZone, "Africa/Casablanca");
         assert.equal((calendar.end.getTime() - calendar.start.getTime()) / 3600_000, hours);
     }
+});
+
+test("Order shortcuts use inclusive calendar days across month/year and clock boundaries", () => {
+    for (const [instant, expected] of [
+        ["2026-01-03T12:00:00Z", ["2026-01-03", "2025-12-28", "2025-12-05", "2025-10-06"]],
+        ["2026-03-24T12:00:00Z", ["2026-03-24", "2026-03-18", "2026-02-23", "2025-12-25"]],
+    ] as const) {
+        for (const [index, days] of [1, 7, 30, 90].entries()) {
+            const range = storeOrderPeriod(days, new Date(instant));
+            assert.equal(range.from, expected[index]);
+            assert.equal(range.day, expected[0]);
+            assert.equal(range.days, days);
+            assert.equal(range.end.getTime(), storeCalendar(new Date(instant)).end.getTime());
+            assert.ok(Math.abs(range.end.getTime() - range.start.getTime() - days * 86400_000) <= 2 * 3600_000);
+        }
+    }
+    for (const days of [0, 2, 31, 91, NaN]) assert.throws(() => storeOrderPeriod(days), RangeError);
 });

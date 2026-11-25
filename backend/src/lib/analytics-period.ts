@@ -19,3 +19,14 @@ export function analyticsPeriod(days: number, now = new Date()) {
     if (days !== 1) return { start: new Date(end.getTime() - days * 86400_000), end };
     return { start: storeCalendar(end).start, end };
 }
+
+/** Inclusive calendar-day ranges for order creation filters, ending with today. */
+export function storeOrderPeriod(days = 1, now = new Date()) {
+    if (![1, 7, 30, 90].includes(days)) throw new RangeError("Unsupported order period");
+    const current = storeCalendar(now);
+    const first = new Date(current.day + "T00:00:00Z");
+    first.setUTCDate(first.getUTCDate() - days + 1);
+    const from = first.toISOString().slice(0, 10);
+    const start = new Date(moroccoDayBoundary(from).replace(" ", "T") + "Z");
+    return { ...current, days, from, start };
+}

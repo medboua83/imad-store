@@ -1,4 +1,4 @@
-import { storeCalendar } from "../lib/analytics-period";
+import { storeOrderPeriod } from "../lib/analytics-period";
 import { validateObjectId } from "../lib/validation";
 import { Router, IRouter } from "express";
 import {
@@ -28,9 +28,14 @@ orderRoutes.post("/", createOrder); // guest checkout
 // Register before the public /:id route and its identifier validation.
 orderRoutes.get("/export.csv", authenticate, requirePermission("orders.export"), exportOrders);
 orderRoutes.get("/dispatch-blacklist", authenticate, requirePermission("orders.read"), getDispatchBlacklist);
-orderRoutes.get("/calendar", authenticate, requirePermission("orders.read"), (_req, res) => {
+orderRoutes.get("/calendar", authenticate, requirePermission("orders.read"), (req, res) => {
     res.setHeader("Cache-Control", "private, no-store");
-    res.json({ success: true, data: storeCalendar() });
+    const days = req.query.days ?? "1";
+    if (typeof days !== "string" || !["1", "7", "30", "90"].includes(days)) {
+        res.status(400).json({ success: false, error: "Unsupported order period" });
+        return;
+    }
+    res.json({ success: true, data: storeOrderPeriod(Number(days)) });
 });
 orderRoutes.get("/:id", getOrder); // order tracking by ID
 

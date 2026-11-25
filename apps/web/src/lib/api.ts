@@ -390,16 +390,21 @@ export interface AdminOrder {
     createdAt: string;
 }
 
-export interface OrderCalendar { day: string; start: string; end: string; timeZone: "Africa/Casablanca" }
-export async function getOrderCalendar(): Promise<OrderCalendar> {
-    const { data } = await api.get<{ success: boolean; data: OrderCalendar }>("/orders/calendar");
+export type OrderPeriodDays = 1 | 7 | 30 | 90;
+export interface OrderCalendar { day: string; from: string; days: OrderPeriodDays; start: string; end: string; timeZone: "Africa/Casablanca" }
+export async function getOrderCalendar(days: OrderPeriodDays = 1): Promise<OrderCalendar> {
+    const { data } = await api.get<{ success: boolean; data: OrderCalendar }>("/orders/calendar", { params: { days } });
     const calendar = data.data;
     const duration = Date.parse(calendar?.end) - Date.parse(calendar?.start);
+    const first = new Date((calendar?.day || "") + "T00:00:00Z");
+    first.setUTCDate(first.getUTCDate() - days + 1);
+    const from = calendar?.from ?? (days === 1 ? calendar?.day : "");
     if (data.success !== true || !calendar || calendar.timeZone !== "Africa/Casablanca" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(calendar.day) || !Number.isFinite(duration) ||
-        duration < 22 * 3600_000 || duration > 26 * 3600_000)
+        !/^\d{4}-\d{2}-\d{2}$/.test(calendar.day) || !Number.isFinite(first.getTime()) ||
+        from !== first.toISOString().slice(0, 10) || (calendar.days ?? 1) !== days || !Number.isFinite(duration) ||
+        Math.abs(duration - days * 86400_000) > 2 * 3600_000)
         throw new Error("Store calendar unavailable");
-    return calendar;
+    return { ...calendar, days, from };
 }
 
 export const getAllOrders = async (params?: {

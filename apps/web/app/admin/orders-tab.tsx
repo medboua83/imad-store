@@ -7,7 +7,7 @@ import { orderTrackingMatches, productVariantImages } from "@imad-store/shared";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, type OrderCalendar, getOrderCalendar, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
+import { type AdminOrder, type OrderCalendar, type OrderPeriodDays, getOrderCalendar, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
@@ -72,35 +72,35 @@ export function OrdersTab({
     const resultsRef = useRef<HTMLParagraphElement>(null), pageNavigation = useRef(false);
     const detailTitle = useRef<HTMLHeadingElement>(null);
     const invalidDates = !!from && !!to && from > to;
-    const [todayCalendar, setTodayCalendar] = useState<OrderCalendar | null>(null);
-    const [todayBusy, setTodayBusy] = useState(false);
-    const todaySequence = useRef(0);
-    useEffect(() => () => { todaySequence.current++; }, []);
-    const todaySelected = !!todayCalendar && from === todayCalendar.day && to === todayCalendar.day;
-    async function toggleToday() {
-        if (todayBusy) return;
-        const request = ++todaySequence.current;
-        setTodayBusy(true);
+    const [periodCalendar, setPeriodCalendar] = useState<OrderCalendar | null>(null);
+    const [periodBusy, setPeriodBusy] = useState(false);
+    const periodSequence = useRef(0);
+    useEffect(() => () => { periodSequence.current++; }, []);
+    const periodSelected = !!periodCalendar && from === periodCalendar.from && to === periodCalendar.day;
+    async function togglePeriod(days: OrderPeriodDays) {
+        if (periodBusy) return;
+        const request = ++periodSequence.current;
+        setPeriodBusy(true);
         try {
-            const calendar = await getOrderCalendar();
-            if (request !== todaySequence.current) return;
-            setTodayCalendar(calendar);
+            const calendar = await getOrderCalendar(days);
+            if (request !== periodSequence.current) return;
+            setPeriodCalendar(calendar);
             pageNavigation.current = false;
-            setFilters(previous => ({ ...previous, page: 1,
-                from: previous.from === calendar.day && previous.to === calendar.day ? "" : calendar.day,
-                to: previous.from === calendar.day && previous.to === calendar.day ? "" : calendar.day,
-            }));
+            setFilters(previous => {
+                const clear = previous.from === calendar.from && previous.to === calendar.day;
+                return { ...previous, page: 1, from: clear ? "" : calendar.from, to: clear ? "" : calendar.day };
+            });
             setMessage(""); setError(false);
         } catch {
-            if (request === todaySequence.current) {
+            if (request === periodSequence.current) {
                 setError(true); setMessage("La période n’a pas pu être chargée. Réessayez.");
             }
-        } finally { if (request === todaySequence.current) setTodayBusy(false); }
+        } finally { if (request === periodSequence.current) setPeriodBusy(false); }
     }
-    const calendarRows = useMemo(() => todaySelected && todayCalendar
-        ? orders.filter(order => Date.parse(order.createdAt) >= Date.parse(todayCalendar.start) && Date.parse(order.createdAt) < Date.parse(todayCalendar.end))
-        : orders, [orders, todaySelected, todayCalendar]);
-    const localFrom = todaySelected ? "" : from, localTo = todaySelected ? "" : to;
+    const calendarRows = useMemo(() => periodSelected && periodCalendar
+        ? orders.filter(order => Date.parse(order.createdAt) >= Date.parse(periodCalendar.start) && Date.parse(order.createdAt) < Date.parse(periodCalendar.end))
+        : orders, [orders, periodSelected, periodCalendar]);
+    const localFrom = periodSelected ? "" : from, localTo = periodSelected ? "" : to;
     const localResults = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(calendarRows.filter(order => orderTrackingMatches(order.shipment, tracking)), search, status), payment, localFrom, localTo, sort),
         [calendarRows, search, status, payment, tracking, localFrom, localTo, sort, invalidDates]);
     const localScope = useMemo(() => invalidDates ? [] : refineOrders(filterOrders(calendarRows.filter(order => orderTrackingMatches(order.shipment, tracking)), search, "ALL"), payment, localFrom, localTo, sort),
@@ -288,10 +288,18 @@ export function OrdersTab({
                     <p>{t("Recherche dans toutes les commandes, hors corbeille.")}</p>
                 </div>
                 <div className="order-heading-actions">
-                    <button type="button" className="admin-button order-today-filter" aria-pressed={todaySelected}
-                        title={t("Depuis minuit, heure du Maroc.")} disabled={todayBusy} aria-busy={todayBusy} onClick={toggleToday}>
-                        {t("Aujourd’hui")}
-                    </button>
+                    <div className="order-period-shortcuts" role="group" aria-label={t("Période de création")}>
+                        {([1, 7, 30, 90] as const).map(days => (
+                            <button key={days} type="button" data-period-days={days}
+                                className={`admin-button order-period-filter${days === 1 ? " order-today-filter" : ""}`}
+                                aria-pressed={periodSelected && periodCalendar?.days === days}
+                                title={t(days === 1 ? "Depuis minuit, heure du Maroc." : "Jours calendaires, aujourd’hui inclus, heure du Maroc.")}
+                                disabled={periodBusy} aria-busy={periodBusy}
+                                onClick={() => togglePeriod(days)}>
+                                {t(days === 1 ? "Aujourd’hui" : `${days} jours`)}
+                            </button>
+                        ))}
+                    </div>
                     <button className="admin-button" aria-label={t("Actualiser")} disabled={busy} onClick={refresh}>
                         <RefreshCw size={16} />
                         <span className="order-refresh-label">{t("Actualiser")}</span>
@@ -363,7 +371,7 @@ export function OrdersTab({
                             <input
                                 dir="auto"
                                 type="date"
-                                disabled={todayBusy}
+                                disabled={periodBusy}
                                 value={from}
                                 onInput={(e) => setFilter("from", e.currentTarget.value)}
                             />
@@ -373,7 +381,7 @@ export function OrdersTab({
                             <input
                                 dir="auto"
                                 type="date"
-                                disabled={todayBusy}
+                                disabled={periodBusy}
                                 value={to}
                                 onInput={(e) => setFilter("to", e.currentTarget.value)}
                             />
