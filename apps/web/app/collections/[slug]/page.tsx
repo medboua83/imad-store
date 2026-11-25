@@ -1,3 +1,4 @@
+import { publicBranding } from "@/lib/server-api";
 import { notFound } from "next/navigation";
 import ShopPage from "../../shop/page";
 import { publishedCategories } from "@/lib/catalog-navigation";
@@ -19,7 +20,7 @@ async function collection(slug: string) {
 
 export async function generateMetadata({ params }: Props) {
     const [{ slug }, origin] = await Promise.all([params, requestSiteOrigin()]);
-    return collectionShareMetadata(await collection(slug), origin);
+    return collectionShareMetadata(await collection(slug), origin, await publicBranding());
 }
 
 export default async function CollectionPage({ params, searchParams }: Props) {

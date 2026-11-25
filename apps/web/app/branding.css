@@ -1,0 +1,36 @@
+.brand-theme { display: contents; }
+.brand-custom-logo { display: block; width: min(180px, 100%); height: 90px; object-fit: contain; }
+.brand-text-logo { display: block; max-width: 230px; font-size: clamp(20px, 3vw, 32px); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.brand-wordmark { min-width: 0; }
+.admin-sidebar .brand-custom-logo, .admin-auth-story .brand-custom-logo { max-width: 100%; }
+.brand-contact-details { display: grid; gap: 10px; overflow-wrap: anywhere; }
+.brand-contact-details address { white-space: pre-line; font-style: normal; }
+.brand-theme[data-custom-primary] .store-shell .btn-primary,
+.brand-theme[data-custom-primary] .store-shell .btn-gold,
+.brand-theme[data-custom-primary] .pixel-choice button:first-of-type { background: var(--brand-primary); border-color: var(--brand-primary); color: var(--brand-on-primary); }
+.brand-theme[data-custom-primary] .store-shell .section-eyebrow,
+.brand-theme[data-custom-primary] .store-shell .nav-link[aria-current="page"] { color: var(--brand-primary); }
+.brand-theme[data-custom-primary] .store-shell .site-footer,
+.brand-theme[data-custom-primary] .store-shell .announcement-bar,
+.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy,
+.brand-theme[data-custom-primary] .admin-sidebar,
+.brand-theme[data-custom-primary] .admin-auth-story { background: var(--brand-primary); color: var(--brand-on-primary); }
+.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy :is(h1, .hero-description, .hero-eyebrow),
+.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy .hero-collection-link { color: var(--brand-on-primary); }
+.brand-theme[data-custom-primary] .admin-app { --admin-green: var(--brand-primary); }
+.brand-theme[data-custom-accent] .store-shell .storefront-home .hero-actions .btn-primary { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--brand-on-accent); }
+.brand-theme[data-custom-accent] .brand-wordmark .brand-logo { background: var(--brand-accent); }
+.brand-theme[data-custom-background] .store-shell { background: var(--brand-background); color: var(--brand-on-background); }
+@media(max-width:767px) {
+    .brand-custom-logo { width: 120px; height: 60px; }
+    .brand-text-logo { max-width: 145px; font-size: 22px; }
+    .admin-sidebar .brand-custom-logo { width: 84px; height: 48px; }
+}
+.brand-theme[data-custom-primary] .store-shell .site-footer :is(h2,a,p,small),
+.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy :is(.hero-price-row,.hero-price-row del,.hero-color-list,.hero-collection-link),
+.brand-theme[data-custom-primary] .admin-sidebar :is(nav button:not([aria-current="page"]),a,.admin-sidebar-note),
+.brand-theme[data-custom-primary] .admin-auth-story :is(p,h1,h2) { color: var(--brand-on-primary); }
+.brand-theme[data-custom-primary] .admin-app .admin-button:not(.secondary):not(:disabled) { background: var(--brand-primary); color: var(--brand-on-primary); }
+.brand-theme[data-custom-accent] .admin-sidebar nav button[aria-current="page"] { background: var(--brand-accent); color: var(--brand-on-accent); }
+
+.brand-text-logo { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

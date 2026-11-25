@@ -71,7 +71,7 @@ uploadRoutes.get(/^\/preview-v1\/([a-f0-9]{64}\.webp)$/, async (req, res) => {
 uploadRoutes.post(
     "/",
     authenticate,
-    requirePermission("catalogue.manage", "content.manage"),
+    requirePermission("catalogue.manage", "content.manage", "settings.manage"),
     express.raw({ type: ["image/png", "image/jpeg", "image/webp"], limit: "5mb" }),
     async (req, res) => {
         if (!Buffer.isBuffer(req.body) || !req.body.length)

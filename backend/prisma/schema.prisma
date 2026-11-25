@@ -607,3 +607,12 @@ model PosAdjustmentItem {
   @@index([sourceItemId])
   @@map("pos_adjustment_items")
 }
+
+// Public merchant identity, independent from commercial and integration settings.
+model StoreBranding {
+  id String @id
+  revision Int @default(0)
+  data Json
+  updatedAt DateTime @updatedAt
+  @@map("store_branding")
+}

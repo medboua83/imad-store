@@ -1,4 +1,5 @@
 export * from "./store-contact";
+export * from "./store-branding";
 export * from "./product-information";
 // ─── Locales ────────────────────────────────────────────────────────────────
 /** A variant represents one size, never a list of numeric pointures. */

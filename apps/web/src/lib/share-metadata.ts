@@ -1,3 +1,4 @@
+import { defaultStoreBranding, type StoreBranding } from "@imad-store/shared";
 import type { Metadata } from "next";
 import type { Category } from "./api";
 import { categoryImageSources } from "../components/store/category-visuals";
@@ -23,31 +24,31 @@ const text = (...values: (string | undefined)[]) =>
     .trim();
 
 /** Brand cards belong only to these public pages; product cards keep their own photos. */
-export function storefrontShareMetadata(page: "home" | "shop", origin: URL): Metadata {
-  const title = page === "home" ? "IMAD Mode — اختيارات على ذوقكم" : "المتجر | IMAD Mode";
+export function storefrontShareMetadata(page: "home" | "shop", origin: URL, brand: StoreBranding = defaultStoreBranding): Metadata {
+  const title = page === "home" ? `${brand.name} — اختيارات على ذوقكم` : `المتجر | ${brand.name}`;
   const description = page === "home"
-    ? "اكتشفوا اختيارات IMAD Mode، وقارنوا الألوان والمقاسات مع تفاصيل واضحة قبل الطلب."
-    : "تصفحوا منتجات IMAD Mode حسب الفئة والسعر والتوفر، واختاروا اللون والمقاس المناسبين.";
+    ? `اكتشفوا اختيارات ${brand.name}، وقارنوا الألوان والمقاسات مع تفاصيل واضحة قبل الطلب.`
+    : `تصفحوا منتجات ${brand.name} حسب الفئة والسعر والتوفر، واختاروا اللون والمقاس المناسبين.`;
   const url = new URL(page === "home" ? "/" : "/shop", origin).href;
-  const images = [{ url: new URL("/images/brand/imad-share-gold-v1.png", origin).href,
-    width: 1200, height: 630, type: "image/png", alt: "IMAD Mode" }];
+  const images = !brand.logoUrl && brand.name !== defaultStoreBranding.name ? [] : [{ url: new URL(brand.logoUrl || "/images/brand/imad-share-gold-v1.png", origin).href,
+    ...(brand.logoUrl ? {} : { width: 1200, height: 630, type: "image/png" }), alt: brand.name }];
   return {
     title: { absolute: title }, description, alternates: { canonical: url },
-    openGraph: { type: "website", siteName: "IMAD Mode", locale: "ar_MA", title,
+    openGraph: { type: "website", siteName: brand.name, locale: "ar_MA", title,
       description, url, images },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }
-export function collectionShareMetadata(category: Category, origin: URL): Metadata {
+export function collectionShareMetadata(category: Category, origin: URL, brand: StoreBranding = defaultStoreBranding): Metadata {
   const name = text(category.nameAr, category.nameFr, category.nameEn);
-  const title = `${name} | IMAD Mode`;
-  const description = `تصفحوا مجموعة ${name} لدى IMAD Mode واختاروا من الألوان والمقاسات المتوفرة.`;
+  const title = `${name} | ${brand.name}`;
+  const description = `تصفحوا مجموعة ${name} لدى ${brand.name} واختاروا من الألوان والمقاسات المتوفرة.`;
   const url = new URL(`/collections/${encodeURIComponent(category.slug)}`, origin).href;
-  const image = categoryImageSources(category, [])[0] || "/images/brand/imad-share-gold-v1.png";
-  const images = [{ url: new URL(image, origin).href, alt: name }];
+  const image = categoryImageSources(category, [])[0] || brand.logoUrl || (brand.name === defaultStoreBranding.name ? "/images/brand/imad-share-gold-v1.png" : "");
+  const images = image ? [{ url: new URL(image, origin).href, alt: name }] : [];
   return {
     title: { absolute: title }, description, alternates: { canonical: url },
-    openGraph: { type: "website", siteName: "IMAD Mode", locale: "ar_MA", title, description, url, images },
+    openGraph: { type: "website", siteName: brand.name, locale: "ar_MA", title, description, url, images },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }
@@ -64,6 +65,7 @@ export function productShareMetadata(
     images: string[];
   },
   origin: URL,
+  brand: StoreBranding = defaultStoreBranding,
 ): Metadata {
   const title = text(product.nameAr, product.nameFr, product.nameEn);
   const description = text(productDescription(product)).slice(0, 200);
@@ -87,7 +89,7 @@ export function productShareMetadata(
     alternates: { canonical: url },
     openGraph: {
       type: "website",
-      siteName: "IMAD Mode",
+      siteName: brand.name,
       locale: "ar_MA",
       url,
       title,

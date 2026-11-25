@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { readStoreBranding } from "../lib/store-branding";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import {
@@ -35,6 +36,7 @@ export async function readSettings() {
         success: true,
         data: {
             ...settings,
+            branding: (await readStoreBranding()).branding,
             ...storeContacts(settings),
             directSiteConfirmation: settings.directSiteConfirmation === true,
             whatsappAssistanceAvailable: Boolean(

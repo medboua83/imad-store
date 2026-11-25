@@ -1,3 +1,4 @@
+import { publicBranding } from "@/lib/server-api";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicProducts, publicCategories, requestSiteOrigin } from "@/lib/server-api";
@@ -15,13 +16,14 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ searchParams }: {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
+    const brand = await publicBranding();
     const raw = await searchParams;
     const origin = await requestSiteOrigin();
     if (typeof raw.category === "string") {
         const category = publishedCategories(await publicCategories()).find((entry) => entry.slug === raw.category);
-        if (category) return collectionShareMetadata(category, origin);
+        if (category) return collectionShareMetadata(category, origin, brand);
     }
-    return storefrontShareMetadata("shop", origin);
+    return storefrontShareMetadata("shop", origin, brand);
 }
 const filterKeys = ["search", "category", "section", "sort", "minPrice", "maxPrice", "availability", "size", "color"] as const;
 const sortLabels: Record<string, string> = {
@@ -35,6 +37,7 @@ export default async function ShopPage({
 }: {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+    const brand = await publicBranding();
     const raw = await searchParams;
     const value = (key: string) => (typeof raw[key] === "string" ? (raw[key] as string) : "");
     const params: Record<string, string | number> = { limit: 12, includeFilters: "1" };
@@ -119,7 +122,7 @@ export default async function ShopPage({
             {categoryTitle ? (
                 <header className="shop-collection-heading">
                     <div>
-                        <p className="shop-collection-kicker">مجموعة IMAD</p>
+                        <p className="shop-collection-kicker">مجموعة {brand.name === "IMAD Mode" ? "IMAD" : brand.name}</p>
                         <h1>{categoryTitle}</h1>
                         <p>تصفحوا القطع واختاروا ما يناسبكم.</p>
                     </div>
@@ -138,7 +141,7 @@ export default async function ShopPage({
             ) : (
                 <div className="shop-intro">
                     <div>
-                        <p className="eyebrow">THE IMAD EDIT</p>
+                        <p className="eyebrow">{brand.name === "IMAD Mode" ? "THE IMAD EDIT" : brand.name}</p>
                         <h1>{section?.nameAr || "اكتشفوا ما يشبهكم."}</h1>
                         <p>قطع تختارونها بطريقتكم. تصفحوا، قارنوا التفاصيل واختاروا ما يناسبكم.</p>
                     </div>

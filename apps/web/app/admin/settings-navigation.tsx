@@ -5,6 +5,7 @@ import { ArrowDown, CreditCard, PackageCheck, RotateCcw, Share2, Truck } from "l
 import { useAdminLocale } from "./admin-locale";
 
 const destinations = [
+    { id: "branding-settings", label: "Identité de la boutique", icon: PackageCheck },
     { id: "social-settings", label: "Réseaux sociaux et WhatsApp", icon: Share2 },
     { id: "order-settings", label: "Gestion des commandes", icon: PackageCheck },
     { id: "carrier-settings", label: "Société de livraison", icon: Truck },

@@ -44,6 +44,7 @@ export async function assertStoreInstallation() {
             prisma.deskcommOutbox,
             prisma.deskcommIntegration,
             prisma.siteContent,
+            prisma.storeBranding,
             prisma.deskcommStatusReceipt,
             prisma.deskcommConnection,
             prisma.olivraisonIntegration,

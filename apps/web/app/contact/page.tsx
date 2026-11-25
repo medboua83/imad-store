@@ -1,3 +1,5 @@
+import { publicBranding } from "@/lib/server-api";
+import { BrandContactDetails } from "@/components/store/BrandContactDetails";
 import Link from "next/link";
 import { ShoppingQuestions } from "@/components/store/ShoppingQuestions";
 import { ContactWhatsAppButton } from "@/components/store/ContactWhatsAppButton";
@@ -9,14 +11,16 @@ export const metadata = { title: "تواصلوا معنا", alternates: { canoni
 
 export default async function ContactPage() {
   // Render the current contact before the browser positions a direct link to #questions.
+  const brand = await publicBranding();
   const settings = await publicSettings().catch(() => null);
   const whatsappUrl = settings ? storeContacts(settings).whatsappUrl : "";
   return (
     <section className="page-shell contact-page" dir="rtl">
       <div className="contact-intro">
-        <p className="contact-eyebrow">IMAD Mode · نحن هنا للمساعدة</p>
+        <p className="contact-eyebrow">{brand.name} · نحن هنا للمساعدة</p>
         <h1>تواصلوا معنا</h1>
-        <p>للاستفسار عن المنتجات أو متابعة طلبكم، راجعوا وسائل التواصل مع فريق IMAD Mode أسفل الصفحة.</p>
+        <p>للاستفسار عن المنتجات أو متابعة طلبكم، راجعوا وسائل التواصل مع فريق {brand.name} أسفل الصفحة.</p>
+        <BrandContactDetails />
         <ContactWhatsAppButton initialHref={whatsappUrl} />
         <p className="contact-service-note">لتسهيل المساعدة، أرسلوا اسم المنتج أو مرجع الطلب مع رسالتكم.</p>
       </div>

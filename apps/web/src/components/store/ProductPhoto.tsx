@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import Image from "next/image";
 import { useState } from "react";
 export function ProductPhoto({
@@ -49,7 +50,7 @@ export function ProductPhoto({
             aria-hidden={!name || undefined}
             aria-label={name ? `${name} — الصورة قيد التحضير` : undefined}
         >
-            IMAD
+            <BrandName original="IMAD" />
         </span>
     );
 }

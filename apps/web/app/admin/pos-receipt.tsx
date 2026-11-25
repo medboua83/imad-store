@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import type { PosReceipt } from "@/lib/pos-api";
 import { useAdminLocale } from "./admin-locale";
 export const posMoney = (cents: number, ar = false) =>
@@ -11,7 +12,7 @@ export function PosTicket({ sale }: { sale: PosReceipt }) {
   return (
     <article dir={ar ? "rtl" : "ltr"} className="pos-ticket" aria-label={t("Ticket de caisse")}>
       <header>
-        <p className="pos-ticket-brand">IMAD MODE</p>
+        <p className="pos-ticket-brand"><BrandName original="IMAD MODE" /></p>
         <h1>{t("Reçu de vente")}</h1>
         <p>{t("Vente emportée")}</p>
         <p>

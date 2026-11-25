@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import { useAdminLocale, AdminLanguageSelect } from "./admin-locale";
 import { ADMIN_ORDERS_REFRESH_MS } from "@imad-store/shared";
 
@@ -551,7 +552,7 @@ export default function AdminPage() {
             >
                 <div className="admin-auth-story">
                     <Link href="/" className="brand-wordmark">
-                        <BrandLogo />
+                        <BrandLogo dark />
                     </Link>
                     <div>
                         <p className="admin-eyebrow">{t("VOTRE ESPACE BOUTIQUE")}</p>
@@ -566,7 +567,7 @@ export default function AdminPage() {
                             {t("Un espace pour tout garder en vue.")}
                         </p>
                     </div>
-                    <span>{t("IMAD Mode · Administration")}</span>
+                    <span><BrandName /> · {t("Administration")}</span>
                 </div>
                 <main className="admin-auth-main">
                     <AdminLanguageSelect />
@@ -656,7 +657,7 @@ export default function AdminPage() {
             </a>
             <aside className="admin-sidebar">
                 <Link href="/" className="brand-wordmark">
-                    <BrandLogo />
+                    <BrandLogo dark />
                 </Link>
                 <p className="admin-sidebar-label">{t("ESPACE ADMINISTRATION")}</p>
                 <button
@@ -756,7 +757,7 @@ export default function AdminPage() {
                 <main id="admin-main" className="admin-main">
                     <div className="admin-page-heading">
                         <div>
-                            <p className="admin-eyebrow">{t("IMAD · GESTION DE LA BOUTIQUE")}</p>
+                            <p className="admin-eyebrow"><BrandName original="IMAD" /> · {t("GESTION DE LA BOUTIQUE")}</p>
                             <h1 ref={mainTitle} tabIndex={-1}>
                                 {t(current.label)}
                             </h1>
@@ -1021,7 +1022,7 @@ export default function AdminPage() {
                         </>
                     )}
                     <footer className="admin-page-footer">
-                        <span>{t("IMAD Mode · Votre espace de gestion")}</span>
+                        <span><BrandName /> · {t("Votre espace de gestion")}</span>
                         <Link href="/" target="_blank" rel="noreferrer">
                             {t("Ouvrir la boutique ")}
                             <ArrowUpRight size={14} />

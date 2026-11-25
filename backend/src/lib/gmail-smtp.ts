@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { readStoreBranding } from "./store-branding";
 import { decryptDeskcommValue, encryptDeskcommValue } from "./deskcomm-config";
 import { AppError } from "../middleware/error.middleware";
 
@@ -21,7 +22,7 @@ export async function gmailTransport() {
         connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 10000,
         disableFileAccess: true, disableUrlAccess: true,
     });
-    return { transport, from: { name: "IMAD Mode", address: config.gmailUser } };
+    return { transport, from: { name: (await readStoreBranding()).branding.name, address: config.gmailUser } };
 }
 export async function sendAccessMail(to: string, token: string, kind: string, tokenHash: string) {
     const base = new URL(process.env.SITE_URL || "http://localhost:3000");
@@ -33,7 +34,7 @@ export async function sendAccessMail(to: string, token: string, kind: string, to
     const { transport, from } = await gmailTransport();
     try {
         await transport.sendMail({ from, to, messageId: `<access-${tokenHash}@${base.hostname}>`,
-            subject: kind === "INVITE" ? "Votre accès à IMAD Mode" : "Réinitialiser votre mot de passe IMAD Mode",
+            subject: kind === "INVITE" ? `Votre accès à ${from.name}` : `Réinitialiser votre mot de passe ${from.name}`,
             text: `Pour définir votre mot de passe :\n${link.href}\n\nCe lien expire dans 30 minutes et ne fonctionne qu'une fois. Si vous n'avez pas fait cette demande, ignorez cet e-mail.`,
         });
     } finally { transport.close(); }

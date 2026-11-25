@@ -1,3 +1,4 @@
+import { publicBranding } from "@/lib/server-api";
 import { HomeView } from "@/components/store/HomeView";
 import {
     publicContent,
@@ -11,7 +12,7 @@ import { homeCatalogueQuery } from "@/lib/home-catalogue";
 import { usesManualHeroSelection } from "@imad-store/shared";
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
-    return storefrontShareMetadata("home", await requestSiteOrigin());
+    return storefrontShareMetadata("home", await requestSiteOrigin(), await publicBranding());
 }
 export default async function HomePage() {
     const [content, categories, products] = await Promise.all([

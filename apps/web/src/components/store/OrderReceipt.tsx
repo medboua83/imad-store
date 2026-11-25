@@ -1,4 +1,5 @@
 "use client";
+import { BrandName } from "@/components/BrandingProvider";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, X } from "lucide-react";
@@ -30,7 +31,7 @@ export function OrderReceipt({ order }: { order: AdminOrder }) {
   }
   return (
     <section className="page-shell checkout-success" role="status">
-      <p className="eyebrow">IMAD MODE</p>
+      <p className="eyebrow"><BrandName original="IMAD MODE" /></p>
       <h1>تم تسجيل طلبكم.</h1>
       <button id="checkout-show-receipt" className="btn-primary" onClick={() => setOpen(true)}>
         عرض تفاصيل الطلب

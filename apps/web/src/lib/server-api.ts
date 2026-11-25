@@ -1,3 +1,4 @@
+import { resolveStoreBranding } from "@imad-store/shared";
 import "server-only";
 import { headers } from "next/headers";
 import { resolvePublicOrigin } from "./share-metadata";
@@ -67,3 +68,5 @@ export const siteOrigin = () => new URL(process.env.SITE_URL || "http://localhos
 export async function requestSiteOrigin() {
     return resolvePublicOrigin(process.env.SITE_URL, (await headers()).get("host"));
 }
+
+export const publicBranding = cache(async () => resolveStoreBranding((await publicSettings().catch(() => null))?.branding));
