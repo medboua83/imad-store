@@ -23,7 +23,7 @@ Prérequis maintenus : Node.js 22, npm, PostgreSQL 16, domaine HTTPS et stockage
 - [Sauvegarde, vérification et reprise](docs/RECOVERY_OPERATIONS.md).
 - [Règles commerciales](docs/COMMERCE_RULES.md).
 - [Guide de caisse](docs/CAISSE.md).
-- [Permissions et Gmail](docs/CURRENT_STATUS.md) et [historique du projet](docs/PROJECT_MEMORY.md).
+- [Permissions, Gmail et utilisation quotidienne](docs/MERCHANT_GUIDE.md).
 
 La procédure courante utilise `npm ci`, `prisma migrate deploy`, puis le serveur combiné Next/Express avec un seul port public derrière le reverse proxy. Suivre le kit avec le profil de l'installation ; ne pas démarrer plusieurs serveurs concurrents en production. Aucun identifiant administrateur universel ne doit être distribué. Ne jamais réinitialiser ou remplir automatiquement une base active.
 

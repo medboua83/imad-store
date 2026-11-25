@@ -54,6 +54,9 @@ test('Standalone profiles require no CRM company or registration secret and cann
         assert.equal(profile.vars.API_UPSTREAM_URL,'http://127.0.0.1:3000');
         assert.equal(profile.vars.HOSTNAME,'127.0.0.1');
         assert.equal(profile.vars.IMAD_TRUST_LOOPBACK_PROXY,'true');
+        const quickstart=fs.readFileSync(path.join(output,'INSTALLATION.txt'),'utf8');
+        assert.match(quickstart,/migrate\.env migrate/);assert.match(quickstart,/runtime-permissions\.sql/);
+        assert.doesNotMatch(quickstart,/store\.env migrate/);
         assert.equal(fs.existsSync(path.join(output,'crm-registration.json')),false);
         for(const patch of ['CRM_COMPANY_ID='+JSON.stringify(randomUUID()),'STORE_SETUP_MODE="unknown"','DESKCOMM_OUTBOX_WORKER_ENABLED="true"']) {
             const key=patch.split('=')[0];fs.writeFileSync(file,original.replace(new RegExp('^'+key+'=.*$','m'),'')+'\n'+patch+'\n');assert.throws(()=>loadProfile(file));
