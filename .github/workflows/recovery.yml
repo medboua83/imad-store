@@ -1,0 +1,28 @@
+name: Isolated recovery rehearsal
+on:
+  pull_request:
+    paths: ['scripts/offsite-recovery.py', 'scripts/verify-store-backup.py', 'tests/test*recovery*', 'tests/test_backup_verifier.py', '.github/workflows/recovery.yml']
+  push:
+    branches: [Master]
+    paths: ['scripts/offsite-recovery.py', 'scripts/verify-store-backup.py', 'tests/test*recovery*', 'tests/test_backup_verifier.py', '.github/workflows/recovery.yml']
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install recovery tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y age postgresql-16
+      - name: Safety contracts
+        run: python3 -m unittest discover -s tests -p test_backup_verifier.py -v
+      - name: Encrypted round-trip and new private PostgreSQL clusters only
+        env:
+          IMAD_RECOVERY_PG_BIN: /usr/lib/postgresql/16/bin
+        run: python3 -m unittest discover -s tests -p test_offsite_recovery.py -v
