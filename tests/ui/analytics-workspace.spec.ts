@@ -51,6 +51,8 @@ for (const width of [320, 390, 768, 1440]) for (const ar of [false, true]) {
         await expect(details).not.toHaveAttribute("open", "");
         await details.locator("summary").focus(); await page.keyboard.press("Enter");
         await expect(details).toHaveAttribute("open", "");
+        await expect(details.locator("summary")).toBeFocused();
+        expect(await details.locator("summary").evaluate(element => getComputedStyle(element).outlineStyle)).toBe("solid");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await page.getByRole("button", { name: ar ? "إدارة الطلبات" : "Gérer les commandes", exact: true }).click();
         await expect(page).toHaveURL(/tab=orders/);

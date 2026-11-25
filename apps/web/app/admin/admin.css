@@ -2208,7 +2208,7 @@
 .admin-app .admin-analytics .analytics-navigation { display:flex; justify-content:flex-end; }
 .admin-app .admin-analytics .analytics-method details { min-width:0; width:100%; }
 .admin-app .admin-analytics .analytics-method summary { min-height:44px; padding-block:10px; cursor:pointer; font-weight:600; }
-.admin-app .admin-analytics .analytics-method summary:focus-visible { outline:2px solid var(--admin-gold); outline-offset:4px; }
+.admin-app .admin-analytics .analytics-method summary:focus-visible { outline:2px solid var(--admin-green); outline-offset:4px; }
 .admin-app .admin-analytics .analytics-method details[open] summary { margin-block-end:8px; }
 @media(max-width:1100px) {
     .admin-app .admin-analytics .analytics-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
