@@ -12,8 +12,9 @@ export function BrandName({ original }: { original?: string }) {
 }
 export function BrandingProvider({ initialSettings, children }: { initialSettings: StoreSettings | null; children: React.ReactNode }) {
     const { data } = useQuery({ queryKey: ["store-settings"], queryFn: getSettings,
-        initialData: initialSettings ?? undefined, staleTime: 60_000, refetchOnMount: "always" });
-    const branding = resolveStoreBranding(data?.branding);
+        staleTime: 60_000 });
+    // SSR identity is a visual fallback, never an injected shipping/checkout cache value.
+    const branding = resolveStoreBranding(data?.branding ?? initialSettings?.branding);
     return <Context.Provider value={branding}>
         <div className="brand-theme" style={brandTheme(branding)}
             data-custom-primary={branding.primaryColor !== defaultStoreBranding.primaryColor || undefined}
