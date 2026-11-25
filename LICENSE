@@ -1,0 +1,15 @@
+IMAD Store — code spécifique : droits réservés
+
+Ce dépôt ne concède pas de licence publique générale sur son code spécifique.
+L'utilisation commerciale, la redistribution, la sous-licence ou la cession de
+ce code doivent être couvertes par un accord écrit avec les titulaires des droits.
+La publication du dépôt ne constitue pas, à elle seule, une telle autorisation.
+
+Les composants tiers restent soumis à leurs propres licences et notices ; voir
+THIRD_PARTY_NOTICES.md et docs/DEPENDENCY_LICENSES.json. Cette réserve ne limite
+pas les droits déjà accordés par les licences de ces composants.
+
+Les marques, logos, photographies, comptes, secrets, données personnelles et
+sauvegardes ne font l'objet d'aucune autorisation de réutilisation par ce fichier.
+La livraison à un autre marchand doit utiliser ses propres ressources et une
+installation vide. Voir DISTRIBUTION_RIGHTS.md et docs/CLIENT_HANDOVER.md.

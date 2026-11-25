@@ -7,7 +7,8 @@ const { parse } = require('dotenv');
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function loadProfile(file, root = path.resolve(__dirname, '..')) {
     const profile = path.resolve(file), stat = fs.lstatSync(profile);
-    if (profile.startsWith(root + path.sep)) throw new Error('Profil privé hors du code requis.');
+    const physicalProfile = fs.realpathSync(profile), physicalRoot = fs.realpathSync(root);
+    if (physicalProfile.startsWith(physicalRoot + path.sep)) throw new Error('Profil privé hors du code requis.');
     if (!stat.isFile() || stat.size > 65536 || (process.platform !== 'win32' && (stat.mode & 0o077)))
         throw new Error('Profil privé requis : fichier ordinaire, maximum 64 Ko, permissions 600.');
     for (const dir of ['', 'backend', 'apps/web']) {
@@ -21,7 +22,9 @@ function loadProfile(file, root = path.resolve(__dirname, '..')) {
         const match = /^([A-Z][A-Z0-9_]*)=(".*")$/.exec(line.trim());
         if (match) { try { vars[match[1]] = JSON.parse(match[2]); } catch { /* Edited dotenv value. */ } }
     }
-    if (!uuid.test(vars.STORE_INSTANCE_ID || '') || !uuid.test(vars.CRM_COMPANY_ID || '')) throw new Error('Identifiants UUID requis.');
+    const standalone = vars.STORE_SETUP_MODE === 'standalone';
+    if (!uuid.test(vars.STORE_INSTANCE_ID || '') || (vars.STORE_SETUP_MODE && !['standalone','crm'].includes(vars.STORE_SETUP_MODE)) ||
+        (standalone ? !!vars.CRM_COMPANY_ID : !uuid.test(vars.CRM_COMPANY_ID || ''))) throw new Error('Identifiants UUID et mode cohérents requis.');
     if (vars.NODE_ENV !== 'production' || vars.IMAD_HOSTING_MODE !== 'combined') throw new Error('Mode combined de production requis.');
     const origin = new URL(vars.CORS_ORIGIN), db = new URL(vars.DATABASE_URL);
     if (origin.protocol !== 'https:' || origin.origin !== vars.CORS_ORIGIN || origin.username || origin.password) throw new Error('Origine HTTPS exacte requise.');
@@ -31,10 +34,12 @@ function loadProfile(file, root = path.resolve(__dirname, '..')) {
     if (!/^\d+$/.test(vars.PORT || '') || +vars.PORT < 1 || +vars.PORT > 65535) throw new Error('Port invalide.');
     for (const key of ['DESKCOMM_OUTBOX_WORKER_ENABLED', 'DESKCOMM_HOSTED_DELIVERY_ENABLED'])
         if (!['true', 'false'].includes(vars[key])) throw new Error('Activation CRM explicite requise.');
+    if (standalone && ['DESKCOMM_OUTBOX_WORKER_ENABLED','DESKCOMM_HOSTED_DELIVERY_ENABLED'].some(k => vars[k] !== 'false')) throw new Error('Les services CRM restent désactivés en mode autonome.');
     if (!vars.DESKCOMM_OUTBOX_MIN_CREATED_AT || !Number.isFinite(Date.parse(vars.DESKCOMM_OUTBOX_MIN_CREATED_AT))) throw new Error('Date limite CRM requise.');
     if (!vars.UPLOAD_DIR || !path.isAbsolute(vars.UPLOAD_DIR)) throw new Error('Stockage absolu requis.');
-    const uploads = path.resolve(vars.UPLOAD_DIR), secrets = path.dirname(profile);
-    if (uploads === path.parse(uploads).root || uploads === root || uploads.startsWith(root + path.sep) || secrets === uploads || secrets.startsWith(uploads + path.sep)) throw new Error('Séparer images, secrets et code.');
+    const physical = value => fs.existsSync(value) ? fs.realpathSync(value) : path.join(physical(path.dirname(value)),path.basename(value));
+    const uploads = physical(path.resolve(vars.UPLOAD_DIR)), secrets = path.dirname(physicalProfile);
+    if (uploads === path.parse(uploads).root || uploads === physicalRoot || uploads.startsWith(physicalRoot + path.sep) || secrets === uploads || secrets.startsWith(uploads + path.sep)) throw new Error('Séparer images, secrets et code.');
     const env = {};
     for (const key of ['PATH', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'SystemRoot', 'LANG']) if (process.env[key]) env[key] = process.env[key];
     return { vars, env: { ...env, ...vars, DOTENV_CONFIG_PATH: profile }, root };

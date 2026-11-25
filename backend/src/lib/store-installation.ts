@@ -5,13 +5,16 @@ import { z } from "zod";
 export function storeIdentity() {
     const storeId = process.env.STORE_INSTANCE_ID;
     const companyId = process.env.CRM_COMPANY_ID;
-    if (!storeId && !companyId) return null; // Existing installations remain compatible.
+    const setupMode = process.env.STORE_SETUP_MODE;
+    if (!storeId && !companyId && !setupMode) return null; // Existing installations remain compatible.
+    const standalone = setupMode === "standalone";
     if (
         !z.string().uuid().safeParse(storeId).success ||
-        !z.string().uuid().safeParse(companyId).success
+        (setupMode !== undefined && !["standalone", "crm"].includes(setupMode)) ||
+        (standalone ? !!companyId : !z.string().uuid().safeParse(companyId).success)
     )
         throw new AppError("Identité de boutique incomplète ou invalide", 503);
-    return { storeId: storeId!, companyId: companyId! };
+    return { storeId: storeId!, companyId: standalone ? null : companyId! };
 }
 
 /** This application is one company per deployment, never a shared tenant database. */
@@ -49,6 +52,13 @@ export async function assertStoreInstallation() {
             prisma.deskcommConnection,
             prisma.olivraisonIntegration,
             prisma.olivraisonShipment,
+            prisma.posSale,
+            prisma.posSaleItem,
+            prisma.posCashRegister,
+            prisma.posCashSession,
+            prisma.posCashClosing,
+            prisma.posAdjustment,
+            prisma.posAdjustmentItem,
         ];
         const analytics = await prisma.storeAnalytics.count();
         if (

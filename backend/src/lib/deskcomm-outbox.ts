@@ -1,4 +1,4 @@
-import { assertStoreInstallation } from "./store-installation";
+import { assertStoreInstallation, storeIdentity } from "./store-installation";
 import { prisma } from "./prisma";
 import { sendOrderToDeskcomm, DeskcommOrder } from "./deskcomm-crm";
 
@@ -6,6 +6,7 @@ const MAX_ATTEMPTS = 8;
 const LOCK_MS = 120000;
 
 export async function queueOrderForDeskcomm(order: DeskcommOrder): Promise<void> {
+    if (storeIdentity()?.companyId === null) return;
     await prisma.deskcommOutbox.upsert({
         where: { orderId: order.id },
         create: { orderId: order.id, payload: JSON.parse(JSON.stringify(order)) },
@@ -16,6 +17,7 @@ export async function queueOrderForDeskcomm(order: DeskcommOrder): Promise<void>
 let running = false;
 export async function processDeskcommOutbox(): Promise<void> {
     await assertStoreInstallation();
+    if (storeIdentity()?.companyId === null) return;
     // IMAD_WORKER_TICK_OBSERVABILITY_V2: safe periodic function-entry marker.
     if (process.env.IMAD_WORKER_TICK_LOG === "true") {
         console.info("[IMAD_DESKCOMM_WORKER_TICK]", new Date().toISOString());

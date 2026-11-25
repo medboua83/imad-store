@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { receiveDeskcommConfirmation } from "./controllers/deskcomm-status.controller";
 import { assertStoreInstallation } from "./lib/store-installation";
+import { readOperationalHealth } from "./lib/store-readiness";
 import rateLimit from "express-rate-limit";
 import { createOrderRateLimiters } from "./middleware/order-rate-limit";
 import "express-async-errors";
@@ -105,6 +106,9 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/telegram", telegramRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/settings", settingsRoutes);
+app.get("/api/operations/health",
+    rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false }),
+    async (_req, res) => { res.setHeader("Cache-Control", "no-store"); res.json(await readOperationalHealth()); });
 app.use("/api/integrations/deskcomm", deskcommRoutes);
 app.use("/api/integrations/olivraison", olivraisonRoutes);
 

@@ -134,6 +134,7 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
             worker: workerStatus(),
             confirmationSync: Boolean(await crmStatusConfig()),
             connection: await publicConnection(),
+            installation: storeIdentity() ? { storeId: storeIdentity()!.storeId, mode: storeIdentity()!.companyId === null ? "standalone" : "crm" } : null,
             activity: {
                 lastSentAt: sent?.updatedAt ?? null,
                 lastReturnAt: returned?.createdAt ?? null,
@@ -144,6 +145,7 @@ export async function getDeskcommConfig(_req: Request, res: Response) {
     });
 }
 export async function putDeskcommConfig(req: Request, res: Response) {
+    if (storeIdentity()?.companyId === null) throw new AppError("Le CRM est désactivé pour cette installation autonome.", 409);
     const b = schema.parse(req.body);
     if (storeIdentity() && (b.clearWebhook || b.webhookUrl)) {
         const existing = await prisma.deskcommIntegration.findUnique({ where: { id: "deskcomm" } });
@@ -241,7 +243,7 @@ const connectionInput = z
     .strict();
 async function publicConnection() {
     const identity = storeIdentity();
-    if (!identity) return null;
+    if (!identity || identity.companyId === null) return null;
     const saved = await prisma.deskcommConnection.findUnique({ where: { id: "deskcomm" } });
     if (!saved)
         return {
@@ -264,7 +266,7 @@ async function publicConnection() {
 }
 export async function putDeskcommConnection(req: Request, res: Response) {
     const identity = storeIdentity();
-    if (!identity)
+    if (!identity || identity.companyId === null)
         throw new AppError(
             "Installez un profil entreprise indépendant avant de configurer cette connexion",
             409,

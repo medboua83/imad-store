@@ -1,5 +1,6 @@
 "use client";
 import { BrandingSettings } from "./branding-settings";
+import { StoreReadiness } from "./store-readiness";
 import { useAdminLocale } from "./admin-locale";
 
 import { OlivraisonSettings } from "./olivraison-settings";
@@ -74,6 +75,7 @@ export default function CommerceTab({ active = true }: { active?: boolean }) {
     return (
         <section className="admin-panel">
             <SettingsNavigation rulesReady={ready} />
+            <StoreReadiness active={active} />
             <BrandingSettings />
             <SocialSettings />
             <MetaDomainSettings />

@@ -44,6 +44,23 @@ test('Inherited app credentials and bootstrap password never contaminate the pro
     try { const p=loadProfile(file); assert.notEqual(p.env.DATABASE_URL,process.env.DATABASE_URL); assert.equal(p.env.BOOTSTRAP_ADMIN_PASSWORD,undefined); assert.equal(p.env.DOTENV_CONFIG_PATH,file); }
     finally { if(before===undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL=before; delete process.env.BOOTSTRAP_ADMIN_PASSWORD; }
 }));
+test('Standalone profiles require no CRM company or registration secret and cannot enable CRM workers', () => {
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'standalone-kit-'));
+    try {
+        const output=path.join(dir,'new'), result=createProfile({name:'Boutique autonome',origin:'https://autonome.example',output});
+        const file=path.join(output,'store.env'), profile=loadProfile(file), original=fs.readFileSync(file,'utf8');
+        assert.equal(result.mode,'standalone'); assert.equal(result.companyId,null);
+        assert.equal(profile.vars.CRM_COMPANY_ID,undefined); assert.equal(profile.vars.STORE_SETUP_MODE,'standalone');
+        assert.equal(profile.vars.API_UPSTREAM_URL,'http://127.0.0.1:3000');
+        assert.equal(fs.existsSync(path.join(output,'crm-registration.json')),false);
+        for(const patch of ['CRM_COMPANY_ID='+JSON.stringify(randomUUID()),'STORE_SETUP_MODE="unknown"','DESKCOMM_OUTBOX_WORKER_ENABLED="true"']) {
+            const key=patch.split('=')[0];fs.writeFileSync(file,original.replace(new RegExp('^'+key+'=.*$','m'),'')+'\n'+patch+'\n');assert.throws(()=>loadProfile(file));
+        }
+        fs.writeFileSync(file,original);
+        const cli=spawnSync(process.execPath,['scripts/create-company-store.cjs','Sans CRM','https://second.example',path.join(dir,'second')],{cwd:root,encoding:'utf8'});
+        assert.equal(cli.status,0);assert.doesNotMatch(cli.stdout,/JWT_SECRET|AGE-SECRET|password/i);
+    } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+});
 test('Rejects invalid identities, keys, ports, dates, image exposure and unsafe file permissions', () => fixture(({file,dir}) => {
     const original=fs.readFileSync(file,'utf8');
     for (const [key,value] of [['STORE_INSTANCE_ID','wrong'],['CRM_COMPANY_ID',''],['JWT_SECRET','short'],['PORT','65536'],['CORS_ORIGIN','https://a.example/path'],['DESKCOMM_OUTBOX_MIN_CREATED_AT','invalid'],['UPLOAD_DIR',path.dirname(file)],['DESKCOMM_HOSTED_DELIVERY_ENABLED','yes'],['DATABASE_URL','mongodb://localhost/']]) {
@@ -70,6 +87,9 @@ test('Distribution contains committed source only, never private profiles, depen
     git(['init']); git(['config','user.email','test@example.invalid']); git(['config','user.name','Test']);
     fs.writeFileSync(path.join(code,'package.json'),'{}');
     fs.mkdirSync(path.join(code,'backend')); fs.writeFileSync(path.join(code,'backend/app.js'),'// source');
+    fs.mkdirSync(path.join(code,'packages/glob-compat'),{recursive:true});fs.writeFileSync(path.join(code,'packages/glob-compat/package.json'),'{}');
+    fs.mkdirSync(path.join(code,'docs'));fs.writeFileSync(path.join(code,'docs/PROJECT_MEMORY.md'),'private operational history excluded');
+    fs.writeFileSync(path.join(code,'docs/STORE_INSTALLATION_KIT.md'),'portable instructions');
     fs.writeFileSync(path.join(code,'.gitignore'),'*.env\nnode_modules/\n');
     git(['add','.']); git(['commit','-m','fixture']);
     fs.writeFileSync(path.join(code,'private.env'),'SECRET=never-export');
@@ -77,7 +97,9 @@ test('Distribution contains committed source only, never private profiles, depen
     const output=path.join(dir,'shop.tar.gz'); const result=bundle(output,code);
     assert.match(result.revision,/^[a-f0-9]{40}$/);
     const listing=execFileSync('tar',['-tzf',output],{encoding:'utf8'});
-    assert.match(listing,/boutique\/backend\/app.js/); assert.doesNotMatch(listing,/private|node_modules|\.git\//);
+    assert.match(listing,/boutique\/backend\/app.js/); assert.match(listing,/packages\/glob-compat\/package.json/);
+    assert.match(listing,/docs\/STORE_INSTALLATION_KIT.md/);assert.doesNotMatch(listing,/PROJECT_MEMORY/);
+    assert.doesNotMatch(listing,/private|node_modules|\.git\//);
     assert.throws(()=>bundle(output,code));
     fs.appendFileSync(path.join(code,'package.json'),'\n'); assert.throws(()=>bundle(path.join(dir,'dirty.tar.gz'),code));
 }));

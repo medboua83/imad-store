@@ -18,7 +18,7 @@ Les fonctionnalités réelles et leurs limites priment sur les anciennes notes h
 
 Prérequis maintenus : Node.js 22, npm, PostgreSQL 16, domaine HTTPS et stockage d'images persistant. Python 3 sert aux contrôles de sauvegarde et à leurs tests. Les installations sur processeur générique peuvent nécessiter la compilation des images décrite ci-dessous.
 
-- [Kit d'installation indépendante](docs/STORE_INSTALLATION_KIT.md) : profil privé, base vide, premier administrateur, compilation et démarrage. Le kit actuel demande un identifiant d'entreprise CRM ; un parcours d'installation sans CRM et une personnalisation complète de marque restent à préparer pour une offre standardisée.
+- [Kit d'installation indépendante](docs/STORE_INSTALLATION_KIT.md) : profil privé, base vide, premier administrateur, compilation et démarrage. Le mode autonome ne demande aucun compte CRM ; la variante CRM reste disponible. Le nom, les logos, les couleurs et les coordonnées se personnalisent dans le dashboard.
 - [PostgreSQL et hébergement Namecheap](docs/POSTGRESQL_NAMECHEAP_2026-11-06.md).
 - [Sauvegarde, vérification et reprise](docs/RECOVERY_OPERATIONS.md).
 - [Règles commerciales](docs/COMMERCE_RULES.md).
@@ -27,7 +27,7 @@ Prérequis maintenus : Node.js 22, npm, PostgreSQL 16, domaine HTTPS et stockage
 
 La procédure courante utilise `npm ci`, `prisma migrate deploy`, puis le serveur combiné Next/Express avec un seul port public derrière le reverse proxy. Suivre le kit avec le profil de l'installation ; ne pas démarrer plusieurs serveurs concurrents en production. Aucun identifiant administrateur universel ne doit être distribué. Ne jamais réinitialiser ou remplir automatiquement une base active.
 
-Les connexions, le SMTP, les tarifs, les conditions et les médias doivent appartenir au marchand de chaque installation. Ne pas copier les profils ni les données d'une boutique pour en créer une autre. `STORE_DISPLAY_NAME` ne renomme pas encore toutes les pages et tous les messages.
+Les connexions, le SMTP, les tarifs, les conditions et les médias doivent appartenir au marchand de chaque installation. Ne pas copier les profils ni les données d'une boutique pour en créer une autre. Le nom du profil initialise la nouvelle boutique ; la marque, le SMTP et l'identité juridique restent des réglages distincts.
 
 ## Développement et vérifications
 
@@ -49,12 +49,14 @@ Ne jamais enregistrer dans le dépôt les fichiers `.env`, clés, exports client
 
 Les pages Next en hébergement normal ou combiné reçoivent une politique de sources, une interdiction d'encadrement, `nosniff`, une politique de référent et HSTS. Les sources nécessaires aux photos et au Pixel sont conservées. Cette première politique conserve les scripts inline requis par le rendu Next ; ce n'est pas une CSP stricte à nonce et elle ne remplace pas les contrôles serveur ou un audit de sécurité.
 
-Les permissions, la révocation des sessions et la récupération de mot de passe existent. Le dashboard utilise des cookies HttpOnly avec contrôle d’origine et sessions révocables ; la présentation locale ne contient plus de clé d’accès pour les nouvelles connexions. Les anciens clients Bearer restent compatibles. Voir [Sessions du dashboard](docs/ADMIN_SESSIONS.md) pour la reprise et les limites. La double authentification propre au dashboard reste à réaliser.
+Les permissions, la révocation des sessions et la récupération de mot de passe existent. Le dashboard utilise des cookies HttpOnly avec contrôle d’origine et sessions révocables ; la présentation locale ne contient plus de clé d’accès pour les nouvelles connexions. Les anciens clients Bearer restent compatibles. Voir [Sessions du dashboard](docs/ADMIN_SESSIONS.md) pour la reprise et les limites. La double authentification TOTP et les codes de secours sont disponibles, à activer personnellement pour chaque compte.
 
 ## Livraison à un autre marchand
 
 Avant livraison : installation neuve, personnalisation de marque, paramètres et droits validés, réception des e-mails vérifiée, sauvegarde hors serveur et restauration testées, recette sur de vrais appareils, formation et modalités de maintenance convenues. Conserver une révision du code identifiable et une procédure de retour arrière.
 
-Les conditions de licence, de redistribution ou de cession du code doivent être formalisées avec le propriétaire. Ce dépôt n'inclut pas actuellement de fichier de licence principal. Les dépendances conservent leurs licences propres ; les droits des photos et de la marque doivent être vérifiés séparément avant réutilisation commerciale.
+Les conditions de redistribution ou de cession doivent être formalisées avec le titulaire des droits. `LICENSE` réserve les droits existants sur le code spécifique ; il ne s'agit pas d'une licence publique MIT. Voir `DISTRIBUTION_RIGHTS.md` et le modèle de remise. Les dépendances conservent leurs licences propres ; les droits des photos et de la marque se vérifient séparément.
 
 Double authentification personnelle du dashboard : [activation, secours et exploitation](docs/ADMIN_MFA.md).
+
+Préparation et livraison : [recette](docs/RESALE_DELIVERY.md), [guide marchand](docs/MERCHANT_GUIDE.md), [remise client](docs/CLIENT_HANDOVER.md). Les réglages contiennent un bilan privé en lecture seule. `/api/operations/health` expose uniquement un état opérationnel minimal, sans données clients.

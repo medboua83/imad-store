@@ -396,7 +396,7 @@ model StoreInstallation {
   id String @id
   storeId String
   initialized Boolean @default(false)
-  companyId String
+  companyId String?
   createdAt DateTime @default(now())
   @@map("store_installation")
 }
