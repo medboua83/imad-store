@@ -14,7 +14,7 @@ function createProfile({companyId, name, origin, output}) {
     const database = `store_${storeId.replaceAll('-','')}`;
     const secret = () => randomBytes(32).toString('hex');
     const vars = {
-        NODE_ENV:'production', IMAD_HOSTING_MODE:'combined', PORT:'3000', STORE_INSTANCE_ID:storeId,
+        NODE_ENV:'production', IMAD_HOSTING_MODE:'combined', HOSTNAME:'127.0.0.1', PORT:'3000', STORE_INSTANCE_ID:storeId,
         STORE_SETUP_MODE:standalone ? 'standalone' : 'crm', ...(standalone ? {} : {CRM_COMPANY_ID:companyId}),
         STORE_DISPLAY_NAME:name, SITE_URL:origin, CORS_ORIGIN:origin, API_UPSTREAM_URL:'http://127.0.0.1:3000',
         DATABASE_URL:`postgresql://store_${storeId.replaceAll('-','').slice(0,12)}_app:CHANGE_ME@127.0.0.1:5432/${database}`,

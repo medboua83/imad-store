@@ -52,6 +52,7 @@ test('Standalone profiles require no CRM company or registration secret and cann
         assert.equal(result.mode,'standalone'); assert.equal(result.companyId,null);
         assert.equal(profile.vars.CRM_COMPANY_ID,undefined); assert.equal(profile.vars.STORE_SETUP_MODE,'standalone');
         assert.equal(profile.vars.API_UPSTREAM_URL,'http://127.0.0.1:3000');
+        assert.equal(profile.vars.HOSTNAME,'127.0.0.1');
         assert.equal(fs.existsSync(path.join(output,'crm-registration.json')),false);
         for(const patch of ['CRM_COMPANY_ID='+JSON.stringify(randomUUID()),'STORE_SETUP_MODE="unknown"','DESKCOMM_OUTBOX_WORKER_ENABLED="true"']) {
             const key=patch.split('=')[0];fs.writeFileSync(file,original.replace(new RegExp('^'+key+'=.*$','m'),'')+'\n'+patch+'\n');assert.throws(()=>loadProfile(file));

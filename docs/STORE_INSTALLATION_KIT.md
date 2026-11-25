@@ -72,6 +72,8 @@ npm run store:run -- /chemin/prive/nouveau-profil/store.env start
 
 Configurer le superviseur de l’hébergeur pour relancer cette commande. Un seul port public, 3000 par défaut ; pas de deuxième processus sur 4000 en mode combiné. Les migrations appliquent les contraintes uniques et les relations avant le démarrage ; le premier accès réserve l’identité de la base ; une base non vide sans identité ou liée à une autre boutique est refusée. Ne pas utiliser `prisma db push` sur une base active.
 
+Le profil neuf écoute sur `127.0.0.1` derrière le reverse proxy HTTPS de l'hébergeur. Si le port change, adapter aussi `API_UPSTREAM_URL`. Le proxy doit remplacer les en-têtes de transfert par ceux de la connexion vérifiée ; activer `IMAD_TRUST_LOOPBACK_PROXY=true` seulement derrière ce proxy local maîtrisé. Ne pas faire confiance à un `X-Forwarded-For` fourni directement par Internet.
+
 ## Personnaliser et réceptionner
 
 Dans Paramètres → Identité de la boutique, compléter les logos, couleurs et coordonnées. Le nom du profil est utilisé avant la première personnalisation. Compléter les règles de livraison et retour, les textes commerciaux et la confidentialité. Le bilan « Préparation de la boutique » ne valide pas ces textes à la place du marchand et ne prouve pas la réception SMTP.
