@@ -58,6 +58,8 @@ npm run store:run -- /chemin/prive/nouveau-profil/store.env build
 
 `check` ne se connecte à aucun service : il vérifie identités, mode combiné, HTTPS déclaré, format des clés, port, date limite et séparation des chemins. Il refuse aussi les fichiers `.env` hérités dans le code. Il ne prouve pas DNS, certificat, autorisations PostgreSQL ou disponibilité du stockage.
 
+Créer le rôle applicatif distinct avec LOGIN, sans SUPERUSER, CREATEDB, CREATEROLE, REPLICATION, BYPASSRLS ni appartenance à un autre rôle. Le propriétaire de migration possède la base et le schéma, pas le rôle applicatif. Après les migrations et avant les données, appliquer `scripts/runtime-permissions.sql` avec la connexion du propriétaire et `-v app_role=nom_du_role_applicatif`. Le script refuse un rôle privilégié ou une base déjà remplie. Il autorise les opérations applicatives et laisse les registres POS en lecture/insertion, avec la seule mise à jour de session active prévue. Ne pas exécuter ce script d'initialisation sur une boutique existante pour « réparer » ses droits.
+
 Définir temporairement `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (minimum 16 caractères), sans les enregistrer dans Git, puis :
 
 ```sh

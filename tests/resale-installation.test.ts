@@ -80,3 +80,9 @@ test("A copied POS-only database cannot be claimed as a new standalone store",as
         const result=spawnSync(process.execPath,['-e',script],{env:{...process.env,DATABASE_URL:databaseUrl(other),STORE_INSTANCE_ID:randomUUID()},encoding:'utf8'});assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/COPY_REJECTED/);
     } finally { await dropDatabase(other); }
 });
+test("Initial runtime provisioning refuses the migration owner's own role without changing data",async()=>{
+    const u=new URL(databaseUrl(db)),before={orders:await p.order.count(),users:await p.user.count(),products:await p.product.count()};
+    const r=spawnSync('psql',['-Xq','--dbname='+decodeURIComponent(u.pathname.slice(1)),'-v','app_role='+decodeURIComponent(u.username),'-f','scripts/runtime-permissions.sql'],{env:{...process.env,PGHOST:u.hostname,PGPORT:u.port||'5432',PGUSER:decodeURIComponent(u.username),PGPASSWORD:decodeURIComponent(u.password)},encoding:'utf8'});
+    assert.notEqual(r.status,0);assert.match(r.stdout,/Role must exist/);
+    assert.deepEqual({orders:await p.order.count(),users:await p.user.count(),products:await p.product.count()},before);
+});
