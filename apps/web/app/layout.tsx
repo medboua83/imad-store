@@ -1,4 +1,3 @@
-import "./branding.css";
 import { BrandingProvider } from "@/components/BrandingProvider";
 import { publicBranding } from "@/lib/server-api";
 import type { Metadata } from "next";
@@ -18,6 +17,7 @@ import "./recommendations.css";
 import "./store-refinements.css";
 import "./home-polish.css";
 import "./catalog-product-polish.css";
+import "./branding.css";
 import { Providers } from "@/components/Providers";
 import StoreLayoutWrapper from "@/components/layout/StoreLayoutWrapper";
 

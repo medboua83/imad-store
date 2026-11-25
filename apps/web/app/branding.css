@@ -19,7 +19,7 @@
 .brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy .hero-collection-link { color: var(--brand-on-primary); }
 .brand-theme[data-custom-primary] .admin-app { --admin-green: var(--brand-primary); }
 .brand-theme[data-custom-accent] .store-shell .storefront-home .hero-actions .btn-primary { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--brand-on-accent); }
- .brand-theme:is([data-custom-primary],[data-custom-accent]) .site-header .brand-logo { background: var(--brand-header-mark); }
+.brand-theme:is([data-custom-primary],[data-custom-accent]) .site-header .brand-logo { background: var(--brand-header-mark); }
 .brand-theme:is([data-custom-primary],[data-custom-accent]) .site-header .brand-wordmark { color: var(--brand-header-mark); }
 .brand-theme:is([data-custom-primary],[data-custom-accent]) :is(.site-footer,.admin-sidebar,.admin-auth-story) .brand-logo { background: var(--brand-dark-mark); }
 .brand-theme[data-custom-background] .store-shell { background: var(--brand-background); color: var(--brand-on-background); }
@@ -28,8 +28,8 @@
     .brand-text-logo { max-width: 145px; font-size: 22px; }
     .admin-sidebar .brand-custom-logo { width: 84px; height: 48px; }
 }
-.brand-theme[data-custom-primary] .store-shell .site-footer :is(h2,a,p,small),
-.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy :is(.hero-price-row,.hero-price-row del,.hero-color-list,.hero-collection-link),
+.brand-theme[data-custom-primary] .store-shell .site-footer :is(h2,a,p,small,.footer-payment),
+.brand-theme[data-custom-primary] .store-shell .storefront-home .hero-copy :is(.hero-price-row,.hero-price-row del,.hero-product-price,.hero-product-description,.hero-colors-label,.hero-colors-more,.hero-collection-link),
 .brand-theme[data-custom-primary] .admin-sidebar :is(nav button:not([aria-current="page"]),a,.admin-sidebar-note),
 .brand-theme[data-custom-primary] .admin-auth-story :is(p,h1,h2) { color: var(--brand-on-primary); }
 .brand-theme[data-custom-primary] .admin-app .admin-button.primary:not(:disabled) { background: var(--brand-primary); color: var(--brand-on-primary); }

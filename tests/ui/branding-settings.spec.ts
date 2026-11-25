@@ -122,5 +122,8 @@ test('Long store names, dark logos and light button colours remain usable at 320
     expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).webkitLineClamp)).toBe('2');
     expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).color)).not.toBe('rgb(255, 255, 255)');
     await expect(page.locator('.brand-contact-details')).toHaveCount(0);
+    await page.goto('/');
+    await expect(page.locator('.hero-product-price')).toBeVisible();
+    await expect(page.locator('.hero-product-price')).toHaveCSS('color','rgb(0, 0, 0)');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
