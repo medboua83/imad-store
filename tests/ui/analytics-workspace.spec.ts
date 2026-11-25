@@ -112,18 +112,23 @@ test("Browser protections allow app hydration but block framing, eval and an unr
     expect(response!.headers()["x-frame-options"]).toBe("DENY");
     expect(response!.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
     expect(response!.headers()["content-security-policy"]).not.toContain("'unsafe-eval'");
-    const blocked = await page.evaluate(() => {
-        // DevTools evaluation itself bypasses unsafe-eval. Run an actual page
-        // script so this assertion exercises the browser's enforced policy.
+    // DevTools evaluation bypasses unsafe-eval, including synchronously inserted
+    // scripts. Load the probe through the normal page script loader instead.
+    await page.route("**/__csp-probe.js", route => route.fulfill({
+        contentType: "application/javascript",
+        body: "try { new Function('return 7')(); window.__storeEvalBlocked=false; } catch { window.__storeEvalBlocked=true; }",
+    }));
+    await page.evaluate(() => {
         const script = document.createElement("script");
-        script.textContent = "try { new Function('return 7')(); window.__storeEvalBlocked=false; } catch { window.__storeEvalBlocked=true; }";
+        script.src = "/__csp-probe.js";
         document.head.appendChild(script);
-        return (window as unknown as { __storeEvalBlocked: boolean }).__storeEvalBlocked;
     });
-    expect(blocked).toBe(true);
+    await expect.poll(() => page.evaluate(() =>
+        (window as unknown as { __storeEvalBlocked?: boolean }).__storeEvalBlocked,
+    )).toBe(true);
     const directive = await page.evaluate(() => new Promise<string>(resolve => {
         document.addEventListener("securitypolicyviolation", event => {
-            if (event.blockedURI === "https://unrelated.example.test/script.js") resolve(event.effectiveDirective);
+            if (event.blockedURI.startsWith("https://unrelated.example.test")) resolve(event.effectiveDirective);
         });
         const script = document.createElement("script"); script.src = "https://unrelated.example.test/script.js"; document.head.appendChild(script);
     }));
