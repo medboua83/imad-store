@@ -2103,6 +2103,21 @@
 .team-settings-form label:not(.team-check) { display: grid; gap: 8px; color: #51452f; font-weight: 600; }
 .team-settings-form input:not([type=checkbox]), .team-settings-form select { width: 100%; min-height: 46px; border: 1px solid #d6d0c5; border-radius: 7px; background: #fff; color: #352c20; padding: 12px; font: inherit; }
 .team-settings-form input[readonly] { background: #f6f3ed; }
+.admin-mfa { margin-bottom: 24px; }
+.admin-mfa-active { color: #245a37; font-weight: 700; }
+.admin-mfa-setup { display: grid; gap: 16px; min-width: 0; }
+.admin-mfa-setup h3 { margin: 10px 0 0; font-size: 1.1rem; }
+.admin-mfa-qr { width: 280px; max-width: 100%; height: auto; background: white; border: 1px solid #d6d0c5; border-radius: 8px; }
+.admin-mfa-codes { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 10px; list-style: none; padding: 12px; margin: 0; background: #f6f3ed; border-radius: 8px; }
+.admin-mfa-codes li { min-width: 0; }
+.admin-mfa-codes code { font-size: .85rem; overflow-wrap: anywhere; user-select: all; }
+.admin-mfa .team-check { display: flex; gap: 12px; align-items: flex-start; padding-block: 12px; }
+.admin-mfa .team-check input { flex: 0 0 22px; width: 22px; height: 22px; margin: 0; }
+.admin-mfa-login { display: grid; gap: 12px; margin-block: 14px; }
+.admin-mfa-login p { margin: 0; }
+.admin-mfa-login .admin-text-button { min-height: 44px; }
+.admin-mfa-login .team-check { display: flex; align-items: flex-start; gap: 12px; padding-block: 12px; line-height: 1.5; }
+.admin-login-card .admin-mfa-login input[type=checkbox] { width: 22px; height: 22px; min-height: 22px; padding: 0; margin: 0; flex: 0 0 22px; }
 .team-check { display: flex; align-items: center; gap: 10px; min-height: 44px; line-height: 1.6; }
 .team-check input { flex-shrink: 0; width: 18px; height: 18px; accent-color: #765421; }
 .team-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }

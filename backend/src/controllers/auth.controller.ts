@@ -7,8 +7,9 @@ import { prisma } from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 
-import { browserSessionRequested, hasAdminCookie } from "../lib/admin-cookies";
+import { assertBrowserRequest, browserSessionRequested, hasAdminCookie } from "../lib/admin-cookies";
 import { startBrowserSession, refreshBrowserSession, endBrowserSession, browserIdentity } from "../lib/admin-browser-session";
+import { verifyLoginMfa } from "../lib/admin-mfa";
 
 const registerSchema = z.object({
     email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
@@ -21,6 +22,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
     email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
     password: z.string().max(128),
+    code: z.string().trim().max(80).optional(),
 });
 
 function generateTokens(user: { id: string; email: string; role: string; authVersion: number; permissions: string[] }) {
@@ -61,6 +63,7 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
+    if (browserSessionRequested(req) || hasAdminCookie(req)) assertBrowserRequest(req);
     const body = loginSchema.parse(req.body);
 
     const user = await prisma.user.findFirst({ where: { email: { equals: body.email, mode: "insensitive" } } });
@@ -72,6 +75,10 @@ export async function login(req: Request, res: Response) {
     const valid = await bcrypt.compare(body.password, user.passwordHash);
     if (!valid) {
         throw new AppError("Invalid credentials", 401);
+    }
+
+    if (!await verifyLoginMfa(user, body.code)) {
+        return res.json({ success: true, data: { mfaRequired: true } });
     }
 
     if (browserSessionRequested(req) || hasAdminCookie(req)) return startBrowserSession(req, res, user);

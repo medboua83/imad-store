@@ -24,7 +24,7 @@ const api = axios.create({
     headers: { "Content-Type": "application/json" },
 });
 
-export function clearAdminSession(reason: "expired" | "logout" | "password-changed" = "expired") {
+export function clearAdminSession(reason: "expired" | "logout" | "password-changed" | "mfa-changed" = "expired") {
     if (typeof window === "undefined") return;
     removeAdminPresentation();
     window.dispatchEvent(new CustomEvent("imad:session-expired", { detail: reason }));
@@ -334,14 +334,27 @@ export const getSettings = async (): Promise<StoreSettings> => {
 
 // ─── Admin (auth required — kept for /admin pages) ───────────────────────────
 
-export interface AdminAuthResponse { success: boolean; data: { presentation: string } }
-export const adminLogin = async (email: string, password: string): Promise<AdminAuthResponse> => {
+export interface AdminAuthResponse { success: boolean; data: { presentation: string; mfaRequired?: false } | { mfaRequired: true } }
+export const adminLogin = async (email: string, password: string, code?: string): Promise<AdminAuthResponse> => {
     return await sessionLock(async () => {
-        const { data } = await axios.post(getBaseUrl() + "/auth/login", { email, password }, cookieOptions());
+        const { data } = await axios.post(getBaseUrl() + "/auth/login", { email, password, ...(code ? { code } : {}) }, cookieOptions());
+        if (data.data?.mfaRequired === true) return { success: true, data: { mfaRequired: true } };
         const presentation = acceptBrowserResponse(data.data);
         return { success: data.success, data: { presentation } };
     });
 };
+
+export interface MfaStatus { enabled: boolean; enabledAt: string | null; recoveryCodesRemaining: number }
+export interface MfaSetup { setupId: string; secret: string; qr: string; recoveryCodes: string[]; expiresAt: string }
+export const readAdminMfa = async () => (await api.get<{ data: MfaStatus }>("/auth/mfa")).data.data;
+export const setupAdminMfa = async (currentPassword: string) => (await api.post<{ data: MfaSetup }>("/auth/mfa/setup", { currentPassword }, { timeout: 30000 })).data.data;
+export const confirmAdminMfa = async (body: { currentPassword: string; setupId: string; code: string; recoverySaved: true }) => (await api.post("/auth/mfa/confirm", body, { timeout: 30000 })).data;
+export const cancelAdminMfa = async (setupId: string) => (await api.post("/auth/mfa/cancel", { setupId })).data;
+export const disableAdminMfa = async (currentPassword: string, code: string) => (await api.post("/auth/mfa/disable", { currentPassword, code }, { timeout: 30000 })).data;
+export const recoverAdminMfa = async (email: string, password: string, code: string) => sessionLock(async () => {
+    const r = await axios.post(getBaseUrl() + "/auth/mfa/recover", { email, password, code }, { ...cookieOptions(), timeout: 30000 });
+    removeAdminPresentation(); return r.data;
+});
 
 export interface GmailSettings {
     enabled: boolean; gmailUser: string; host: string; port: 465 | 587; hasPassword: boolean; revision: number;
