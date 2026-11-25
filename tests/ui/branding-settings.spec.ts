@@ -113,7 +113,7 @@ test('Failed initial read never permits saving defaults over a merchant identity
     c.failRead=false; await s.getByRole('button',{name:'Recharger l’identité',exact:true}).click();
     await expect(s.getByLabel('Nom de la boutique',{exact:true})).toHaveValue(defaultStoreBranding.name); expect(c.writes).toHaveLength(0);
 });
-test('Long store names, dark logos and light button colours remain usable at 320px', async ({page,context}) => {
+test('Long store names, dark logos and light button colours remain usable at 320px', async ({page,context}, info) => {
     await page.setViewportSize({width:320,height:844}); const c=await fixture(context);
     c.branding={...defaultStoreBranding,name:'Atelier de démonstration avec un nom de boutique très long',darkLogoUrl:logo,primaryColor:'#ffffff',accentColor:'#000000'};
     await page.goto('/contact');
@@ -121,10 +121,13 @@ test('Long store names, dark logos and light button colours remain usable at 320
     await expect(page.locator('.site-footer .brand-custom-logo')).toHaveAttribute('src',logo);
     expect(await page.locator('.site-footer').evaluate(e=>getComputedStyle(e).color)).toBe('rgb(0, 0, 0)');
     expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).webkitLineClamp)).toBe('2');
+    expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(20);
     expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).color)).not.toBe('rgb(255, 255, 255)');
     await expect(page.locator('.brand-contact-details')).toHaveCount(0);
     await page.goto('/');
     await expect(page.locator('.hero-product-price')).toBeVisible();
     await expect(page.locator('.hero-product-price')).toHaveCSS('color','rgb(0, 0, 0)');
+    await page.screenshot({path:info.outputPath('brand-small-home.png'),fullPage:true});
+    if (await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) console.log('SMALL_OVERFLOW',await page.evaluate(()=>[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,cls:e.className,x:e.getBoundingClientRect().x,width:e.getBoundingClientRect().width})).filter(e=>e.width>0&&(e.x< -1||e.x+e.width>innerWidth+1)).slice(0,25)));
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

@@ -43,3 +43,6 @@
     .site-header .brand-text-logo { width: 116px; max-width: 116px; }
     .site-header .brand-custom-logo { width: 116px; height: 54px; }
 }
+.store-shell .refined-header .brand-text-logo { font-size: clamp(20px, 2.3vw, 28px); }
+.brand-theme .site-footer .footer-legal { min-width: 0; max-width: 100%; }
+.brand-theme .site-footer .footer-legal small { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
