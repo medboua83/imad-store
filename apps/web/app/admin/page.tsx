@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import { initialOrderListFilters } from "./order-list-context";
 import { initialInventoryListFilters } from "./inventory-list-context";
 import { acceptAdminRead, startAdminRead, type AdminReadState } from "./read-version";
@@ -189,6 +190,9 @@ export default function AdminPage() {
         [showPassword, setShowPassword] = useState(false),
         [authError, setAuthError] = useState(""),
         [authLoading, setAuthLoading] = useState(false);
+    const [mfaRequired, setMfaRequired] = useState(false), [mfaCode, setMfaCode] = useState(""), [recoveryMode, setRecoveryMode] = useState(false);
+    const mfaInput = useRef<HTMLInputElement>(null), loginLock = useRef(false);
+    useEffect(() => { if (mfaRequired) mfaInput.current?.focus(); }, [mfaRequired, recoveryMode]);
     const [activeTab, setActiveTab] = useState<Tab>("overview"),
         [mobileMenu, setMobileMenu] = useState(false);
     const [notifications, setNotifications] = useState<Notice[]>([]),
@@ -276,6 +280,8 @@ export default function AdminPage() {
             setAuthError(
                 event instanceof CustomEvent && event.detail === "password-changed"
                     ? "Mot de passe changé. Reconnectez-vous."
+                    : event instanceof CustomEvent && event.detail === "mfa-changed"
+                    ? "Protection du compte mise à jour. Reconnectez-vous."
                     : event instanceof CustomEvent && event.detail === "logout"
                     ? "Vous êtes déconnecté."
                     : "Votre session est terminée. Reconnectez-vous pour continuer.",
@@ -440,23 +446,30 @@ export default function AdminPage() {
     };
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
+        if (loginLock.current) return;
+        loginLock.current = true;
         setAuthLoading(true);
         setAuthError("");
         try {
-            const r = await adminLogin(email, password);
+            const r = await adminLogin(email, password, mfaRequired ? mfaCode : undefined);
+            if (r.data.mfaRequired) { setMfaRequired(true); return; }
             if (!["ADMIN", "STAFF"].includes(presentationAccess(r.data.presentation).role)) throw new Error("Staff access required");
             readState.current.session++;
             productSnapshot.current = [];
             setPassword("");
+            setMfaCode(""); setMfaRequired(false); setRecoveryMode(false);
             setOrderFilters(initialOrderListFilters);
             setAnalyticsDays(7);
             setInitialSyncReady(false);
             setSyncError("");
             setToken(r.data.presentation);
-        } catch {
-            setAuthError("Connexion impossible. Vérifiez vos identifiants et votre connexion.");
+        } catch (error) {
+            const message = isAxiosError(error) && typeof error.response?.data?.error === "string" ? error.response.data.error : null;
+            setAuthError(mfaRequired && message ? message : "Connexion impossible. Vérifiez vos identifiants et votre connexion.");
+            if (mfaRequired) { setMfaCode(""); mfaInput.current?.focus(); }
         } finally {
             setAuthLoading(false);
+            loginLock.current = false;
         }
     }
     async function logout() {
@@ -565,6 +578,7 @@ export default function AdminPage() {
                             autoComplete="username"
                             required
                             value={email}
+                            readOnly={mfaRequired}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder={t("vous@exemple.ma")}
                         />
@@ -576,6 +590,7 @@ export default function AdminPage() {
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
                                 required
+                                readOnly={mfaRequired}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
@@ -592,6 +607,15 @@ export default function AdminPage() {
                                 {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
                             </button>
                         </div>
+                        {mfaRequired && <div className="admin-mfa-login">
+                            <p role="status">{t("Votre mot de passe est correct. Confirmez maintenant votre identité.")}</p>
+                            <label htmlFor="admin-mfa-code">{t(recoveryMode ? "Code de secours" : "Code de l’application")}</label>
+                            <input ref={mfaInput} id="admin-mfa-code" dir="ltr" autoComplete="one-time-code" inputMode={recoveryMode ? "text" : "numeric"} required
+                                pattern={recoveryMode ? undefined : "[0-9]{6}"} maxLength={recoveryMode ? 80 : 6} value={mfaCode} onChange={e => setMfaCode(e.target.value)} />
+                            <p className="admin-scope">{t(recoveryMode ? "Chaque code de secours ne peut servir qu’une seule fois." : "Saisissez les 6 chiffres de votre application. Un code déjà utilisé ne peut pas resservir.")}</p>
+                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setRecoveryMode(v => !v); setMfaCode(""); setAuthError(""); }}>{t(recoveryMode ? "Utiliser l’application" : "Utiliser un code de secours")}</button>
+                            <button type="button" className="admin-text-button" disabled={authLoading} onClick={() => { setMfaRequired(false); setMfaCode(""); setPassword(""); setRecoveryMode(false); setAuthError(""); }}>{t("Changer de compte")}</button>
+                        </div>}
                         <button className="admin-button primary" disabled={authLoading}>
                             {authLoading ? t("Connexion en cours…") : t("Se connecter")}
                             <ArrowUpRight size={18} aria-hidden="true" />

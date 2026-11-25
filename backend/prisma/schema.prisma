@@ -65,8 +65,26 @@ model User {
   orders        Order[]
   refreshTokens RefreshToken[]
   passwordResets PasswordReset[]
+  adminMfa      AdminMfa?
 
   @@map("users")
+}
+
+model AdminMfa {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secretCiphertext String?
+  enabledAt DateTime?
+  pendingCiphertext String?
+  pendingExpiresAt DateTime?
+  setupId String?
+  recoveryHashes String[] @default([])
+  pendingRecoveryHashes String[] @default([])
+  lastUsedStep BigInt?
+  failedAttempts Int @default(0)
+  lockedUntil DateTime?
+  updatedAt DateTime @updatedAt
+  @@map("admin_mfa")
 }
 
 model PasswordReset {

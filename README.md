@@ -56,3 +56,5 @@ Les permissions, la révocation des sessions et la récupération de mot de pass
 Avant livraison : installation neuve, personnalisation de marque, paramètres et droits validés, réception des e-mails vérifiée, sauvegarde hors serveur et restauration testées, recette sur de vrais appareils, formation et modalités de maintenance convenues. Conserver une révision du code identifiable et une procédure de retour arrière.
 
 Les conditions de licence, de redistribution ou de cession du code doivent être formalisées avec le propriétaire. Ce dépôt n'inclut pas actuellement de fichier de licence principal. Les dépendances conservent leurs licences propres ; les droits des photos et de la marque doivent être vérifiés séparément avant réutilisation commerciale.
+
+Double authentification personnelle du dashboard : [activation, secours et exploitation](docs/ADMIN_MFA.md).

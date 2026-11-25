@@ -32,9 +32,11 @@
     "mongodb": "^6.21.0",
     "morgan": "^1.12.1",
     "nodemailer": "^10.1.7",
+    "otpauth": "9.6.0",
+    "qrcode": "1.5.4",
+    "sharp": "^0.35.5",
     "stripe": "^15.7.0",
-    "zod": "^4.6.6",
-    "sharp": "^0.35.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -44,10 +46,11 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.0",
     "@types/nodemailer": "^8.0.0",
+    "@types/qrcode": "1.5.6",
     "prisma": "^5.14.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "tsx": "^4.20.0"
+    "tsx": "^4.20.0",
+    "typescript": "^5.4.5"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
