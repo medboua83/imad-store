@@ -31,7 +31,9 @@ const trackingCases = [
 const shipmentFor = (n: number) => trackingCases[n % trackingCases.length];
 const expectedAttention = new Set([0, 3, 4, 5, 6, 7, 10, 12, 13]);
 const admin = { Authorization: `Bearer ${jwt.sign({ id: "123456789012345678901234", role: "ADMIN" }, process.env.JWT_SECRET!)}` };
-const prefix = randomBytes(8).toString("hex");
+// Keep zeroes in the counter only: otherwise a prefix ending in 0 makes
+// #00000000 match the first 16 IDs across the prefix/counter boundary.
+const prefix = randomBytes(8).toString("hex").replaceAll("0", "a");
 const id = (n: number) => prefix + n.toString(16).padStart(8, "0");
 const statuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 const futureBoundaries = ["2026-11-21T22:59:59Z", "2026-11-21T23:00:00Z", "2026-11-22T22:59:59Z", "2026-11-22T23:00:00Z"];
