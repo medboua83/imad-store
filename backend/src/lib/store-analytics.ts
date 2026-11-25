@@ -9,7 +9,7 @@ let nextCleanup = 0;
 let cleanup: Promise<unknown> | undefined;
 export function analyticsScope() {
     const identity = storeIdentity();
-    return identity ? `${identity.companyId}:${identity.storeId}` : "legacy-installation";
+    return identity ? `${identity.companyId ?? "standalone"}:${identity.storeId}` : "legacy-installation";
 }
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const sessionHash = (scope: string, session: string) => hash(`${scope}:${session}`);

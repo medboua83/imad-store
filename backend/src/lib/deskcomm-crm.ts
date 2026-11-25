@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { ORDER_SERVICE_POLICY_VERSION, ORDER_WHATSAPP_NOTICE_VERSION } from "@imad-store/shared";
 import { prisma } from "./prisma";
 import { decryptDeskcommValue } from "./deskcomm-config";
+import { storeIdentity } from "./store-installation";
 /** Server-only DeskcommCRM adapter. Additional fields require CRM-side mapping. */
 export interface DeskcommOrder {
   id: string;
@@ -96,6 +97,7 @@ export function encodeDeskcommForm(order: DeskcommOrder): URLSearchParams {
 import { resolveDeskcommWebhookUrl } from "./deskcomm-config";
 
 export async function sendOrderToDeskcomm(order: DeskcommOrder): Promise<void> {
+  if (storeIdentity()?.companyId === null) throw new Error("CRM disabled for standalone installation");
   const url = await resolveDeskcommWebhookUrl();
   if (!url) throw new Error("DeskcommCRM webhook not configured or disabled");
   const parsed = new URL(url);

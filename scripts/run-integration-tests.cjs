@@ -19,7 +19,7 @@ const env = {
     UPLOAD_DIR: path.resolve(".test-runtime", name, "uploads"),
 };
 for (const key of Object.keys(env))
-    if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|STORE_INSTANCE_ID$|CRM_COMPANY_ID$|DESKCOMM_STATUS_)/.test(key)) delete env[key];
+    if (/^(GOOGLE_|TELEGRAM_BOT_|SMTP_|RESEND_|STRIPE_|STORE_INSTANCE_ID$|STORE_SETUP_MODE$|STORE_DISPLAY_NAME$|CRM_COMPANY_ID$|DESKCOMM_STATUS_)/.test(key)) delete env[key];
 (async () => {
 await createDatabase(name);
 try {
@@ -62,6 +62,7 @@ const result = spawnSync(
         "tests/analytics-period.test.ts",
         "tests/category-visuals.test.ts",
         "tests/store-template.test.ts",
+        "tests/resale-installation.test.ts",
         "tests/deskcomm-form.test.ts",
         "tests/checkout-assistance.test.ts",
         "tests/admin-summary.test.ts",

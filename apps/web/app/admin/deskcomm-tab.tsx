@@ -6,6 +6,7 @@ import axios from "axios";
 import CrmConnectionForm, { type CompanyConnection } from "./crm-connection-form";
 import { adminApi } from "@/lib/api";
 type Config = {
+    installation?: { storeId: string; mode: "standalone" | "crm" } | null;
     enabled: boolean;
     configured: boolean;
     signedSending?: boolean;
@@ -140,6 +141,14 @@ export default function DeskcommTab() {
             setLoading(false);
         }
     }
+    if (config?.installation?.mode === "standalone") return (
+        <section className="max-w-2xl admin-panel space-y-4">
+            <h2 className="text-xl font-semibold">{t("Boutique autonome")}</h2>
+            <p>{t("Cette boutique fonctionne sans CRM. Les commandes sont confirmées sur le site et aucun envoi CRM n’est activé.")}</p>
+            <p className="admin-muted">{t("Identifiant de la boutique")} : <span style={{ overflowWrap: "anywhere" }}>{config.installation.storeId}</span></p>
+            <p className="admin-muted">{t("Un rattachement CRM ultérieur exige une configuration contrôlée de l’installation. Ne réutilisez jamais le profil d’une autre boutique.")}</p>
+        </section>
+    );
     return (
         <section className="max-w-2xl admin-panel admin-crm space-y-4">
             <h2 className="text-xl font-semibold">{t("Connexion à votre CRM")}</h2>

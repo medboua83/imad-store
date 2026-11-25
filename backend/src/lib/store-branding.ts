@@ -7,6 +7,7 @@ export async function readStoreBranding() {
     const content = !row ? await prisma.siteContent.findUnique({ where: { id: "site" } }) : null;
     const published = content?.published as { businessAddress?: string; policiesVerified?: boolean } | undefined;
     return { revision: row?.revision ?? 0, branding: resolveStoreBranding(row?.data as any ?? {
+        name: process.env.STORE_INSTANCE_ID ? process.env.STORE_DISPLAY_NAME : undefined,
         contactAddress: published?.policiesVerified ? published.businessAddress : "",
     }) };
 }

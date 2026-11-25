@@ -3,8 +3,10 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../src/lib/prisma";
 import { assertStoreInstallation, storeIdentity } from "../src/lib/store-installation";
+import { defaultSiteContent } from "@imad-store/shared";
 async function main() {
-    if (!storeIdentity()) throw new Error("Un profil entreprise indépendant est requis");
+    const identity = storeIdentity();
+    if (!identity) throw new Error("Un profil indépendant est requis");
     const email = z.string().email().parse(process.env.BOOTSTRAP_ADMIN_EMAIL);
     const password = z.string().min(16).max(128).refine(value => Buffer.byteLength(value, "utf8") <= 72).parse(process.env.BOOTSTRAP_ADMIN_PASSWORD);
     await assertStoreInstallation();
@@ -29,6 +31,15 @@ async function main() {
                 role: "ADMIN",
             },
         });
+        // New installations start with their own name and no inherited IMAD contact or tracker.
+        const name = process.env.STORE_DISPLAY_NAME?.trim();
+        if (!name) throw new Error("Le nom de cette boutique est requis");
+        await tx.storeBranding.create({ data: { id: "store", data: { name } } });
+        await tx.storeSettings.create({ data: { id: "settings", whatsappPhone: "",
+            whatsappUrl: "", instagramUrl: "", facebookUrl: "", tiktokUrl: "",
+            directSiteConfirmation: identity.companyId === null, metaPixelEnabled: false, metaPixelId: null } });
+        const content = { ...defaultSiteContent, businessName: name, heroImage: "", policiesVerified: false };
+        await tx.siteContent.create({ data: { id: "site", draft: content, published: content } });
     });
     console.log("Premier administrateur créé ; aucun identifiant affiché.");
 }

@@ -1,6 +1,6 @@
-# Installer une boutique modèle pour une entreprise CRM
+# Installer une boutique indépendante — CRM facultatif
 
-Ce kit utilise le code commun et une installation indépendante par boutique. Il ne copie ni la base de Quickydev, ni ses comptes, ni ses secrets. Il prépare l'installation et la connexion commandes/confirmations ; le nom visuel, le logo, les couleurs, le catalogue et les conditions commerciales restent à personnaliser avant publication.
+Ce kit utilise le code commun et une installation indépendante par boutique, avec ou sans CRM. Il ne copie ni la base de Quickydev, ni ses comptes, ni ses secrets. Le nom, les logos, les couleurs, les coordonnées, le catalogue et les conditions commerciales se règlent pour chaque marchand.
 
 ## Livrer le code
 
@@ -16,7 +16,19 @@ L’archive contient le code suivi par Git du commit affiché, sans historique G
 
 Décompresser dans un dossier neuf, puis entrer dans `boutique/` et installer les dépendances avec `npm ci --include=dev`. On peut également utiliser un clone propre du même commit.
 
-## Préparer l’entreprise
+## Préparer une boutique autonome
+
+Aucun compte CRM ni UUID tiers n'est nécessaire :
+
+```sh
+npm run store:create -- "Nouvelle boutique" https://boutique.example /chemin/prive/nouveau-profil
+```
+
+Le mode autonome possède une identité, une base et un nom de rôle applicatif distincts. Les services CRM restent désactivés, y compris si une requête tente de les activer. Le premier administrateur initialise le nom choisi, des contacts sociaux vides, aucun Pixel et la confirmation des commandes sur le site. Aucun produit, client, compte prédéfini ou photo téléversée d'IMAD n'est copié.
+
+Ne pas convertir ce profil en changeant simplement ses variables : l'identité est liée à sa base. Une liaison CRM ultérieure exige une opération contrôlée avec sauvegarde et rapprochement explicite ; ne jamais adopter la base d'un autre marchand.
+
+## Variante : préparer une entreprise CRM
 
 Créer l’entreprise dans le CRM et relever son UUID réel. Le nom d’entreprise, l’UUID de source ou une référence de commande ne remplacent pas cet UUID. L’opérateur CRM peut relever l’identifiant de son organisation dans son contexte administrateur ; ne jamais réutiliser celui d’une autre entreprise.
 
@@ -24,25 +36,29 @@ Créer l’entreprise dans le CRM et relever son UUID réel. Le nom d’entrepri
 npm run store:create -- UUID_ENTREPRISE_CRM "Nouvelle boutique" https://boutique.example /chemin/prive/nouveau-profil
 ```
 
-Le dossier neuf est privé (700) et les trois fichiers sont privés (600) :
+Le dossier neuf est privé (700) et ses fichiers sont privés (600) :
 
 - `store.env` : identité immuable, base dédiée, clés JWT/chiffrement et réglages serveur ;
-- `crm-registration.json` : nom, entreprise, boutique, domaine et clé de signature dédiée ; c’est une fiche privée à lire, pas un fichier à téléverser dans le formulaire actuel ;
+- `crm-registration.json` (variante CRM uniquement) : nom, entreprise, boutique, domaine et clé de signature dédiée ; c’est une fiche privée à lire, pas un fichier à téléverser dans le formulaire actuel ;
 - `INSTALLATION.txt` : procédure propre à cette installation.
 
 Ne pas les placer dans le code, `public/`, les images ou Git. Ne pas exécuter `source store.env` : les valeurs sont des données, chargées par l’outil ci-dessous. Ne pas reprendre un profil pour créer une autre boutique.
 
 Adapter `DATABASE_URL` à une base PostgreSQL **vide**, avec son utilisateur dédié. Appliquer les migrations avec un propriétaire de schéma réservé à cette opération, puis configurer un rôle applicatif limité pour le démarrage ; les deux connexions doivent viser la même base. Ne pas utiliser le rôle de test avec CREATEDB pour le service. Adapter `UPLOAD_DIR` au stockage persistant de cette seule boutique, hors du code et hors des secrets. Le domaine, les droits PostgreSQL, les sauvegardes et HTTPS sont à provisionner chez l’hébergeur ; le générateur ne les crée pas.
 
+Le mot de passe PostgreSQL `CHANGE_ME` doit être remplacé dans le fichier privé. Préparer aussi une copie privée `migrate.env` avec les mêmes identifiants de boutique et clés, mais une connexion de propriétaire de schéma. Utiliser `store.env` avec le rôle applicatif limité pour le service. Le contrôle statique ne prouve pas que la base est joignable ; ne jamais diffuser le profil de migration.
+
 ## Vérifier, compiler et démarrer
 
 ```sh
 npm run store:run -- /chemin/prive/nouveau-profil/store.env check
-npm run store:run -- /chemin/prive/nouveau-profil/store.env migrate
+npm run store:run -- /chemin/prive/nouveau-profil/migrate.env migrate
 npm run store:run -- /chemin/prive/nouveau-profil/store.env build
 ```
 
 `check` ne se connecte à aucun service : il vérifie identités, mode combiné, HTTPS déclaré, format des clés, port, date limite et séparation des chemins. Il refuse aussi les fichiers `.env` hérités dans le code. Il ne prouve pas DNS, certificat, autorisations PostgreSQL ou disponibilité du stockage.
+
+Créer le rôle applicatif distinct avec LOGIN, sans SUPERUSER, CREATEDB, CREATEROLE, REPLICATION, BYPASSRLS ni appartenance à un autre rôle. Le propriétaire de migration possède la base et le schéma, pas le rôle applicatif. Après les migrations et avant les données, appliquer `scripts/runtime-permissions.sql` avec la connexion du propriétaire et `-v app_role=nom_du_role_applicatif`. Le script refuse un rôle privilégié ou une base déjà remplie. Il autorise les opérations applicatives et laisse les registres POS en lecture/insertion, avec la seule mise à jour de session active prévue. Ne pas exécuter ce script d'initialisation sur une boutique existante pour « réparer » ses droits.
 
 Définir temporairement `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (minimum 16 caractères), sans les enregistrer dans Git, puis :
 
@@ -58,7 +74,17 @@ npm run store:run -- /chemin/prive/nouveau-profil/store.env start
 
 Configurer le superviseur de l’hébergeur pour relancer cette commande. Un seul port public, 3000 par défaut ; pas de deuxième processus sur 4000 en mode combiné. Les migrations appliquent les contraintes uniques et les relations avant le démarrage ; le premier accès réserve l’identité de la base ; une base non vide sans identité ou liée à une autre boutique est refusée. Ne pas utiliser `prisma db push` sur une base active.
 
-## Remplir le module CRM
+Le profil neuf écoute sur `127.0.0.1` derrière le reverse proxy HTTPS de l'hébergeur, avec `IMAD_TRUST_LOOPBACK_PROXY=true` pour reconnaître ce seul proxy local. Si le port change, adapter aussi `API_UPSTREAM_URL`. Le proxy doit remplacer les en-têtes de transfert par ceux de la connexion vérifiée. Pour une architecture différente, réviser explicitement cette option ; ne pas faire confiance à un `X-Forwarded-For` fourni directement par Internet.
+
+## Personnaliser et réceptionner
+
+Dans Paramètres → Identité de la boutique, compléter les logos, couleurs et coordonnées. Le nom du profil est utilisé avant la première personnalisation. Compléter les règles de livraison et retour, les textes commerciaux et la confidentialité. Le bilan « Préparation de la boutique » ne valide pas ces textes à la place du marchand et ne prouve pas la réception SMTP.
+
+Consulter le [guide marchand](MERCHANT_GUIDE.md), le [modèle de remise](CLIENT_HANDOVER.md), la [recette de livraison](RESALE_DELIVERY.md), `LICENSE`, `DISTRIBUTION_RIGHTS.md` et les notices tierces avant toute remise externe.
+
+Le kit inclut les paquets locaux nécessaires, notamment `packages/glob-compat`, et des guides portables, sans journal privé d'exploitation IMAD. Réinstaller les dépendances pour la plateforme cible ; ne pas copier `node_modules` ou une compilation d'un autre système.
+
+## Remplir le module CRM — variante CRM seulement
 
 Ouvrir **Webhooks → Boutiques connectées** dans la bonne entreprise. Comparer son UUID avec `company_id` de la fiche privée avant de préparer la connexion.
 
