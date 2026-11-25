@@ -1,5 +1,7 @@
 "use client";
-import { useSyncExternalStore } from "react";
+import { readAdminPresentation } from "@/lib/admin-session";
+import { restoreAdminSession } from "@/lib/api";
+import { useEffect, useSyncExternalStore } from "react";
 import { presentationSessionKey } from "../../../admin-access";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -10,15 +12,19 @@ import { useAdminLocale, AdminLanguageSelect } from "../../../admin-locale";
 import "../../../pos.css";
 const subscribe = (changed: () => void) => {
   window.addEventListener("storage", changed);
+  window.addEventListener("imad:session-changed", changed);
+  window.addEventListener("pageshow", changed);
   window.addEventListener("imad:session-expired", changed);
   return () => {
     window.removeEventListener("storage", changed);
+    window.removeEventListener("imad:session-changed", changed);
+    window.removeEventListener("pageshow", changed);
     window.removeEventListener("imad:session-expired", changed);
   };
 };
 const snapshot = () => {
   try {
-    return presentationSessionKey(localStorage.getItem("adminToken"));
+    return presentationSessionKey(readAdminPresentation());
   } catch {
     return null;
   }
@@ -27,6 +33,7 @@ export default function ReceiptPage() {
   const { id } = useParams<{ id: string }>(),
     { t, locale } = useAdminLocale();
   const session = useSyncExternalStore(subscribe, snapshot, () => null);
+  useEffect(() => { void restoreAdminSession(); }, []);
   const query = useQuery({
     queryKey: ["pos-return-print", session, id],
     queryFn: ({ signal }) => getReturn(id, signal),

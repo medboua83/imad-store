@@ -49,7 +49,7 @@ Ne jamais enregistrer dans le dépôt les fichiers `.env`, clés, exports client
 
 Les pages Next en hébergement normal ou combiné reçoivent une politique de sources, une interdiction d'encadrement, `nosniff`, une politique de référent et HSTS. Les sources nécessaires aux photos et au Pixel sont conservées. Cette première politique conserve les scripts inline requis par le rendu Next ; ce n'est pas une CSP stricte à nonce et elle ne remplace pas les contrôles serveur ou un audit de sécurité.
 
-Les permissions, la révocation des sessions et la récupération de mot de passe existent. La migration des jetons administrateur hors de localStorage et la double authentification propre au dashboard restent des évolutions à réaliser ; elles ne doivent pas être annoncées comme actives.
+Les permissions, la révocation des sessions et la récupération de mot de passe existent. Le dashboard utilise des cookies HttpOnly avec contrôle d’origine et sessions révocables ; la présentation locale ne contient plus de clé d’accès pour les nouvelles connexions. Les anciens clients Bearer restent compatibles. Voir [Sessions du dashboard](docs/ADMIN_SESSIONS.md) pour la reprise et les limites. La double authentification propre au dashboard reste à réaliser.
 
 ## Livraison à un autre marchand
 

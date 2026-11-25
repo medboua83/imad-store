@@ -1,3 +1,4 @@
+import { hasAdminCookie } from "../lib/admin-cookies";
 import express, { Router, IRouter } from "express";
 import path from "node:path";
 import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -62,7 +63,7 @@ uploadRoutes.get(/^\/preview-v1\/([a-f0-9]{64}\.webp)$/, async (req, res) => {
         image = (await pending) ?? undefined;
     }
     if (!image) return res.set("Cache-Control", "no-store").sendStatus(404);
-    if (!req.headers.authorization)
+    if (!req.headers.authorization && !hasAdminCookie(req))
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     return res.type("webp").send(image);
 });

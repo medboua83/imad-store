@@ -7,6 +7,9 @@ import { prisma } from "../lib/prisma";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { AppError } from "../middleware/error.middleware";
 
+import { browserSessionRequested, hasAdminCookie } from "../lib/admin-cookies";
+import { startBrowserSession, refreshBrowserSession, endBrowserSession, browserIdentity } from "../lib/admin-browser-session";
+
 const registerSchema = z.object({
     email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
     password: z.string().min(8).max(128).refine(value => Buffer.byteLength(value, "utf8") <= 72),
@@ -71,6 +74,8 @@ export async function login(req: Request, res: Response) {
         throw new AppError("Invalid credentials", 401);
     }
 
+    if (browserSessionRequested(req) || hasAdminCookie(req)) return startBrowserSession(req, res, user);
+
     const { accessToken, refreshToken } = generateTokens(user);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
@@ -79,6 +84,7 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function refreshToken(req: Request, res: Response) {
+    if (browserSessionRequested(req) || hasAdminCookie(req)) return refreshBrowserSession(req, res);
     const { token } = z.object({ token: z.string().min(1).max(4096) }).parse(req.body);
     let identity: jwt.JwtPayload;
     try {
@@ -110,6 +116,7 @@ export async function refreshToken(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
+    if (browserSessionRequested(req) || hasAdminCookie(req)) return endBrowserSession(req, res);
     const { token } = req.body;
     if (token) {
         await prisma.refreshToken.deleteMany({ where: { token } });
@@ -132,4 +139,9 @@ export async function getMe(req: AuthRequest, res: Response) {
         },
     });
     res.json({ success: true, data: user });
+}
+
+export function getBrowserSession(req: AuthRequest, res: Response) {
+    if (!req.user || !["ADMIN", "STAFF"].includes(req.user.role)) throw new AppError("Staff access required", 403);
+    return res.json({ success: true, data: { mode: "cookie", identity: browserIdentity(req.user) } });
 }

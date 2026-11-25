@@ -4,7 +4,7 @@ export function analyticsAllowed() {
     if (typeof window === "undefined") return false;
     try {
         return (
-            !localStorage.getItem("adminToken") &&
+            !localStorage.getItem("adminToken") && !localStorage.getItem("imad:admin:profile") &&
             !localStorage.getItem("imad:analytics:exclude") &&
             navigator.doNotTrack !== "1" &&
             !(navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl &&

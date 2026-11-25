@@ -54,6 +54,10 @@ test("Pixel loads automatically, preserves refusals, excludes tests/admin and de
     metaPage("/");
     assert.equal(scripts.length, 0);
     location.pathname = "/";
+    storage.set("imad:admin:profile", JSON.stringify({id:"fixture"}));
+    metaPage("/");
+    assert.equal(scripts.length, 0, "cookie-session administrators stay excluded on the storefront");
+    storage.delete("imad:admin:profile");
     metaPage("/");
     assert.equal(scripts.length, 1);
     assert.equal(storage.has("imad-meta-consent:123456789"), false, "automatic loading must not record visitor consent");

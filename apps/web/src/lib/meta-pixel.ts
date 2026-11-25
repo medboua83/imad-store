@@ -28,7 +28,7 @@ export function pixelExcluded() {
             Boolean(
                 (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl,
             ) ||
-            Boolean(localStorage.getItem("adminToken"))
+            Boolean(localStorage.getItem("adminToken") || localStorage.getItem("imad:admin:profile"))
         );
     } catch {
         return true;

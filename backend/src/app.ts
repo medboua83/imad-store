@@ -27,6 +27,8 @@ import { deskcommRoutes } from "./routes/deskcomm.routes";
 import { telegramRoutes } from "./routes/telegram.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 
+import { hasAdminCookie } from "./lib/admin-cookies";
+
 export const app: Application = express();
 // Only opt in behind a local reverse proxy that overwrites X-Forwarded-For.
 // Never trust arbitrary internet proxies; direct deployments retain the default.
@@ -77,7 +79,7 @@ const loginRateLimiter = rateLimit({
 });
 app.use("/api/auth/login", loginRateLimiter);
 app.use("/api", (req, res, next) => {
-    if (req.headers.authorization || !["GET", "HEAD"].includes(req.method))
+    if (req.headers.authorization || hasAdminCookie(req) || !["GET", "HEAD"].includes(req.method))
         res.setHeader("Cache-Control", "private, no-store");
     next();
 });

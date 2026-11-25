@@ -29,7 +29,7 @@ export default function PasswordRecoveryPage() {
                 if (token && password !== repeat) { setError("Les deux mots de passe doivent être identiques."); return; }
                 lock.current = true; setBusy(true);
                 try {
-                    if (token) { await submitPasswordReset(token, password); localStorage.removeItem("adminToken"); localStorage.removeItem("adminRefresh"); setPassword(""); setRepeat(""); }
+                    if (token) { await submitPasswordReset(token, password); localStorage.removeItem("adminToken"); localStorage.removeItem("adminRefresh"); localStorage.removeItem("imad:admin:profile"); setPassword(""); setRepeat(""); }
                     else await requestPasswordReset(email);
                     setDone(true);
                 } catch { setError(token ? "Ce lien est expiré, déjà utilisé ou temporairement indisponible. Demandez un nouveau lien ou réessayez." : "Demande indisponible. Réessayez dans quelques minutes."); }
