@@ -112,3 +112,14 @@ test('Failed initial read never permits saving defaults over a merchant identity
     c.failRead=false; await s.getByRole('button',{name:'Recharger l’identité',exact:true}).click();
     await expect(s.getByLabel('Nom de la boutique',{exact:true})).toHaveValue(defaultStoreBranding.name); expect(c.writes).toHaveLength(0);
 });
+test('Long store names, dark logos and light button colours remain usable at 320px', async ({page,context}) => {
+    await page.setViewportSize({width:320,height:844}); const c=await fixture(context);
+    c.branding={...defaultStoreBranding,name:'Atelier de démonstration avec un nom de boutique très long',darkLogoUrl:logo,primaryColor:'#ffffff',accentColor:'#000000'};
+    await page.goto('/contact');
+    await expect(page.locator('.site-header .brand-text-logo')).toHaveText(c.branding.name);
+    await expect(page.locator('.site-footer .brand-custom-logo')).toHaveAttribute('src',logo);
+    expect(await page.locator('.site-footer').evaluate(e=>getComputedStyle(e).color)).toBe('rgb(23, 23, 23)');
+    expect(await page.locator('.site-header .brand-text-logo').evaluate(e=>getComputedStyle(e).webkitLineClamp)).toBe('2');
+    await expect(page.locator('.brand-contact-details')).toHaveCount(0);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

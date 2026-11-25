@@ -119,7 +119,7 @@ export function BrandingSettings() {
             </section>
             {dirty && <p role="status">{t("Modifications non enregistrées")}</p>}
             <div className="admin-branding-actions">
-                <button className="admin-button" type="submit" disabled={busy || !dirty || conflict}>{t(busy ? "Enregistrement…" : "Enregistrer et publier l’identité")}</button>
+                <button className="admin-button primary" type="submit" disabled={busy || !dirty || conflict}>{t(busy ? "Enregistrement…" : "Enregistrer et publier l’identité")}</button>
                 <button className="admin-button secondary" type="button" disabled={busy} onClick={() => { setForm(snapshot.branding); setMessage(""); setError(""); }}>{t("Annuler mes modifications")}</button>
                 {(conflict || error) && <button className="admin-button secondary" type="button" disabled={busy} onClick={() => void load()}>{t("Recharger les valeurs enregistrées")}</button>}
             </div>
