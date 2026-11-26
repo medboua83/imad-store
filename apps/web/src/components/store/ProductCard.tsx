@@ -1,3 +1,4 @@
+import { formatStoreAmount } from "@/lib/store-money";
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
@@ -81,10 +82,10 @@ export function ProductCard({
                             <span className="product-shipping-badge">توصيل مجاني</span>
                         )}
                         {p.compareAtPrice && p.compareAtPrice > p.price ? (
-                            <del>{p.compareAtPrice.toFixed(2)} MAD</del>
+                            <del>{formatStoreAmount(p.compareAtPrice)} MAD</del>
                         ) : null}
                         <span className="product-current-price">
-                            {p.price.toFixed(2)} <span>MAD</span>
+                            {formatStoreAmount(p.price)} <span>MAD</span>
                         </span>
                     </p>
                 </div>
@@ -105,7 +106,7 @@ export function ProductCard({
                         <p className="quantity-card-hint" key={tier.minQuantity}>
                             عرض {tier.minQuantity} قطع،{" "}
                             <bdi>
-                                {(tier.totalPrice ?? tier.unitPrice * tier.minQuantity).toFixed(2)}{" "}
+                                {formatStoreAmount((tier.totalPrice ?? tier.unitPrice * tier.minQuantity))}{" "}
                                 MAD
                             </bdi>{" "}
                             للمجموع

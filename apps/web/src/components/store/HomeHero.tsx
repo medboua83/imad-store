@@ -3,6 +3,7 @@ import { useBranding } from "@/components/BrandingProvider";
 import { defaultStoreBranding } from "@imad-store/shared";
 
 import Link from "next/link";
+import { formatStoreMoney } from "@/lib/store-money";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, ArrowUpLeft } from "lucide-react";
 import { ProductPhoto } from "./ProductPhoto";
@@ -193,16 +194,11 @@ export function HomeHero({
                 )}
                 <div className="hero-price-row">
                   <span className="hero-product-price" dir="ltr">
-                    {new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD" }).format(
-                      active.price,
-                    )}
+                    {formatStoreMoney(active.price)}
                   </span>
                   {active.compareAtPrice !== undefined && active.compareAtPrice > active.price && (
                     <del dir="ltr">
-                      {new Intl.NumberFormat("fr-MA", {
-                        style: "currency",
-                        currency: "MAD",
-                      }).format(active.compareAtPrice)}
+                      {formatStoreMoney(active.compareAtPrice)}
                     </del>
                   )}
                 </div>

@@ -75,12 +75,13 @@ export default async function ShopPage({
     const categoryTitle = category?.nameAr || category?.nameFr;
     const collectionImages = category ? categoryImageSources(category, []) : [];
     const scope = new URLSearchParams(category ? { category: category.slug } : {});
-    if (category && sectionKey) scope.set("section", sectionKey);
+    if (sectionKey) scope.set("section", sectionKey);
     const clearFiltersHref = scope.size ? `/shop?${scope}` : "/shop";
     const active = filterKeys.filter(
         (key) =>
             value(key) &&
-            !(category && (key === "category" || key === "section")) &&
+            !(category && key === "category") &&
+            !(sectionKey && key === "section") &&
             !(key === "sort" && value(key) === "newest") &&
             !(key === "availability" && value(key) === "all"),
     );
@@ -344,7 +345,7 @@ export default async function ShopPage({
                             {category && (
                                 <details className="collection-sort" key={JSON.stringify(raw)}>
                                     <summary>
-                                        الترتيب: {sortLabels[sort] || sortLabels.newest}
+                                        <span className="collection-sort-prefix">الترتيب:</span> {sortLabels[sort] || sortLabels.newest}
                                         <ChevronDown size={15} aria-hidden="true" />
                                     </summary>
                                     <div role="group" aria-label="ترتيب المنتجات">
@@ -373,7 +374,7 @@ export default async function ShopPage({
                                 }
                             >
                                 <Check size={15} aria-hidden="true" />
-                                المتوفر فقط
+                                <span className="stock-quick-label">المتوفر فقط</span>
                             </Link>
                         </div>
                     </div>

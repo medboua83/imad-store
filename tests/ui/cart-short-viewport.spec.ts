@@ -19,7 +19,7 @@ for (const viewport of [
     const close = dialog.getByRole("button", { name: "إغلاق السلة", exact: true });
     const checkout = dialog.getByRole("link", { name: "متابعة الطلب", exact: true });
     await expect(checkout).toBeEnabled();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("400,00");
     if (viewport.height <= 600) {
       const header = await dialog.locator(".bag-header").boundingBox();
       const bounds = await dialog.boundingBox();
@@ -33,14 +33,14 @@ for (const viewport of [
       await page.screenshot({ path: info.outputPath(`basket-short-total-${viewport.width}.png`) });
     }
     await dialog.getByRole("button", { name: "تقليل كمية صابو تجريبي", exact: true }).click();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("230.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("230,00");
     await close.press("Escape");
     await expect(dialog).not.toBeVisible();
     await expect(page.getByRole("button", { name: "إضافة إلى السلة", exact: true })).toBeFocused();
     await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).first().click();
     await expect(checkout).toBeVisible();
     await dialog.getByRole("button", { name: "زيادة كمية صابو تجريبي", exact: true }).click();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("400,00");
     await checkout.focus();
     // Native focus scrolling can round the border by a fraction of a pixel.
     await expect(checkout).toBeInViewport({ ratio: 0.99 });
@@ -50,7 +50,7 @@ for (const viewport of [
     await checkout.click();
     await expect(page).toHaveURL(/\/checkout/);
     await expect(dialog).not.toBeVisible();
-    await expect(page.locator(".checkout-compact-total")).toContainText("400.00");
+    await expect(page.locator(".checkout-compact-total")).toContainText("400,00");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(orders).toBe(0);
   });
@@ -80,7 +80,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 844, height: 390 }
     await checkout.focus();
     // Native focus scrolling can round the border by a fraction of a pixel.
     await expect(checkout).toBeInViewport({ ratio: 0.99 });
-    await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("400,00");
     expect(orders).toBe(0);
   });
 }

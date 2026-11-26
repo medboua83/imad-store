@@ -19,8 +19,8 @@ for (const width of [320, 390, 1440]) {
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const dialog = page.locator(".cart-dialog");
     const benefit = dialog.getByRole("status", { name: "حالة التوصيل", exact: true });
-    await expect(dialog.locator(".bag-grand-total")).toContainText("445.00");
-    await expect(benefit).toContainText("100.00 MAD");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("445,00");
+    await expect(benefit).toContainText("100,00 MAD");
     await expect(benefit.getByRole("progressbar")).toHaveAttribute("value", "400");
     await expect(benefit.getByRole("progressbar")).toHaveAttribute("max", "500");
     await page.screenshot({ path: info.outputPath(`delivery-progress-${width}.png`) });
@@ -28,14 +28,14 @@ for (const width of [320, 390, 1440]) {
     await page.goto("/products/fixture-accessory?stats_test=1");
     await chooseSizeIfRequired(page);
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("450.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("450,00");
     await expect(benefit).toContainText("التوصيل مجاني لطلبكم");
     await expect(benefit.getByRole("progressbar")).toHaveCount(0);
     await dialog.getByRole("button", { name: "حذف قطعة مكملة تجريبية", exact: true }).click();
-    await expect(benefit).toContainText("100.00 MAD");
-    await expect(dialog.locator(".bag-grand-total")).toContainText("445.00");
+    await expect(benefit).toContainText("100,00 MAD");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("445,00");
     await dialog.getByRole("button", { name: "زيادة كمية صابو تجريبي", exact: true }).click();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("630.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("630,00");
     await expect(benefit).toContainText("التوصيل مجاني لطلبكم");
     await expect(benefit.getByRole("progressbar")).toHaveCount(0);
     await dialog.getByRole("link", { name: "متابعة الطلب", exact: true }).click();
@@ -46,8 +46,8 @@ for (const width of [320, 390, 1440]) {
     await expect(summaryBenefit).toContainText("التوصيل مجاني لطلبكم");
     await expect(summary.locator(".checkout-summary-items .bag-line")).toBeVisible();
     await summary.getByRole("button", { name: "تقليل كمية صابو تجريبي", exact: true }).click();
-    await expect(summaryBenefit).toContainText("100.00 MAD");
-    await expect(summary.locator(".bag-grand-total")).toContainText("445.00");
+    await expect(summaryBenefit).toContainText("100,00 MAD");
+    await expect(summary.locator(".bag-grand-total")).toContainText("445,00");
     let threshold = 400.01;
     await page.route("**/api/settings", async (route) => {
       const response = await route.fetch();
@@ -58,13 +58,13 @@ for (const width of [320, 390, 1440]) {
     await page.reload();
     await chooseSizeIfRequired(page);
     if (width < 768) await page.locator(".checkout-order-disclosure > summary").click();
-    await expect(summaryBenefit).toContainText("0.01 MAD");
+    await expect(summaryBenefit).toContainText("0,01 MAD");
     threshold = 400;
     await page.reload();
     await chooseSizeIfRequired(page);
     if (width < 768) await page.locator(".checkout-order-disclosure > summary").click();
     await expect(summaryBenefit).toContainText("التوصيل مجاني لطلبكم");
-    await expect(summary.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(summary.locator(".bag-grand-total")).toContainText("400,00");
     expect(orders).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -132,7 +132,7 @@ for (const width of [320, 390, 1440]) {
     await expect(dialog.getByRole("status", { name: "حالة التوصيل", exact: true })).toContainText(
       "التوصيل مجاني لطلبكم",
     );
-    await expect(dialog.locator(".bag-grand-total")).toContainText("230.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("230,00");
     await page.screenshot({ path: info.outputPath(`delivery-free-${width}.png`) });
     await dialog.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
     await page.route("**/api/settings", async (route) => {

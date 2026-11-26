@@ -182,7 +182,7 @@ for (const viewport of [
         await page.getByRole("button", { name: "بني", exact: true }).click();
         await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
-        await expect(page.locator(".purchase-price")).toContainText("630.00");
+        await expect(page.locator(".purchase-price")).toContainText("630,00");
         const after = await buy.boundingBox();
         expect(after!.y + after!.height).toBeLessThanOrEqual(viewport.height);
         await page.getByRole("spinbutton", { name: "الكمية", exact: true }).fill("");

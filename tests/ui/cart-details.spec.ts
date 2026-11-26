@@ -38,7 +38,7 @@ for (const width of [390, 1440]) {
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator(".bag-line-name")).toHaveText(item.nameAr);
     await expect(dialog.locator(".bag-notice")).toContainText("تفاصيل المنتجات");
-    await expect(dialog.locator(".bag-grand-total")).toContainText("230.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("230,00");
     await expect(dialog.locator(".bag-quantity span")).toHaveText("1");
     await expect(dialog.locator(".bag-line-name")).toHaveAttribute(
       "href",

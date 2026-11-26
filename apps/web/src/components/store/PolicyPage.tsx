@@ -1,3 +1,4 @@
+import { formatStoreAmount } from "@/lib/store-money";
 import Link from "next/link";
 import { publicContent, publicSettings } from "@/lib/server-api";
 export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "privacy" }) {
@@ -26,8 +27,8 @@ export async function PolicyPage({ kind }: { kind: "delivery" | "returns" | "pri
         <section className="page-shell policy-page max-w-3xl space-y-6">
             <h1 className="text-3xl">{title}</h1>
             {kind === "delivery" && <div className="policy-facts">
-                <div><h2>رسوم التوصيل</h2><p dir="ltr">{settings.shippingCost.toFixed(2)} MAD</p></div>
-                <div><h2>التوصيل المجاني</h2><p>من <bdi>{settings.freeShippingMin.toFixed(2)} MAD</bdi> أو مع منتج مؤهل</p></div>
+                <div><h2>رسوم التوصيل</h2><p dir="ltr">{formatStoreAmount(settings.shippingCost)} MAD</p></div>
+                <div><h2>التوصيل المجاني</h2><p>من <bdi>{formatStoreAmount(settings.freeShippingMin)} MAD</bdi> أو مع منتج مؤهل</p></div>
                 <div><h2>الدفع</h2><p>{settings.codEnabled ? "عند الاستلام" : "تواصلوا معنا لمعرفة المتاح"}</p></div>
             </div>}
             {published ? (

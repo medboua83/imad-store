@@ -116,7 +116,7 @@ test("A saved cart hydrates without React text mismatches and survives reload", 
         page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText("130.00");
+    await expect(page.getByRole("dialog")).toContainText("130,00");
     expect(errors).toEqual([]);
 });
 for (const viewport of [
@@ -134,7 +134,7 @@ for (const viewport of [
         const review = page.getByRole("region", { name: "راجعوا طلبكم قبل التأكيد النهائي" });
         await expect(review).toBeVisible();
         await expect(review).toContainText("Client fictif");
-        await expect(review).toContainText("130.00");
+        await expect(review).toContainText("130,00");
         expect(requests).toHaveLength(0);
         await page.getByRole("button", { name: "تعديل المعلومات", exact: true }).click();
         await page.getByLabel("المدينة", { exact: false }).fill("Tanger");
@@ -183,19 +183,19 @@ test("delivery charges stay visible and a changed fee requires a new review befo
     await page.setViewportSize({width: 390, height: 844});
     const {settings, requests} = await fixture(page, false);
     await fillCheckout(page);
-    await expect(page.locator(".checkout-visible-shipping")).toContainText("30.00 MAD");
+    await expect(page.locator(".checkout-visible-shipping")).toContainText("30,00 MAD");
     await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
     const review = page.locator("#checkout-final-review");
-    await expect(review).toContainText("30.00 MAD");
-    await expect(review.locator(".bag-grand-total")).toContainText("130.00");
+    await expect(review).toContainText("30,00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("130,00");
     expect(requests).toHaveLength(0);
     settings.shippingCost = 45;
     await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
     await expect(page.locator(".checkout-submission-error")).toContainText("تغيرت رسوم التوصيل");
     expect(requests).toHaveLength(0);
     await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
-    await expect(review).toContainText("45.00 MAD");
-    await expect(review.locator(".bag-grand-total")).toContainText("145.00");
+    await expect(review).toContainText("45,00 MAD");
+    await expect(review.locator(".bag-grand-total")).toContainText("145,00");
     expect(requests).toHaveLength(0);
     await page.getByRole("button", {name: "أؤكد طلبي", exact: true}).click();
     await expect.poll(() => requests.length).toBe(1);
@@ -210,7 +210,7 @@ for (const width of [320, 390, 1440]) {
         await page.getByRole("button", {name: "مراجعة الطلب", exact: true}).click();
         const confirmation = page.getByRole("dialog", {name: "مراجعة الطلب والتوصيل", exact: true});
         await expect(confirmation).toBeVisible();
-        await expect(confirmation.locator(".checkout-confirm-actions")).toContainText("30.00 MAD");
+        await expect(confirmation.locator(".checkout-confirm-actions")).toContainText("30,00 MAD");
         expect(await confirmation.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
         expect(requests).toHaveLength(0);
         await page.keyboard.press("Escape");
@@ -224,8 +224,8 @@ for (const width of [320, 390, 1440]) {
         await expect(popup).toContainText("منتج تجريبي");
         await expect(popup).toContainText("أسود · 42");
         await expect(popup).toContainText("TEST-UI");
-        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
-        await expect(popup.locator(".order-receipt-total")).toContainText("130.00 MAD");
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30,00 MAD");
+        await expect(popup.locator(".order-receipt-total")).toContainText("130,00 MAD");
         await expect(popup.locator(".order-receipt-items img")).toHaveAttribute("src", /abaya\.webp/);
         await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items.length)).toBe(0);
         expect(await popup.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
@@ -235,7 +235,7 @@ for (const width of [320, 390, 1440]) {
         const reopen = page.getByRole("button", {name: "عرض تفاصيل الطلب", exact: true});
         await expect(reopen).toBeFocused();
         await reopen.click();
-        await expect(popup.locator(".order-receipt-shipping")).toContainText("30.00 MAD");
+        await expect(popup.locator(".order-receipt-shipping")).toContainText("30,00 MAD");
         expect(requests).toHaveLength(1);
     });
 }

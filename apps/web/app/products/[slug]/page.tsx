@@ -1,3 +1,4 @@
+import { formatStoreAmount } from "@/lib/store-money";
 import { publicBranding } from "@/lib/server-api";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -96,10 +97,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
             )}
             <div className="product-price-row">
               {product.compareAtPrice && product.compareAtPrice > product.price ? (
-                <del>{product.compareAtPrice.toFixed(2)} MAD</del>
+                <del>{formatStoreAmount(product.compareAtPrice)} MAD</del>
               ) : null}
               <p dir="ltr">
-                {product.price.toFixed(2)} <span>MAD</span>
+                {formatStoreAmount(product.price)} <span>MAD</span>
               </p>
               <span className="product-stock-label">
                 {inStock ? "متوفر الآن" : "غير متوفر حالياً"}
@@ -143,7 +144,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             </details>
             <details>
               <summary>التوصيل والاستبدال</summary>
-              <p>{product.freeShipping ? "التوصيل مجاني عند إضافة هذا المنتج إلى السلة." : `رسوم التوصيل ${settings.shippingCost.toFixed(2)} MAD، وتصبح مجانية من ${settings.freeShippingMin.toFixed(2)} MAD أو عند إضافة منتج مؤهل.`}</p>
+              <p>{product.freeShipping ? "التوصيل مجاني عند إضافة هذا المنتج إلى السلة." : `رسوم التوصيل ${formatStoreAmount(settings.shippingCost)} MAD، وتصبح مجانية من ${formatStoreAmount(settings.freeShippingMin)} MAD أو عند إضافة منتج مؤهل.`}</p>
               {settings.deliveryMaxDays && <p>التوصيل خلال {settings.deliveryMaxDays} أيام كحد أقصى.</p>}
               {settings.returnWindowDays && <p>طلب الاستبدال أو الإرجاع خلال {settings.returnWindowDays} أيام من الاستلام.</p>}
               {settings.returnFeePayer === "STORE" && <p>يتحمل المتجر رسوم الشحن الخاصة بالإرجاع.</p>}

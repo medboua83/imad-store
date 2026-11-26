@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import Link from "next/link";
 import type { Product } from "@/lib/api";
 import { useCartStore } from "@/store/cart.store";
@@ -74,7 +76,7 @@ export function RecommendationList({
                                 </Link>
                             </h3>
                             <p className="recommendation-price" dir="ltr">
-                                {p.price.toFixed(2)} <span>MAD</span>
+                                {formatStoreAmount(p.price)} <span>MAD</span>
                             </p>
                             {p.freeShipping && (
                                 <p className="recommendation-shipping">توصيل مجاني</p>

@@ -24,17 +24,17 @@ for (const width of [320, 390, 1440]) {
       {
         src: "/images/catalogue-test/sac.webp",
         href: "/products/fixture-sabot",
-        price: "230.00 MAD",
+        price: "230,00 MAD",
       },
       {
         src: "/images/catalogue-test/abaya.webp",
         href: "/products/fixture-premium",
-        price: "300.00 MAD",
+        price: "300,00 MAD",
       },
       {
         src: "/images/catalogue-test/sac.webp",
         href: "/products/fixture-accessory",
-        price: "50.00 MAD",
+        price: "50,00 MAD",
       },
     ];
     for (let i = 0; i < expected.length; i++) {
@@ -68,7 +68,7 @@ for (const width of [320, 390, 1440]) {
     }
     await expect(cards.first().locator(".product-shipping-badge")).toHaveText("توصيل مجاني");
     await expect(cards.nth(1).locator(".product-shipping-badge")).toHaveCount(0);
-    await expect(cards.last().locator(".quantity-card-hint")).toContainText("90.00 MAD");
+    await expect(cards.last().locator(".quantity-card-hint")).toContainText("90,00 MAD");
     const row = await cards.evaluateAll((elements) =>
       elements.map((e) => ({
         x: e.getBoundingClientRect().x,

@@ -185,7 +185,7 @@ for (const width of [390, 1440]) {
         await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).click();
         const total = page.locator(".cart-dialog .bag-grand-total");
         try {
-            await expect(total).toContainText("260.00");
+            await expect(total).toContainText("260,00");
         } finally {
             release();
         }
@@ -196,7 +196,7 @@ for (const width of [390, 1440]) {
                     requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
                 ),
         );
-        await expect(total).toContainText("260.00");
+        await expect(total).toContainText("260,00");
         expect(writes).toBe(0);
         await page.screenshot({ path: info.outputPath(`cart-fresh-${width}.png`) });
     });

@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import { sizeLabel } from "@/lib/product-presentation";
 import { ProductPhoto } from "./ProductPhoto";
 import Link from "next/link";
@@ -34,17 +36,17 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     {[item.colorNameAr || item.colorNameFr, item.size ? sizeLabel(item.size) : undefined].filter(Boolean).join(" · ")}
                 </p>
                 <p className="bag-unit-price">
-                    {unitPrice < item.price && <del dir="ltr">{item.price.toFixed(2)} MAD </del>}
+                    {unitPrice < item.price && <del dir="ltr">{formatStoreAmount(item.price)} MAD </del>}
                     <span dir="ltr">
                         {approximate ? "≈ " : ""}
-                        {unitPrice.toFixed(2)} MAD
+                        {formatStoreAmount(unitPrice)} MAD
                     </span>{" "}
                     / {approximate || mixedPrices ? "متوسط القطعة" : "القطعة"}
                     {mixedPrices && (
                         <span className="bag-pack-prices" dir="ltr">
                             {priced?.allocations
                                 .map(
-                                    (part) => `${part.quantity} × ${part.unitPrice.toFixed(2)} MAD`,
+                                    (part) => `${part.quantity} × ${formatStoreAmount(part.unitPrice)} MAD`,
                                 )
                                 .join(" + ")}
                         </span>
@@ -90,7 +92,7 @@ export function CartLine({ item, disabled = false }: { item: CartItem; disabled?
                     </button>
                 </div>
                 <p className="bag-line-total" dir="ltr">
-                    {(priced?.total ?? item.price * item.quantity).toFixed(2)} <span>MAD</span>
+                    {formatStoreAmount((priced?.total ?? item.price * item.quantity))} <span>MAD</span>
                 </p>
             </div>
         </article>

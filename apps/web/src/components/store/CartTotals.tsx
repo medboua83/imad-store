@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import type { useShipping } from "@/hooks/useShipping";
 import { useCartStore } from "@/store/cart.store";
 import { priceCart } from "@imad-store/shared";
@@ -21,12 +23,12 @@ export function CartTotals({
             {savings > 0 && (
                 <div className="quantity-saving">
                     <dt>توفير عرض الكمية</dt>
-                    <dd dir="ltr">−{savings.toFixed(2)} MAD</dd>
+                    <dd dir="ltr">−{formatStoreAmount(savings)} MAD</dd>
                 </div>
             )}
             <div>
                 <dt>قيمة المنتجات</dt>
-                <dd dir="ltr">{subtotal.toFixed(2)} MAD</dd>
+                <dd dir="ltr">{formatStoreAmount(subtotal)} MAD</dd>
             </div>
             <div className="bag-shipping-row">
                 <dt>رسوم التوصيل</dt>
@@ -40,7 +42,7 @@ export function CartTotals({
                     ) : shipping.fee === 0 ? (
                         "مجاني"
                     ) : (
-                        <span dir="ltr">{shipping.fee.toFixed(2)} MAD</span>
+                        <span dir="ltr">{formatStoreAmount(shipping.fee)} MAD</span>
                     )}
                 </dd>
             </div>
@@ -56,7 +58,7 @@ export function CartTotals({
                         <span className="bag-total-pending">بانتظار رسوم التوصيل</span>
                     ) : (
                         <span dir="ltr">
-                            {shipping.total!.toFixed(2)} <small>MAD</small>
+                            {formatStoreAmount(shipping.total!)} <small>MAD</small>
                         </span>
                     )}
                 </dd>

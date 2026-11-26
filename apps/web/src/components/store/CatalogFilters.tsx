@@ -34,7 +34,8 @@ export function CatalogFilters({ children, count, initialOpen }: {
                 aria-label="البحث والفلاتر" aria-haspopup="dialog" aria-expanded={open} aria-controls="catalog-search"
                 onClick={show}>
                 <SlidersHorizontal size={18} aria-hidden="true" />
-                البحث والفلاتر
+                <span className="filter-trigger-full">البحث والفلاتر</span>
+                <span className="filter-trigger-short" aria-hidden="true">الفلاتر</span>
                 {count > 0 && <span className="active-filter-count">{count}</span>}
             </button>
             <dialog ref={dialog} id="catalog-search" className="catalog-filter-dialog"

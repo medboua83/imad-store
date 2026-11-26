@@ -18,7 +18,7 @@ for (const width of [320, 390, 1440]) {
     await expect(price).toContainText("—");
     await quantity.pressSequentially("12");
     await expect(quantity).toHaveValue("12");
-    await expect(price).toContainText("2400.00");
+    await expect(price).toContainText("2 400,00");
     await expect(add).toBeEnabled();
     await quantity.press("Tab");
     await expect(quantity).toHaveValue("12");
@@ -28,7 +28,7 @@ for (const width of [320, 390, 1440]) {
     await expect(quantity).toHaveValue("");
     await quantity.pressSequentially("2");
     await expect(quantity).toHaveValue("2");
-    await expect(price).toContainText("400.00");
+    await expect(price).toContainText("400,00");
     for (const invalid of ["21", "0", "1.5"]) {
       await quantity.fill(invalid);
       await expect(quantity).toHaveValue(invalid);
@@ -47,14 +47,14 @@ for (const width of [320, 390, 1440]) {
     await expect(page.locator("#product-quantity-error")).toHaveCount(0);
     await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
     await expect(quantity).toHaveValue("2");
-    await expect(price).toContainText("400.00");
+    await expect(price).toContainText("400,00");
     await page.getByRole("button", { name: "تقليل الكمية", exact: true }).click();
     await expect(quantity).toHaveValue("1");
     await quantity.fill("2");
     await add.click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator(".bag-quantity span")).toHaveText("2");
-    await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("400,00");
     expect(orders).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
@@ -81,13 +81,13 @@ for (const width of [390, 1440]) {
     await expect(quantity).toHaveValue("1");
     await expect(quantity).toHaveAttribute("aria-invalid", "false");
     await quantity.fill("3");
-    await expect(page.locator(".purchase-price")).toContainText("630.00");
+    await expect(page.locator(".purchase-price")).toContainText("630,00");
     await page.getByRole("button", { name: "أسود", exact: true }).click();
     await chooseSizeIfRequired(page);
     await expect(quantity).toHaveValue("1");
-    await expect(page.locator(".purchase-price")).toContainText("230.00");
+    await expect(page.locator(".purchase-price")).toContainText("230,00");
     await page.getByRole("button", { name: "فتح السلة، 19 قطعة", exact: true }).first().click();
     await expect(page.getByRole("dialog").locator(".bag-quantity span")).toHaveText("19");
-    await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("3830.00");
+    await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("3 830,00");
   });
 }
