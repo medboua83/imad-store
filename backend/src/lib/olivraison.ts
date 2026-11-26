@@ -80,11 +80,16 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
     // Read-only checks must never re-arm parcel creation, confirmation or pickup.
     const state = review ? "ATTENTION" : terminal.has(remote.status) ? "DONE" :
       shipment.state === "ATTENTION" && shipment.lastError === CARRIER_REFERENCE_MISMATCH ? "TRACKING_ONLY" : shipment.state;
+    // Re-reading the same incident must retain the existing reconciliation
+    // instructions (for example a physical stock check after a deleted parcel).
+    // An identity mismatch is superseded only after the response validates.
+    const sameIncident = review && shipment.carrierStatus === remote.status &&
+      shipment.lastError && shipment.lastError !== CARRIER_REFERENCE_MISMATCH;
     const saved = await prisma.olivraisonShipment.updateMany({
       where: { ...owned, lockedUntil: { gt: new Date() } },
       data: {
         carrierStatus: remote.status, lastSyncedAt: new Date(), nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS), state,
-        lastError: review ? "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
+        lastError: review ? sameIncident ? shipment.lastError : "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
       },
     });
     if (!saved.count) throw new AppError("Une autre vérification a pris le relais. Actualisez la commande.", 409);

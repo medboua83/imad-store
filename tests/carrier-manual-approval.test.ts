@@ -127,6 +127,41 @@ test('A pre-existing confirmed parcel with cancellation history cannot request a
     assert.deepEqual(calls, ['GET /package/TEST-NO-PICKUP']); assert.equal(await protect(), before); await quiet();
 });
 
+test('Repeated tracking preserves an unresolved physical-stock instruction without recreating a parcel or touching payment', async () => {
+    const { refreshOlivraisonTracking } = await import('../backend/src/lib/olivraison');
+    const { CARRIER_REFERENCE_MISMATCH } = await import('../backend/src/lib/olivraison-api');
+    const order = await p.order.create({ data: { ...base, status: 'CANCELLED', inventoryReserved: true } });
+    const note = 'Colis supprimé chez Olivraison : stock réservé conservé ; vérifier physiquement avant réintégration.';
+    await p.olivraisonShipment.create({ data: { id: order.id, trackingId: 'TEST-DELETED-PHYSICAL', state: 'ATTENTION', carrierStatus: 'DELETED', lastError: note, pickupAttempted: true } });
+    const before = await protect();
+    const count = await p.olivraisonShipment.count();
+    const calls: string[] = [];
+    let status = 'DELETED';
+    const read = async (path: string, method = 'GET') => {
+        calls.push(method + ' ' + path);
+        assert.equal(method, 'GET');
+        assert.equal(path, '/package/TEST-DELETED-PHYSICAL');
+        return { trackingID: 'TEST-DELETED-PHYSICAL', status };
+    };
+    for (let i = 0; i < 2; i++) await refreshOlivraisonTracking(order.id, read);
+    let saved = await p.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(saved.lastError, note);
+    assert.equal(saved.state, 'ATTENTION');
+    assert.equal(saved.pickupAttempted, true);
+    status = 'RETURNED';
+    await refreshOlivraisonTracking(order.id, read);
+    saved = await p.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(saved.lastError, 'Incident transporteur : rapprocher la commande, le stock et le paiement.');
+    // A resolved identity mismatch must not remain as a misleading incident note.
+    await p.olivraisonShipment.update({ where: { id: order.id }, data: { lastError: CARRIER_REFERENCE_MISMATCH } });
+    await refreshOlivraisonTracking(order.id, read);
+    assert.equal((await p.olivraisonShipment.findUnique({ where: { id: order.id } })).lastError, 'Incident transporteur : rapprocher la commande, le stock et le paiement.');
+    assert.equal(calls.length, 4);
+    assert.equal(await p.olivraisonShipment.count(), count);
+    assert.equal(await protect(), before);
+    await quiet();
+});
+
 test('Cancelled orders, removed configuration and old history cannot be approved or backfilled', async () => {
     const { order } = await pair(18); await queue(order);
     await p.olivraisonIntegration.update({ where: { id: 'olivraison' }, data: { enabled: false } });
