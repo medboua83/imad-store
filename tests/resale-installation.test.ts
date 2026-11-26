@@ -57,7 +57,10 @@ test("Offsite health accepts only a fresh verified private receipt and never exp
     const file=join(receiptDir,'receipt.json');process.env.IMAD_OFFSITE_STATUS_FILE=file;
     const write=async(extra:any={})=>{await writeFile(file,JSON.stringify({completedAt:new Date().toISOString(),verified:true,encryptedSha256:'a'.repeat(64),tables:34,photos:2,...extra}),{mode:0o600});await chmod(file,0o600);};
     await write();let result=(await request(app).get('/api/operations/health').expect(200)).body;assert.equal(result.status,'ok');assert.equal(result.backupFresh,true);
-    assert.doesNotMatch(JSON.stringify(result),/receipt.json|encryptedSha256|34|photos|tables|carrier:/);
+    // Check the public contract: arbitrary receipt counts can also occur in a valid timestamp.
+    assert.deepEqual(Object.keys(result).sort(),['backupFresh','checkedAt','hasFailedSends','status']);
+    assert.equal(result.hasFailedSends,false);assert.equal(typeof result.checkedAt,'string');
+    assert.ok(Number.isFinite(Date.parse(result.checkedAt)));
     const baseline=await p.order.count();await write({completedAt:new Date(Date.now()-37*3600_000).toISOString()});result=(await request(app).get('/api/operations/health').expect(200)).body;assert.equal(result.status,'attention');assert.equal(result.backupFresh,false);
     await write({completedAt:new Date(Date.now()+3600_000).toISOString()});assert.equal((await request(app).get('/api/operations/health')).body.backupFresh,false);
     await write();await chmod(file,0o666);assert.equal((await request(app).get('/api/operations/health')).body.backupFresh,false);await chmod(file,0o600);
