@@ -109,3 +109,5 @@ Les nouveaux profils mettent les deux travailleurs d’envoi **à false**. Aprè
 Contrôler : une commande → un événement d’envoi → un prospect ; confirmation dans le CRM → une transition Confirmée dans la boutique, paiement inchangé. Les répétitions signées ont un reçu unique. Une signature d’une autre entreprise est refusée. Sur erreur, désactiver l’envoi et la règle, consulter Suivi CRM de la commande et Activité ; ne pas dupliquer une source ou rejouer l’historique.
 
 Cette connexion **n’active pas les messages IA/WhatsApp**. Le premier contact exige son propre agent, canal, signature entrante, autorisation de source et les informations d’accord requises par le CRM. Une commande transmise n’est pas une preuve de consentement à un service automatisé.
+
+Le kit contient aussi les configurations Playwright utilisées par les tests d’interface et le fichier Docker Compose de développement référencé dans les prérequis. La découverte `npx playwright test --list` doit rester limitée aux scénarios `tests/ui` ; ne pas lancer la recette contre le domaine de production. Le fichier Compose n’est pas une configuration de production et exige son propre mot de passe local.

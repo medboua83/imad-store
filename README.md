@@ -60,3 +60,5 @@ Les conditions de redistribution ou de cession doivent être formalisées avec l
 Double authentification personnelle du dashboard : [activation, secours et exploitation](docs/ADMIN_MFA.md).
 
 Préparation et livraison : [recette](docs/RESALE_DELIVERY.md), [guide marchand](docs/MERCHANT_GUIDE.md), [remise client](docs/CLIENT_HANDOVER.md). Les réglages contiennent un bilan privé en lecture seule. `/api/operations/health` expose uniquement un état opérationnel minimal, sans données clients.
+
+Finaliser une installation avec le marchand : [parcours de remise](docs/FINAL_SETUP.md), [affichage du catalogue et des statistiques](docs/STOREFRONT_DISPLAY.md). Ces guides font partie du kit source ; ils ne contiennent aucun secret ou bilan privé de production.
