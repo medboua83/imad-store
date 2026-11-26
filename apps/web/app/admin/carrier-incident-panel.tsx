@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { type AdminOrder, getCarrierIncidentHistory } from "@/lib/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { carrierStatusLabel } from "@imad-store/shared";
@@ -13,6 +13,7 @@ export function CarrierIncidentPanel({ shipment, onClose, busy = false }: {
 }) {
     const { t, locale } = useAdminLocale();
     const id = useId();
+    const focusReason = useCallback((node: HTMLTextAreaElement | null) => { node?.focus(); }, []);
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [reason, setReason] = useState("");
     const [saving, setSaving] = useState(false);
@@ -44,7 +45,7 @@ export function CarrierIncidentPanel({ shipment, onClose, busy = false }: {
         }}>
             <p>{t("Cette clôture enregistre votre contrôle de l’incident. Elle ne confirme ni retour physique ni règlement transporteur. Paiement, stock et réservations restent inchangés.")}</p>
             <label htmlFor={id}>{t("Motif de clôture (obligatoire)")}</label>
-            <textarea id={id} dir="auto" autoFocus required minLength={10} maxLength={1000}
+            <textarea id={id} dir="auto" ref={focusReason} required minLength={10} maxLength={1000}
                 value={reason} disabled={busy || saving} onChange={event => setReason(event.target.value)}
                 aria-describedby={id + "-help"} />
             <p id={id + "-help"} className="admin-muted">{t("Décrivez le contrôle effectué, de 10 à 1 000 caractères. Le motif, l’auteur et la date seront conservés dans l’historique.")}</p>

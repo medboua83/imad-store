@@ -23,6 +23,7 @@ export function OrderCarrierStatus({ order, onSync, onApprove, onClose, busy = f
         <p>{t("L’envoi est bloqué à cause des anciennes annulations associées au numéro. Vérifiez l’historique avant d’autoriser cette commande.")}</p>
         <p>{t("Aucun colis créé pour cette demande en attente.")}</p>
         {onApprove && order.status === "CONFIRMED" && <button type="button" className="admin-button" disabled={busy} onClick={onApprove}>{t("Autoriser l’envoi à Olivraison")}</button>}
+        <CarrierIncidentPanel key={order.id} shipment={shipment} busy={busy} />
     </section>;
     const status = shipment.carrierStatus;
     const attention = orderTrackingMatches(shipment, "ATTENTION");
