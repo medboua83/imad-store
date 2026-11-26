@@ -39,7 +39,7 @@ async function admin(page: Page) {
                 convertedVisits: 0,
                 orderRate: 0,
                 attributedOrders: 0,
-                trackingSince: null,
+                start: "2026-11-19T00:00:00Z", end: "2026-11-26T10:00:00Z", trackingSince: null,
                 products: [],
             };
         }

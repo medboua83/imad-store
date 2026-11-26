@@ -32,7 +32,7 @@ async function fixture(page: Page, ar: boolean, remote: boolean, ranges = false)
             return route.fulfill({ json: { success: true, data: {
                 days, visits: days === 1 ? 3 : 21, productViews: 2, pageViews: 4,
                 convertedVisits: 1, attributedOrders: 1, orderRate: 33.33,
-                trackingSince: null, products: [],
+                start: "2026-11-19T00:00:00Z", end: "2026-11-26T10:00:00Z", trackingSince: null, products: [],
             } } });
         }
         if (path !== "/api/orders") return route.fulfill({ json: { success: true, data: [], total: 0, unread: 0 } });

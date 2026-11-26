@@ -98,7 +98,7 @@ async function mockAdmin(page: Page) {
                 convertedVisits: 1,
                 orderRate: 10,
                 attributedOrders: 1,
-                trackingSince: null,
+                start: "2026-11-19T00:00:00Z", end: "2026-11-26T10:00:00Z", trackingSince: null,
                 products: [],
             };
         else if (path === "/api/products/" + product.id) data = product;
