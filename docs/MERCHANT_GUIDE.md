@@ -1,5 +1,9 @@
 # Guide marchand
 
+## Comprendre les incidents du bilan
+
+Dans Paramètres → Préparation de la boutique, « Incidents d’envoi » distingue les colis à vérifier, les envois CRM en échec et les e-mails d’accès en échec. Seules les sources concernées apparaissent. Les liens ouvrent la rubrique correspondante selon vos permissions ; ce bilan ne relance aucun envoi. Un collaborateur sans l’accès requis demande à un administrateur de traiter le point. Le suivi Olivraison reste soumis à sa configuration, à la réponse du transporteur et à la validation manuelle des numéros signalés.
+
 ## Démarrer
 
 Ouvrir `/admin`, se connecter avec son compte personnel puis ouvrir **Mon compte**. Activer la double authentification avec son application et conserver les codes de secours dans un endroit séparé. Le propriétaire ne doit pas partager un compte administrateur entre les caissiers.

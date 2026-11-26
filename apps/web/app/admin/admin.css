@@ -2267,6 +2267,9 @@
 .store-readiness-completed { border-top: 1px solid var(--admin-border, #ded4c1); margin-block: 16px; }
 .store-readiness-completed summary { min-height: 44px; padding-block: 12px; cursor: pointer; overflow-wrap: anywhere; }
 .store-readiness-completed summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 6px; }
+.store-readiness-incidents { display: grid; gap: 12px; margin-top: 12px; }
+.store-readiness-incidents > div { border-top: 1px solid var(--admin-border, #ded4c1); padding-top: 12px; }
+.store-readiness-incidents strong { display: block; font-size: .94rem; }
 
 /* Keep the detailed funnel available without pushing product performance down the page. */
 .admin-app .analytics-conversion-details > summary { min-height:44px; cursor:pointer; padding-block:8px; }

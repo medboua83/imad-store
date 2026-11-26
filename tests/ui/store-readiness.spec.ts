@@ -9,17 +9,17 @@ const checks=[
  {id:'backup',label:'Sauvegarde hors serveur vérifiée',detail:'Le reçu d’une restauration réussie doit dater de moins de 36 heures. Sans reçu, le contrôle reste à terminer.',href:null},
  {id:'integrations',label:'Incidents d’envoi',detail:'Consultez les commandes et les connexions lorsqu’un envoi échoue. Aucune relance n’est effectuée ici.',href:'/admin?tab=orders'},
 ];
-async function fixture(context:BrowserContext){
- const c={fail:false,invalid:false,allReady:false,mismatchedCount:false,duplicate:false,missingClock:false,reads:0,writes:[] as string[]};
+async function fixture(context:BrowserContext,account:{id:string;role:string;authVersion:number;permissions:string[]}=identity){
+ const c={fail:false,invalid:false,allReady:false,mismatchedCount:false,duplicate:false,missingClock:false,missingIncidents:false,inconsistentIncidents:false,incidents:{carrier:0,crm:0,accessMail:0},reads:0,writes:[] as string[]};
  await context.setExtraHTTPHeaders({DNT:'1'});await context.route('**/*facebook*',route=>route.abort());
  await context.route('**/api/**',async route=>{
   const req=route.request(),path=new URL(req.url()).pathname;
   if(req.method()!=='GET'){c.writes.push(path);return route.fulfill({status:405})}
-  if(path.startsWith('/api/auth/'))return route.fulfill({json:{success:true,data:{mode:'cookie',identity}}});
+  if(path.startsWith('/api/auth/'))return route.fulfill({json:{success:true,data:{mode:'cookie',identity:account}}});
   if(path==='/api/settings/readiness'){
-   c.reads++;const rows=checks.map(x=>({...x,ready:c.allReady||x.id==='integrations'}));
+   c.reads++;const rows=checks.map(x=>({...x,href:x.id==='mail'&&account.role!=='ADMIN'?null:x.href,ready:c.allReady||(x.id==='integrations'&&(c.inconsistentIncidents||Object.values(c.incidents).every(count=>count===0)))}));
    if(c.duplicate)rows[1].id=rows[0].id;
-   return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',checkedAtText:c.missingClock?null:{fr:'25/11/2026 12:00',ar:'25/11/2026 12:00 — توقيت المغرب'},completed:c.allReady||c.mismatchedCount?7:1,total:7,checks:rows}}});
+   return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',checkedAtText:c.missingClock?null:{fr:'25/11/2026 12:00',ar:'25/11/2026 12:00 — توقيت المغرب'},incidents:c.missingIncidents?null:c.incidents,completed:c.mismatchedCount?7:rows.filter(x=>x.ready).length,total:7,checks:rows}}});
   }
   if(path==='/api/team/gmail')return route.fulfill({json:{success:true,data:{enabled:false,hasPassword:false,gmailUser:'',port:465,revision:0}}});
   if(path==='/api/settings/branding')return route.fulfill({json:{success:true,data:{revision:0,branding:{name:'IMAD Mode',logoUrl:'',darkLogoUrl:'',primaryColor:'#78551f',accentColor:'#e7cf97',backgroundColor:'#fcfaf6',contactEmail:'',contactPhone:'',contactAddress:''}}}});
@@ -53,10 +53,44 @@ test('Read failure retains the last dated report and retry never publishes a set
 test('Malformed response cannot display successful readiness',async({page,context})=>{
  const c=await fixture(context);c.invalid=true;await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('alert')).toBeVisible();await expect(section.locator('li')).toHaveCount(0);expect(c.writes).toEqual([]);
 });
-for(const mismatch of ['count','duplicate','clock'])test(`Inconsistent ${mismatch} cannot replace a previously dated report`,async({page,context})=>{
+for(const mismatch of ['count','duplicate','clock','missing-incidents','negative-incidents','incident-state'])test(`Inconsistent ${mismatch} cannot replace a previously dated report`,async({page,context})=>{
  const c=await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('listitem')).toHaveCount(6);
- c.mismatchedCount=mismatch==='count';c.duplicate=mismatch==='duplicate';c.missingClock=mismatch==='clock';await section.getByRole('button',{name:'Actualiser le bilan'}).click();
+ c.mismatchedCount=mismatch==='count';c.duplicate=mismatch==='duplicate';c.missingClock=mismatch==='clock';c.missingIncidents=mismatch==='missing-incidents';
+ if(mismatch==='negative-incidents')c.incidents.carrier=-1;
+ if(mismatch==='incident-state'){c.incidents.carrier=1;c.inconsistentIncidents=true;}
+ await section.getByRole('button',{name:'Actualiser le bilan'}).click();
  await expect(section.getByRole('alert')).toBeVisible();await expect(section).toContainText('1 / 7');await expect(section.getByRole('listitem')).toHaveCount(6);expect(c.writes).toEqual([]);
+});
+for(const width of [320,1440])for(const ar of [false,true])test(`Incident sources expose read-only actions ${width}px ${ar?'AR':'FR'}`,async({page,context},info)=>{
+ await page.setViewportSize({width,height:900});const c=await fixture(context);c.incidents={carrier:2,crm:1,accessMail:1};await page.goto('/admin?tab=commerce#store-readiness');
+ if(ar)await page.getByRole('combobox',{name:'Langue de l’administration / لغة لوحة الإدارة'}).selectOption('ar');
+ const section=page.locator('#store-readiness'),sources=section.getByRole('list',{name:ar?'مصدر المشكلات':'Origine des incidents'});
+ await expect(sources.getByRole('listitem')).toHaveCount(3);
+ await expect(sources).toContainText(ar?'طرود تحتاج إلى مراجعة: 2':'Colis à vérifier : 2');
+ await expect(sources).toContainText(ar?'عمليات إرسال إلى CRM فشلت: 1':'Envois CRM en échec : 1');
+ await expect(sources).toContainText(ar?'رسائل الوصول التي فشل إرسالها: 1':'E-mails d’accès en échec : 1');
+ await expect(sources.getByRole('link')).toHaveCount(3);
+ await expect(sources.locator('a[href="/admin?tab=deskcomm"]')).toBeVisible();await expect(sources.locator('a[href="/admin?tab=mail"]')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await section.screenshot({path:info.outputPath('incident-sources.png')});
+ await sources.locator('a[href="/admin?tab=commerce#carrier-settings"]').click();
+ const carrier=page.locator('#carrier-settings');await expect(carrier).toContainText(ar?'كل 30 ثانية تقريباً':'environ toutes les 30 secondes');
+ await expect(carrier).toContainText(ar?'خاضعة للموافقة اليدوية':'soumis à une validation manuelle');expect(c.writes).toEqual([]);
+});
+for(const width of [390,1440])test(`Settings staff sees only permitted readiness actions ${width}px`,async({page,context})=>{
+ await page.setViewportSize({width,height:900});const c=await fixture(context,{...identity,role:'STAFF',permissions:['settings.manage']});c.incidents={carrier:1,crm:2,accessMail:1};
+ await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');
+ await expect(section.getByRole('list',{name:'Origine des incidents'})).toBeVisible();
+ await expect(section.locator('a[href="/admin?tab=commerce#carrier-settings"]')).toBeVisible();
+ for(const tab of ['deskcomm','mail','content','orders'])await expect(section.locator(`a[href="/admin?tab=${tab}"]`)).toHaveCount(0);
+ await expect(section.getByText('Un administrateur peut ouvrir ce réglage.',{exact:true})).toHaveCount(3);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(c.writes).toEqual([]);
+});
+test('A CRM collaborator can investigate a CRM failure without unrelated actions or zero-count alerts',async({page,context})=>{
+ await page.setViewportSize({width:390,height:900});const c=await fixture(context,{...identity,role:'STAFF',permissions:['settings.manage','crm.manage']});c.incidents.crm=1;
+ await page.goto('/admin?tab=commerce#store-readiness');const sources=page.locator('#store-readiness').getByRole('list',{name:'Origine des incidents'});
+ await expect(sources.getByRole('listitem')).toHaveCount(1);await expect(sources.getByRole('link',{name:'Ouvrir la connexion CRM',exact:true})).toBeVisible();
+ await expect(sources.locator('a[href="/admin?tab=mail"]')).toHaveCount(0);await expect(sources).not.toContainText('Colis à vérifier');expect(c.writes).toEqual([]);
 });
 for(const width of [390,1440])test(`SMTP shortcut reaches the mail settings ${width}px`,async({page,context})=>{
  await page.setViewportSize({width,height:900});const c=await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');

@@ -104,7 +104,7 @@ export function OlivraisonSettings({ active = true }: { active?: boolean }) {
             <h2 id="olivraison-title">{t("Olivraison — automatisation des colis")}</h2>
             <p>
                 {t(
-                    "Les nouvelles commandes confirmées sont envoyées automatiquement : création du colis, confirmation et suivi toutes les cinq minutes environ. Aucune ancienne commande n’est envoyée.",
+                    "Si l’automatisation est activée, les nouvelles commandes confirmées éligibles sont envoyées à Olivraison. Les numéros sur liste de contrôle restent soumis à une validation manuelle. Le suivi des colis actifs est relu environ toutes les 30 secondes ; les délais du transporteur et les reprises après erreur peuvent l’allonger.",
                 )}
             </p>
             {savedConfig?.saved && !editing && (
