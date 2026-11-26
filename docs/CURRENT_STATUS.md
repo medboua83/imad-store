@@ -1,6 +1,6 @@
 ## Bilan de préparation et raccourci SMTP — 26 novembre 2026
 
-Candidat : points non satisfaits affichés en premier, contrôles satisfaits dans un volet natif repliable, heure de lecture française/arabe fixée sur Africa/Casablanca et refus des rapports aux identifiants dupliqués ou au décompte incohérent. Le raccourci SMTP administrateur vise E-mails et SMTP, sans donner de lien aux collaborateurs non administrateurs. Aucune validation commerciale, relance ou écriture de commande, paiement, stock ou connexion par ce bilan. Recettes et publication : outputs/admin-readiness-navigation-20261126 sur DATA.
+Candidat : points non satisfaits affichés en premier, contrôles satisfaits dans un volet natif repliable, heure de lecture française/arabe fournie par le serveur selon Africa/Casablanca pour éviter les règles horaires périmées de certains appareils et refus des rapports aux identifiants dupliqués ou au décompte incohérent. Le raccourci SMTP administrateur vise E-mails et SMTP, sans donner de lien aux collaborateurs non administrateurs. Aucune validation commerciale, relance ou écriture de commande, paiement, stock ou connexion par ce bilan. Recettes et publication : outputs/admin-readiness-navigation-20261126 sur DATA.
 
 ## Guides de finalisation et kit — 26 novembre 2026
 

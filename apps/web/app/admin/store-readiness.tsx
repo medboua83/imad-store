@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { adminApi } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
-type Report = { checkedAt: string; completed: number; total: number; checks: Array<{
+type Report = { checkedAt: string; checkedAtText: { fr: string; ar: string }; completed: number; total: number; checks: Array<{
     id: string; ready: boolean; label: string; detail: string; href: string | null;
 }> };
 function validReport(value: unknown): value is Report {
     const v = value as Report;
     return !!v && typeof v.checkedAt === "string" && Number.isFinite(Date.parse(v.checkedAt)) &&
+        !!v.checkedAtText && [v.checkedAtText.fr, v.checkedAtText.ar].every(text => typeof text === "string" && !!text.trim() && text.length <= 100) &&
         Number.isInteger(v.completed) && Number.isInteger(v.total) && v.total > 0 && v.completed >= 0 && v.completed <= v.total &&
         Array.isArray(v.checks) && v.checks.length === v.total && v.checks.every(c => c && typeof c.id === "string" && !!c.id.trim() && typeof c.ready === "boolean" &&
             typeof c.label === "string" && typeof c.detail === "string" && (c.href === null || /^\/admin\?tab=[a-z]+(?:#[a-z-]+)?$/.test(c.href))) &&
@@ -49,7 +50,7 @@ export function StoreReadiness({ active }: { active: boolean }) {
         {error && <p role="alert">{t("Bilan non actualisé. Rechargez le contrôle ; aucune validation n’a été ajoutée.")}</p>}
         {!report && !error && <p role="status">{t("Contrôle de la préparation…")}</p>}
         {report && <>
-            <p className="admin-muted">{report.completed} / {report.total} {t("contrôles satisfaits")} · {t("Lecture du bilan")} : <time dateTime={report.checkedAt} title={t("Heure du Maroc")}>{new Date(report.checkedAt).toLocaleString(locale === "ar" ? "ar-MA" : "fr-MA", { dateStyle: "short", timeStyle: "short", timeZone: "Africa/Casablanca" })}</time></p>
+            <p className="admin-muted">{report.completed} / {report.total} {t("contrôles satisfaits")} · {t("Lecture du bilan")} : <time dateTime={report.checkedAt} title={t("Heure du Maroc")}>{report.checkedAtText[locale]}</time></p>
             {remaining.length > 0 ? <ul className="store-readiness-list" aria-label={t("Points à terminer")}>{remaining.map(checkCard)}</ul>
                 : <p role="status">{t("Aucune action indiquée par ce bilan.")}</p>}
             {completed.length > 0 && <details className="store-readiness-completed">

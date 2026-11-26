@@ -10,7 +10,7 @@ const checks=[
  {id:'integrations',label:'Incidents d’envoi',detail:'Consultez les commandes et les connexions lorsqu’un envoi échoue. Aucune relance n’est effectuée ici.',href:'/admin?tab=orders'},
 ];
 async function fixture(context:BrowserContext){
- const c={fail:false,invalid:false,allReady:false,mismatchedCount:false,duplicate:false,reads:0,writes:[] as string[]};
+ const c={fail:false,invalid:false,allReady:false,mismatchedCount:false,duplicate:false,missingClock:false,reads:0,writes:[] as string[]};
  await context.setExtraHTTPHeaders({DNT:'1'});await context.route('**/*facebook*',route=>route.abort());
  await context.route('**/api/**',async route=>{
   const req=route.request(),path=new URL(req.url()).pathname;
@@ -19,7 +19,7 @@ async function fixture(context:BrowserContext){
   if(path==='/api/settings/readiness'){
    c.reads++;const rows=checks.map(x=>({...x,ready:c.allReady||x.id==='integrations'}));
    if(c.duplicate)rows[1].id=rows[0].id;
-   return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',completed:c.allReady||c.mismatchedCount?7:1,total:7,checks:rows}}});
+   return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',checkedAtText:c.missingClock?null:{fr:'25/11/2026 12:00',ar:'25/11/2026 12:00 — توقيت المغرب'},completed:c.allReady||c.mismatchedCount?7:1,total:7,checks:rows}}});
   }
   if(path==='/api/team/gmail')return route.fulfill({json:{success:true,data:{enabled:false,hasPassword:false,gmailUser:'',port:465,revision:0}}});
   if(path==='/api/settings/branding')return route.fulfill({json:{success:true,data:{revision:0,branding:{name:'IMAD Mode',logoUrl:'',darkLogoUrl:'',primaryColor:'#78551f',accentColor:'#e7cf97',backgroundColor:'#fcfaf6',contactEmail:'',contactPhone:'',contactAddress:''}}}});
@@ -53,9 +53,9 @@ test('Read failure retains the last dated report and retry never publishes a set
 test('Malformed response cannot display successful readiness',async({page,context})=>{
  const c=await fixture(context);c.invalid=true;await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('alert')).toBeVisible();await expect(section.locator('li')).toHaveCount(0);expect(c.writes).toEqual([]);
 });
-for(const mismatch of ['count','duplicate'])test(`Inconsistent ${mismatch} cannot replace a previously dated report`,async({page,context})=>{
+for(const mismatch of ['count','duplicate','clock'])test(`Inconsistent ${mismatch} cannot replace a previously dated report`,async({page,context})=>{
  const c=await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('listitem')).toHaveCount(6);
- c.mismatchedCount=mismatch==='count';c.duplicate=mismatch==='duplicate';await section.getByRole('button',{name:'Actualiser le bilan'}).click();
+ c.mismatchedCount=mismatch==='count';c.duplicate=mismatch==='duplicate';c.missingClock=mismatch==='clock';await section.getByRole('button',{name:'Actualiser le bilan'}).click();
  await expect(section.getByRole('alert')).toBeVisible();await expect(section).toContainText('1 / 7');await expect(section.getByRole('listitem')).toHaveCount(6);expect(c.writes).toEqual([]);
 });
 for(const width of [390,1440])test(`SMTP shortcut reaches the mail settings ${width}px`,async({page,context})=>{
@@ -71,9 +71,10 @@ test('All satisfied checks remain accessible without an empty action list',async
 });
 test.describe('Readiness clock',()=>{
  test.use({timezoneId:'America/Los_Angeles'});
- test('The reading time stays in Morocco even on a device set to another timezone',async({page,context})=>{
+ test('The server reading time survives another device timezone and outdated browser rules',async({page,context})=>{
   await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');const time=page.locator('#store-readiness time');
-  await expect(time).toContainText('13:00');await expect(time).toHaveAttribute('datetime','2026-11-25T12:00:00Z');await expect(time).toHaveAttribute('title','Heure du Maroc');
+  await expect(time).toHaveText('25/11/2026 12:00');await expect(time).toHaveAttribute('datetime','2026-11-25T12:00:00Z');await expect(time).toHaveAttribute('title','Heure du Maroc');
+  await page.getByRole('combobox',{name:'Langue de l’administration / لغة لوحة الإدارة'}).selectOption('ar');await expect(time).toHaveText('25/11/2026 12:00 — توقيت المغرب');
  });
 });
 for(const width of [390,1440])test(`Standalone CRM stays unavailable with a clear explanation ${width}px`,async({page,context})=>{

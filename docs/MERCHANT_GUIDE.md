@@ -4,7 +4,7 @@
 
 Ouvrir `/admin`, se connecter avec son compte personnel puis ouvrir **Mon compte**. Activer la double authentification avec son application et conserver les codes de secours dans un endroit séparé. Le propriétaire ne doit pas partager un compte administrateur entre les caissiers.
 
-Dans **Paramètres → Préparation de la boutique**, consulter les points à terminer, affichés en premier. Les contrôles satisfaits restent accessibles dans un volet replié, au clavier comme au toucher. Le bilan est en lecture seule ; il ne modifie ni réglage, ni commande, ni envoi. La date affichée correspond à la dernière lecture, à l’heure du Maroc. Un bilan non actualisé ne constitue pas une nouvelle validation. Le raccourci SMTP ouvre directement **E-mails et SMTP** pour les administrateurs.
+Dans **Paramètres → Préparation de la boutique**, consulter les points à terminer, affichés en premier. Les contrôles satisfaits restent accessibles dans un volet replié, au clavier comme au toucher. Le bilan est en lecture seule ; il ne modifie ni réglage, ni commande, ni envoi. La date affichée correspond à la dernière lecture, à l’heure du Maroc fournie par le serveur, même si l’appareil utilise un autre fuseau ou des règles horaires anciennes. Un bilan non actualisé ne constitue pas une nouvelle validation. Le raccourci SMTP ouvre directement **E-mails et SMTP** pour les administrateurs.
 
 ## Identité et contacts
 
