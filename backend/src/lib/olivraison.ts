@@ -34,6 +34,14 @@ export function configuredClient(ciphertext: string) {
   return createCarrierClient(JSON.parse(decryptDeskcommValue(ciphertext)), carrierGate);
 }
 const terminal = new Set(["DELIVERED", "RETURNED", "DELETED", "CUSTOMER_CANCELED", "ARCHIVED"]);
+const missingPickupDocumentMessages = [
+  "Ramassage créé, bordereaux à récupérer dans le compte Olivraison",
+  "Ramassage effectué : récupérer les bordereaux dans Olivraison.",
+];
+function isPickupDocumentIncident(shipment: { state: string; carrierStatus: string | null; pickupAttempted: boolean; lastError: string | null }) {
+  return shipment.state === "ATTENTION" && shipment.carrierStatus === "PICKUP" &&
+    shipment.pickupAttempted && missingPickupDocumentMessages.includes(shipment.lastError || "");
+}
 /** Forward-only commercial transitions. A delivery never proves COD remittance. */
 export async function applyCarrierOrderStatus(orderId: string, status: string) {
   const progress = carrierOrderProgress(status);
@@ -79,12 +87,18 @@ export async function refreshOlivraisonTracking(orderId: string, injected?: Carr
     const review = carrierNeedsReview(remote.status);
     // Read-only checks must never re-arm parcel creation, confirmation or pickup.
     const state = review ? "ATTENTION" : terminal.has(remote.status) ? "DONE" :
+      isPickupDocumentIncident(shipment) && carrierOrderProgress(remote.status) ? "TRACKING_ONLY" :
       shipment.state === "ATTENTION" && shipment.lastError === CARRIER_REFERENCE_MISMATCH ? "TRACKING_ONLY" : shipment.state;
+    // Re-reading the same incident must retain the existing reconciliation
+    // instructions (for example a physical stock check after a deleted parcel).
+    // An identity mismatch is superseded only after the response validates.
+    const sameIncident = review && shipment.carrierStatus === remote.status &&
+      shipment.lastError && shipment.lastError !== CARRIER_REFERENCE_MISMATCH;
     const saved = await prisma.olivraisonShipment.updateMany({
       where: { ...owned, lockedUntil: { gt: new Date() } },
       data: {
         carrierStatus: remote.status, lastSyncedAt: new Date(), nextAttemptAt: new Date(Date.now() + CARRIER_TRACKING_INTERVAL_MS), state,
-        lastError: review ? "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
+        lastError: review ? sameIncident ? shipment.lastError : "Incident transporteur : rapprocher la commande, le stock et le paiement." : state === "ATTENTION" ? shipment.lastError : null,
       },
     });
     if (!saved.count) throw new AppError("Une autre vérification a pris le relais. Actualisez la commande.", 409);
@@ -107,6 +121,9 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
         { state: "ATTENTION", trackingId: { not: null }, lastError: CARRIER_REFERENCE_MISMATCH },
         // An unsuccessful delivery can later become RETURNED. Continue reading that parcel.
         { state: "ATTENTION", trackingId: { not: null }, carrierStatus: { in: ["CANCELED", "CANCELLED"] } },
+        // Missing pickup PDFs must not freeze the tracking of an existing parcel.
+        { state: "ATTENTION", trackingId: { not: null }, carrierStatus: "PICKUP", pickupAttempted: true,
+          lastError: { in: missingPickupDocumentMessages } },
       ],
       nextAttemptAt: { lte: now },
       lockedUntil: { lte: now },
@@ -114,7 +131,7 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
     orderBy: { nextAttemptAt: "asc" },
   });
   if (!candidate) return false;
-  if (candidate.state === "TRACKING_ONLY" || (candidate.state === "ATTENTION" && candidate.lastError === CARRIER_REFERENCE_MISMATCH)) {
+  if (candidate.state === "TRACKING_ONLY" || candidate.state === "ATTENTION") {
     try {
       await refreshOlivraisonTracking(candidate.id, injected, now);
     } catch (error) {

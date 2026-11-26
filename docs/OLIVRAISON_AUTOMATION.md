@@ -27,3 +27,19 @@ No schema push/migration is required on the active database: these new MongoDB c
 Operational limits: Hostinger must keep/wake the Node process for timers to run. Exceptions still require human correction. Production API credentials and a real pickup/label test remain unverified until the administrator configures and explicitly authorizes them. Disable the integration to pause automation; already-created remote parcels remain in the carrier account.
 
 Reference: https://partners.olivraison.com/docs#description/introduction (OpenAPI v1, reviewed 2026-10-22).
+
+## Incident reconciliation notes
+
+An explicit tracking refresh reads the existing parcel only. If the carrier
+reports the same incident again, retain any previously recorded reconciliation
+instruction, particularly physical-stock checks. A changed carrier incident
+requires a fresh review; a validated identity response supersedes an old
+reference-mismatch warning. Neither refresh nor this note-preservation change
+confirms COD payment, restores inventory, or creates another parcel.
+
+Missing pickup documents no longer freeze status checks: the scheduler reads
+the persisted parcel with GET only, retaining the document warning while pickup
+is pending. Once the carrier confirms collection or delivery progress, the
+parcel continues in tracking-only mode (or finishes if delivered). This does
+not regenerate or claim to recover the missing PDFs. Failed deliveries under
+review likewise use GET only, including when the local order was cancelled.
