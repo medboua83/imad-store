@@ -1,3 +1,7 @@
+## Bilan de préparation et raccourci SMTP — 26 novembre 2026
+
+Candidat : points non satisfaits affichés en premier, contrôles satisfaits dans un volet natif repliable, heure de lecture française/arabe fournie par le serveur selon Africa/Casablanca pour éviter les règles horaires périmées de certains appareils et refus des rapports aux identifiants dupliqués ou au décompte incohérent. Le raccourci SMTP administrateur vise E-mails et SMTP, sans donner de lien aux collaborateurs non administrateurs. Aucune validation commerciale, relance ou écriture de commande, paiement, stock ou connexion par ce bilan. Recettes et publication : outputs/admin-readiness-navigation-20261126 sur DATA.
+
 ## Guides de finalisation et kit — 26 novembre 2026
 
 Lot documentaire : parcours propriétaire pour SMTP/réception, MFA, coffre indépendant, identité/conditions, recette physique et remise ; inclusion des guides FINAL_SETUP et STOREFRONT_DISPLAY dans le kit de distribution, liens du guide marchand corrigés. Aucun code applicatif, donnée ou migration changé. La publication des finitions est attestée par la PR178 (source 8e98bb6, fusion b177b90) et les preuves privées du 26 novembre ; ne pas la refaire pour ce lot documentaire. Aucun secret ou résultat personnel ne doit être inventé pour clore les réserves.

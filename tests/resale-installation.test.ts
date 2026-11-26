@@ -46,6 +46,9 @@ test("Readiness is private, permission checked and cannot mark empty policies, m
     const result=await request(app).get('/api/settings/readiness').set(auth(owner)).expect(200);
     assert.match(result.headers['cache-control'],/private, no-store/);assert.equal(result.body.data.installationMode,'standalone');
     assert.equal(result.body.data.emailDeliveryVerified,false);
+    assert.equal(result.body.data.checkedAtText.fr,new Intl.DateTimeFormat('fr-MA',{dateStyle:'short',timeStyle:'short',timeZone:'Africa/Casablanca'}).format(new Date(result.body.data.checkedAt)));
+    assert.equal(result.body.data.checkedAtText.ar,new Intl.DateTimeFormat('ar-MA',{dateStyle:'short',timeStyle:'short',timeZone:'Africa/Casablanca'}).format(new Date(result.body.data.checkedAt)));
+    assert.equal(result.body.data.checks.find((c:any)=>c.id==='mail').href,'/admin?tab=mail');
     for(const id of ['identity','policies','mail','mfa','backup'])assert.equal(result.body.data.checks.find((c:any)=>c.id===id).ready,false,id);
     const staff=await request(app).get('/api/settings/readiness').set(auth(manager)).expect(200);assert.equal(staff.body.data.checks.find((c:any)=>c.id==='mail').href,null);
     assert.doesNotMatch(JSON.stringify(result.body),/passwordHash|Ciphertext|JWT_SECRET|fictional-bootstrap|owner@example/);
