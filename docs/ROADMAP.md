@@ -1,3 +1,9 @@
+## Clôture administrative des incidents transporteur — 26 novembre 2026
+
+Candidat : bouton dans la fiche commande, motif obligatoire, auteur/date et historique privé paginé. Clôture de la seule version observée, dédupliquée, sans modification des commandes, paiements, montants, stock, réservations ou colis et sans appel externe. Les changements de statut/erreur/colis réouvrent l’alerte, y compris après un cycle ; les dates de suivi et les verrous ne la réouvrent pas. Reprise des incidents non terminaux par GET uniquement. Droits orders.read + orders.write ; historique réservé à orders.read ; aucun motif exposé publiquement ou aux seuls réglages.
+
+Migration additive 20261126180000_carrier_incident_closures : table vide d’audit, compteur incidentVersion du suivi et déclencheur de version. Aucun incident réel ne doit être clôturé pendant la recette sans contrôle marchand. Guide docs/CARRIER_INCIDENT_CLOSURE.md ; tests et publication privées dans outputs/carrier-incident-closure-20261126. Candidat en cours de tests, non publié à cette note.
+
 ## Livraison autonome et bilan de préparation — 25 novembre 2026
 
 Candidat : profil autonome à trois arguments sans UUID CRM, propriétaire de boutique lié à une base vide et CRM bloqué dans ce mode ; variante CRM conservée. Migration 20261125230000_standalone_store rend seulement companyId nullable, sans modifier les identités existantes. La garde de base vide couvre aussi tous les registres POS. Premier administrateur transactionnel, nom propre, contacts sociaux/WhatsApp vides, aucun Pixel et confirmation sur le site en autonome. Ne pas transformer le mode d’une base remplie par simple changement d’environnement.

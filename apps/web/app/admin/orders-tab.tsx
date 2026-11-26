@@ -7,7 +7,7 @@ import { orderTrackingMatches, productVariantImages } from "@imad-store/shared";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { initialOrderListFilters, type OrderListFilters } from "./order-list-context";
 import { ArrowUpRight, Package, RefreshCw, Search, X } from "lucide-react";
-import { type AdminOrder, type OrderCalendar, type OrderPeriodDays, getOrderCalendar, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch } from "@/lib/api";
+import { type AdminOrder, type OrderCalendar, type OrderPeriodDays, getOrderCalendar, updateOrderStatus, trashOrders, syncOrderCarrierStatus, approveOrderCarrierDispatch, closeOrderCarrierIncident } from "@/lib/api";
 import { OrderCarrierStatus } from "./order-carrier-status";
 import { OrderTrash } from "./order-trash";
 import { OrderHistory } from "./order-history";
@@ -221,6 +221,24 @@ export function OrdersTab({
         } catch {
             setReloadRequired(true); setError(true);
             setMessage(saved ? "Envoi autorisé. Actualisez pour relire le suivi." : "Validation ou actualisation non confirmée. Actualisez avant de réessayer.");
+        } finally { lock.current = false; setBusy(false); }
+    }
+    async function closeIncident(o: AdminOrder, fingerprint: string, reason: string): Promise<boolean> {
+        if (lock.current || readBlocked || reloadRequired) return false;
+        lock.current = true; setBusy(true); setMessage("");
+        let saved = false;
+        try {
+            const result = await closeOrderCarrierIncident(o.id, fingerprint, reason);
+            saved = true;
+            await onRefresh(); setReloadRequired(false); setError(false);
+            setMessage(result.created ? "Incident clôturé. Paiement, stock et réservations inchangés." : "Cet incident était déjà clôturé. Aucun doublon enregistré.");
+            return true;
+        } catch (error) {
+            setError(true);
+            if (saved) { setReloadRequired(true); setMessage("Clôture enregistrée, mais la liste n’a pas pu être actualisée. Actualisez la fiche."); }
+            else setMessage((error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+                "Clôture non confirmée. Actualisez la fiche avant de réessayer.");
+            return saved;
         } finally { lock.current = false; setBusy(false); }
     }
     async function syncCarrier(o: AdminOrder) {
@@ -571,7 +589,7 @@ export function OrdersTab({
                         customerHistory={hasCancellationHistory(order)
                             ? <CustomerCancellationAlert order={order} onOpen={() => openCustomerHistory(order.id)} />
                             : order.customerHistory?.available ? <button type="button" className="admin-text-button" onClick={() => openCustomerHistory(order.id)}>{t("Voir l’historique du numéro")}</button> : null}
-                        carrier={<OrderCarrierStatus order={order} onApprove={canWrite ? () => void approveCarrier(order) : undefined} onSync={canWrite ? () => void syncCarrier(order) : undefined} busy={busy || reloadRequired || readBlocked} />}
+                        carrier={<OrderCarrierStatus order={order} onApprove={canWrite ? () => void approveCarrier(order) : undefined} onSync={canWrite ? () => void syncCarrier(order) : undefined} onClose={canWrite ? (fingerprint, reason) => closeIncident(order, fingerprint, reason) : undefined} busy={busy || reloadRequired || readBlocked} />}
                         feedback={<>{history.error && <p className="admin-alert" role="alert">{t(history.error)}</p>}{history.loading && <p role="status">{t("Recherche dans l’historique…")}</p>}{feedback}</>}
                         actions={
                             <OrderActions

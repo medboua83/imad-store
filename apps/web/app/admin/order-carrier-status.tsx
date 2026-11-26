@@ -4,11 +4,13 @@ import { Truck } from "lucide-react";
 import { type AdminOrder } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
 import { orderDate } from "./order-utils";
+import { CarrierIncidentPanel } from "./carrier-incident-panel";
 
-export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
+export function OrderCarrierStatus({ order, onSync, onApprove, onClose, busy = false }: {
     order: AdminOrder;
     onSync?: () => void;
     onApprove?: () => void;
+    onClose?: (fingerprint: string, reason: string) => Promise<boolean>;
     busy?: boolean;
 }) {
     const { t, locale } = useAdminLocale();
@@ -37,5 +39,6 @@ export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
         {onSync && shipment.trackingId && !disconnected && <button type="button" className="admin-button" disabled={busy} onClick={onSync}>
             {busy ? t("Vérification…") : t("Vérifier chez Olivraison")}
         </button>}
+        <CarrierIncidentPanel key={order.id} shipment={shipment} onClose={onClose} busy={busy} />
     </section>;
 }

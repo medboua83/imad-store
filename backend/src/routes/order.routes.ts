@@ -13,6 +13,8 @@ import {
     exportOrders,
     updateOrderStatus,
     syncOrderCarrierStatus,
+    closeOrderCarrierIncident,
+    getCarrierIncidentHistory,
     approveOrderCarrierDispatch,
     getAdminNotifications,
     markNotificationRead,
@@ -48,6 +50,8 @@ orderRoutes.post("/trash", authenticate, requirePermission("orders.write"), move
 orderRoutes.patch("/:id/status", authenticate, requirePermission("orders.write"), updateOrderStatus);
 orderRoutes.post("/:id/olivraison-approve", authenticate, requirePermission("orders.write"), approveOrderCarrierDispatch);
 orderRoutes.post("/:id/olivraison-sync", authenticate, requirePermission("orders.write"), syncOrderCarrierStatus);
+orderRoutes.post("/:id/carrier-incident-close", authenticate, requirePermission("orders.read"), requirePermission("orders.write"), closeOrderCarrierIncident);
+orderRoutes.get("/:id/carrier-incident-history", authenticate, requirePermission("orders.read"), getCarrierIncidentHistory);
 
 // Admin notifications (polled by dashboard every 5–10s)
 export const notificationRoutes: IRouter = Router();

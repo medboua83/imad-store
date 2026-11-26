@@ -266,6 +266,7 @@ model Order {
   notes                 String?
   items                 OrderItem[]
   events                OrderEvent[]
+  carrierIncidentClosures CarrierIncidentClosure[]
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
@@ -426,6 +427,7 @@ model OlivraisonIntegration {
 // The source order ID is the database primary key: duplicate enqueue is impossible.
 model OlivraisonShipment {
   id String @id
+  incidentVersion Int @default(0)
   trackingId String?
   carrierStatus String?
   lastSyncedAt DateTime?
@@ -443,6 +445,26 @@ model OlivraisonShipment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("olivraison_shipments")
+}
+
+// Administrative acknowledgement only. Never changes a parcel, payment or inventory.
+model CarrierIncidentClosure {
+  id            String @id @default(dbgenerated("substr(replace(gen_random_uuid()::text, '-', ''), 1, 24)"))
+  orderId       String
+  order         Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fingerprint   String
+  trackingId    String
+  shipmentState String
+  carrierStatus String?
+  incidentError String?
+  incidentVersion Int
+  reason        String
+  closedById    String
+  closedByName  String
+  closedAt      DateTime @default(now())
+  @@unique([orderId, fingerprint])
+  @@index([orderId, closedAt])
+  @@map("carrier_incident_closures")
 }
 
 // First-party analytics; ephemeral and scoped to one installation, without customer PII.

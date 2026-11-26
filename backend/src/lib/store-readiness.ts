@@ -6,6 +6,7 @@ import { readStoreBranding } from "./store-branding";
 import { readPublicContent } from "./public-content";
 import { storeIdentity } from "./store-installation";
 import { decryptDeskcommValue } from "./deskcomm-config";
+import { readOpenCarrierIncidentCount } from "./carrier-incident-closure";
 
 export type ReadinessCheck = { id: string; ready: boolean; label: string; detail: string; href: string | null };
 const receiptSchema = z.object({
@@ -33,7 +34,7 @@ export async function readOffsiteReceipt() {
 
 export async function readOperationalHealth() {
     const [backup, carrier, crm, mail] = await Promise.all([
-        readOffsiteReceipt(), prisma.olivraisonShipment.count({ where: { state: { in: ["ATTENTION", "RETRY"] } } }),
+        readOffsiteReceipt(), readOpenCarrierIncidentCount(),
         prisma.deskcommOutbox.count({ where: { status: "FAILED" } }),
         prisma.passwordReset.count({ where: { mailState: "FAILED", expiresAt: { gt: new Date() } } }),
     ]);
@@ -47,7 +48,7 @@ export async function readStoreReadiness(userId: string, isAdmin: boolean) {
         readStoreBranding(), readPublicContent(), prisma.storeSettings.findUnique({ where: { id: "settings" } }),
         prisma.gmailConfig.findUnique({ where: { id: "gmail" }, select: { enabled: true, passwordCiphertext: true } }),
         prisma.adminMfa.findUnique({ where: { userId }, select: { enabledAt: true } }), readOffsiteReceipt(),
-        prisma.olivraisonShipment.count({ where: { state: { in: ["ATTENTION", "RETRY"] } } }),
+        readOpenCarrierIncidentCount(),
         prisma.deskcommOutbox.count({ where: { status: "FAILED" } }),
         prisma.passwordReset.count({ where: { mailState: "FAILED", expiresAt: { gt: new Date() } } }),
     ]);

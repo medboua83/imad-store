@@ -1965,6 +1965,18 @@
 .order-carrier-status p { margin-block: 0.45rem; font-size: 0.9rem; }
 .order-carrier-status .order-carrier-date { color: #6d6250; font-size: 0.8rem; }
 .order-carrier-status button { margin-block-start: 0.5rem; }
+.carrier-incident-panel { margin-block-start: .75rem; }
+.carrier-incident-form { display: grid; gap: .65rem; padding-block-start: .75rem; border-block-start: 1px solid #ddd2bd; }
+.carrier-incident-form label { font-weight: 600; }
+.carrier-incident-form textarea { box-sizing: border-box; width: 100%; min-height: 110px; padding: .7rem; border: 1px solid #b9ac93; border-radius: 8px; background: #fff; color: #29261d; font: inherit; resize: vertical; }
+.carrier-incident-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.carrier-incident-actions button, .carrier-incident-panel > button { min-height: 44px; white-space: normal; text-align: start; overflow-wrap: anywhere; }
+.carrier-incident-history { margin-block-start: .75rem; }
+.carrier-incident-history summary { cursor: pointer; padding-block: .5rem; }
+.carrier-incident-history ol { list-style: none; margin: .5rem 0 0; padding: 0; }
+.carrier-incident-history li { padding-block: .75rem; border-block-start: 1px solid #ddd2bd; overflow-wrap: anywhere; }
+.carrier-incident-reason { white-space: pre-wrap; }
+.order-carrier-status .carrier-incident-closed { color: #34563b; }
 
 /* Operational density: keep search ahead of maintenance and preserve touch targets. */
 .admin-sidebar { overflow-y: auto; }

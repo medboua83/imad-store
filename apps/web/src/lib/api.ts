@@ -406,6 +406,10 @@ export const markAllNotificationsRead = async () => {
     await api.post("/notifications/read-all");
 };
 
+export interface CarrierIncidentClosure {
+    id: string; orderId: string; fingerprint: string; trackingId: string;
+    carrierStatus: string | null; reason: string; closedById: string; closedByName: string; closedAt: string;
+}
 export interface AdminOrder {
     customerBlacklist?: { available: boolean; blocked: boolean; cancelledCount: number };
     customerHistory?: { available: boolean; priorCancelledCount: number };
@@ -417,6 +421,10 @@ export interface AdminOrder {
         state: string;
         lastError: string | null;
         lastSyncedAt: string | null;
+        incidentFingerprint?: string;
+        incidentClosure?: CarrierIncidentClosure | null;
+        incidentHistory?: CarrierIncidentClosure[];
+        incidentHistoryCount?: number;
     } | null;
     confirmationMethod?: string | null;
     confirmedAt?: string | null;
@@ -575,6 +583,27 @@ export const updateOrderStatus = async (id: string, status: string) => {
 export const syncOrderCarrierStatus = async (id: string) =>
     (await api.post(`/orders/${id}/olivraison-sync`)).data;
 
+export const closeOrderCarrierIncident = async (id: string, fingerprint: string, reason: string) => {
+    const { data } = await api.post(`/orders/${id}/carrier-incident-close`, { fingerprint, reason });
+    const result = data as { success?: boolean; data?: { orderId: string; created: boolean; closure: CarrierIncidentClosure } };
+    if (result.success !== true || result.data?.orderId !== id || typeof result.data.created !== "boolean" ||
+        result.data.closure?.fingerprint !== fingerprint || result.data.closure.orderId !== id ||
+        !/^[a-f0-9]{24}$/.test(result.data.closure.id) || !Number.isFinite(Date.parse(result.data.closure.closedAt)))
+        throw new Error("Clôture non confirmée. Actualisez la fiche avant de réessayer.");
+    return result.data;
+};
+
+export const getCarrierIncidentHistory = async (id: string, before?: string, signal?: AbortSignal): Promise<{ items: CarrierIncidentClosure[]; nextCursor: string | null }> => {
+    const { data } = await api.get(`/orders/${id}/carrier-incident-history`, { params: { before }, signal });
+    const result = data?.data;
+    if (!result || !Array.isArray(result.items) || result.items.length > 20 ||
+        !(result.nextCursor === null || /^[a-f0-9]{24}$/.test(result.nextCursor)) ||
+        !result.items.every((row: CarrierIncidentClosure) => row && row.orderId === id && /^[a-f0-9]{24}$/.test(row.id) &&
+            typeof row.reason === "string" && typeof row.closedByName === "string" && Number.isFinite(Date.parse(row.closedAt))))
+        throw new Error("Historique indisponible. Actualisez la fiche.");
+    return result;
+};
+
 export const approveOrderCarrierDispatch = async (id: string) =>
     (await api.post(`/orders/${id}/olivraison-approve`, { approve: true })).data;
 
@@ -669,6 +698,8 @@ export interface OlivraisonConfig {
 export interface OlivraisonShipment {
     id: string; trackingId: string | null; carrierStatus: string | null; state: string;
     lastError: string | null; stickerUrl: string | null; slipUrl: string | null; updatedAt: string;
+    incidentFingerprint?: string;
+    incidentClosure?: { fingerprint: string } | null;
 }
 export const getOlivraisonConfig = async (): Promise<OlivraisonConfig> => (await api.get("/integrations/olivraison")).data.data;
 export const saveOlivraisonConfig = async (body: Omit<OlivraisonConfig, "configured" | "activatedAt" | "saved"> & { apiKey?: string; secretKey?: string }): Promise<OlivraisonConfig> => (await api.put("/integrations/olivraison", body)).data.data;
