@@ -47,7 +47,7 @@ for (const width of [390, 1440]) {
     expect(new URL(page.url()).searchParams.get("sort")).toBe("price-asc");
     await page.screenshot({ path: info.outputPath(`recovered-catalogue-${width}.png`) });
     await page.getByRole("button", { name: "فتح السلة، 1 قطعة", exact: true }).first().click();
-    await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("230.00");
+    await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("230,00");
     await expect(page.getByRole("dialog").locator(".bag-quantity span")).toHaveText("1");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

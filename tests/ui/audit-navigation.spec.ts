@@ -5,13 +5,14 @@ for (const width of [390,1440]) test(`Conversion funnel remains readable at ${wi
     await page.addInitScript(()=>localStorage.setItem("adminToken","isolated-fixture"));
     await page.route("**/api/**",async route=>{
         const path=new URL(route.request().url()).pathname;
-        const data=path==="/api/analytics/summary"?{days:7,visits:10,productViews:8,pageViews:15,convertedVisits:2,attributedOrders:3,orderRate:20,trackingSince:null,products:[],funnel:{cartVisits:5,checkoutVisits:4,confirmedOrders:1,shippedOrders:1,deliveredOrders:0,cancelledOrders:1,unknownOrders:1}}:[];
+        const data=path==="/api/analytics/summary"?{days:7,visits:10,productViews:8,pageViews:15,convertedVisits:2,attributedOrders:3,orderRate:20,start:"2026-11-19T00:00:00Z",end:"2026-11-26T10:00:00Z",trackingSince:null,products:[],funnel:{cartVisits:5,checkoutVisits:4,confirmedOrders:1,shippedOrders:1,deliveredOrders:0,cancelledOrders:1,unknownOrders:1}}:[];
         await route.fulfill({json:{success:true,data,total:0,unread:0}});
     });
     await page.goto("/admin");
     await chooseSizeIfRequired(page);
     if(width<768) await page.getByRole("button",{name:"Navigation",exact:true}).click();
     await page.getByRole("button",{name:"Statistiques",exact:true}).click();
+    await page.locator(".analytics-conversion-details > summary").click();
     await expect(page.getByRole("region",{name:"Parcours de conversion"})).toContainText("Avec ajout au panier");
     await expect(page.getByRole("region",{name:"Parcours de conversion"})).toContainText("pas une preuve de paiement");
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

@@ -30,9 +30,9 @@ for (const width of [320, 390, 1440]) {
     expect(await page.evaluate(() => (window as any).__copiedProduct)).toBe(target);
     await expect(share).toBeFocused();
     await page.locator(".product-identity").screenshot({ path: info.outputPath(`product-share-feedback-${width}.png`) });
-    await expect(page.locator(".purchase-price")).toContainText("230.00");
+    await expect(page.locator(".purchase-price")).toContainText("230,00");
     await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
-    await expect(page.locator(".purchase-price")).toContainText("400.00");
+    await expect(page.locator(".purchase-price")).toContainText("400,00");
     await page.screenshot({ path: info.outputPath(`product-share-${width}.png`) });
     await page.goto("/products/fixture-premium?utm_source=other");
     await chooseSizeIfRequired(page);

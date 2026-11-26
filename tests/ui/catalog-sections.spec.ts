@@ -14,6 +14,8 @@ for (const width of [390, 1440]) {
         await expect(categoryRail.getByRole("link", { name: /معاطف نسائية/ })).toBeVisible();
         await expect(categoryRail.getByRole("link", { name: /صابو رجالي/ })).toHaveCount(0);
         await expect(page.locator(".catalog-card")).toHaveCount(1);
+        await expect(page.locator(".active-filter-chips")).toHaveCount(0);
+        await expect(page.locator(".active-filter-count")).toHaveCount(0);
         const cover = page.locator(".catalog-card-image");
         await expect(cover).toHaveAttribute("href", /\/products\/fixture-premium\?/);
         await expect(cover).toHaveCSS("aspect-ratio", "3 / 4");
@@ -91,6 +93,22 @@ for (const width of [320, 1440]) {
         await page.getByRole("link", { name: "مسح الكل", exact: true }).click();
         await expect(page).toHaveURL(/\/shop\?category=mens-clogs&section=men$/);
         await expect(page.locator(".active-filter-chips")).toHaveCount(0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+}
+
+for (const width of [320, 390, 1440]) {
+    test(`Clearing product filters preserves the chosen section at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto("/shop?section=women&maxPrice=500");
+        await expect(page.locator(".active-filter-count")).toHaveText("1");
+        await page.getByRole("link", { name: "مسح الكل", exact: true }).click();
+        await expect(page).toHaveURL(/\/shop\?section=women$/);
+        await expect(page.locator(".active-filter-chips")).toHaveCount(0);
+        const available = page.getByRole("link", { name: "المتوفر فقط", exact: true });
+        await expect(available.locator(".stock-quick-label")).toBeVisible();
+        expect((await available.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        expect((await page.locator(".catalog-card-image").first().boundingBox())!.y).toBeLessThan(width < 768 ? 470 : 800);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     });
 }

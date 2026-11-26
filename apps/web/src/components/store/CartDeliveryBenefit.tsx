@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import { Truck } from "lucide-react";
 import type { useShipping } from "@/hooks/useShipping";
 
@@ -49,7 +51,7 @@ export function CartDeliveryBenefit({
             <p>
               باقي{" "}
               <strong>
-                <bdi>{remaining.toFixed(2)} MAD</bdi>
+                <bdi>{formatStoreAmount(remaining)} MAD</bdi>
               </strong>{" "}
               للتوصيل المجاني
             </p>
@@ -58,7 +60,7 @@ export function CartDeliveryBenefit({
               max={threshold}
               value={Math.min(subtotal, threshold)}
               aria-label="التقدم نحو التوصيل المجاني"
-              aria-valuetext={`${subtotal.toFixed(2)} MAD من ${threshold.toFixed(2)} MAD`}
+              aria-valuetext={`${formatStoreAmount(subtotal)} MAD من ${formatStoreAmount(threshold)} MAD`}
             />
           </>
         )}

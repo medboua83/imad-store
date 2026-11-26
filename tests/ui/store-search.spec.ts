@@ -29,7 +29,7 @@ for (const width of [390, 1440]) {
         await search.fill("صا");
         const suggestion = panel.getByRole("link", { name: /صابو البحث/ });
         await expect(suggestion).toHaveAttribute("href", "/products/fixture-sabot");
-        await expect(suggestion).toContainText("230.00 MAD");
+        await expect(suggestion).toContainText("230,00 MAD");
         await page.keyboard.press("Escape");
         await expect(panel).not.toBeVisible();
         await expect(trigger).toBeFocused();

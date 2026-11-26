@@ -7,7 +7,7 @@ function summary(days: number, visits = days === 1 ? 0 : 120) {
         funnel: { cartVisits: 10, checkoutVisits: 6, confirmedOrders: 3, shippedOrders: 2, deliveredOrders: 1, cancelledOrders: 1, unknownOrders: 0 } };
 }
 async function fixture(page: Page, ar = false, analyticsOnly = false) {
-    const control = { fail: false, wrongPeriod: false, hold: 0, requests: [] as number[], writes: [] as string[], reads: [] as string[] };
+    const control = { fail: false, malformed: false, wrongPeriod: false, hold: 0, requests: [] as number[], writes: [] as string[], reads: [] as string[] };
     const payload = Buffer.from(JSON.stringify({ id: "a".repeat(24), role: analyticsOnly ? "STAFF" : "ADMIN", permissions: analyticsOnly ? ["analytics.read"] : [] })).toString("base64url");
     await page.addInitScript(({ token, ar }) => {
         localStorage.setItem("adminToken", token);
@@ -22,7 +22,7 @@ async function fixture(page: Page, ar = false, analyticsOnly = false) {
             control.requests.push(days);
             const fail = control.fail, wrong = control.wrongPeriod;
             if (control.hold === days) await new Promise(resolve => setTimeout(resolve, 600));
-            return fail ? route.fulfill({ status: 503 }) : route.fulfill({ json: { success: true, data: summary(wrong ? 90 : days) } });
+            return fail ? route.fulfill({ status: 503 }) : route.fulfill({ json: { success: true, data: control.malformed ? { ...summary(days), products: null } : summary(wrong ? 90 : days) } });
         }
         return route.fulfill({ json: { success: true, data: [], total: 0, unread: 0 } });
     });
@@ -47,6 +47,14 @@ for (const width of [320, 390, 768, 1440]) for (const ar of [false, true]) {
         }
         await expect(page.locator(".analytics-freshness")).toContainText(ar ? "بتوقيت المغرب" : "heure du Maroc");
         await page.screenshot({ path: info.outputPath("statistics.png") });
+        const funnel = page.locator(".analytics-conversion-details");
+        await expect(funnel).not.toHaveAttribute("open", "");
+        expect((await funnel.locator("summary").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        await funnel.locator("summary").focus(); await page.keyboard.press("Enter");
+        await expect(funnel).toHaveAttribute("open", "");
+        await expect(funnel.locator(".analytics-funnel")).toBeVisible();
+        await page.keyboard.press("Enter");
+        await expect(funnel).not.toHaveAttribute("open", "");
         const details = page.locator(".analytics-method details");
         await expect(details).not.toHaveAttribute("open", "");
         await details.locator("summary").focus(); await page.keyboard.press("Enter");
@@ -138,4 +146,19 @@ test("Browser protections allow app hydration but block framing, eval and an unr
     await page.getByRole("button", { name: "البحث في المتجر", exact: true }).click();
     await expect(page.locator('input[type="search"]:visible').first()).toBeVisible();
     expect(errors).toEqual([]);
+});
+
+test("An incomplete successful response retains the last validated statistics", async ({ page }) => {
+    const c = await fixture(page); await page.goto("/admin?tab=analytics");
+    await expect(page.locator(".analytics-kpis strong").first()).toHaveText("120");
+    const stamp = await page.locator(".analytics-freshness").textContent();
+    c.malformed = true;
+    await page.getByRole("button", { name: "Actualiser", exact: true }).click();
+    await expect(page.locator(".admin-analytics [role=alert]")).toContainText("restent affichées");
+    await expect(page.locator(".analytics-kpis strong").first()).toHaveText("120");
+    await expect(page.locator(".analytics-freshness")).toHaveText(stamp!);
+    await page.locator("#analytics-period").selectOption("30");
+    await expect(page.locator(".analytics-kpis")).toHaveCount(0);
+    await expect(page.locator(".admin-analytics [role=alert]")).toBeVisible();
+    expect(c.writes).toEqual([]);
 });

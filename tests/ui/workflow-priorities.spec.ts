@@ -198,10 +198,10 @@ for (const viewport of [
     const increase = dialog.getByRole("button", { name: "زيادة كمية صابو تجريبي", exact: true });
     await expect(increase).toBeInViewport({ ratio: 1 });
     await increase.click();
-    await expect(dialog.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(dialog.locator(".bag-grand-total")).toContainText("400,00");
     await dialog.locator(".bag-cost-breakdown summary").click();
     await expect(dialog.locator(".bag-breakdown-totals")).toBeVisible();
-    await expect(dialog.locator(".bag-breakdown-totals")).toContainText("400.00");
+    await expect(dialog.locator(".bag-breakdown-totals")).toContainText("400,00");
     await expect(dialog.locator(".bag-grand-total")).toHaveCount(1);
     await page.screenshot({ path: info.outputPath("basket-compact.png") });
     expect(writes).toBe(0);

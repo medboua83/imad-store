@@ -1,3 +1,4 @@
+import { formatStoreAmount } from "@/lib/store-money";
 import { ProductSizeGuide } from "./ProductSizeGuide";
 import { Check, ChevronUp, Minus, Plus, ShoppingBag, MessageCircle } from "lucide-react";
 import { useRef, useState } from "react";
@@ -221,11 +222,11 @@ export function ProductOptions({
                                         className="quantity-choice-details"
                                     >
                                         <span className="quantity-choice-price" dir="ltr">
-                                            {choiceTotal.toFixed(2)} <small>MAD</small>
+                                            {formatStoreAmount(choiceTotal)} <small>MAD</small>
                                         </span>
                                         {choiceSaving > 0 && (
                                             <span className="quantity-choice-saving">
-                                                توفير <bdi>{choiceSaving.toFixed(2)} MAD</bdi>
+                                                توفير <bdi>{formatStoreAmount(choiceSaving)} MAD</bdi>
                                             </span>
                                         )}
                                     </span>
@@ -242,15 +243,15 @@ export function ProductOptions({
                         <div className="quantity-selection-summary is-repeated-total" aria-live="polite" aria-atomic="true">
                                 <p>سعر الكمية المختارة</p>
                                 <strong className="quantity-selection-total" dir="ltr">
-                                    {total.toFixed(2)} <span>MAD</span>
+                                    {formatStoreAmount(total)} <span>MAD</span>
                                 </strong>
                                 {savings > 0 && (
                                     <p className="quantity-selection-saving">
                                         <del dir="ltr">
-                                            {(product.price * selectionQuantity).toFixed(2)} MAD
+                                            {formatStoreAmount((product.price * selectionQuantity))} MAD
                                         </del>
                                         <span>
-                                            توفير <bdi>{savings.toFixed(2)} MAD</bdi>
+                                            توفير <bdi>{formatStoreAmount(savings)} MAD</bdi>
                                         </span>
                                     </p>
                                 )}
@@ -334,7 +335,7 @@ export function ProductOptions({
                 <div className="product-purchase-bar">
                     <div className="purchase-summary">
                         <p className="purchase-price" dir="ltr">
-                            {!sizeConfirmed ? product.price.toFixed(2) : alreadyInCart ? (cartLineTotal ?? product.price).toFixed(2) : available && !quantityInvalid ? total.toFixed(2) : "—"}{" "}
+                            {!sizeConfirmed ? formatStoreAmount(product.price) : alreadyInCart ? formatStoreAmount((cartLineTotal ?? product.price)) : available && !quantityInvalid ? formatStoreAmount(total) : "—"}{" "}
                             <span>MAD</span>
                         </p>
                         <p className="purchase-selection" aria-live="polite" aria-atomic="true">
@@ -403,7 +404,7 @@ export function ProductOptions({
                                 بعد إضافة <bdi>{selectedQuantity}</bdi>:{" "}
                                 <bdi>{anticipatedQuantity}</bdi> قطع من هذا المنتج بإجمالي{" "}
                                 <strong>
-                                    <bdi>{anticipatedTotal.toFixed(2)} MAD</bdi>
+                                    <bdi>{formatStoreAmount(anticipatedTotal)} MAD</bdi>
                                 </strong>
                                 .
                             </p>
@@ -431,14 +432,14 @@ export function ProductOptions({
                                         <span>
                                             {pack.count} × عرض {pack.quantity} قطع
                                         </span>
-                                        <bdi>{(pack.count * pack.totalPrice).toFixed(2)} MAD</bdi>
+                                        <bdi>{formatStoreAmount((pack.count * pack.totalPrice))} MAD</bdi>
                                     </li>
                                 ))}
                                 {pricing.looseQuantity > 0 && (
                                     <li>
                                         <span>{pricing.looseQuantity} × قطعة بالسعر العادي</span>
                                         <bdi>
-                                            {(pricing.looseQuantity * product.price).toFixed(2)} MAD
+                                            {formatStoreAmount((pricing.looseQuantity * product.price))} MAD
                                         </bdi>
                                     </li>
                                 )}
@@ -449,7 +450,7 @@ export function ProductOptions({
                                 {Math.abs(unitPrice * 100 - Math.round(unitPrice * 100)) > 0.000001
                                     ? "≈ "
                                     : ""}
-                                {unitPrice.toFixed(2)} MAD / متوسط القطعة
+                                {formatStoreAmount(unitPrice)} MAD / متوسط القطعة
                             </p>
                         )}
                     </>

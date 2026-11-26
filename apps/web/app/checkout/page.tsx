@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import { BrandName } from "@/components/BrandingProvider";
 import { CheckoutCityInput } from "./city-input";
 import { checkoutPhoneDigits, formatCheckoutPhone } from "./phone-input";
@@ -518,19 +520,19 @@ export default function CheckoutPage() {
                             />
                             {error && <p ref={submissionError} role="alert" tabIndex={-1} className="checkout-alert checkout-submission-error">{error}</p>}
                             <div className="checkout-confirm-actions">
-                                <p><span className="checkout-confirm-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${shipping.total.toFixed(2)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
+                                <p><span className="checkout-confirm-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${formatStoreAmount(shipping.fee)} MAD`}</bdi></span><strong><bdi>{shipping.total === null || shipping.error ? "—" : `${formatStoreAmount(shipping.total)} MAD`}</bdi></strong><small>الإجمالي شامل التوصيل</small></p>
                                 <button type="submit" className="btn-primary" disabled={blocked}>{busy ? "جارٍ التحقق والحفظ…" : "أؤكد طلبي"}<ArrowLeft size={18} aria-hidden="true" /></button>
                             </div>
                         </div>}
                         </dialog>
                         <div className="checkout-submit-bar" hidden={reviewReady}>
                             <p>
-                                <span className="checkout-visible-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${shipping.fee.toFixed(2)} MAD`}</bdi></span>
+                                <span className="checkout-visible-shipping">رسوم التوصيل <bdi>{shipping.fee === null || shipping.error ? "—" : `${formatStoreAmount(shipping.fee)} MAD`}</bdi></span>
                                 <span>المبلغ عند الاستلام</span>
                                 <strong dir="ltr">
                                     {invalidItems || shipping.error || shipping.total === null
                                         ? "—"
-                                        : shipping.total.toFixed(2)}{" "}
+                                        : formatStoreAmount(shipping.total)}{" "}
                                     <small>MAD</small>
                                 </strong>
                             </p>
@@ -570,7 +572,7 @@ export default function CheckoutPage() {
                                         "بانتظار رسوم التوصيل"
                                     ) : (
                                         <bdi>
-                                            {shipping.total.toFixed(2)} <small>MAD</small>
+                                            {formatStoreAmount(shipping.total)} <small>MAD</small>
                                         </bdi>
                                     )}
                                     <small>شامل التوصيل</small>

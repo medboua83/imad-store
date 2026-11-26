@@ -1,4 +1,5 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
 
 import Link from "next/link";
 import { Search, X } from "lucide-react";
@@ -131,7 +132,7 @@ export function StoreSearch() {
                                         <ProductPhoto images={product.images} name="" sizes="44px" thumbnail />
                                     </span>
                                     <span className={styles.name}>{product.nameAr || product.nameFr || product.nameEn}</span>
-                                    <span className={styles.price} dir="ltr">{product.price.toFixed(2)} MAD</span>
+                                    <span className={styles.price} dir="ltr">{formatStoreAmount(product.price)} MAD</span>
                                 </Link>
                             </li>
                         ))}

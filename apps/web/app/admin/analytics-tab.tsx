@@ -3,6 +3,7 @@ import { useAdminLocale } from "./admin-locale";
 
 import { useEffect, useRef, useState } from "react";
 import { Eye, MousePointer2, ShoppingBag, RefreshCw, ShieldCheck, Package, ArrowUpRight } from "lucide-react";
+import { isAnalyticsSummary } from "@/lib/analytics-summary";
 import { getStoreAnalytics, type StoreAnalyticsSummary } from "@/lib/api";
 export default function AnalyticsTab({
     days,
@@ -34,7 +35,7 @@ export default function AnalyticsTab({
             setFailure(null);
             getStoreAnalytics(days)
                 .then((value) => {
-                    if (value.days !== days) throw new Error("Unexpected analytics period");
+                    if (!isAnalyticsSummary(value, days)) throw new Error("Invalid analytics summary");
                     if (active && request === sequence.current)
                         setSnapshot({ period: days, data: value, readAt: new Date().toISOString() });
                 })
@@ -149,8 +150,10 @@ export default function AnalyticsTab({
                         {t("Gérer les commandes")}<ArrowUpRight size={16} aria-hidden="true" />
                     </button></div>}
                     {data.funnel && (
-                        <section className="admin-panel" aria-label={t("Parcours de conversion")}>
-                            <h2>{t("Où les visiteurs s’arrêtent-ils ?")}</h2>
+                        <section className="admin-panel analytics-conversion-panel" aria-label={t("Parcours de conversion")}>
+                            <details className="analytics-conversion-details">
+                            <summary><h2>{t("Où les visiteurs s’arrêtent-ils ?")}</h2></summary>
+                            <div className="analytics-conversion-content">
                             <ol className="analytics-funnel">
                                 {[
                                     ["Visites", data.visits],
@@ -197,6 +200,8 @@ export default function AnalyticsTab({
                                     " ancienne(s) commande(s) sans statut mesuré ne sont pas reconstituées.",
                                 )}
                             </p>
+                            </div>
+                            </details>
                         </section>
                     )}
                     {!data.visits && (

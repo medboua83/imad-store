@@ -96,7 +96,8 @@
     .catalog-tools-row .catalog-results-heading p { font-size: 12px; }
     .catalog-tools-row .catalog-result-tools { margin-inline-start: auto; gap: 6px; }
     .catalog-tools-row .collection-sort summary { padding-inline: 9px; font-size: 11px; border-radius: 10px; }
-    .catalog-tools-row .stock-quick-filter { width: 44px; padding: 0; justify-content: center; font-size: 0; border-radius: 10px; }
+    .catalog-tools-row .stock-quick-filter { width: auto; min-width: 84px; padding-inline: 9px; justify-content: center; font-size: 11px; border-radius: 10px; }
+    .catalog-tools-row .collection-sort-prefix { display: none; }
     .store-shell .catalog-filter-dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); border-radius: 16px; }
     .catalog-filter-dialog-heading { padding: 8px 14px; }
     .store-shell .catalog-filter-dialog .catalog-filter-form { grid-template-columns: minmax(0, 1fr); padding: 14px 14px 0; gap: 16px; }
@@ -104,4 +105,25 @@
     .product-page .refined-gallery .gallery-stage { height: clamp(260px, 42svh, 400px); }
     .store-shell .product-page .refined-gallery .gallery-stage > .gallery-photo { padding: 4px; }
     .store-shell .product-page .refined-gallery .gallery-thumbnails { scrollbar-width: thin; scrollbar-color: #cdbb98 transparent; }
+}
+
+/* A section is the browsing context, not an extra applied filter. */
+@media (max-width: 767px) {
+    .store-shell .refined-shop .shop-intro {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 4px 0 8px;
+        margin-bottom: 4px;
+    }
+    .store-shell .refined-shop .shop-intro h1 { font-size: 26px; line-height: 1.25; }
+    .refined-shop .shop-navigation-rails { margin-bottom: 4px; }
+}
+
+.filter-trigger-short { display: none; }
+@media (max-width: 359px) {
+    .catalog-filter-trigger .filter-trigger-full { display: none; }
+    .catalog-filter-trigger .filter-trigger-short { display: inline; }
+    .catalog-tools-row .stock-quick-filter { gap: 4px; min-width: 80px; padding-inline: 6px; }
+    .catalog-tools-row .collection-sort summary { padding-inline: 6px; gap: 4px; }
 }

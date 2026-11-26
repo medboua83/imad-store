@@ -22,7 +22,7 @@ for (const width of [320, 390, 1440]) {
     await page.getByRole("button",{name:"إغلاق السلة",exact:true}).click();
     const view = page.getByRole("button",{name:"عرض السلة",exact:true});
     await expect(view).toBeEnabled();
-    await expect(page.locator(".purchase-price")).toContainText("230.00");
+    await expect(page.locator(".purchase-price")).toContainText("230,00");
     await view.press("Enter");
     await expect(bag.locator(".bag-quantity span")).toHaveText("1");
     await page.getByRole("button",{name:"إغلاق السلة",exact:true}).click();
@@ -36,7 +36,7 @@ for (const width of [320, 390, 1440]) {
     await expect(summary.locator("details")).toHaveCount(0);
     await expect(summary.locator(".bag-line-photo img")).toHaveJSProperty("src",image);
     await expect(summary.locator(".bag-line-detail")).toContainText("بني · مقاس موحد");
-    await expect(summary.locator(".bag-grand-total")).toContainText("275.00");
+    await expect(summary.locator(".bag-grand-total")).toContainText("275,00");
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("imad-store-cart")!).state.items);
     expect(saved.map((item: {variantId:string;quantity:number}) => [item.variantId,item.quantity])).toEqual([["999999999999999999999991",1]]);
     expect(saved[0].images).toEqual(["/images/catalogue-test/abaya.webp"]);

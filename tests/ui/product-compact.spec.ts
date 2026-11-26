@@ -49,7 +49,7 @@ for (const viewport of [
         await brown.click();
         await chooseSizeIfRequired(page);
         await page.getByRole("button", { name: "اختيار 3 قطع", exact: true }).click();
-        await expect(page.locator(".purchase-price")).toContainText("630.00");
+        await expect(page.locator(".purchase-price")).toContainText("630,00");
         await page.getByText("تفاصيل السعر والعروض", { exact: true }).click();
         await expect(page.getByLabel("تفصيل السعر حسب العروض", { exact: true })).toContainText(
             "1 × عرض 2 قطع",
@@ -63,7 +63,7 @@ for (const viewport of [
             expect(fixed!.y + fixed!.height).toBeLessThanOrEqual(viewport.height);
         }
         await buy.click();
-        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("630.00");
+        await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("630,00");
         await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
             true,

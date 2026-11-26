@@ -8,7 +8,7 @@ async function prepare(page: Page) {
   await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "اختيار قطعتين", exact: true }).click();
   await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
-  await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400.00");
+  await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("400,00");
   await page.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
   await page.goto("/checkout");
   await chooseSizeIfRequired(page);
@@ -25,7 +25,7 @@ for (const viewport of [{width:320,height:740}, {width:390,height:844}, {width:1
     const toggle = disclosure.locator(":scope > summary");
     if (viewport.width < 768) {
       await expect(disclosure).not.toHaveAttribute("open");
-      await expect(page.locator(".checkout-compact-total")).toContainText("400.00");
+      await expect(page.locator(".checkout-compact-total")).toContainText("400,00");
       const input = await page.getByLabel("الاسم الكامل").boundingBox();
       expect(input!.y + input!.height).toBeLessThan(viewport.height - 80);
       await page.screenshot({path:info.outputPath(`checkout-compact-${viewport.width}.png`)});
@@ -34,17 +34,17 @@ for (const viewport of [{width:320,height:740}, {width:390,height:844}, {width:1
     }
     await expect(disclosure).toHaveAttribute("open");
     await expect(disclosure.locator(".bag-grand-total")).toBeVisible();
-    await expect(disclosure.locator(".bag-grand-total")).toContainText("400.00");
+    await expect(disclosure.locator(".bag-grand-total")).toContainText("400,00");
     await expect(disclosure.locator("details")).toHaveCount(0);
     await expect(disclosure.locator(".bag-line")).toHaveCount(1);
     await expect(disclosure.locator(".bag-line-detail")).toContainText("أسود · 40");
     await disclosure.getByRole("button", {name:"تقليل كمية صابو تجريبي",exact:true}).click();
-    await expect(disclosure.locator(".bag-grand-total")).toContainText("230.00");
+    await expect(disclosure.locator(".bag-grand-total")).toContainText("230,00");
     await toggle.click();
-    await expect(page.locator(".checkout-compact-total")).toContainText("230.00");
+    await expect(page.locator(".checkout-compact-total")).toContainText("230,00");
     await page.reload();
     await chooseSizeIfRequired(page);
-    if (viewport.width < 768) await expect(page.locator(".checkout-compact-total")).toContainText("230.00");
+    if (viewport.width < 768) await expect(page.locator(".checkout-compact-total")).toContainText("230,00");
     else await expect(disclosure).toHaveAttribute("open");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(orders()).toBe(0);
@@ -60,7 +60,7 @@ test("A compact summary never advertises a total when delivery settings fail", a
   await page.reload();
   await chooseSizeIfRequired(page);
   await expect(page.locator(".checkout-compact-total")).toContainText("بانتظار رسوم التوصيل");
-  await expect(page.locator(".checkout-compact-total")).not.toContainText("400.00");
+  await expect(page.locator(".checkout-compact-total")).not.toContainText("400,00");
   await expect(page.getByRole("button", {name:"مراجعة الطلب",exact:true})).toBeDisabled();
   expect(orders()).toBe(0);
 });

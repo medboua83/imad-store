@@ -55,13 +55,13 @@ for (const width of [320, 390, 1440]) {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonical);
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", canonical);
     await page.getByRole("button", { name: "زيادة الكمية", exact: true }).click();
-    await expect(page.locator(".purchase-price")).toContainText("460.00");
+    await expect(page.locator(".purchase-price")).toContainText("460,00");
     await page.screenshot({ path: info.outputPath(`size-selected-${width}.png`) });
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     const cart = page.locator(".cart-dialog");
     await expect(cart).toContainText("بني · 44");
     await expect(cart.locator(".bag-quantity span")).toHaveText("2");
-    await expect(cart.locator(".bag-grand-total")).toContainText("460.00");
+    await expect(cart.locator(".bag-grand-total")).toContainText("460,00");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

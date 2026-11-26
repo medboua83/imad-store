@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import { BrandName } from "@/components/BrandingProvider";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -113,7 +115,7 @@ export function OrderReceipt({ order }: { order: AdminOrder }) {
                         .join(" · ")}
                     </p>
                     <p>
-                      {item.quantity} قطعة × <bdi>{item.unitPrice.toFixed(2)} MAD</bdi>
+                      {item.quantity} قطعة × <bdi>{formatStoreAmount(item.unitPrice)} MAD</bdi>
                     </p>
                     {item.variant?.sku && (
                       <small>
@@ -121,7 +123,7 @@ export function OrderReceipt({ order }: { order: AdminOrder }) {
                       </small>
                     )}
                   </div>
-                  <strong dir="ltr">{(item.quantity * item.unitPrice).toFixed(2)} MAD</strong>
+                  <strong dir="ltr">{formatStoreAmount((item.quantity * item.unitPrice))} MAD</strong>
                 </li>
               ))}
             </ul>
@@ -140,7 +142,7 @@ export function OrderReceipt({ order }: { order: AdminOrder }) {
               <dt>قيمة المنتجات</dt>
               <dd dir="ltr">
                 {subtotal !== null && Number.isFinite(subtotal)
-                  ? `${subtotal.toFixed(2)} MAD`
+                  ? `${formatStoreAmount(subtotal)} MAD`
                   : "—"}
               </dd>
             </div>
@@ -154,13 +156,13 @@ export function OrderReceipt({ order }: { order: AdminOrder }) {
                     مجاني <bdi>(0.00 MAD)</bdi>
                   </span>
                 ) : (
-                  <bdi>{fee.toFixed(2)} MAD</bdi>
+                  <bdi>{formatStoreAmount(fee)} MAD</bdi>
                 )}
               </dd>
             </div>
             <div className="order-receipt-total">
               <dt>الإجمالي شامل التوصيل</dt>
-              <dd dir="ltr">{order.totalAmount.toFixed(2)} MAD</dd>
+              <dd dir="ltr">{formatStoreAmount(order.totalAmount)} MAD</dd>
             </div>
           </dl>
           <p>الدفع عند الاستلام. المبلغ الإجمالي أعلاه يشمل رسوم التوصيل.</p>

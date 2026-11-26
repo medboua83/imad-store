@@ -83,7 +83,7 @@ for (const width of [320, 390, 1440])
       });
       await dialog.getByRole("button", { name: "حذف صابو تجريبي", exact: true }).click();
       if (mixed) {
-        await expect(dialog.locator(".bag-grand-total")).toContainText("95.00");
+        await expect(dialog.locator(".bag-grand-total")).toContainText("95,00");
         await expect(dialog.getByRole("link", { name: "متابعة الطلب", exact: true })).toBeVisible();
       } else {
         await expect(dialog.locator(".bag-empty")).toBeVisible();
@@ -91,8 +91,8 @@ for (const width of [320, 390, 1440])
       }
       await dialog.getByRole("button", { name: "إغلاق السلة", exact: true }).click();
       if (mixed) {
-        await expect(page.locator(".checkout-compact-total")).toContainText("95.00");
-        await expect(page.locator(".checkout-submit-bar strong")).toContainText("95.00");
+        await expect(page.locator(".checkout-compact-total")).toContainText("95,00");
+        await expect(page.locator(".checkout-submit-bar strong")).toContainText("95,00");
         await expect(page.getByRole("button", { name: "مراجعة الطلب", exact: true })).toBeEnabled();
       } else await expect(page.locator(".checkout-empty")).toBeVisible();
       expect(orders).toBe(0);

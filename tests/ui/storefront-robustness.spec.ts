@@ -87,7 +87,7 @@ test("A mixed saved basket preserves valid lines, gives a warning and survives r
   await expect(page.locator("main .cart-recovery-notice")).toBeVisible();
   await expect(
     page.locator(".checkout-order-summary .bag-grand-total, .checkout-summary .bag-grand-total"),
-  ).toContainText("230.00");
+  ).toContainText("230,00");
   await page.locator("main .cart-recovery-notice").getByRole("button").click();
   await expect(page.locator("main .cart-recovery-notice")).toHaveCount(0);
   await page.reload();
@@ -111,7 +111,7 @@ test("Browser storage being unavailable does not break a new basket", async ({ p
   await page.goto("/products/fixture-sabot");
   await chooseSizeIfRequired(page);
   await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
-  await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("230.00");
+  await expect(page.getByRole("dialog").locator(".bag-grand-total")).toContainText("230,00");
   expect(errors).toEqual([]);
 });
 for (const width of [390, 1440]) {

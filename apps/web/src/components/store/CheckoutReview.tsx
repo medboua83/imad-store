@@ -1,4 +1,6 @@
 "use client";
+import { formatStoreAmount } from "@/lib/store-money";
+
 import type { useShipping } from "@/hooks/useShipping";
 import type { CartItem } from "@/store/cart.store";
 import { CartTotals } from "./CartTotals";
@@ -56,7 +58,7 @@ export function CheckoutReview({
                                     0.000001
                                         ? "≈ "
                                         : ""}
-                                    {unitPrice.toFixed(2)} MAD
+                                    {formatStoreAmount(unitPrice)} MAD
                                 </span>{" "}
                                 {new Set(allocations.map((part) => part.unitPrice)).size > 1
                                     ? "متوسط القطعة"
@@ -66,14 +68,14 @@ export function CheckoutReview({
                                         {allocations
                                             .map(
                                                 (part) =>
-                                                    `${part.quantity} × ${part.unitPrice.toFixed(2)} MAD`,
+                                                    `${part.quantity} × ${formatStoreAmount(part.unitPrice)} MAD`,
                                             )
                                             .join(" + ")}
                                     </span>
                                 )}
                             </p>
                         </div>
-                        <strong dir="ltr">{total.toFixed(2)} MAD</strong>
+                        <strong dir="ltr">{formatStoreAmount(total)} MAD</strong>
                     </li>
                 ))}
             </ul>

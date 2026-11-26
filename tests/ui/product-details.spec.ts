@@ -29,7 +29,7 @@ for (const width of [390, 1440])
     await page.getByRole("button", { name: "إضافة إلى السلة", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText("بني · 44");
     await expect(page.getByRole("dialog")).toContainText("الأسعار والتوفر محدثان");
-    await expect(page.getByRole("dialog")).toContainText("230.00");
+    await expect(page.getByRole("dialog")).toContainText("230,00");
     await page.reload();
     await chooseSizeIfRequired(page);
     await expect(
@@ -50,8 +50,8 @@ test("Delivery and returns show configured fees and never invent missing deadlin
 }) => {
   await page.goto("/delivery");
   await chooseSizeIfRequired(page);
-  await expect(page.locator(".policy-page")).toContainText("45.00 MAD");
-  await expect(page.locator(".policy-page")).toContainText("500.00 MAD");
+  await expect(page.locator(".policy-page")).toContainText("45,00 MAD");
+  await expect(page.locator(".policy-page")).toContainText("500,00 MAD");
   await expect(page.locator(".policy-page")).toContainText("لم يُنشر أجل توصيل محدد بعد");
   await page.goto("/returns");
   await chooseSizeIfRequired(page);

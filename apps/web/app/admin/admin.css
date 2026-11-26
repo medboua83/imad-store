@@ -2264,3 +2264,14 @@
 .store-readiness-list a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: underline; margin-top: 8px; }
 .store-readiness-state { display: inline-block; border: 1px solid currentColor; border-radius: 30px; padding: 3px 10px; font-size: .85rem; color: #845811; background: #fff7e7; }
 .store-readiness-list [data-ready="true"] .store-readiness-state { color: #285c42; background: #eaf3ed; }
+
+/* Keep the detailed funnel available without pushing product performance down the page. */
+.admin-app .analytics-conversion-details > summary { min-height:44px; cursor:pointer; padding-block:8px; }
+.admin-app .analytics-conversion-details > summary h2 { display:inline; font-size:18px; line-height:1.5; }
+.admin-app .analytics-conversion-details > summary:focus-visible { outline:2px solid var(--admin-green); outline-offset:4px; }
+.admin-app .analytics-conversion-details[open] > summary { margin-bottom:12px; }
+.admin-app .analytics-conversion-content { min-width:0; }
+@media(max-width:767px) {
+ .admin-app .analytics-conversion-panel { padding:12px; }
+ .admin-app .analytics-conversion-details > summary h2 { font-size:15px; }
+}

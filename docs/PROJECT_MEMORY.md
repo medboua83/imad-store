@@ -1,3 +1,7 @@
+## Finition mobile et prix — 26 novembre 2026
+
+Candidat : contexte Femme/Homme conservé après effacement des critères, titre compact sur mobile, disponibilité explicitement libellée et contrôles tactiles à 320 px. Prix publics harmonisés par un formateur d’affichage seul ; ne pas localiser les nombres d’API, de paiements, de champs numériques ou des événements Meta. Statistiques : parcours détaillé repliable, réponses incomplètes rejetées, dernière lecture de même période conservée après échec. Photos et palette actuelles conservées, aucune migration ou modification de données commerciales. Guide docs/STOREFRONT_DISPLAY.md ; recettes/publication privées suivies dans outputs/mobile-delivery-finish-20261126. L’existence des fonctions ne vaut pas validation des e-mails réels, d’un coffre indépendant, des informations juridiques ou d’un vrai téléphone.
+
 ## Livraison autonome et bilan de préparation — 25 novembre 2026
 
 Candidat : profil autonome à trois arguments sans UUID CRM, propriétaire de boutique lié à une base vide et CRM bloqué dans ce mode ; variante CRM conservée. Migration 20261125230000_standalone_store rend seulement companyId nullable, sans modifier les identités existantes. La garde de base vide couvre aussi tous les registres POS. Premier administrateur transactionnel, nom propre, contacts sociaux/WhatsApp vides, aucun Pixel et confirmation sur le site en autonome. Ne pas transformer le mode d’une base remplie par simple changement d’environnement.
