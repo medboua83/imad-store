@@ -13,7 +13,7 @@ function bundle(output, root = path.resolve(__dirname, '..')) {
     const revision = git(['rev-parse','HEAD']).trim();
     // Archive only distributable source. No Git history, private environment, DB or local uploads.
     const paths = ['package.json','package-lock.json','.npmrc','.gitignore','server.js','turbo.json','tsconfig.json','scripts','apps/web','backend','packages','tests',
-        ...['STORE_INSTALLATION_KIT','MERCHANT_GUIDE','CLIENT_HANDOVER','RECOVERY_OPERATIONS','ADMIN_MFA','ADMIN_SESSIONS','STORE_BRANDING','CAISSE','COMMERCE_RULES','RESALE_DELIVERY','POSTGRESQL_NAMECHEAP_2026-11-06'].map(n => 'docs/'+n+'.md'),
+        ...['STORE_INSTALLATION_KIT','MERCHANT_GUIDE','CLIENT_HANDOVER','RECOVERY_OPERATIONS','ADMIN_MFA','ADMIN_SESSIONS','STORE_BRANDING','CAISSE','COMMERCE_RULES','RESALE_DELIVERY','FINAL_SETUP','STOREFRONT_DISPLAY','POSTGRESQL_NAMECHEAP_2026-11-06'].map(n => 'docs/'+n+'.md'),
         'docs/DEPENDENCY_LICENSES.json','README.md','LICENSE','THIRD_PARTY_NOTICES.md','DISTRIBUTION_RIGHTS.md'].filter(p => files.some(f => f === p || f.startsWith(p + '/')));
     const fd = fs.openSync(destination,'wx',0o600);
     try { execFileSync('git',['archive','--format=tar.gz','--prefix=boutique/','HEAD','--',...paths],{cwd:root,stdio:['ignore',fd,'pipe']}); }
