@@ -36,3 +36,10 @@ instruction, particularly physical-stock checks. A changed carrier incident
 requires a fresh review; a validated identity response supersedes an old
 reference-mismatch warning. Neither refresh nor this note-preservation change
 confirms COD payment, restores inventory, or creates another parcel.
+
+Missing pickup documents no longer freeze status checks: the scheduler reads
+the persisted parcel with GET only, retaining the document warning while pickup
+is pending. Once the carrier confirms collection or delivery progress, the
+parcel continues in tracking-only mode (or finishes if delivered). This does
+not regenerate or claim to recover the missing PDFs. Failed deliveries under
+review likewise use GET only, including when the local order was cancelled.

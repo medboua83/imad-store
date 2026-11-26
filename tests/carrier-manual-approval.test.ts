@@ -162,6 +162,56 @@ test('Repeated tracking preserves an unresolved physical-stock instruction witho
     await quiet();
 });
 
+test('Missing pickup PDFs do not freeze tracking or re-arm pickup after the carrier collects the existing parcel', async () => {
+    const order = await p.order.create({ data: { ...base, status: 'CONFIRMED', inventoryReserved: true } });
+    await p.olivraisonShipment.create({ data: { id: order.id, trackingId: 'TEST-PDF-RECOVERY', state: 'ATTENTION', carrierStatus: 'PICKUP', pickupAttempted: true, lastError: 'Ramassage créé, bordereaux à récupérer dans le compte Olivraison', nextAttemptAt: new Date(0) } });
+    const before = await protect();
+    const count = await p.olivraisonShipment.count();
+    const calls: string[] = [];
+    let status = 'PICKUP';
+    const read = async (path: string, method = 'GET') => {
+        calls.push(method + ' ' + path);
+        assert.equal(method, 'GET');
+        assert.equal(path, '/package/TEST-PDF-RECOVERY');
+        return { trackingID: 'TEST-PDF-RECOVERY', status };
+    };
+    await worker(read);
+    assert.equal((await p.olivraisonShipment.findUnique({ where: { id: order.id } })).state, 'ATTENTION');
+    assert.equal(await worker(read), false);
+    for (const next of ['PICKEDUP', 'CREATED', 'DELIVERED']) {
+        status = next;
+        await p.olivraisonShipment.update({ where: { id: order.id }, data: { nextAttemptAt: new Date(0) } });
+        await worker(read);
+        const saved = await p.olivraisonShipment.findUnique({ where: { id: order.id } });
+        assert.equal(saved.state, next === 'DELIVERED' ? 'DONE' : 'TRACKING_ONLY');
+        assert.equal(saved.lastError, null);
+        assert.equal(saved.pickupAttempted, true);
+    }
+    assert.equal((await p.order.findUnique({ where: { id: order.id } })).status, 'DELIVERED');
+    assert.equal(calls.length, 4);
+    assert.equal(await p.olivraisonShipment.count(), count);
+    assert.equal(await protect(), before);
+    await quiet();
+});
+
+test('A failed delivery of a locally cancelled order is still read without retrying remote shipment actions', async () => {
+    const order = await p.order.create({ data: { ...base, status: 'CANCELLED', inventoryReserved: true } });
+    await p.olivraisonShipment.create({ data: { id: order.id, trackingId: 'TEST-CANCEL-READ', state: 'ATTENTION', carrierStatus: 'CANCELED', nextAttemptAt: new Date(0) } });
+    const before = await protect();
+    const calls: string[] = [];
+    await worker(async (path: string, method = 'GET') => {
+        calls.push(method + ' ' + path);
+        assert.equal(method, 'GET');
+        return { trackingID: 'TEST-CANCEL-READ', status: 'RETURNED' };
+    });
+    const saved = await p.olivraisonShipment.findUnique({ where: { id: order.id } });
+    assert.equal(saved.carrierStatus, 'RETURNED');
+    assert.equal(saved.state, 'ATTENTION');
+    assert.deepEqual(calls, ['GET /package/TEST-CANCEL-READ']);
+    assert.equal(await protect(), before);
+    await quiet();
+});
+
 test('Cancelled orders, removed configuration and old history cannot be approved or backfilled', async () => {
     const { order } = await pair(18); await queue(order);
     await p.olivraisonIntegration.update({ where: { id: 'olivraison' }, data: { enabled: false } });
