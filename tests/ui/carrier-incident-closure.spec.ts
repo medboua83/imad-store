@@ -19,7 +19,7 @@ for(const width of [390,1440])for(const locale of ['fr','ar'] as const){
    const data=path==='/api/orders'?[order]:[];return route.fulfill({json:{success:true,data,total:data.length,scopeTotal:data.length,statusCounts:{PENDING:0,CONFIRMED:0,SHIPPED:0,DELIVERED:0,CANCELLED:data.length},page:1,totalPages:1,unread:0}});
   });
   await page.goto('/admin?tab=orders');await page.getByRole('button',{name:locale==='fr'?/Voir les détails/:/عرض التفاصيل/}).click();const dialog=page.getByRole('dialog');
-  await dialog.getByRole('button',{name:l.open,exact:true}).click();const reason=dialog.getByLabel(l.reason,{exact:true}),submit=dialog.getByRole('button',{name:l.submit,exact:true});
+  await dialog.getByRole('button',{name:l.open,exact:true}).click();const reason=dialog.getByLabel(l.reason,{exact:true}),submit=dialog.locator('.carrier-incident-form button[type="submit"]');
   await expect(reason).toBeFocused();await expect(submit).toBeDisabled();await reason.fill('          ');await expect(submit).toBeDisabled();
   const note='Contrôle documenté <b>sans mouvement</b> — aucune réintégration automatique.';await reason.fill('  '+note+'  ');await submit.dblclick();await expect.poll(()=>calls).toBe(1);await expect(submit).toBeDisabled();release();
   await expect(dialog.getByText(l.closed,{exact:true})).toBeVisible();await expect(dialog.getByText(l.payment,{exact:true})).toBeVisible();
