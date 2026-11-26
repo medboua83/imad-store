@@ -5,6 +5,8 @@ import { encryptDeskcommValue } from "../lib/deskcomm-config";
 import { configuredClient } from "../lib/olivraison";
 import { CarrierError } from "../lib/olivraison-api";
 import { AppError } from "../middleware/error.middleware";
+import { carrierIncidentFingerprint, withCarrierIncidentSummaries } from "../lib/carrier-incident-closure";
+import { Prisma } from "@prisma/client";
 
 const pickupSchema = z.object({
   streetAddress: z.string().trim().min(3).max(124),
@@ -114,19 +116,32 @@ export async function listOlivraisonShipments(_req: Request, res: Response) {
       stickerUrl: true,
       slipUrl: true,
       updatedAt: true,
+      incidentVersion: true,
     },
   });
-  res.json({ data: rows });
+  res.setHeader("Cache-Control", "private, no-store");
+  // Settings viewers see acknowledgement state, not private order-control notes.
+  const decorated = await withCarrierIncidentSummaries(prisma, rows);
+  res.json({ data: decorated.map(row => ({ ...row,
+    ...(row.incidentClosure ? { incidentClosure: { fingerprint: row.incidentClosure.fingerprint } } : {}),
+  })) });
 }
 export async function retryOlivraisonShipment(req: Request, res: Response) {
   // Wake up transient failures. ATTENTION requires reconciliation, never a forced duplicate pickup.
-  const result = await prisma.olivraisonShipment.updateMany({
+  const result = await prisma.$transaction(async tx => {
+    await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "olivraison_shipments" WHERE "id" = ${req.params.id} FOR UPDATE`);
+    const shipment = await tx.olivraisonShipment.findUnique({ where: { id: req.params.id } });
+    const fingerprint = shipment && carrierIncidentFingerprint(shipment);
+    if (fingerprint && await tx.carrierIncidentClosure.findUnique({ where: { orderId_fingerprint: { orderId: req.params.id, fingerprint } } }))
+      throw new AppError("Incident clôturé : consultez la commande pour actualiser le suivi.", 409);
+    return tx.olivraisonShipment.updateMany({
     where: {
       id: req.params.id,
       state: { in: ["RETRY", "ACTIVE", "ATTENTION"] },
       lockedUntil: { lte: new Date() },
     },
     data: { state: "RETRY", nextAttemptAt: new Date() },
+    });
   });
   if (!result.count)
     throw new AppError("Colis à vérifier manuellement dans Olivraison avant reprise", 409);

@@ -30,6 +30,8 @@ Le repère d'annulations antérieures concerne le numéro de téléphone. Une va
 
 En cas d'envoi au résultat incertain, consulter le suivi et le compte transporteur avant toute nouvelle création. Ne pas dupliquer le colis pour faire disparaître une alerte. Les incidents sont signalés dans le bilan des réglages ; ce bilan ne relance aucun envoi.
 
+Après un contrôle réel, le bouton **Clôturer l’incident sans mouvement de stock**, dans la fiche commande, permet de documenter le motif, l’auteur et la date sans modifier le paiement ni les quantités. Une nouvelle situation de suivi réouvre l’alerte. Voir le [guide de clôture des incidents](CARRIER_INCIDENT_CLOSURE.md).
+
 ## Caisse
 
 Chaque caissier ouvre sa propre session avec le fond initial, choisit la bonne variante et vérifie le récapitulatif avant d'encaisser. Un paiement par carte correspond à un encaissement déjà réalisé sur un terminal externe, pas à une transaction bancaire effectuée par ce site.

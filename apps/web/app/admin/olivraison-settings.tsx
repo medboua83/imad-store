@@ -1,5 +1,6 @@
 "use client";
 import { useAdminLocale } from "./admin-locale";
+import { useAdminPermission } from "./admin-access";
 
 import { useEffect, useId, useRef, useState } from "react";
 import {
@@ -19,6 +20,7 @@ const cityRows = (mapping: Record<string, string>): CityRow[] =>
 
 export function OlivraisonSettings({ active = true }: { active?: boolean }) {
     const { t } = useAdminLocale();
+    const canReadOrders = useAdminPermission("orders.read");
     const [config, setConfig] = useState<OlivraisonConfig | null>(null);
     const [savedConfig, setSavedConfig] = useState<OlivraisonConfig | null>(null);
     const [shipments, setShipments] = useState<OlivraisonShipment[]>([]);
@@ -481,7 +483,7 @@ export function OlivraisonSettings({ active = true }: { active?: boolean }) {
                                     QUEUED: "En file",
                                     ACTIVE: "Suivi automatique",
                                     RETRY: "Nouvelle tentative prévue",
-                                    ATTENTION: "À vérifier",
+                                    ATTENTION: s.incidentClosure?.fingerprint === s.incidentFingerprint && s.incidentFingerprint ? t("Incident clôturé sans mouvement de stock") : "À vérifier",
                                     DONE: "Terminé",
                                     DISCONNECTED: "Suivi retiré",
                                 } as Record<string, string>
@@ -500,7 +502,10 @@ export function OlivraisonSettings({ active = true }: { active?: boolean }) {
                                 </a>
                             )}
                         </p>
-                        {["ACTIVE", "RETRY", "ATTENTION"].includes(s.state) && (
+                        {s.state === "ATTENTION" && canReadOrders && <p><a href={`/admin?tab=orders&order=${encodeURIComponent(s.id)}`}>
+                            {t("Voir la commande et l’historique")}
+                        </a></p>}
+                        {["ACTIVE", "RETRY", "ATTENTION"].includes(s.state) && !(s.incidentFingerprint && s.incidentClosure?.fingerprint === s.incidentFingerprint) && (
                             <button
                                 className="admin-button"
                                 disabled={busy}

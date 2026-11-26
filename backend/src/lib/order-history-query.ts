@@ -2,6 +2,7 @@ import { orderSearchReference, orderSearchPhone, orderTrackingFilters, attention
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { paginationSchema, statusSchema } from "./validation";
+import { unclosedCarrierIncidentSql } from "./carrier-incident-closure";
 
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
     const date = new Date(value + "T00:00:00Z");
@@ -58,7 +59,8 @@ export function orderHistoryWhere(q: z.infer<typeof orderHistoryQuery>) {
                     OR coalesce(tracking."lastError", '') <> ''
                     OR tracking."carrierStatus" IN (${Prisma.join([...attentionDeliveryStatuses])})
                     OR (coalesce(tracking."carrierStatus", '') <> '' AND tracking."carrierStatus" NOT IN (${Prisma.join(Object.keys(olivraisonStatusLabels).filter(status => !carrierNeedsReview(status)))})))`;
-            parts.push(Prisma.sql`EXISTS (SELECT 1 FROM "olivraison_shipments" tracking WHERE tracking."id" = "orders"."id" AND ${condition})`);
+            const unclosed = q.tracking === "ATTENTION" ? Prisma.sql`AND ${unclosedCarrierIncidentSql("tracking")}` : Prisma.empty;
+            parts.push(Prisma.sql`EXISTS (SELECT 1 FROM "olivraison_shipments" tracking WHERE tracking."id" = "orders"."id" AND ${condition} ${unclosed})`);
         }
     }
     if (q.search) {

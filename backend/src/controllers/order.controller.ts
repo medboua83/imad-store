@@ -1,4 +1,5 @@
 import { approveCarrierDispatch } from "../lib/carrier-approval";
+import { closeCarrierIncident, closeCarrierIncidentSchema, carrierIncidentClosureDto, withCarrierIncidentSummaries } from "../lib/carrier-incident-closure";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { Prisma } from "@prisma/client";
 import { orderHistoryQuery, orderHistoryWhere, orderHistorySort, orderExportQuery } from "../lib/order-history-query";
@@ -489,9 +490,9 @@ export async function listOrders(req: Request, res: Response) {
         const rows = new Map(orders.map(order => [order.id, order]));
         const shipments = ids.length ? await tx.olivraisonShipment.findMany({
             where: { id: { in: ids.map(row => row.id) } },
-            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true, incidentVersion: true },
         }) : [];
-        const tracking = new Map(shipments.map(shipment => [shipment.id, shipment]));
+        const tracking = new Map((await withCarrierIncidentSummaries(tx, shipments)).map(shipment => [shipment.id, shipment]));
         const summaries = await customerHistorySummaries(tx, ids.map(row => row.id));
         const blacklist = await customerBlacklistSummaries(tx, ids.map(row => row.id));
         return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id), customerBlacklist: blacklist.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
@@ -537,11 +538,12 @@ export async function getAdminOrder(req: Request, res: Response) {
         if (!order) throw new AppError("Commande introuvable", 404);
         const shipment = await tx.olivraisonShipment.findUnique({
             where: { id: order.id },
-            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true },
+            select: { id: true, trackingId: true, carrierStatus: true, state: true, lastError: true, lastSyncedAt: true, approvedAt: true, incidentVersion: true },
         });
         const summaries = await customerHistorySummaries(tx, [order.id]);
         const blacklist = await customerBlacklistSummaries(tx, [order.id]);
-        return { ...order, shipment, customerHistory: summaries.get(order.id), customerBlacklist: blacklist.get(order.id) };
+        const decorated = shipment ? (await withCarrierIncidentSummaries(tx, [shipment], true))[0] : null;
+        return { ...order, shipment: decorated, customerHistory: summaries.get(order.id), customerBlacklist: blacklist.get(order.id) };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, data });
@@ -570,6 +572,30 @@ export async function syncOrderCarrierStatus(req: Request, res: Response) {
         if (error instanceof CarrierError) throw new AppError(error.reason, 502);
         throw error;
     }
+}
+
+export async function closeOrderCarrierIncident(req: AuthRequest, res: Response) {
+    const input = closeCarrierIncidentSchema.parse(req.body);
+    const data = await closeCarrierIncident(req.params.id, req.user!.id, req.user!.authVersion, input);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ success: true, data });
+}
+
+export async function getCarrierIncidentHistory(req: Request, res: Response) {
+    const { before } = z.object({ before: z.string().regex(/^[a-f0-9]{24}$/).optional() }).strict().parse(req.query);
+    const data = await prisma.$transaction(async tx => {
+        if (!await tx.order.findUnique({ where: { id: req.params.id }, select: { id: true } })) throw new AppError("Commande introuvable", 404);
+        const cursor = before ? await tx.carrierIncidentClosure.findFirst({ where: { id: before, orderId: req.params.id } }) : null;
+        if (before && !cursor) throw new AppError("Historique indisponible. Actualisez la fiche.", 400);
+        const rows = await tx.carrierIncidentClosure.findMany({
+            where: { orderId: req.params.id, ...(cursor ? { OR: [
+                { closedAt: { lt: cursor.closedAt } }, { closedAt: cursor.closedAt, id: { lt: cursor.id } },
+            ] } : {}) }, orderBy: [{ closedAt: "desc" }, { id: "desc" }], take: 21,
+        });
+        return { items: rows.slice(0, 20).map(carrierIncidentClosureDto), nextCursor: rows.length > 20 ? rows[19].id : null };
+    }, { isolationLevel: "RepeatableRead" });
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ success: true, data });
 }
 
 export async function updateOrderStatus(req: Request, res: Response) {

@@ -1,3 +1,9 @@
+## Clôture administrative des incidents transporteur — 26 novembre 2026
+
+Candidat : bouton dans la fiche commande, motif obligatoire, auteur/date et historique privé paginé. Clôture de la seule version observée, dédupliquée, sans modification des commandes, paiements, montants, stock, réservations ou colis et sans appel externe. Les changements de statut/erreur/colis réouvrent l’alerte, y compris après un cycle ; les dates de suivi et les verrous ne la réouvrent pas. Reprise des incidents non terminaux par GET uniquement. Droits orders.read + orders.write ; historique réservé à orders.read ; aucun motif exposé publiquement ou aux seuls réglages.
+
+Migration additive 20261126180000_carrier_incident_closures : table vide d’audit, compteur incidentVersion du suivi et déclencheur de version. Aucun incident réel ne doit être clôturé pendant la recette sans contrôle marchand. Guide docs/CARRIER_INCIDENT_CLOSURE.md ; tests et publication privées dans outputs/carrier-incident-closure-20261126. Candidat en cours de tests, non publié à cette note.
+
 ## Incidents du bilan et permissions — 26 novembre 2026
 
 Candidat : origine des incidents détaillée en lecture seule (colis à vérifier, CRM et e-mails d’accès), liens limités aux rubriques autorisées et absence d’alertes pour les sources sans incident. Une réponse aux compteurs manquants, négatifs ou incompatibles avec le contrôle intégrations est rejetée en conservant le dernier bilan. Le texte de configuration Olivraison décrit le suivi existant à trente secondes, les délais possibles et la validation manuelle des numéros signalés. Aucun changement du suivi, des envois, des permissions serveur, des paiements ou du stock. Recette/publication privées : outputs/admin-readiness-incidents-20261126 sur DATA.

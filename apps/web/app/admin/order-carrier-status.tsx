@@ -4,11 +4,13 @@ import { Truck } from "lucide-react";
 import { type AdminOrder } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
 import { orderDate } from "./order-utils";
+import { CarrierIncidentPanel } from "./carrier-incident-panel";
 
-export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
+export function OrderCarrierStatus({ order, onSync, onApprove, onClose, busy = false }: {
     order: AdminOrder;
     onSync?: () => void;
     onApprove?: () => void;
+    onClose?: (fingerprint: string, reason: string) => Promise<boolean>;
     busy?: boolean;
 }) {
     const { t, locale } = useAdminLocale();
@@ -21,6 +23,7 @@ export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
         <p>{t("L’envoi est bloqué à cause des anciennes annulations associées au numéro. Vérifiez l’historique avant d’autoriser cette commande.")}</p>
         <p>{t("Aucun colis créé pour cette demande en attente.")}</p>
         {onApprove && order.status === "CONFIRMED" && <button type="button" className="admin-button" disabled={busy} onClick={onApprove}>{t("Autoriser l’envoi à Olivraison")}</button>}
+        <CarrierIncidentPanel key={order.id} shipment={shipment} busy={busy} />
     </section>;
     const status = shipment.carrierStatus;
     const attention = orderTrackingMatches(shipment, "ATTENTION");
@@ -37,5 +40,6 @@ export function OrderCarrierStatus({ order, onSync, onApprove, busy = false }: {
         {onSync && shipment.trackingId && !disconnected && <button type="button" className="admin-button" disabled={busy} onClick={onSync}>
             {busy ? t("Vérification…") : t("Vérifier chez Olivraison")}
         </button>}
+        <CarrierIncidentPanel key={order.id} shipment={shipment} onClose={onClose} busy={busy} />
     </section>;
 }

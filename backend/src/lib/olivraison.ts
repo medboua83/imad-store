@@ -119,11 +119,11 @@ export async function processOlivraisonQueue(injected?: CarrierRequest) {
         { state: { in: ["QUEUED", "ACTIVE", "RETRY", "TRACKING_ONLY"] } },
         // Recover existing parcels blocked by the old optional-reference check, using GET only.
         { state: "ATTENTION", trackingId: { not: null }, lastError: CARRIER_REFERENCE_MISMATCH },
-        // An unsuccessful delivery can later become RETURNED. Continue reading that parcel.
-        { state: "ATTENTION", trackingId: { not: null }, carrierStatus: { in: ["CANCELED", "CANCELLED"] } },
-        // Missing pickup PDFs must not freeze the tracking of an existing parcel.
-        { state: "ATTENTION", trackingId: { not: null }, carrierStatus: "PICKUP", pickupAttempted: true,
-          lastError: { in: missingPickupDocumentMessages } },
+        // Keep non-terminal incidents (including a return in transit) observable.
+        // Acknowledging an alert never re-arms a parcel action or stops tracking.
+        { state: "ATTENTION", trackingId: { not: null }, OR: [
+          { carrierStatus: { notIn: [...terminal] } }, { carrierStatus: null },
+        ] },
       ],
       nextAttemptAt: { lte: now },
       lockedUntil: { lte: now },
