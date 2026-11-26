@@ -1,6 +1,14 @@
 import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    "Origine des incidents": "مصدر المشكلات",
+    "Colis à vérifier : {count}": "طرود تحتاج إلى مراجعة: {count}",
+    "Envois CRM en échec : {count}": "عمليات إرسال إلى CRM فشلت: {count}",
+    "E-mails d’accès en échec : {count}": "رسائل الوصول التي فشل إرسالها: {count}",
+    "Voir le suivi Olivraison": "عرض تتبع Olivraison",
+    "Ouvrir la connexion CRM": "فتح اتصال CRM",
+    "Ouvrir E-mails et SMTP": "فتح البريد وإعدادات SMTP",
+    "Un administrateur peut ouvrir ce réglage.": "يمكن للمسؤول فتح هذا الإعداد.",
     "Points à terminer": "نقاط غير مكتملة",
     "Contrôles satisfaits": "الفحوصات المكتملة",
     "Contrôles satisfaits ({count})": "الفحوصات المكتملة ({count})",
@@ -737,8 +745,8 @@ export const adminArabic: Record<string, string> = {
     "Les cinq dernières demandes reçues.": "آخر خمسة طلبات مستلمة.",
     "Les confirmées incluent les expédiées et livrées. Ce sont les états enregistrés sur la boutique, pas une preuve de paiement. Le suivi détaillé démarre à cette mise à jour ;":
         "تشمل الطلبات المؤكدة الطلبات المشحونة والمسلّمة. هذه هي الحالات المسجلة في المتجر وليست إثباتاً للدفع. يبدأ التتبع التفصيلي من هذا التحديث؛",
-    "Les nouvelles commandes confirmées sont envoyées automatiquement : création du colis, confirmation et suivi toutes les cinq minutes environ. Aucune ancienne commande n’est envoyée.":
-        "تُرسل الطلبات الجديدة المؤكدة تلقائياً: إنشاء الطرد وتأكيده وتحديث تتبعه كل خمس دقائق تقريباً. لا تُرسل الطلبات السابقة.",
+    "Si l’automatisation est activée, les nouvelles commandes confirmées éligibles sont envoyées à Olivraison. Les numéros sur liste de contrôle restent soumis à une validation manuelle. Le suivi des colis actifs est relu environ toutes les 30 secondes ; les délais du transporteur et les reprises après erreur peuvent l’allonger.":
+        "عند تفعيل الأتمتة، تُرسل الطلبات الجديدة المؤكدة والمؤهلة إلى Olivraison. تظل الأرقام المدرجة في قائمة المراجعة خاضعة للموافقة اليدوية. تُراجع حالة الطرود النشطة كل 30 ثانية تقريباً؛ وقد تطول المدة بسبب استجابة الناقل أو إعادة المحاولة بعد خطأ.",
     "Les oppositions des clients et les prises en charge par l’équipe restent respectées. Désactiver bloque les demandes encore en attente d’envoi ; les conversations déjà ouvertes se gèrent dans le CRM.":
         "تُحترم طلبات الإيقاف من العملاء وتدخلات الفريق. يمنع التعطيل طلبات المساعدة التي ما زالت تنتظر الإرسال؛ وتُدار المحادثات المفتوحة من CRM.",
     "Les premières visites apparaîtront ici": "ستظهر الزيارات الأولى هنا",

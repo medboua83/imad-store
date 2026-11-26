@@ -1,3 +1,7 @@
+## Incidents du bilan et permissions — 26 novembre 2026
+
+Candidat : origine des incidents détaillée en lecture seule (colis à vérifier, CRM et e-mails d’accès), liens limités aux rubriques autorisées et absence d’alertes pour les sources sans incident. Une réponse aux compteurs manquants, négatifs ou incompatibles avec le contrôle intégrations est rejetée en conservant le dernier bilan. Le texte de configuration Olivraison décrit le suivi existant à trente secondes, les délais possibles et la validation manuelle des numéros signalés. Aucun changement du suivi, des envois, des permissions serveur, des paiements ou du stock. Recette/publication privées : outputs/admin-readiness-incidents-20261126 sur DATA.
+
 ## Bilan de préparation et raccourci SMTP — 26 novembre 2026
 
 Candidat : points non satisfaits affichés en premier, contrôles satisfaits dans un volet natif repliable, heure de lecture française/arabe fournie par le serveur selon Africa/Casablanca pour éviter les règles horaires périmées de certains appareils et refus des rapports aux identifiants dupliqués ou au décompte incohérent. Le raccourci SMTP administrateur vise E-mails et SMTP, sans donner de lien aux collaborateurs non administrateurs. Aucune validation commerciale, relance ou écriture de commande, paiement, stock ou connexion par ce bilan. Recettes et publication : outputs/admin-readiness-navigation-20261126 sur DATA.
