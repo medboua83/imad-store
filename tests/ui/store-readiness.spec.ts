@@ -4,21 +4,24 @@ const checks=[
  {id:'identity',label:'Coordonnées publiques',detail:'Vérifiez le nom, l’e-mail, le téléphone et l’adresse de votre boutique.',href:'/admin?tab=commerce#branding-settings'},
  {id:'policies',label:'Informations et conditions commerciales',detail:'Les coordonnées juridiques et les trois textes doivent être complétés et validés par le marchand.',href:'/admin?tab=content'},
  {id:'delivery',label:'Livraison et retours',detail:'Définissez les délais et la prise en charge des frais de retour. Les tarifs ne sont pas modifiés par ce contrôle.',href:'/admin?tab=commerce#shipping-settings'},
- {id:'mail',label:'Connexion SMTP enregistrée',detail:'Une configuration enregistrée ne prouve pas la réception des e-mails. Effectuez un essai de réception avant livraison.',href:'/admin?tab=team'},
+ {id:'mail',label:'Connexion SMTP enregistrée',detail:'Une configuration enregistrée ne prouve pas la réception des e-mails. Effectuez un essai de réception avant livraison.',href:'/admin?tab=mail'},
  {id:'mfa',label:'Double authentification de votre compte',detail:'Activez votre application d’authentification et conservez vos codes de secours séparément.',href:'/admin?tab=account'},
  {id:'backup',label:'Sauvegarde hors serveur vérifiée',detail:'Le reçu d’une restauration réussie doit dater de moins de 36 heures. Sans reçu, le contrôle reste à terminer.',href:null},
  {id:'integrations',label:'Incidents d’envoi',detail:'Consultez les commandes et les connexions lorsqu’un envoi échoue. Aucune relance n’est effectuée ici.',href:'/admin?tab=orders'},
 ];
 async function fixture(context:BrowserContext){
- const c={fail:false,invalid:false,reads:0,writes:[] as string[]};
+ const c={fail:false,invalid:false,allReady:false,mismatchedCount:false,duplicate:false,reads:0,writes:[] as string[]};
  await context.setExtraHTTPHeaders({DNT:'1'});await context.route('**/*facebook*',route=>route.abort());
  await context.route('**/api/**',async route=>{
   const req=route.request(),path=new URL(req.url()).pathname;
   if(req.method()!=='GET'){c.writes.push(path);return route.fulfill({status:405})}
   if(path.startsWith('/api/auth/'))return route.fulfill({json:{success:true,data:{mode:'cookie',identity}}});
   if(path==='/api/settings/readiness'){
-   c.reads++;return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',completed:1,total:7,checks:checks.map(x=>({...x,ready:x.id==='integrations'}))}}});
+   c.reads++;const rows=checks.map(x=>({...x,ready:c.allReady||x.id==='integrations'}));
+   if(c.duplicate)rows[1].id=rows[0].id;
+   return route.fulfill({status:c.fail?503:200,json:{success:true,data:c.invalid?{checkedAt:'invalid',checks:[]}:{checkedAt:'2026-11-25T12:00:00Z',completed:c.allReady||c.mismatchedCount?7:1,total:7,checks:rows}}});
   }
+  if(path==='/api/team/gmail')return route.fulfill({json:{success:true,data:{enabled:false,hasPassword:false,gmailUser:'',port:465,revision:0}}});
   if(path==='/api/settings/branding')return route.fulfill({json:{success:true,data:{revision:0,branding:{name:'IMAD Mode',logoUrl:'',darkLogoUrl:'',primaryColor:'#78551f',accentColor:'#e7cf97',backgroundColor:'#fcfaf6',contactEmail:'',contactPhone:'',contactAddress:''}}}});
   if(['/api/categories','/api/content','/api/settings','/api/products'].includes(path))return route.fallback();
   return route.fulfill({json:{success:true,data:[],total:0,totalPages:1,unread:0}});
@@ -31,6 +34,11 @@ for(const width of [320,768,1440])for(const ar of [false,true])test(`Read-only r
  if(ar)await page.getByRole('combobox',{name:'Langue de l’administration / لغة لوحة الإدارة'}).selectOption('ar');
  await expect(section).toContainText(ar?'تجهيز المتجر':'Préparation de la boutique');
  await expect(section.locator('[data-ready="false"]')).toHaveCount(6);await expect(section.locator('[data-ready="true"]')).toHaveCount(1);
+  await expect(section.getByRole('listitem')).toHaveCount(6);
+  const summary=section.locator('summary');await expect(summary).toHaveText(ar?'الفحوصات المكتملة (1)':'Contrôles satisfaits (1)');
+  expect(await summary.evaluate(e=>e.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await summary.focus();await summary.press('Enter');await expect(section.getByRole('listitem')).toHaveCount(7);
+  await summary.press('Enter');await expect(section.getByRole('listitem')).toHaveCount(6);
  await expect(section).toContainText(ar?'ليست شهادة قانونية':'n’est pas une certification juridique');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await section.screenshot({path:info.outputPath('readiness.png')});expect(c.writes).toEqual([]);
@@ -44,6 +52,29 @@ test('Read failure retains the last dated report and retry never publishes a set
 });
 test('Malformed response cannot display successful readiness',async({page,context})=>{
  const c=await fixture(context);c.invalid=true;await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('alert')).toBeVisible();await expect(section.locator('li')).toHaveCount(0);expect(c.writes).toEqual([]);
+});
+for(const mismatch of ['count','duplicate'])test(`Inconsistent ${mismatch} cannot replace a previously dated report`,async({page,context})=>{
+ const c=await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');await expect(section.getByRole('listitem')).toHaveCount(6);
+ c.mismatchedCount=mismatch==='count';c.duplicate=mismatch==='duplicate';await section.getByRole('button',{name:'Actualiser le bilan'}).click();
+ await expect(section.getByRole('alert')).toBeVisible();await expect(section).toContainText('1 / 7');await expect(section.getByRole('listitem')).toHaveCount(6);expect(c.writes).toEqual([]);
+});
+for(const width of [390,1440])test(`SMTP shortcut reaches the mail settings ${width}px`,async({page,context})=>{
+ await page.setViewportSize({width,height:900});const c=await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');
+ await page.locator('#store-readiness').getByRole('link',{name:'Ouvrir le réglage — Connexion SMTP enregistrée'}).click();
+ await expect(page).toHaveURL(/\/admin\?tab=mail$/);await expect(page.getByRole('heading',{name:'E-mails et SMTP',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Gmail SMTP',exact:true})).toBeVisible();expect(c.writes).toEqual([]);
+});
+test('All satisfied checks remain accessible without an empty action list',async({page,context})=>{
+ const c=await fixture(context);c.allReady=true;await page.goto('/admin?tab=commerce#store-readiness');const section=page.locator('#store-readiness');
+ await expect(section.getByRole('status')).toHaveText('Aucune action indiquée par ce bilan.');await expect(section.getByRole('listitem')).toHaveCount(0);
+ await section.locator('summary').click();await expect(section.getByRole('listitem')).toHaveCount(7);expect(c.writes).toEqual([]);
+});
+test.describe('Readiness clock',()=>{
+ test.use({timezoneId:'America/Los_Angeles'});
+ test('The reading time stays in Morocco even on a device set to another timezone',async({page,context})=>{
+  await fixture(context);await page.goto('/admin?tab=commerce#store-readiness');const time=page.locator('#store-readiness time');
+  await expect(time).toContainText('13:00');await expect(time).toHaveAttribute('datetime','2026-11-25T12:00:00Z');await expect(time).toHaveAttribute('title','Heure du Maroc');
+ });
 });
 for(const width of [390,1440])test(`Standalone CRM stays unavailable with a clear explanation ${width}px`,async({page,context})=>{
  await page.setViewportSize({width,height:900});const c=await fixture(context);

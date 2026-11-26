@@ -1,6 +1,11 @@
 import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    "Points à terminer": "نقاط غير مكتملة",
+    "Contrôles satisfaits": "الفحوصات المكتملة",
+    "Contrôles satisfaits ({count})": "الفحوصات المكتملة ({count})",
+    "Aucune action indiquée par ce bilan.": "لا تشير هذه المراجعة إلى إجراء مطلوب.",
+    "Heure du Maroc": "توقيت المغرب",
     "Préparation de la boutique": "تجهيز المتجر",
     "Un bilan en lecture seule. Aucun réglage ni envoi n’est modifié.": "مراجعة للقراءة فقط دون تغيير الإعدادات أو إرسال أي شيء.",
     "Actualiser le bilan": "تحديث المراجعة",

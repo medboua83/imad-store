@@ -66,7 +66,7 @@ export async function readStoreReadiness(userId: string, isAdmin: boolean) {
         { id: "delivery", ready: !!settings?.deliveryMaxDays && !!settings?.returnWindowDays && !!settings?.returnFeePayer, label: "Livraison et retours",
             detail: "Définissez les délais et la prise en charge des frais de retour. Les tarifs ne sont pas modifiés par ce contrôle.", href: "/admin?tab=commerce#shipping-settings" },
         { id: "mail", ready: mailConfigured, label: "Connexion SMTP enregistrée",
-            detail: "Une configuration enregistrée ne prouve pas la réception des e-mails. Effectuez un essai de réception avant livraison.", href: isAdmin ? "/admin?tab=team" : null },
+            detail: "Une configuration enregistrée ne prouve pas la réception des e-mails. Effectuez un essai de réception avant livraison.", href: isAdmin ? "/admin?tab=mail" : null },
         { id: "mfa", ready: !!mfa?.enabledAt, label: "Double authentification de votre compte",
             detail: "Activez votre application d’authentification et conservez vos codes de secours séparément.", href: "/admin?tab=account" },
         { id: "backup", ready: backup.fresh, label: "Sauvegarde hors serveur vérifiée",
