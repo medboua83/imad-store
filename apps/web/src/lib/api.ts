@@ -380,6 +380,29 @@ export const requestPasswordReset = async (email: string) => (await api.post("/a
 export const submitPasswordReset = async (token: string, password: string) => (await api.post("/auth/reset-password", { token, password }, { timeout: 30000 })).data;
 export const changeOwnPassword = async (currentPassword: string, password: string) => (await api.post("/auth/change-password", { currentPassword, password }, { timeout: 30000 })).data;
 
+export interface BrowserSessionMetadata { id: string; createdAt: string; expiresAt: string }
+export interface OwnBrowserSessions { current: BrowserSessionMetadata; others: BrowserSessionMetadata[]; nextCursor: string | null; mfaEnabled: boolean }
+export async function readOwnBrowserSessions(before?: string, signal?: AbortSignal): Promise<OwnBrowserSessions> {
+    const { data } = await api.get("/auth/sessions", { params: { before }, signal });
+    const result = data?.data;
+    const valid = (row: BrowserSessionMetadata) => row && /^[a-f0-9]{24}$/.test(row.id)
+        && typeof row.createdAt === "string" && typeof row.expiresAt === "string"
+        && Number.isFinite(Date.parse(row.createdAt)) && Date.parse(row.expiresAt) > Date.parse(row.createdAt)
+        && Object.keys(row).sort().join(",") === "createdAt,expiresAt,id";
+    if (data?.success !== true || !result || !valid(result.current) || !Array.isArray(result.others) || result.others.length > 20
+        || !result.others.every((row: BrowserSessionMetadata) => valid(row) && row.id !== result.current.id)
+        || new Set(result.others.map((row: BrowserSessionMetadata) => row.id)).size !== result.others.length
+        || !(result.nextCursor === null || typeof result.nextCursor === "string" && /^[a-f0-9]{24}$/.test(result.nextCursor))
+        || typeof result.mfaEnabled !== "boolean") throw new Error("Liste des sessions indisponible. Actualisez-la.");
+    return result;
+}
+export async function closeOtherBrowserSessions(currentPassword: string, code?: string): Promise<{ closed: number; currentSessionKept: true }> {
+    const { data } = await api.post("/auth/sessions/close-others", { currentPassword, ...(code ? { code } : {}) }, { timeout: 30000 });
+    if (data?.success !== true || data.data?.currentSessionKept !== true || !Number.isSafeInteger(data.data.closed) || data.data.closed < 0)
+        throw new Error("Déconnexion non confirmée. Relisez vos sessions avant de réessayer.");
+    return data.data;
+}
+
 export interface AdminNotification {
     id: string;
     type: string;

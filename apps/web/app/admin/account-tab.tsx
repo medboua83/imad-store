@@ -4,11 +4,12 @@ import { isAxiosError } from "axios";
 import { changeOwnPassword, clearAdminSession } from "@/lib/api";
 import { useAdminLocale } from "./admin-locale";
 import MfaSettings from "./mfa-settings";
+import SessionSettings from "./session-settings";
 export default function AccountTab() {
     const { t } = useAdminLocale();
     const [current, setCurrent] = useState(""), [password, setPassword] = useState(""), [repeat, setRepeat] = useState("");
     const [busy, setBusy] = useState(false), [error, setError] = useState(""); const lock = useRef(false);
-    return <><MfaSettings /><section className="admin-panel"><h2>{t("Changer mon mot de passe")}</h2>
+    return <><MfaSettings /><SessionSettings /><section className="admin-panel"><h2>{t("Changer mon mot de passe")}</h2>
         <p className="admin-scope">{t("Après modification, toutes vos sessions seront fermées. Reconnectez-vous avec le nouveau mot de passe.")}</p>
         <form className="team-settings-form" onSubmit={async e => {
             e.preventDefault(); if (lock.current) return; setError("");

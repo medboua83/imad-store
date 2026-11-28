@@ -24,4 +24,20 @@ Les clients explicites de l’API Bearer restent compatibles. L’échange conso
 - Tests navigateur : connexion, reprise, déconnexion, absence de clés dans JavaScript, téléphone/tablette/ordinateur, erreurs temporaires, plusieurs onglets et ticket de caisse séparé.
 - Transport réel des cookies dans les modes TCP, Passenger et LiteSpeed.
 
-Les cookies HttpOnly limitent le vol des clés par JavaScript ; ils n’empêchent pas un script malveillant exécuté sur la même origine d’effectuer des actions pendant une session. Conserver la CSP, les validations de contenu, les permissions serveur et les contrôles de publication. La MFA et la gestion des appareils restent des évolutions distinctes.
+Les cookies HttpOnly limitent le vol des clés par JavaScript ; ils n’empêchent pas un script malveillant exécuté sur la même origine d’effectuer des actions pendant une session. Conserver la CSP, les validations de contenu, les permissions serveur et les contrôles de publication. La MFA personnelle est décrite dans [ADMIN_MFA.md](ADMIN_MFA.md).
+
+## Contrôles personnels des sessions
+
+Dans **Mon compte → Sessions de connexion**, cliquer sur **Voir mes sessions**. La lecture est privée et paginée. Chaque entrée contient uniquement sa référence interne, sa date de création et son expiration absolue. La session actuelle est présentée séparément ; plusieurs onglets d’un même navigateur peuvent la partager. Ces dates décrivent l’ouverture et l’échéance, pas une dernière activité ni un appareil identifié.
+
+**Fermer mes autres sessions** concerne toutes les pages de la liste. L’action exige le mot de passe actuel et, si elle est active, la MFA du compte (TOTP ou un code de secours utilisable). Le dernier code de secours reste réservé à la récupération. Les compteurs d’échec et l’exclusion d’un code déjà consommé sont partagés avec les autres actions MFA. Une action ayant réellement fermé des sessions laisse une entrée `OTHER_BROWSER_SESSIONS_CLOSED` dans `access_events`.
+
+La session actuelle conserve sa ligne, ses clés, sa version de compte et son expiration. Les autres sessions navigateur existantes du même compte sont supprimées ; leurs accès liés sont immédiatement refusés, même présentés comme Bearer. Les comptes voisins, les clés API historiques, les configurations SMTP et les données commerciales sont conservés. Les connexions futures restent soumises aux identifiants et à la MFA : en cas de compromission présumée, changer aussi le mot de passe.
+
+Les accès API historiques sans identifiant de session restent indépendants de cette liste et de ce bouton. Le changement de mot de passe ferme aussi ces accès par la version de compte. Les nouvelles pages utilisent la session navigateur protégée après la reprise prévue plus haut.
+
+`GET /api/auth/sessions` et `POST /api/auth/sessions/close-others` acceptent uniquement une session navigateur complète, liée au compte attendu et à l’origine autorisée. Les accès Bearer seuls sont refusés, y compris lorsqu’ils contiennent un identifiant de session. Un administrateur comme un collaborateur peut agir sur ses propres sessions, avec les mêmes contrôles. Le corps strict ne permet de choisir ni un autre compte, ni la session à conserver. Les jetons, mots de passe, secrets MFA et codes ne sont pas renvoyés dans la liste.
+
+La pagination limite chaque lecture et permet de traverser les anciennes lignes API sans les exposer. Une liste modifiée demande une actualisation ; une réponse incomplète conserve seulement la dernière lecture clairement signalée. Après un résultat de déconnexion incertain, relire la liste avant de réessayer. Le formulaire efface les secrets après chaque tentative et n’enregistre rien dans le stockage du navigateur. Les comptes exceptionnellement chargés sont orientés vers le changement de mot de passe ; le traitement échoué annule toutes ses suppressions et la consommation MFA.
+
+Ce lot réutilise `refresh_tokens`, `admin_mfa` et `access_events`, sans migration ni élargissement des droits applicatifs. Les recettes de déconnexion utilisent exclusivement des comptes et bases fictifs. Sur la boutique réelle, consulter et annuler le formulaire : ne pas déconnecter des utilisateurs pour démontrer l’interface.

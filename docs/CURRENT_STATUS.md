@@ -1,8 +1,14 @@
+## Contrôles personnels des sessions du dashboard — 28 novembre 2026
+
+Candidat : lecture privée et paginée des sessions navigateur du seul compte courant, dates d’ouverture/expiration et session actuelle distincte. Déconnexion de toutes les autres sessions du dashboard après mot de passe et MFA si active, échéance et version actuelles conservées, journal de sécurité, refus des Bearer seuls et des cibles injectées. Codes à usage unique et verrou d’échec partagés ; le dernier secours reste réservé à la récupération. Secrets effacés du formulaire après tentative, aucune persistance locale ; relecture obligatoire après un résultat incertain. Les accès API historiques restent indépendants et relèvent du changement de mot de passe.
+
+Aucune migration, dépendance ou modification commerciale. Aucun compte réel ne doit être déconnecté pour tester. Guide docs/ADMIN_SESSIONS.md ; recette et publication privées dans outputs/admin-session-controls-20261128. Candidat non publié à cette note.
+
 ## Clôture administrative des incidents transporteur — 26 novembre 2026
 
 Candidat : bouton dans la fiche commande, motif obligatoire, auteur/date et historique privé paginé. Clôture de la seule version observée, dédupliquée, sans modification des commandes, paiements, montants, stock, réservations ou colis et sans appel externe. Les changements de statut/erreur/colis réouvrent l’alerte, y compris après un cycle ; les dates de suivi et les verrous ne la réouvrent pas. Reprise des incidents non terminaux par GET uniquement. Droits orders.read + orders.write ; historique réservé à orders.read ; aucun motif exposé publiquement ou aux seuls réglages.
 
-Migration additive 20261126180000_carrier_incident_closures : table vide d’audit, compteur incidentVersion du suivi et déclencheur de version. Aucun incident réel ne doit être clôturé pendant la recette sans contrôle marchand. Guide docs/CARRIER_INCIDENT_CLOSURE.md ; tests et publication privées dans outputs/carrier-incident-closure-20261126. Candidat en cours de tests, non publié à cette note.
+Migration additive 20261126180000_carrier_incident_closures : table vide d’audit, compteur incidentVersion du suivi et déclencheur de version. Aucun incident réel ne doit être clôturé pendant la recette sans contrôle marchand. Guide docs/CARRIER_INCIDENT_CLOSURE.md ; tests et publication privées dans outputs/carrier-incident-closure-20261126. Publié par la PR183, source dcece1b et fusion f4a75d0, le 26 novembre 2026 ; preuve privée dans le dossier de publication.
 
 ## Incidents du bilan et permissions — 26 novembre 2026
 

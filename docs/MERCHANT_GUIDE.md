@@ -42,6 +42,8 @@ En cas de coupure après validation, reprendre la tentative existante pour retro
 
 Créer un compte personnel avec seulement les rubriques utiles. Les permissions sont vérifiées par le serveur. Ne pas envoyer un mot de passe dans un message : utiliser une invitation ou un lien de réinitialisation lorsque le SMTP est opérationnel.
 
+Dans **Mon compte → Sessions de connexion**, consulter les connexions du dashboard. **Fermer mes autres sessions** demande le mot de passe actuel et le code MFA si cette protection est active ; la session utilisée reste ouverte. Le formulaire concerne aussi les pages suivantes. Si le résultat est incertain, actualiser la liste avant de recommencer. Voir le [guide des sessions](ADMIN_SESSIONS.md).
+
 Dans **E-mails et SMTP**, enregistrer l'adresse Gmail, un mot de passe d'application Google et activer la connexion. La vérification de connexion ne transmet pas d'e-mail. Avant remise, vérifier aussi la réception d'une invitation et d'un lien de récupération, leur expiration et leur usage unique. Gmail exige la validation en deux étapes pour créer un mot de passe d'application : [aide Google](https://support.google.com/mail/answer/185833?hl=fr).
 
 Ne jamais recopier les mots de passe SMTP, les liens de récupération ou les codes MFA dans les journaux, un ticket de support ou le dépôt Git.

@@ -41,6 +41,7 @@ const result = spawnSync(
         "tests/carrier-incident-closure.test.ts",
         "tests/team-access-gmail.test.ts",
         "tests/admin-browser-session.test.ts",
+        "tests/admin-session-controls.test.ts",
         "tests/admin-mfa.test.ts",
         "tests/admin-browser-identity.test.ts",
         "tests/admin-session-retry.test.ts",

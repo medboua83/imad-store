@@ -13,6 +13,7 @@ import { forgotPassword, resetPassword, changePassword } from "../controllers/pa
 
 import { assertBrowserRequest } from "../lib/admin-cookies";
 import { migrateBrowserSession } from "../lib/admin-browser-session";
+import { listOwnBrowserSessions, closeOtherBrowserSessions } from "../controllers/admin-sessions.controller";
 import { readMfa, setupMfa, confirmMfa, cancelMfaSetup, disableMfa, recoverMfa } from "../controllers/admin-mfa.controller";
 
 export const authRoutes: IRouter = Router();
@@ -26,6 +27,8 @@ authRoutes.post("/refresh", refreshToken);
 authRoutes.post("/logout", logout);
 authRoutes.get("/me", authenticate, getMe);
 const recoveryLimit = () => rateLimit({ windowMs: 15 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false });
+authRoutes.get("/sessions", authenticate, listOwnBrowserSessions);
+authRoutes.post("/sessions/close-others", authenticate, recoveryLimit(), closeOtherBrowserSessions);
 authRoutes.post("/forgot-password", recoveryLimit(), forgotPassword);
 authRoutes.post("/reset-password", recoveryLimit(), resetPassword);
 authRoutes.post("/change-password", authenticate, recoveryLimit(), changePassword);
