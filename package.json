@@ -21,6 +21,7 @@
     "store:admin": "node --import tsx backend/scripts/provision-company-admin.ts",
     "store:run": "node scripts/run-company-store.cjs",
     "test:installer": "node --test tests/store-installer.test.cjs",
+    "test:delivery": "npm --prefix packages/shared run build && npm --prefix backend run prisma:generate && node scripts/test-client-delivery.cjs",
     "store:bundle": "node scripts/bundle-company-store.cjs",
     "test:ui": "playwright test",
     "test:security": "node --test tests/security-dependencies.test.cjs tests/web-security.test.cjs && python3 -m unittest discover -s tests -p test_backup_verifier.py && python3 -m unittest discover -s tests -p test_offsite_recovery.py",

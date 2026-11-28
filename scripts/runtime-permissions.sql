@@ -33,6 +33,8 @@ GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."access_events" TO :"app_ro
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."addresses" TO :"app_role";
 GRANT INSERT, SELECT, UPDATE ON TABLE public."admin_mfa" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."admin_notifications" TO :"app_role";
+-- Incident history is append-only, like receipts; the application may never rewrite it.
+GRANT INSERT, SELECT ON TABLE public."carrier_incident_closures" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."categories" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."deskcomm_connection" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."deskcomm_integrations" TO :"app_role";

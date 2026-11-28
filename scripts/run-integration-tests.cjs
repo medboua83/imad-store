@@ -65,6 +65,7 @@ const result = spawnSync(
         "tests/category-visuals.test.ts",
         "tests/store-template.test.ts",
         "tests/resale-installation.test.ts",
+        "tests/fresh-runtime-installation.test.ts",
         "tests/deskcomm-form.test.ts",
         "tests/checkout-assistance.test.ts",
         "tests/admin-summary.test.ts",

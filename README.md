@@ -38,10 +38,11 @@ npm run check
 npm run test:security
 npm run test:ui
 npm run test:installer
+npm run test:delivery
 npm test
 ```
 
-Les tests serveur exigent un rôle PostgreSQL de test distinct, local, autorisé à créer uniquement les bases jetables du lanceur. Voir le guide PostgreSQL pour `IMAD_TEST_POSTGRES_URL`. Les tests d'interface utilisent des données fictives ; ne pas les diriger vers une boutique active pour créer des ventes ou des colis. La vérification de l'hébergement combiné est décrite dans les scripts et la chaîne GitHub Actions.
+Les tests serveur exigent un cluster PostgreSQL de test local séparé. Son rôle de recette doit pouvoir créer les bases jetables ; `test:delivery` et la suite complète créent aussi un rôle applicatif temporaire limité pour vérifier les véritables permissions d'une installation neuve. Voir le guide PostgreSQL pour `IMAD_TEST_POSTGRES_URL` et la [recette de remise](docs/RESALE_DELIVERY.md). Ne jamais utiliser un profil ou un rôle de production. Les tests d'interface utilisent des données fictives ; ne pas les diriger vers une boutique active pour créer des ventes ou des colis. La vérification de l'hébergement combiné est décrite dans les scripts et la chaîne GitHub Actions.
 
 Ne jamais enregistrer dans le dépôt les fichiers `.env`, clés, exports clients, sauvegardes, rapports privés, images téléversées ou résultats générés. Les comptes applicatifs doivent disposer de permissions PostgreSQL limitées ; le rôle de test n'est pas un compte de production.
 

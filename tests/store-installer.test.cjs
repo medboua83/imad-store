@@ -8,6 +8,15 @@ const { spawnSync } = require('node:child_process');
 const { createProfile } = require('../scripts/create-company-store.cjs');
 const { loadProfile } = require('../scripts/run-company-store.cjs');
 const root = path.resolve(__dirname, '..');
+test('Delivery acceptance refuses foreign databases, inherited store targets and profile arguments without exposing credentials', () => {
+    for (const value of ['postgresql://user:fictitious-secret@remote.example.invalid/postgres', 'postgresql://user:fictitious-secret@127.0.0.1/store_live', 'invalid-fictitious-secret']) {
+        const r = spawnSync(process.execPath, ['scripts/test-client-delivery.cjs'], { cwd: root, env: { PATH: process.env.PATH, IMAD_TEST_POSTGRES_URL: value }, encoding: 'utf8' });
+        assert.equal(r.status, 1); assert.doesNotMatch(r.stdout + r.stderr, /fictitious-secret|remote\.example|store_live/);
+        assert.match(r.stderr, /Recette refusée/);
+    }
+    const r = spawnSync(process.execPath, ['scripts/test-client-delivery.cjs', '/private/production.env'], { cwd: root, encoding: 'utf8' });
+    assert.equal(r.status, 1); assert.doesNotMatch(r.stdout + r.stderr, /production\.env/);
+});
 function fixture(fn) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'store-kit-'));
     try {
