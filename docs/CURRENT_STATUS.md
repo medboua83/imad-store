@@ -1,8 +1,14 @@
+## Recette d’installation avec rôle applicatif réel — 28 novembre 2026
+
+Correction du programme d’initialisation : SELECT/INSERT seulement sur carrier_incident_closures. Une installation vide avec rôle limité échouait sur operations/health faute de ce droit ; la recette l’a reproduit avant correction. Aucune modification de schéma ou de permissions sur une boutique existante : runtime-permissions.sql reste réservé aux bases vides.
+
+La commande test:delivery et la suite complète créent une base et un rôle temporaires locaux, provisionnent un propriétaire par le vrai profil autonome, puis vérifient santé/bilan, absence de données IMAD, catalogue/couleurs, commande/idempotence/stock/paiement, vente/échange/retour/clôture, historique append-only, invitations/permissions/réinitialisation/MFA/secours. Les e-mails sont simulés en mémoire, aucun événement publicitaire, colis ou paiement réel. Le lanceur refuse les profils de boutique et les cibles PostgreSQL distantes. Guide RESALE_DELIVERY ; preuves privées dans outputs/fresh-store-runtime-20261128. Une recette technique ne vaut pas réception SMTP réelle, contrôle physique ou validation juridique.
+
 ## Contrôles personnels des sessions du dashboard — 28 novembre 2026
 
 Candidat : lecture privée et paginée des sessions navigateur du seul compte courant, dates d’ouverture/expiration et session actuelle distincte. Déconnexion de toutes les autres sessions du dashboard après mot de passe et MFA si active, échéance et version actuelles conservées, journal de sécurité, refus des Bearer seuls et des cibles injectées. Codes à usage unique et verrou d’échec partagés ; le dernier secours reste réservé à la récupération. Secrets effacés du formulaire après tentative, aucune persistance locale ; relecture obligatoire après un résultat incertain. Les accès API historiques restent indépendants et relèvent du changement de mot de passe.
 
-Aucune migration, dépendance ou modification commerciale. Aucun compte réel ne doit être déconnecté pour tester. Guide docs/ADMIN_SESSIONS.md ; recette et publication privées dans outputs/admin-session-controls-20261128. Candidat non publié à cette note.
+Aucune migration, dépendance ou modification commerciale. Aucun compte réel ne doit être déconnecté pour tester. Guide docs/ADMIN_SESSIONS.md ; recette et publication privées dans outputs/admin-session-controls-20261128. Publié et vérifié le 28 novembre 2026 par la PR184, source 195749d et fusion 29098f0 ; les révocations effectives ont été testées uniquement sur comptes fictifs.
 
 ## Clôture administrative des incidents transporteur — 26 novembre 2026
 

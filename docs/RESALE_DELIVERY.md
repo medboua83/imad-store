@@ -24,6 +24,25 @@ Le premier compte n'a pas de mot de passe universel. Sa création est exclusive 
 
 Les scénarios d'écriture utilisent des fixtures ou une base jetable. Un essai de transporteur externe ou de paiement doit être expressément autorisé ; ne pas envoyer un colis réel pour démontrer l'interface.
 
+## Recette reproductible d'une nouvelle installation
+
+Avec Node 22, les clients PostgreSQL (`psql`) dans le PATH et un PostgreSQL 16 **de test local**, exécuter `npm run test:delivery`. Comme la CI, le contrôle utilise par défaut le compte de test `imad_test` sur `127.0.0.1:5432/postgres`. Pour un autre cluster isolé, définir `IMAD_TEST_POSTGRES_URL` dans l'environnement privé de l'opérateur ; ne pas mettre de mot de passe dans une commande partagée, Git ou un rapport. Le compte de test doit pouvoir créer puis supprimer les bases et rôles temporaires. Ne jamais lui substituer un profil ou un compte de production.
+
+Le lanceur refuse les hôtes distants, les bases autres que `/postgres` et tout argument de profil. Il ne reprend pas `DATABASE_URL`, les clés ou les intégrations de l'environnement appelant. Il crée une base `imad_ci_…`, un rôle applicatif `imad_delivery_…` sans privilèges d'administration et un profil autonome aux clés nouvelles. Les migrations et les droits initiaux sont appliqués avant la création du propriétaire. L'application et tous ses parcours fonctionnent ensuite avec ce rôle limité, jamais avec le propriétaire de migration.
+
+La recette vérifie :
+
+- démarrage, santé publique et bilan privé, catalogue vide et absence de coordonnées, Pixel et CRM hérités ;
+- lecture des tables applicatives, refus de modifier le schéma et historiques financiers/incidents en ajout seulement ;
+- publication d'un article fictif avec variantes et photos par couleur, prix serveur, commande répétée unique, annulation et paiement inchangé ;
+- vente répétée unique, échange, remboursement fictif sans remise en stock d'un article non revendable et clôture de caisse unique ;
+- clôture d'incident fictif, historique conservé, aucune mutation commerciale ;
+- invitation, permissions minimales, réinitialisation à usage unique, maintien de la MFA et récupération avec un code de secours.
+
+Les e-mails sont capturés par une **boîte simulée en mémoire** ; aucun envoi SMTP, événement Meta, paiement ou colis réel n'est effectué. Ce contrôle ne valide ni réception réelle, ni DNS/HTTPS de l'hébergeur, ni appareil physique, ni restauration hors serveur. Les bases, rôles, profils et images temporaires sont supprimés à la fin normale de la recette. Une interruption brutale demande de contrôler le nettoyage sur le seul cluster de test.
+
+Ce scénario fait aussi partie de `npm test`. Le script `runtime-permissions.sql` est réservé aux installations vides : il inclut `carrier_incident_closures` en **SELECT/INSERT seulement**, sans UPDATE, DELETE ou TRUNCATE. Ne pas le réexécuter sur une boutique existante pour corriger une alerte : ses droits courants et ses données doivent être examinés séparément.
+
 ## Bilan dans les réglages
 
 `GET /api/settings/readiness` exige une session actuelle et `settings.manage`, répond en `private, no-store` et ne modifie rien. Le résultat vérifie coordonnées, textes publiés et validés, règles de livraison/retour, configuration SMTP déchiffrable, MFA du seul compte courant, reçu de sauvegarde et incidents. Il ne retourne aucun secret ou donnée de client. Une configuration SMTP ne prouve pas que le destinataire a reçu un e-mail.
