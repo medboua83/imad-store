@@ -81,6 +81,7 @@ const CommerceTab = dynamic(() => import("./commerce-tab"), { loading: PendingVi
 const InventoryTab = dynamic(() => import("./inventory-tab"), { loading: PendingView });
 const ContentTab = dynamic(() => import("./content-tab"), { loading: PendingView });
 const AnalyticsTab = dynamic(() => import("./analytics-tab"), { loading: PendingView });
+const MediaBuyerTab = dynamic(() => import("./media-buyer-tab"), { loading: PendingView });
 const DeskcommTab = dynamic(() => import("./deskcomm-tab"), { loading: PendingView });
 const TeamTab = dynamic(() => import("./team-tab"), { loading: PendingView });
 const GmailSettingsPanel = dynamic(() => import("./gmail-settings"), { loading: PendingView });
@@ -95,7 +96,7 @@ type Tab =
     | "content"
     | "deskcomm"
     | "notifications"
-    | "analytics"
+    | "analytics" | "media"
     | "commerce" | "pos" | "team" | "mail" | "account";
 type Notice = { id: string; title: string; message: string; read: boolean; createdAt: string };
 const sections = [
@@ -136,6 +137,7 @@ const sections = [
         description: "Comprenez les visites, les produits consultés et les commandes.",
         icon: ChartNoAxesCombined,
     },
+    { id: "media" as Tab, label: "Media Buyer", description: "Reliez vos dépenses publicitaires aux commandes réellement livrées.", icon: ChartNoAxesCombined },
     {
         id: "content" as Tab,
         label: "Contenu du site",
@@ -902,6 +904,7 @@ export default function AdminPage() {
                                     <ContentTab />
                                 </div>
                             )}
+                            {activeTab === "media" && <MediaBuyerTab />}
                             {activeTab === "analytics" && (
                                 <AnalyticsTab days={analyticsDays} setDays={setAnalyticsDays}
                                     onOpenOrders={allowed("orders") ? () => selectTab("orders") : undefined} />

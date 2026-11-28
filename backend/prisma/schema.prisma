@@ -229,6 +229,9 @@ model ProductVariant {
 // ─── Order ──────────────────────────────────────────────────────────────────
 
 model Order {
+  campaignAttribution Json?
+  campaignAttributionExpiresAt DateTime?
+  @@index([campaignAttributionExpiresAt], map: "orders_campaign_retention")
   confirmationMethod    String?
   confirmedAt           DateTime?
   deletedAt             DateTime?
@@ -299,7 +302,64 @@ model OrderEvent {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([orderId, type])
   @@map("order_events")
+}
+
+// Read-only Meta integration. Credentials never leave the server; daily amounts use exact micros.
+model MediaBuyerConnection {
+  id String @id
+  accountId String?
+  accountName String?
+  currency String?
+  timeZone String?
+  tokenCiphertext String?
+  targetCents Int?
+  revision Int @default(1)
+  lastSyncAt DateTime?
+  lastError String?
+  syncLease String?
+  syncLockedUntil DateTime?
+  updatedAt DateTime @updatedAt
+  @@map("media_buyer_connection")
+}
+
+model MetaAd {
+  accountId String
+  adId String
+  campaignId String
+  campaignName String
+  adsetId String
+  adsetName String
+  adName String
+  updatedAt DateTime @updatedAt
+  spend MetaDailySpend[]
+  @@id([accountId, adId])
+  @@index([accountId, campaignId, adsetId])
+  @@map("meta_ads")
+}
+
+model MetaDailySpend {
+  accountId String
+  adId String
+  date DateTime @db.Date
+  spendMicros BigInt
+  currency String
+  timeZone String
+  ad MetaAd @relation(fields: [accountId, adId], references: [accountId, adId], onDelete: Restrict, map: "meta_daily_spend_ad_fkey")
+  @@id([accountId, adId, date])
+  @@index([accountId, date])
+  @@map("meta_daily_spend")
+}
+
+model MetaSyncDay {
+  accountId String
+  date DateTime @db.Date
+  currency String
+  timeZone String
+  syncedAt DateTime
+  @@id([accountId, date])
+  @@map("meta_sync_days")
 }
 
 // ─── Store Settings ─────────────────────────────────────────────────────────

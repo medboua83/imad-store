@@ -28,6 +28,6 @@ export function allowedAdminTab(access: AdminAccess, tab: string) {
     if (access.role === "ADMIN") return true;
     const permissions: Record<string, AdminPermission> = { orders: "orders.read", notifications: "orders.read",
         products: "catalogue.manage", inventory: "catalogue.manage", categories: "catalogue.manage",
-        analytics: "analytics.read", content: "content.manage", commerce: "settings.manage", deskcomm: "crm.manage" };
+        analytics: "analytics.read", media: "media.read", content: "content.manage", commerce: "settings.manage", deskcomm: "crm.manage" };
     return !!permissions[tab] && canAdmin(access, permissions[tab]);
 }

@@ -1,4 +1,4 @@
-import { server } from "../../backend/src/index";
+const { server } = require("../../backend/dist/index.js");
 
 // Observe the actual entry point over IPC, independently of log formatting/reporters.
 const ready = () => {

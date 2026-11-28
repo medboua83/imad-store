@@ -59,6 +59,10 @@ export async function assertStoreInstallation() {
             prisma.posCashClosing,
             prisma.posAdjustment,
             prisma.posAdjustmentItem,
+            prisma.mediaBuyerConnection,
+            prisma.metaAd,
+            prisma.metaDailySpend,
+            prisma.metaSyncDay,
         ];
         const analytics = await prisma.storeAnalytics.count();
         if (

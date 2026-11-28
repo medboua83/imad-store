@@ -41,6 +41,10 @@ GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."deskcomm_integrations" TO 
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."deskcomm_outbox" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."deskcomm_status_receipts" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."gmail_config" TO :"app_role";
+GRANT INSERT, SELECT, UPDATE ON TABLE public."media_buyer_connection" TO :"app_role";
+GRANT INSERT, SELECT, UPDATE ON TABLE public."meta_ads" TO :"app_role";
+GRANT DELETE, INSERT, SELECT ON TABLE public."meta_daily_spend" TO :"app_role";
+GRANT INSERT, SELECT, UPDATE ON TABLE public."meta_sync_days" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."olivraison_integration" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."olivraison_shipments" TO :"app_role";
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."order_events" TO :"app_role";

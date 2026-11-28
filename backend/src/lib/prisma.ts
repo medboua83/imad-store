@@ -8,7 +8,9 @@ export const prisma =
     globalForPrisma.prisma ??
     new PrismaClient({
         transactionOptions: { isolationLevel: "Serializable", maxWait: 10000, timeout: 15000 },
-        log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+        // ORM diagnostics can render arguments containing customer or campaign data.
+        // Request failures are reported by the middleware with type/code only.
+        log: [],
     });
 
 if (process.env.NODE_ENV !== "production") {

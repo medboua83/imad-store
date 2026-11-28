@@ -1,3 +1,4 @@
+import { campaignForOrder, privateCampaign, publicOrder } from "../lib/campaign-attribution";
 import { approveCarrierDispatch } from "../lib/carrier-approval";
 import { closeCarrierIncident, closeCarrierIncidentSchema, carrierIncidentClosureDto, withCarrierIncidentSummaries } from "../lib/carrier-incident-closure";
 import { AuthRequest } from "../middleware/auth.middleware";
@@ -27,6 +28,7 @@ import { CarrierError } from "../lib/olivraison-api";
 // Guest-only checkout schema — COD only (card payments disabled)
 const createOrderSchema = z
     .object({
+        campaignAttribution: z.unknown().optional(),
         paymentMethod: z.enum(["COD"]).default("COD"),
         confirmationMode: z.literal("SITE").optional(),
         // Accepted only for old clients/idempotent retries; never controls CRM delivery.
@@ -135,7 +137,7 @@ export async function createOrder(req: Request, res: Response) {
         if (previous.requestFingerprint !== requestFingerprint)
             throw new AppError("Idempotency key already used for another order", 409);
         await recordConversion(previous.id, previous.createdAt, req);
-        return res.status(200).json({ success: true, data: previous, idempotentReplay: true });
+        return res.status(200).json({ success: true, data: publicOrder(previous), idempotentReplay: true });
     }
 
     const delivery = checkoutDeliverySchema.parse({ customer: body.customer }).customer;
@@ -266,6 +268,7 @@ export async function createOrder(req: Request, res: Response) {
                     const created = await tx.order.create({
                         data: {
                             idempotencyKey: key,
+                            ...campaignForOrder(body.campaignAttribution, req),
                             requestFingerprint,
                             inventoryReserved: true,
                             orderServiceRequested: managedAssistance ? orderServiceRequested : null,
@@ -389,7 +392,7 @@ export async function createOrder(req: Request, res: Response) {
                         throw new AppError("Idempotency key already used for another order", 409);
                     return res
                         .status(200)
-                        .json({ success: true, data: existing, idempotentReplay: true });
+                        .json({ success: true, data: publicOrder(existing), idempotentReplay: true });
                 }
             }
             if (code === "P2034" && attempt < 4) {
@@ -428,7 +431,7 @@ export async function createOrder(req: Request, res: Response) {
         console.error("Telegram bridge failed"),
     );
     appendOrderToSheets(order).catch(() => console.error("Google Sheets append failed"));
-    return res.status(201).json({ success: true, data: order });
+    return res.status(201).json({ success: true, data: publicOrder(order) });
 }
 
 export async function getOrder(req: Request, res: Response) {
@@ -495,7 +498,7 @@ export async function listOrders(req: Request, res: Response) {
         const tracking = new Map((await withCarrierIncidentSummaries(tx, shipments)).map(shipment => [shipment.id, shipment]));
         const summaries = await customerHistorySummaries(tx, ids.map(row => row.id));
         const blacklist = await customerBlacklistSummaries(tx, ids.map(row => row.id));
-        return { data: ids.map(({ id }) => ({ ...rows.get(id)!, shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id), customerBlacklist: blacklist.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
+        return { data: ids.map(({ id }) => ({ ...privateCampaign(rows.get(id)!), shipment: tracking.get(id) ?? null, customerHistory: summaries.get(id), customerBlacklist: blacklist.get(id) })), total, scopeTotal, statusCounts, page, totalPages };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, ...result, trackingFilter: q.tracking });
@@ -543,7 +546,7 @@ export async function getAdminOrder(req: Request, res: Response) {
         const summaries = await customerHistorySummaries(tx, [order.id]);
         const blacklist = await customerBlacklistSummaries(tx, [order.id]);
         const decorated = shipment ? (await withCarrierIncidentSummaries(tx, [shipment], true))[0] : null;
-        return { ...order, shipment: decorated, customerHistory: summaries.get(order.id), customerBlacklist: blacklist.get(order.id) };
+        return { ...privateCampaign(order), shipment: decorated, customerHistory: summaries.get(order.id), customerBlacklist: blacklist.get(order.id) };
     }, { isolationLevel: "RepeatableRead" });
     res.setHeader("Cache-Control", "no-store");
     res.json({ success: true, data });
@@ -608,7 +611,7 @@ export async function updateOrderStatus(req: Request, res: Response) {
         console.error("Google Sheets status update failed:", err),
     );
 
-    res.json({ success: true, data: order });
+    res.json({ success: true, data: publicOrder(order) });
 }
 
 // Admin: list notifications (polling endpoint)

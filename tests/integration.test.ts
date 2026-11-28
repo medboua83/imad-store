@@ -905,7 +905,11 @@ test("Unconfigured Sheets does not load the optional Google API SDK", async () =
     }
 });
 
-test("An empty server startup does not publish demo data even with a legacy seed flag", { timeout: 60000 }, async () => {
+// CI retains a 30 s readiness bound. A local USB-disk run can explicitly select a larger,
+// still bounded cold-start allowance; migration/cleanup have their own lifecycle allowance.
+const startupTimeout = process.env.IMAD_TEST_STARTUP_TIMEOUT_MS ? Number(process.env.IMAD_TEST_STARTUP_TIMEOUT_MS) : 30000;
+if (![30000, 60000, 90000, 120000].includes(startupTimeout)) throw new Error("Invalid local startup test allowance");
+test("An empty server startup does not publish demo data even with a legacy seed flag", { timeout: startupTimeout + 150000 }, async () => {
     const { spawn } = await import("node:child_process");
     const isolated = `imad_ci_${randomBytes(8).toString("hex")}`;
     await createDatabase(isolated);
@@ -922,7 +926,8 @@ test("An empty server startup does not publish demo data even with a legacy seed
     };
     // A standalone server must not inherit Node's child-test reporter protocol.
     delete env.NODE_TEST_CONTEXT;
-    const child = spawn(process.execPath, ["--import", "tsx", "tests/fixtures/startup.ts"], {
+    // Exercise the compiled production entry point, not the development transpiler's cold start.
+    const child = spawn(process.execPath, ["tests/fixtures/startup.cjs"], {
         cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe", "ipc"],
     });
     let errors = "";
@@ -933,7 +938,7 @@ test("An empty server startup does not publish demo data even with a legacy seed
         const port = await new Promise<number>((resolve, reject) => {
             // Readiness of a fresh process is not an 8 s performance benchmark on an external disk.
             // Keep a hard bound and still require a real listener, healthy response and empty tables.
-            const timer = setTimeout(() => reject(new Error(`Startup timeout: ${errors}`)), 30000);
+            const timer = setTimeout(() => reject(new Error(`Startup timeout: ${errors}`)), startupTimeout);
             child.on("message", (message: any) => {
                 if (message?.type !== "imad-startup-ready") return;
                 clearTimeout(timer);
@@ -2671,5 +2676,72 @@ test("Meta domain verification is an admin-only partial setting, normalized and 
     } finally {
         if (initial) { const { id, ...data } = initial; await prisma.storeSettings.update({ where: { id }, data }); }
         else await prisma.storeSettings.deleteMany({ where: { id: "settings" } });
+    }
+});
+
+
+test("Campaign attribution is optional, immutable on replay, private, exportable and expires without changing orders", async () => {
+    const { CAMPAIGN_NOTICE_VERSION, CAMPAIGN_WINDOW_MS } = await import("@imad-store/shared");
+    const { purgeExpiredCampaigns } = await import("../backend/src/lib/campaign-attribution");
+    const p = await prisma.product.create({data:{...payload(),slug:"campaign-isolated",variants:{create:payload().variants.map(v=>({...v,stock:40,size:"M"}))}},include:{variants:true}});
+    const ids:string[]=[], writerId=randomBytes(12).toString("hex");
+    const body={paymentMethod:"COD",crmConsent:false,customer:{fullName:"TEST ISOLATED",phone:"+212600000099",street:"Adresse fictive test",city:"Rabat",region:"Rabat"},items:[{productId:p.id,variantId:p.variants[0].id,quantity:1}]};
+    const now=Date.now(), touch={version:1,model:"last_tagged_touch_30d",consentVersion:CAMPAIGN_NOTICE_VERSION,consentAt:now-1000,capturedAt:now-500,
+        tags:{utm_source:"facebook",utm_campaign:"Fixture campaign",campaign_id:"12345678901234567890",adset_id:"23456789012345678901",ad_id:"34567890123456789012",email:"ignored@example.invalid"}};
+    const post=async (campaignAttribution:unknown,headers:Record<string,string>={})=>{
+        const response=await request(app).post("/api/orders").set({"Idempotency-Key":key(),...headers}).send({...body,...(campaignAttribution===undefined?{}:{campaignAttribution})});
+        assert.equal(response.status,201,JSON.stringify(response.body));ids.push(response.body.data.id);return response;
+    };
+    try {
+        const orderKey=key();
+        const response=await request(app).post("/api/orders").set("Idempotency-Key",orderKey).send({...body,campaignAttribution:touch});
+        assert.equal(response.status,201);const id=response.body.data.id;ids.push(id);
+        assert.equal(response.body.data.campaignAttribution,undefined,"public receipt does not expose attribution");
+        const saved=await prisma.order.findUnique({where:{id}});
+        assert.equal(saved.campaignAttribution.tags.campaign_id,touch.tags.campaign_id);
+        assert.equal(saved.campaignAttribution.tags.email,undefined);
+        assert.ok(Math.abs(saved.campaignAttributionExpiresAt.getTime()-saved.createdAt.getTime()-90*86400_000)<5000);
+        const stock=(await prisma.productVariant.findUnique({where:{id:p.variants[0].id}})).stock;
+        const replay=await request(app).post("/api/orders").set("Idempotency-Key",orderKey).send({...body,campaignAttribution:{...touch,tags:{ad_id:"99999"}}});
+        assert.equal(replay.status,200);assert.equal(replay.body.data.id,id);
+        assert.equal((await prisma.productVariant.findUnique({where:{id:p.variants[0].id}})).stock,stock);
+        assert.deepEqual((await prisma.order.findUnique({where:{id}})).campaignAttribution,saved.campaignAttribution);
+        assert.equal((await request(app).get(`/api/orders/${id}`)).body.data.campaignAttribution,undefined);
+        assert.equal((await request(app).get(`/api/orders/${id}/admin-details`)).status,401);
+        assert.equal((await request(app).get("/api/orders/export.csv")).status,401);
+        const customerToken=jwt.sign({id:"123456789012345678901234",role:"CUSTOMER"},process.env.JWT_SECRET!);
+        for(const path of ["/api/orders",`/api/orders/${id}/admin-details`,"/api/orders/export.csv"])
+            assert.equal((await request(app).get(path).set("Authorization",`Bearer ${customerToken}`)).status,403);
+        const privateRead=await request(app).get(`/api/orders/${id}/admin-details`).set(admin());
+        assert.equal(privateRead.body.data.campaignAttribution.tags.ad_id,touch.tags.ad_id);
+        await prisma.user.create({data:{id:writerId,email:writerId+"@example.invalid",passwordHash:"fixture-no-login",firstName:"Test",lastName:"Writer",role:"STAFF",permissions:["orders.write"]}});
+        const writerToken=jwt.sign({id:writerId,role:"STAFF"},process.env.JWT_SECRET!);
+        assert.equal((await request(app).get(`/api/orders/${id}/admin-details`).set("Authorization",`Bearer ${writerToken}`)).status,403);
+        const statusChange=await request(app).patch(`/api/orders/${id}/status`).set("Authorization",`Bearer ${writerToken}`).send({status:"CONFIRMED"});
+        assert.equal(statusChange.status,200);assert.equal(statusChange.body.data.campaignAttribution,undefined,"write permission alone does not expose campaign data");
+        assert.equal((await prisma.order.findUnique({where:{id}})).campaignAttribution.tags.ad_id,touch.tags.ad_id);
+        assert.match(privateRead.headers["cache-control"],/no-store/);
+        const listed=await request(app).get("/api/orders").query({search:id}).set(admin());
+        assert.equal(listed.body.data.find((o:any)=>o.id===id).campaignAttribution.tags.ad_id,touch.tags.ad_id);
+        const csv=await request(app).get("/api/orders/export.csv").query({search:id}).set(admin());
+        assert.equal(csv.status,200);assert.match(csv.text,/campaign_id/);assert.ok(csv.text.includes("'"+touch.tags.campaign_id));
+        for(const [value,headers] of [[undefined,{}],[{...touch,consentVersion:"old"},{}],[{...touch,capturedAt:now-CAMPAIGN_WINDOW_MS},{}],[{...touch,tags:{ad_id:"{{ad.id}}",utm_source:"a@invalid.test"}},{}],[touch,{DNT:"1"}],[touch,{"Sec-GPC":"1"}]] as [unknown,Record<string,string>][]) {
+            const result=await post(value,headers);const blank=await prisma.order.findUnique({where:{id:result.body.data.id}});assert.equal(blank.campaignAttribution,null);
+        }
+        await prisma.order.update({where:{id},data:{campaignAttributionExpiresAt:new Date(0)}});
+        const before=await prisma.order.findUnique({where:{id}});
+        assert.equal((await request(app).get(`/api/orders/${id}/admin-details`).set(admin())).body.data.campaignAttribution,null,"expired metadata hidden before purge");
+        await purgeExpiredCampaigns();const after=await prisma.order.findUnique({where:{id}});
+        assert.equal(after.campaignAttribution,null);assert.equal(after.campaignAttributionExpiresAt,null);
+        const {campaignAttribution:a,campaignAttributionExpiresAt:b,...oldBusiness}=before;
+        const {campaignAttribution:c,campaignAttributionExpiresAt:d,...newBusiness}=after;
+        assert.deepEqual(newBusiness,oldBusiness,"retention preserves all business fields, including updatedAt");
+    } finally {
+        await prisma.deskcommOutbox.deleteMany({where:{orderId:{in:ids}}});
+        await prisma.olivraisonShipment.deleteMany({where:{id:{in:ids}}});
+        await prisma.adminNotification.deleteMany({where:{orderId:{in:ids}}});
+        await prisma.order.deleteMany({where:{id:{in:ids}}});
+        await prisma.product.delete({where:{id:p.id}});
+        await prisma.user.deleteMany({where:{id:writerId}});
     }
 });

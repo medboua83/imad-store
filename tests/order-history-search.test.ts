@@ -240,7 +240,10 @@ test("CSV exports every matching history page in stable order, with all active f
         assert.deepEqual(parsed.slice(1).map(row => row[1].replace(/^'/, "")), expected);
         assert.equal(new Set(expected).size, expected.length);
         assert.ok(!parsed.slice(1).some(row => row[1] === "'" + id(130)));
-        for (const row of parsed.slice(1)) { assert.equal(row.length, 19); assert.equal(row[13], "MAD"); }
+        for (const row of parsed.slice(1)) {
+            assert.equal(row.length, 32); assert.equal(row[13], "MAD");
+            assert.deepEqual(row.slice(19), Array(13).fill(""), "old orders have no invented campaign attribution");
+        }
     }
     assert.equal(await integrity(), snapshot);
 });
