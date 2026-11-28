@@ -6,6 +6,8 @@ import { canAdmin, type AdminPermission } from "@imad-store/shared";
 import { readAdminCookie, hasAdminCookie, assertBrowserRequest } from "../lib/admin-cookies";
 
 export interface AuthRequest extends Request {
+    /** Set only after a cookie-bound browser credential has been authenticated. */
+    adminBrowserSessionId?: string;
     user?: {
         id: string;
         email: string;
@@ -57,6 +59,7 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
             res.status(409).json({ success: false, code: "SESSION_CHANGED", error: "Le compte connecté a changé. Rechargez votre session avant de continuer." }); return;
         }
         req.user = { id: user.id, email: user.email, role: payload.role, permissions: user.permissions, authVersion: user.authVersion };
+        if (cookie && payload.sid) req.adminBrowserSessionId = payload.sid;
         next();
     } catch (error) { next(error); }
 }

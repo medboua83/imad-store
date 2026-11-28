@@ -2267,6 +2267,14 @@
 }
 
 .store-readiness { border: 1px solid var(--admin-border, #ded4c1); border-radius: 16px; padding: clamp(16px, 2.5vw, 24px); margin-block: 20px; scroll-margin-top: 100px; }
+.admin-app .admin-sessions { min-width: 0; overflow-wrap: anywhere; }
+.admin-app .admin-session-current { padding: 16px; border: 1px solid var(--admin-border, #ded4c1); border-radius: 12px; background: var(--admin-surface, #fbf8f1); margin-block: 16px; }
+.admin-app .admin-session-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; list-style: none; padding: 0; margin-block: 16px; }
+.admin-app .admin-session-list li { min-width: 0; border: 1px solid var(--admin-border, #ded4c1); border-radius: 12px; padding: 14px; }
+.admin-app .admin-session-current p, .admin-app .admin-session-list p { margin-block: 6px; font-size: .94rem; line-height: 1.55; }
+.admin-app .admin-session-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 12px; }
+.admin-app .admin-sessions .admin-button { min-height: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.admin-app .admin-sessions fieldset > p, .admin-app .admin-sessions fieldset > .admin-session-actions { grid-column: 1 / -1; }
 .store-readiness-heading { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 14px; }
 .store-readiness h2 { font-size: 1.25rem; font-weight: 650; }
 .store-readiness-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 14px; list-style: none; padding: 0; margin-block: 16px; }
