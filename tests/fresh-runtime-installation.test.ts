@@ -88,7 +88,13 @@ test('Fresh application role serves public health and private readiness without 
     const settings = (await request(app).get('/api/settings').expect(200)).body.data;
     assert.equal(settings.branding.name, 'Atelier Démonstration'); assert.equal(settings.metaPixelEnabled, false); assert.equal(settings.metaPixelId, null);
     for (const key of ['whatsappPhone', 'whatsappUrl', 'instagramUrl', 'facebookUrl', 'tiktokUrl']) assert.equal(settings[key], '');
-    for (const model of ['product', 'category', 'order', 'posSale', 'olivraisonShipment', 'deskcommConnection', 'deskcommOutbox', 'gmailConfig', 'carrierIncidentClosure']) assert.equal(await p[model].count(), 0, model);
+    for (const model of ['product', 'category', 'order', 'posSale', 'olivraisonShipment', 'deskcommConnection', 'deskcommOutbox', 'gmailConfig', 'carrierIncidentClosure', 'mediaBuyerConnection', 'metaAd', 'metaDailySpend', 'metaSyncDay']) assert.equal(await p[model].count(), 0, model);
+    const media = (await privateRequest('get', '/api/media-buyer/connection').expect(200)).body.data;
+    assert.equal(media.connected, false); assert.equal(media.targetCents, null);
+    await privateRequest('put', '/api/media-buyer/target').send({ revision: 0, targetCents: 5000 }).expect(200);
+    const today = media.today;
+    const report = (await privateRequest('get', '/api/media-buyer/report?from=' + today + '&to=' + today).expect(200)).body.data;
+    assert.equal(report.totals.attributed, 0); assert.equal(report.totals.spend, null); assert.equal(report.collectedRevenue, null);
     await privateRequest('put', '/api/integrations/deskcomm').send({ enabled: true }).expect(409);
 });
 

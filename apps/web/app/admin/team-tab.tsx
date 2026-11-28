@@ -9,7 +9,7 @@ export const permissionLabels: Record<string, string> = {
     "pos.returns": "Effectuer les retours et échanges en caisse", "pos.sell": "Encaisser et consulter ses ventes magasin", "pos.read": "Consulter les ventes de tous les caissiers",
     "orders.read": "Consulter les commandes et leurs historiques", "orders.write": "Gérer les statuts et la corbeille des commandes",
     "orders.export": "Exporter les commandes", "catalogue.manage": "Gérer les produits, catégories, photos et stocks",
-    "analytics.read": "Consulter les statistiques", "content.manage": "Modifier et publier le contenu du site",
+    "analytics.read": "Consulter les statistiques", "media.read": "Consulter Media Buyer et les dépenses publicitaires", "content.manage": "Modifier et publier le contenu du site",
     "settings.manage": "Gérer les réglages, la livraison et le Pixel", "crm.manage": "Gérer la connexion CRM",
 };
 const empty = { email: "", firstName: "", lastName: "", role: "STAFF", permissions: ["orders.read"], isActive: true };

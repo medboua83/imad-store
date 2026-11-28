@@ -1,6 +1,7 @@
 import { posArabic } from "./pos-translations";
 import { teamArabic } from "./team-translations";
 export const adminArabic: Record<string, string> = {
+    "Media Buyer": "Media Buyer", "Reliez vos dépenses publicitaires aux commandes réellement livrées.": "اربطوا مصاريف الإعلانات بالطلبات المسلّمة فعلياً.", "Consulter Media Buyer et les dépenses publicitaires": "عرض Media Buyer ومصاريف الإعلانات",
     "Sessions de connexion": "جلسات تسجيل الدخول",
     "Consultez vos sessions du dashboard et fermez les autres connexions en conservant celle-ci.": "اطّلعوا على جلسات لوحة الإدارة وأغلقوا الجلسات الأخرى مع الإبقاء على هذه الجلسة.",
     "Voir mes sessions": "عرض جلساتي",

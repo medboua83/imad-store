@@ -1,5 +1,7 @@
 import { adminPresentationBinding, readAdminPresentation, hasBrowserProfile, storeBrowserIdentity, removeAdminPresentation, type AdminBrowserIdentity } from "./admin-session";
 import { analyticsOrderHeaders } from "./store-analytics";
+import { captureCampaign } from "./campaign-attribution";
+import type { CampaignAttribution } from "@imad-store/shared";
 import { assertAssistanceReceipt } from "./checkout-assistance";
 import axios from "axios";
 import type { SiteContent } from "@imad-store/shared";
@@ -291,7 +293,8 @@ export const getCategories = async (): Promise<Category[]> => {
 // ─── Guest Checkout (no auth) ─────────────────────────────────────────────────
 
 export const createOrder = async (payload: GuestCheckoutPayload, idempotencyKey: string) => {
-    const { data } = await api.post("/orders", payload, {
+    const campaignAttribution = captureCampaign();
+    const { data } = await api.post("/orders", { ...payload, ...(campaignAttribution ? { campaignAttribution } : {}) }, {
         headers: { "Idempotency-Key": idempotencyKey, ...analyticsOrderHeaders() },
     });
     const order = data.data;
@@ -434,6 +437,8 @@ export interface CarrierIncidentClosure {
     carrierStatus: string | null; reason: string; closedById: string; closedByName: string; closedAt: string;
 }
 export interface AdminOrder {
+    campaignAttribution?: CampaignAttribution | null;
+    campaignAttributionExpiresAt?: string | null;
     customerBlacklist?: { available: boolean; blocked: boolean; cancelledCount: number };
     customerHistory?: { available: boolean; priorCancelledCount: number };
     shipment?: {

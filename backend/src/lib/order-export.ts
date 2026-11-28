@@ -1,8 +1,11 @@
 import { Prisma } from "@prisma/client";
+import { CAMPAIGN_FIELDS, campaignTags } from "@imad-store/shared";
+import { privateCampaign } from "./campaign-attribution";
 import { olivraisonStatusLabels } from "@imad-store/shared";
 
 export const ORDER_EXPORT_LIMIT = 10000;
 export const orderExportSelect = {
+    campaignAttribution: true, campaignAttributionExpiresAt: true,
     id: true, createdAt: true, customerName: true, fullName: true, customerPhone: true,
     phone: true, customerEmail: true, city: true, street: true, status: true,
     paymentStatus: true, paymentMethod: true, totalAmount: true, shippingCost: true,
@@ -23,6 +26,9 @@ const columns = [
     ["Devise", "العملة"], ["Articles et variantes", "المنتجات والخيارات"],
     ["Numéro de suivi", "رقم التتبع"], ["Statut Olivraison", "حالة Olivraison"],
     ["État du suivi", "حالة التتبع"], ["Dernière vérification (UTC)", "آخر تحقق (UTC)"],
+    ...CAMPAIGN_FIELDS.map(key => [key, key]),
+    ["Modèle attribution", "نموذج الإسناد"], ["Arrivée publicitaire (UTC)", "الوصول الإعلاني (UTC)"],
+    ["Consentement publicitaire (UTC)", "الموافقة الإعلانية (UTC)"], ["Notice publicitaire", "إشعار الإعلانات"],
 ];
 /** Quote separators/newlines and neutralize spreadsheet formulas, including leading whitespace. */
 export function csvCell(value: unknown, preserveText = false) {
@@ -43,6 +49,8 @@ export function orderCsv(orders: ExportOrder[], tracking: Map<string, Tracking>,
                 `${item.quantity} × ${item.unitPrice.toFixed(2)} MAD`].filter(Boolean).join(" · ");
         }).join("\n");
         const carrier = shipment?.carrierStatus;
+        const touch = privateCampaign(o).campaignAttribution as { tags?: unknown; model?: string; capturedAt?: number; consentAt?: number; consentVersion?: string } | null;
+        const tags = campaignTags(touch?.tags);
         // Payment remains the stored payment state, never inferred from delivery.
         lines.push([
             "#" + o.id.slice(-8).toUpperCase(), o.id, o.createdAt.toISOString(),
@@ -51,7 +59,10 @@ export function orderCsv(orders: ExportOrder[], tracking: Map<string, Tracking>,
             o.totalAmount.toFixed(2), o.shippingCost === null ? "" : o.shippingCost.toFixed(2), "MAD", items,
             shipment?.trackingId, carrier ? `${carrier} · ${olivraisonStatusLabels[carrier] || carrier}` : "",
             shipment?.state, shipment?.lastSyncedAt?.toISOString(),
-        ].map((value, column) => csvCell(value, column === 1 || column === 4 || column === 15)).join(";"));
+            ...CAMPAIGN_FIELDS.map(key => tags[key]), touch?.model,
+            touch?.capturedAt ? new Date(touch.capturedAt).toISOString() : "",
+            touch?.consentAt ? new Date(touch.consentAt).toISOString() : "", touch?.consentVersion,
+        ].map((value, column) => csvCell(value, column === 1 || column === 4 || column === 15 || (column >= 19 && column <= 27))).join(";"));
     }
     return "\uFEFF" + lines.join("\r\n") + "\r\n";
 }

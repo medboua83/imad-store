@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { campaignAllowed, campaignChoiceNeeded, captureCampaign, chooseCampaignConsent } from "@/lib/campaign-attribution";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getSettings } from "@/lib/api";
 import {
@@ -11,26 +12,34 @@ import {
 } from "@/lib/meta-pixel";
 
 export function MetaPixel() {
+    return <Suspense fallback={null}><MetaPixelTracking /></Suspense>;
+}
+function MetaPixelTracking() {
     const path = usePathname();
+    const search = useSearchParams().toString();
     const { data } = useQuery({
         queryKey: ["store-settings"],
         queryFn: getSettings,
         staleTime: 60_000,
     });
+    const settingsReady = Boolean(data);
     const [eligible, setEligible] = useState(false),
         [opened, setOpened] = useState(false);
     useEffect(() => {
         const task = setTimeout(() => {
         configurePixel(Boolean(data?.metaPixelEnabled), data?.metaPixelId || "", data?.metaPixelMadPerUsd);
         const permitted = Boolean(data?.metaPixelEnabled && data.metaPixelId && !pixelExcluded());
-        setEligible(permitted);
+        setEligible(settingsReady && (permitted || campaignAllowed()));
+        captureCampaign();
+        if (settingsReady && campaignChoiceNeeded()) setOpened(true);
         if (permitted) metaPage(path);
         }, 0);
         return () => clearTimeout(task);
-    }, [data?.metaPixelEnabled, data?.metaPixelId, data?.metaPixelMadPerUsd, path]);
+    }, [settingsReady, data?.metaPixelEnabled, data?.metaPixelId, data?.metaPixelMadPerUsd, path, search]);
     if (!eligible) return null;
     function choose(allow: boolean) {
         choosePixelConsent(allow);
+        chooseCampaignConsent(allow);
         setOpened(false);
         if (allow) metaPage(path);
     }
@@ -42,8 +51,8 @@ export function MetaPixel() {
             {opened && (
                 <section className="pixel-choice" aria-label="ملفات الارتباط الإعلانية">
                     <p>
-                        نستخدم Meta Pixel لقياس الحملات الإعلانية. يمكنكم إيقاف التتبع
-                        الإعلاني أو تفعيله وتغيير اختياركم في أي وقت.
+                        بموافقتكم، نحفظ مصدر الإعلان لمدة 30 يوماً لربطه بطلبكم، ثم نحفظ هذا الربط مع الطلب لمدة 90 يوماً.
+                        نستخدم Meta Pixel أيضاً إذا كان مفعلاً. يمكنكم الرفض أو تغيير اختياركم في أي وقت؛ الشراء متاح دون موافقة.
                     </p>
                     <button onClick={() => choose(true)}>تفعيل التتبع</button>
                     <button onClick={() => choose(false)}>إيقاف التتبع</button>

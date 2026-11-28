@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { startCampaignRetention } from "./lib/campaign-attribution";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -15,6 +16,7 @@ import { olivraisonRoutes } from "./routes/olivraison.routes";
 
 import { uploadRoutes, uploadDirectory } from "./routes/upload.routes";
 import { analyticsRoutes } from "./routes/analytics.routes";
+import { mediaBuyerRoutes } from "./routes/media-buyer.routes";
 import { contentRoutes } from "./routes/content.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { teamRoutes } from "./routes/team.routes";
@@ -43,7 +45,9 @@ app.use(
         credentials: true,
     }),
 );
-app.use(morgan("dev"));
+// Paths/queries may contain personal data or ad parameters; log neither.
+app.use(morgan(":method :status :response-time ms"));
+if (process.env.NODE_ENV !== "test") startCampaignRetention();
 app.use(async (_req, _res, next) => {
     await assertStoreInstallation();
     next();
@@ -86,6 +90,7 @@ app.use("/api", (req, res, next) => {
 });
 app.use("/api/content", contentRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/media-buyer", mediaBuyerRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/pos", posRoutes);

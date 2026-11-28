@@ -44,6 +44,8 @@ npm test
 
 Les tests serveur exigent un cluster PostgreSQL de test local séparé. Son rôle de recette doit pouvoir créer les bases jetables ; `test:delivery` et la suite complète créent aussi un rôle applicatif temporaire limité pour vérifier les véritables permissions d'une installation neuve. Voir le guide PostgreSQL pour `IMAD_TEST_POSTGRES_URL` et la [recette de remise](docs/RESALE_DELIVERY.md). Ne jamais utiliser un profil ou un rôle de production. Les tests d'interface utilisent des données fictives ; ne pas les diriger vers une boutique active pour créer des ventes ou des colis. La vérification de l'hébergement combiné est décrite dans les scripts et la chaîne GitHub Actions.
 
+La recette de démarrage lance le serveur compilé, préparé par `test:integration`. Sur un disque USB local très lent, `IMAD_TEST_STARTUP_TIMEOUT_MS=120000` permet un démarrage à froid borné plus long ; les valeurs admises sont 30000, 60000, 90000 et 120000 ms. Sans cette option, notamment dans GitHub Actions, le délai reste 30 secondes. La création/migration et le nettoyage de la base jetable ont une enveloppe séparée ; le test exige toujours un véritable serveur sain et une boutique vide, sans chargement des SDK optionnels.
+
 Ne jamais enregistrer dans le dépôt les fichiers `.env`, clés, exports clients, sauvegardes, rapports privés, images téléversées ou résultats générés. Les comptes applicatifs doivent disposer de permissions PostgreSQL limitées ; le rôle de test n'est pas un compte de production.
 
 ## Sécurité et limites de la protection web
@@ -63,3 +65,7 @@ Double authentification personnelle du dashboard : [activation, secours et explo
 Préparation et livraison : [recette](docs/RESALE_DELIVERY.md), [guide marchand](docs/MERCHANT_GUIDE.md), [remise client](docs/CLIENT_HANDOVER.md). Les réglages contiennent un bilan privé en lecture seule. `/api/operations/health` expose uniquement un état opérationnel minimal, sans données clients.
 
 Finaliser une installation avec le marchand : [parcours de remise](docs/FINAL_SETUP.md), [affichage du catalogue et des statistiques](docs/STOREFRONT_DISPLAY.md). Ces guides font partie du kit source ; ils ne contiennent aucun secret ou bilan privé de production.
+
+### Media Buyer
+
+Le module `/admin?tab=media` rapproche les dépenses Meta quotidiennes des commandes attribuées et réellement livrées. Connexion en lecture seule, attribution consentie, sources inconnues explicites et recommandations sans modification de budget : voir [le guide Media Buyer](docs/MEDIA_BUYER.md) et [la règle d’attribution](docs/CAMPAIGN_ATTRIBUTION.md).
